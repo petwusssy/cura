@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: monospace; }
+    #output { white-space: pre; }
+  </style>
+</head>
+<body>
+  <div id="svg-container" style="display: none;"></div>
+  <div id="output"></div>
+
+  <script>
+    fetch('/CURA2_grouped.svg')
+      .then(res => res.text())
+      .then(svgText => {
+        document.getElementById('svg-container').innerHTML = svgText;
+        const svg = document.querySelector('svg');
+        const groups = svg.querySelectorAll('g[id]');
+        let report = '';
+        
+        groups.forEach(g => {
+          report += `Group: ${g.id}\n`;
+          const paths = g.querySelectorAll('path');
+          paths.forEach((p, index) => {
+            const bbox = p.getBBox();
+            const fill = p.getAttribute('fill') || '';
+            const transform = p.getAttribute('transform') || '';
+            
+            // Calculate absolute center for grouping logic
+            let cx = bbox.x + bbox.width / 2;
+            let cy = bbox.y + bbox.height / 2;
+            
+            // Handle translate transform if present
+            const translateMatch = transform.match(/translate\(([^,]+),([^)]+)\)/);
+            if (translateMatch) {
+                cx += parseFloat(translateMatch[1]);
+                cy += parseFloat(translateMatch[2]);
+            }
+
+            report += `  Path ${index}: fill=${fill}, cx=${cx.toFixed(1)}, cy=${cy.toFixed(1)}, bbox={w: ${bbox.width.toFixed(1)}, h: ${bbox.height.toFixed(1)}}, transform=${transform}\n`;
+          });
+          report += '\n';
+        });
+        
+        document.getElementById('output').textContent = report;
+      });
+  </script>
+</body>
+</html>

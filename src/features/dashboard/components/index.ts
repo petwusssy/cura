@@ -1,0 +1,14 @@
+export { BedsManagement } from "./BedsManagement";
+export { ConsultationTab } from "./ConsultationTab";
+export { Dashboard } from "./Dashboard";
+export { Inventory } from "./Inventory";
+export { MedicalCertificates } from "./MedicalCertificates";
+export { NewConsultation } from "./NewConsultation";
+export { NonConsultationTab } from "./NonConsultationTab";
+export { Notifications } from "./Notifications";
+export { PatientForm } from "./PatientForm";
+export { PatientManagement } from "./PatientManagement";
+export { PatientProfile } from "./PatientProfile";
+export { PurchaseReceipts } from "./PurchaseReceipts";
+export { Reports } from "./Reports";
+export { Settings } from "./Settings";

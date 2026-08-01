@@ -1,0 +1,169 @@
+=== COAT (8 paths) ===
+tx:399 ty:193 fill:#F4FAFD
+tx:212 ty:183.4375 fill:#F4F9FD
+tx:302.00390625 ty:118.6796875 fill:#F1F8FA
+tx:389 ty:119 fill:#F1F8FA
+tx:285 ty:229 fill:#F0FAFD
+tx:290 ty:245 fill:#F0FAFB
+tx:285 ty:230 fill:#F1FAFB
+tx:399 ty:229 fill:#F2FBFD
+
+=== STETHOSCOPE (75 paths) ===
+tx:192 ty:181 fill:#E8F5FB
+tx:176 ty:190 fill:#E8F4F9
+tx:206 ty:181 fill:#E9F5FA
+tx:231 ty:37 fill:#B8CAD3
+tx:188 ty:86 fill:#B7C8D3
+tx:302 ty:45 fill:#BBCED7
+tx:215 ty:177 fill:#BFD0D8
+tx:181 ty:184 fill:#C6CFD3
+tx:171 ty:211 fill:#BECFD8
+tx:169 ty:200 fill:#C9D7E0
+tx:193 ty:117 fill:#BECFD6
+tx:412 ty:44 fill:#BACFD7
+tx:451 ty:37 fill:#B6C3CC
+tx:484 ty:122 fill:#BFD1DA
+tx:467 ty:44 fill:#BECDD4
+tx:426 ty:39 fill:#B5C5D2
+tx:485 ty:64 fill:#B0C3CD
+tx:373 ty:128 fill:#434B5B
+tx:452 ty:188 fill:#B4C3CC
+tx:372 ty:123 fill:#D6E8F1
+tx:365 ty:41 fill:#BBCBD3
+tx:303 ty:123 fill:#434A5B
+tx:301 ty:122 fill:#727681
+tx:386 ty:123 fill:#444B5B
+tx:386 ty:123 fill:#8E9097
+tx:291 ty:146 fill:#C9D7E3
+tx:279.25 ty:143.875 fill:#D3C7CD
+tx:401.25 ty:142.8125 fill:#CFD1DB
+tx:286 ty:146 fill:#CCD2D7
+tx:280 ty:227 fill:#85929A
+tx:288 ty:242 fill:#D9E4E9
+tx:285 ty:229 fill:#DAE5E7
+tx:283 ty:194.25 fill:#EEF9FB
+tx:291 ty:198 fill:#CFE1EA
+tx:259 ty:251 fill:#D9E4E8
+tx:286 ty:197 fill:#84949F
+tx:249 ty:211 fill:#DADBDD
+tx:299 ty:251 fill:#7E8D96
+tx:294 ty:201 fill:#E7F8FC
+tx:261 ty:202 fill:#E7F5F8
+tx:288 ty:237 fill:#828C95
+tx:288 ty:242 fill:#D0DEE5
+tx:285 ty:229 fill:#D1E5EE
+tx:288 ty:237 fill:#8D99A0
+tx:280 ty:227 fill:#91A1AD
+tx:292 ty:230 fill:#DFEBED
+tx:397 ty:195 fill:#89959C
+tx:406 ty:227 fill:#C1CACF
+tx:397 ty:195 fill:#85939B
+tx:397 ty:208 fill:#DAE4E9
+tx:425 ty:258 fill:#D8E4EA
+tx:388 ty:258 fill:#D5E3E9
+tx:407 ty:257 fill:#BCC6CC
+tx:406 ty:227 fill:#BAC3C9
+tx:395 ty:199 fill:#D4E3EA
+tx:401 ty:247 fill:#96A1A7
+tx:397 ty:208 fill:#D1DEE5
+tx:302 ty:256 fill:#C1CACD
+tx:265 ty:263 fill:#C5CCD0
+tx:303 ty:283 fill:#C3CDD2
+tx:282 ty:297 fill:#96A0A7
+tx:294.0625 ty:295.9375 fill:#8C97A0
+tx:307 ty:283 fill:#DEE8EC
+tx:278 ty:299 fill:#8C9AA2
+tx:257 ty:266 fill:#D2DEE2
+tx:467 ty:331 fill:#E8F5FB
+tx:458 ty:336 fill:#E8F7FC
+tx:481 ty:324 fill:#E7F3FA
+tx:437 ty:321 fill:#B6C7CF
+tx:482 ty:296 fill:#BED3DB
+tx:474 ty:332 fill:#C5D7E2
+tx:474 ty:333 fill:#E2EEF2
+tx:377 ty:352 fill:#D9E4E8
+tx:488 ty:319 fill:#BBC4C9
+tx:322 ty:299 fill:#EEF8FD
+
+=== HEAD (9 paths) ===
+tx:351.41796875 ty:147.90625 fill:#9BC4DA
+tx:380 ty:100 fill:#81A9BE
+tx:300 ty:100 fill:#81A7BF
+tx:395 ty:126 fill:#C2DBE6
+tx:330 ty:38 fill:#B5CBD5
+tx:313 ty:43 fill:#C1D7E2
+tx:284.75 ty:145.8125 fill:#F5A290
+tx:284.75 ty:145.8125 fill:#E3A99F
+tx:287 ty:148 fill:#DBAFA7
+
+=== LEFT_ARM (24 paths) ===
+tx:212 ty:183.4375 fill:#B9DBED
+tx:213 ty:160 fill:#B9CDD7
+tx:205 ty:180 fill:#C9E0EC
+tx:190 ty:180 fill:#C1D6E0
+tx:259.375 ty:187.3125 fill:#BBD6E1
+tx:300 ty:166 fill:#96BED5
+tx:308 ty:153 fill:#96C0D6
+tx:303 ty:166 fill:#BBD2E3
+tx:276 ty:196 fill:#BADBE9
+tx:286 ty:197 fill:#9BC1D7
+tx:268 ty:204 fill:#97C1D9
+tx:268.6875 ty:195.75 fill:#B7CCD7
+tx:278 ty:204 fill:#99BBCE
+tx:303 ty:203 fill:#93BBD1
+tx:267.6875 ty:218.375 fill:#C6DFED
+tx:283 ty:193 fill:#CBE0EB
+tx:313 ty:228 fill:#8CC3EB
+tx:328 ty:224 fill:#8BC3E9
+tx:309 ty:229 fill:#9BC4DF
+tx:322 ty:238 fill:#80BFEE
+tx:317 ty:224 fill:#ADDBF8
+tx:320 ty:232 fill:#73B2DD
+tx:307 ty:283 fill:#C6DEE8
+tx:321.857666015625 ty:290.886474609375 fill:#679EC8
+
+=== RIGHT_ARM (2 paths) ===
+tx:461 ty:180 fill:#BFD4DE
+tx:392 ty:157 fill:#D5B6B2
+
+=== LEFT_EAR (4 paths) ===
+tx:275 ty:49 fill:#B8DCEE
+tx:260 ty:58 fill:#95C2DC
+tx:207 ty:48 fill:#B7D1D8
+tx:271 ty:47 fill:#B0C6CF
+
+=== RIGHT_EAR (3 paths) ===
+tx:461.25 ty:56.875 fill:#95C2DC
+tx:408.4375 ty:146.0625 fill:#E6AAA0
+tx:403 ty:147 fill:#F3A391
+
+=== EYES_MOUTH (11 paths) ===
+tx:377 ty:166 fill:#59687C
+tx:300 ty:166 fill:#5F6B7E
+tx:306 ty:178 fill:#5A7286
+tx:302 ty:174 fill:#546476
+tx:330 ty:260 fill:#4282BD
+tx:339 ty:281 fill:#498AC1
+tx:379 ty:203 fill:#4E85B6
+tx:357 ty:253 fill:#4382B8
+tx:314 ty:228 fill:#3C7FB5
+tx:366 ty:231 fill:#3479B3
+tx:320 ty:291 fill:#5B9ED4
+
+=== BODY (15 paths) ===
+tx:482 ty:296 fill:#B8D9EA
+tx:333.25 ty:166.6875 fill:#9BC5DB
+tx:330 ty:188 fill:#98C2D7
+tx:365 ty:160 fill:#83BAE3
+tx:377 ty:209 fill:#8DC3EB
+tx:362 ty:237 fill:#8BC3EC
+tx:365 ty:160 fill:#94C1DA
+tx:366 ty:217 fill:#B4DBF1
+tx:365 ty:160 fill:#98C0D7
+tx:375 ty:224 fill:#9EC6DF
+tx:364 ty:231 fill:#71ADD8
+tx:377 ty:209 fill:#7DB2DA
+tx:470 ty:309 fill:#C4DEE8
+tx:346 ty:289 fill:#66A9DA
+tx:338 ty:293 fill:#85C4F3
+
