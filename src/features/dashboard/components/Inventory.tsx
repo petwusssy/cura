@@ -8,8 +8,8 @@ const YELLOW = '#F4C542';
 
 interface InventoryProps {
   medicines: MedicineItem[];
-  onUpdateMedicine: (medicine: MedicineItem) => void;
-  onAddMedicine: (medicine: MedicineItem) => void;
+  onUpdateMedicine: (medicine: MedicineItem) => void | Promise<void>;
+  onAddMedicine: (medicine: MedicineItem) => void | Promise<void>;
 }
 
 export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: InventoryProps) {
@@ -30,7 +30,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
 
   const lowStockCount = medicines.filter(m => m.status === 'Low Stock').length;
 
-  const handleAddStock = () => {
+  const handleAddStock = async () => {
     if (!addStockModal || !addStockQty) return;
     const qty = parseInt(addStockQty);
     const updated: MedicineItem = {
@@ -38,29 +38,33 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
       stock: addStockModal.stock + qty,
       status: addStockModal.stock + qty > 10 ? 'Normal' : 'Low Stock',
       stockHistory: [...addStockModal.stockHistory, {
-        date: '2026-06-27', qty, type: 'add', note: addStockNote || 'Stock added',
+        date: new Date().toISOString(), qty, type: 'add', note: addStockNote || 'Stock added',
       }],
     };
-    onUpdateMedicine(updated);
-    setAddStockModal(null);
-    setAddStockQty('');
-    setAddStockNote('');
+    try {
+      await onUpdateMedicine(updated);
+      setAddStockModal(null);
+      setAddStockQty('');
+      setAddStockNote('');
+    } catch (e) { console.error(e); }
   };
 
-  const handleAddNewMedicine = () => {
+  const handleAddNewMedicine = async () => {
     if (!newMed.name || !newMed.stock) return;
     const med: MedicineItem = {
       id: `m${Date.now()}`,
       name: newMed.name,
       stock: parseInt(newMed.stock),
       unit: newMed.unit,
-      dateAdded: '2026-06-27',
+      dateAdded: new Date().toISOString(),
       status: parseInt(newMed.stock) > 10 ? 'Normal' : 'Low Stock',
-      stockHistory: [{ date: '2026-06-27', qty: parseInt(newMed.stock), type: 'add', note: 'Initial stock' }],
+      stockHistory: [{ date: new Date().toISOString(), qty: parseInt(newMed.stock), type: 'add', note: 'Initial stock' }],
     };
-    onAddMedicine(med);
-    setShowAddForm(false);
-    setNewMed({ name: '', stock: '', unit: 'tablet' });
+    try {
+      await onAddMedicine(med);
+      setShowAddForm(false);
+      setNewMed({ name: '', stock: '', unit: 'tablet' });
+    } catch (e) { console.error(e); }
   };
 
   return (

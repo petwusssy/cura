@@ -89,7 +89,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
-              style={{ pointerEvents: stage === "splitting" ? "none" : "auto" }}
+              style={{ pointerEvents: "auto" }}
             >
               {/* UA Logo */}
               <img

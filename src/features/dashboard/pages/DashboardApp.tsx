@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../layouts/DashboardLayout';
 import {
   Dashboard, PatientManagement, PatientForm, PatientProfile, NewConsultation,
@@ -9,10 +9,13 @@ import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
   Bed, AppNotification, HospitalTransfer, Page,
 } from '@/types';
-import {
-  mockPatients, mockConsultations, mockMedicines, mockPurchaseRequests,
-  mockMedicalCerts, mockBeds, mockNotifications, mockTransfers,
-} from '@/services';
+
+import { patientService } from '@/services/patientService';
+import { consultationService } from '@/services/consultationService';
+import { medicineService } from '@/services/medicineService';
+import { bedService } from '@/services/bedService';
+import { certificateService } from '@/services/certificateService';
+import { notificationService } from '@/services/notificationService';
 
 interface DashboardAppProps {
   onLogout: () => void;
@@ -24,65 +27,102 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
 
-  const [patients, setPatients]                 = useState<Patient[]>(mockPatients);
-  const [consultations, setConsultations]       = useState<Consultation[]>(mockConsultations);
-  const [transfers, setTransfers]               = useState<HospitalTransfer[]>(mockTransfers);
-  const [medicines, setMedicines]               = useState<MedicineItem[]>(mockMedicines);
-  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>(mockPurchaseRequests);
-  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(mockMedicalCerts);
-  const [beds, setBeds]                         = useState<Bed[]>(mockBeds);
-  const [notifications, setNotifications]       = useState<AppNotification[]>(mockNotifications);
+  const [patients, setPatients]                 = useState<Patient[]>([]);
+  const [consultations, setConsultations]       = useState<Consultation[]>([]);
+  const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
+  const [medicines, setMedicines]               = useState<MedicineItem[]>([]);
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
+  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
+  const [beds, setBeds]                         = useState<Bed[]>([]);
+  const [notifications, setNotifications]       = useState<AppNotification[]>([]);
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
     if (page !== 'patients') setSearchQuery('');
   };
 
-  const handleSavePatient = (patient: Patient) => {
-    setPatients(prev => {
-      const exists = prev.find(p => p.id === patient.id);
-      return exists ? prev.map(p => p.id === patient.id ? patient : p) : [...prev, patient];
-    });
-  };
+  useEffect(() => {
+    patientService.getPatients().then(setPatients).catch(console.error);
+    consultationService.getConsultations().then(setConsultations).catch(console.error);
+    medicineService.getMedicines().then(setMedicines).catch(console.error);
+    medicineService.getPurchaseRequests().then(setPurchaseRequests).catch(console.error);
+    bedService.getBeds().then(setBeds).catch(console.error);
+    certificateService.getCertificates().then(setMedicalCerts).catch(console.error);
+    notificationService.getNotifications().then(setNotifications).catch(console.error);
+  }, []);
 
-  const handleSaveConsultation = (consultation: Consultation) => {
-    setConsultations(prev => [...prev, consultation]);
-    consultation.treatments.forEach(t => {
-      setMedicines(prev => prev.map(m => {
-        if (m.name.toLowerCase().startsWith(t.medicineName.toLowerCase().split(' ')[0].toLowerCase())) {
-          const newStock = Math.max(0, m.stock - t.quantity);
-          return {
-            ...m, stock: newStock,
-            status: newStock <= 10 ? 'Low Stock' : 'Normal',
-            stockHistory: [...m.stockHistory, {
-              date: consultation.date, qty: t.quantity, type: 'dispense' as const,
-              note: `Dispensed to ${patients.find(p => p.id === consultation.patientId)?.name || 'patient'}`,
-            }],
-          };
-        }
-        return m;
-      }));
-    });
-    consultation.treatments.forEach(t => {
-      if (t.nextDose) {
-        const notif: AppNotification = {
-          id: `N${Date.now()}${Math.random()}`, type: 'medication',
-          message: `Medication due for ${patients.find(p => p.id === consultation.patientId)?.name}`,
-          time: new Date().toISOString(), read: false,
-          patientName: patients.find(p => p.id === consultation.patientId)?.name,
-          nextDose: t.nextDose, minutesLeft: 30,
-        };
-        setNotifications(prev => [notif, ...prev]);
+  const handleSavePatient = async (patient: Patient) => {
+    try {
+      if (patients.find(p => p.id === patient.id)) {
+        const updated = await patientService.updatePatient(patient.id, patient);
+        setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
+      } else {
+        const created = await patientService.createPatient(patient);
+        setPatients(prev => [...prev, created]);
       }
-    });
+    } catch (error) {
+      console.error('Failed to save patient', error);
+      throw error;
+    }
   };
 
-  const handleUpdateConsultation = (updated: Consultation) => {
-    setConsultations(prev => prev.map(c => c.id === updated.id ? updated : c));
+  const handleSaveConsultation = async (consultation: Consultation) => {
+    try {
+      const { id, ...rest } = consultation;
+      const created = await consultationService.createConsultation(rest);
+      setConsultations(prev => [...prev, created]);
+      
+      // Keep medicine stock logic local for now (will be updated when Medicine API is integrated)
+      consultation.treatments.forEach(t => {
+        setMedicines(prev => prev.map(m => {
+          if (m.name.toLowerCase().startsWith(t.medicineName.toLowerCase().split(' ')[0].toLowerCase())) {
+            const newStock = Math.max(0, m.stock - t.quantity);
+            return {
+              ...m, stock: newStock,
+              status: newStock <= 10 ? 'Low Stock' : 'Normal',
+              stockHistory: [...m.stockHistory, {
+                date: consultation.date, qty: t.quantity, type: 'dispense' as const,
+                note: `Dispensed to ${patients.find(p => p.id === consultation.patientId)?.name || 'patient'}`,
+              }],
+            };
+          }
+          return m;
+        }));
+      });
+      consultation.treatments.forEach(t => {
+        if (t.nextDose) {
+          const notif: AppNotification = {
+            id: `N${Date.now()}${Math.random()}`, type: 'medication',
+            message: `Medication due for ${patients.find(p => p.id === consultation.patientId)?.name}`,
+            time: new Date().toISOString(), read: false,
+            patientName: patients.find(p => p.id === consultation.patientId)?.name,
+            nextDose: t.nextDose, minutesLeft: 30,
+          };
+          setNotifications(prev => [notif, ...prev]);
+        }
+      });
+    } catch (e) {
+      console.error('Failed to save consultation', e);
+      throw e;
+    }
   };
 
-  const handleConvertToConsultation = (id: string) => {
-    setConsultations(prev => prev.map(c => c.id === id ? { ...c, status: 'Consultation' } : c));
+  const handleUpdateConsultation = async (updated: Consultation) => {
+    try {
+      const res = await consultationService.updateConsultation(updated.id, updated);
+      setConsultations(prev => prev.map(c => c.id === res.id ? res : c));
+    } catch (e) {
+      console.error('Failed to update consultation', e);
+    }
+  };
+
+  const handleConvertToConsultation = async (id: string) => {
+    try {
+      const res = await consultationService.updateConsultation(id, { status: 'Consultation' });
+      setConsultations(prev => prev.map(c => c.id === id ? res : c));
+    } catch (e) {
+      console.error('Failed to convert consultation', e);
+    }
   };
 
   const handleAddTransfer = (transfer: HospitalTransfer) => {
@@ -95,55 +135,82 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     setNotifications(prev => [notif, ...prev]);
   };
 
-  const handleUpdateMedicine = (med: MedicineItem) => {
-    setMedicines(prev => prev.map(m => m.id === med.id ? med : m));
+  const handleAddMedicine = async (med: MedicineItem) => {
+    try {
+      const { id, ...rest } = med;
+      const created = await medicineService.createMedicine(rest);
+      setMedicines(prev => [...prev, created]);
+    } catch (e) { console.error(e); }
   };
 
-  const handleAddMedicine = (med: MedicineItem) => {
-    setMedicines(prev => [...prev, med]);
+  const handleUpdateMedicine = async (med: MedicineItem) => {
+    try {
+      const updated = await medicineService.updateMedicine(med.id, med);
+      setMedicines(prev => prev.map(m => m.id === updated.id ? updated : m));
+    } catch (e) { console.error(e); }
   };
 
-  const handleUpdatePurchaseRequest = (req: PurchaseRequest) => {
-    setPurchaseRequests(prev => prev.map(r => r.id === req.id ? req : r));
-    const last = req.history[req.history.length - 1];
-    if (last?.qty > 0) {
-      setMedicines(prev => prev.map(m => {
-        if (m.name === req.medicine) {
-          const newStock = m.stock + last.qty;
-          return {
-            ...m, stock: newStock,
-            status: newStock > 10 ? 'Normal' : 'Low Stock',
-            stockHistory: [...m.stockHistory, { date: last.date, qty: last.qty, type: 'add' as const, note: `From PR ${req.id}` }],
-          };
-        }
-        return m;
-      }));
-    }
+  const handleAddPurchaseRequest = async (req: PurchaseRequest) => {
+    try {
+      const { id, ...rest } = req;
+      const created = await medicineService.createPurchaseRequest(rest);
+      setPurchaseRequests(prev => [created, ...prev]);
+    } catch (e) { console.error(e); }
   };
 
-  const handleAddPurchaseRequest = (req: PurchaseRequest) => {
-    setPurchaseRequests(prev => [...prev, req]);
+  const handleUpdatePurchaseRequest = async (req: PurchaseRequest) => {
+    try {
+      const updated = await medicineService.updatePurchaseRequest(req.id, req);
+      setPurchaseRequests(prev => prev.map(r => r.id === updated.id ? updated : r));
+      
+      const last = req.history[req.history.length - 1];
+      if (last?.qty > 0) {
+        setMedicines(prev => prev.map(m => {
+          if (m.name === req.medicine) {
+            const newStock = m.stock + last.qty;
+            const updatedMed = {
+              ...m, stock: newStock,
+              status: newStock > 10 ? 'Normal' : 'Low Stock',
+              stockHistory: [...m.stockHistory, { date: last.date, qty: last.qty, type: 'add' as const, note: `From PR ${req.id}` }],
+            };
+            // Note: The UI updates immediately, but we should also call the API for the medicine stock update.
+            // For now, it updates locally.
+            return updatedMed as MedicineItem;
+          }
+          return m;
+        }));
+      }
+    } catch (e) { console.error(e); }
+  };
+  const handleAddMedCert = async (cert: MedicalCertificate) => {
+    try {
+      const { id, ...rest } = cert;
+      const created = await certificateService.createCertificate(rest);
+      setMedicalCerts(prev => [...prev, created]);
+    } catch (e) { console.error(e); }
   };
 
-  const handleAddMedCert = (cert: MedicalCertificate) => {
-    setMedicalCerts(prev => [...prev, cert]);
+  const handleUpdateMedCert = async (cert: MedicalCertificate) => {
+    try {
+      const updated = await certificateService.updateCertificate(cert.id, cert);
+      setMedicalCerts(prev => prev.map(c => c.id === updated.id ? updated : c));
+    } catch (e) { console.error(e); }
   };
 
-  const handleUpdateMedCert = (cert: MedicalCertificate) => {
-    setMedicalCerts(prev => prev.map(c => c.id === cert.id ? cert : c));
-  };
-
-  const handleUpdateBed = (bed: Bed) => {
-    setBeds(prev => prev.map(b => b.id === bed.id ? bed : b));
-    if (bed.status === 'Occupied' && bed.patientName) {
-      const notif: AppNotification = {
-        id: `N${Date.now()}`, type: 'bed',
-        message: `Bed ${bed.bedNumber} assigned to ${bed.patientName}`,
-        time: new Date().toISOString(), read: false,
-        patientName: bed.patientName,
-      };
-      setNotifications(prev => [notif, ...prev]);
-    }
+  const handleUpdateBed = async (bed: Bed) => {
+    try {
+      const updated = await bedService.updateBed(bed.id, bed);
+      setBeds(prev => prev.map(b => b.id === updated.id ? updated : b));
+      if (updated.status === 'Occupied' && updated.patientName) {
+        const notif: AppNotification = {
+          id: `N${Date.now()}`, type: 'bed',
+          message: `Bed ${updated.bedNumber} assigned to ${updated.patientName}`,
+          time: new Date().toISOString(), read: false,
+          patientName: updated.patientName,
+        };
+        setNotifications(prev => [notif, ...prev]);
+      }
+    } catch (e) { console.error(e); }
   };
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId);

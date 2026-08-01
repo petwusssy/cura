@@ -2,6 +2,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Eye, EyeOff, ArrowLeft, Lock, User } from "lucide-react"
 import curaLogo from "@/assets/images/cura-logo.png"
+import { authService } from "@/services/authService"
 
 interface Props {
   onLogin: () => void
@@ -25,13 +26,19 @@ export default function LoginPage({ onLogin, onBack }: Props) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      await authService.login(username, password)
       onLogin()
-    }, 800)
+    } catch (error) {
+      console.error("Login failed:", error)
+      // Displaying alert for simplicity, a toast would be better in a real app
+      alert("Login failed. Please check your credentials.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

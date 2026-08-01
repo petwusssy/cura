@@ -2,9 +2,20 @@ import { Routes, Route, useNavigate } from "react-router"
 import LandingPage from "@/features/landing/pages/LandingPage"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardApp from "@/features/dashboard/pages/DashboardApp"
+import { authService } from "@/services/authService"
 
 export function AppRouter() {
   const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+    } catch (error) {
+      console.error("Logout failed:", error)
+    } finally {
+      navigate("/")
+    }
+  }
 
   return (
     <Routes>
@@ -29,7 +40,7 @@ export function AppRouter() {
       <Route
         path="/dashboard/*"
         element={
-          <DashboardApp onLogout={() => navigate("/")} />
+          <DashboardApp onLogout={handleLogout} />
         }
       />
     </Routes>

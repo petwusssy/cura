@@ -55,7 +55,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   const todayStudents = filteredConsultations.filter(c => patients.find(p => p.id === c.patientId)?.category === 'Student');
   const todayEmployees = filteredConsultations.filter(c => patients.find(p => p.id === c.patientId)?.category === 'Employee');
   const todayOutsiders = filteredConsultations.filter(c => patients.find(p => p.id === c.patientId)?.category === 'Outsider');
-  const dispensed = filteredConsultations.reduce((sum, c) => sum + c.treatments.length, 0);
+  const dispensed = filteredConsultations.reduce((sum, c) => sum + (c.treatments?.length || 0), 0);
   const lowStock = medicines.filter(m => m.status === 'Low Stock').length;
 
   const medicationReminders = notifications.filter(n => n.type === 'medication' && !n.read);

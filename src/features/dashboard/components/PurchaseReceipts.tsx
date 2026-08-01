@@ -10,8 +10,8 @@ const RED = '#D64545';
 interface PurchaseReceiptsProps {
   purchaseRequests: PurchaseRequest[];
   medicines: MedicineItem[];
-  onUpdateRequest: (req: PurchaseRequest) => void;
-  onAddRequest: (req: PurchaseRequest) => void;
+  onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
+  onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -29,7 +29,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [newReq, setNewReq] = useState({ medicine: '', requestedQty: '' });
   const [prfModal, setPrfModal] = useState<PurchaseRequest | null>(null);
 
-  const handleReceive = () => {
+  const handleReceive = async () => {
     if (!receiveModal || !receiveQty) return;
     const qty = parseInt(receiveQty);
     const newReceived = receiveModal.receivedQty + qty;
@@ -37,28 +37,32 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       ...receiveModal,
       receivedQty: newReceived,
       status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
-      history: [...receiveModal.history, { date: '2026-06-27', qty, note: receiveNote || `Received ${qty} units` }],
+      history: [...receiveModal.history, { date: new Date().toISOString().split('T')[0], qty, note: receiveNote || `Received ${qty} units` }],
     };
-    onUpdateRequest(updated);
-    setReceiveModal(null);
-    setReceiveQty('');
-    setReceiveNote('');
+    try {
+      await onUpdateRequest(updated);
+      setReceiveModal(null);
+      setReceiveQty('');
+      setReceiveNote('');
+    } catch (e) { console.error(e); }
   };
 
-  const handleNewRequest = () => {
+  const handleNewRequest = async () => {
     if (!newReq.medicine || !newReq.requestedQty) return;
     const req: PurchaseRequest = {
       id: `PR-${String(purchaseRequests.length + 1).padStart(3, '0')}`,
       medicine: newReq.medicine,
       requestedQty: parseInt(newReq.requestedQty),
       receivedQty: 0,
-      date: '2026-06-27',
+      date: new Date().toISOString().split('T')[0],
       status: 'Pending',
-      history: [{ date: '2026-06-27', qty: 0, note: 'Purchase request created' }],
+      history: [{ date: new Date().toISOString().split('T')[0], qty: 0, note: 'Purchase request created' }],
     };
-    onAddRequest(req);
-    setShowNewForm(false);
-    setNewReq({ medicine: '', requestedQty: '' });
+    try {
+      await onAddRequest(req);
+      setShowNewForm(false);
+      setNewReq({ medicine: '', requestedQty: '' });
+    } catch (e) { console.error(e); }
   };
 
   return (

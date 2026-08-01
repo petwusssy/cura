@@ -34,7 +34,7 @@ interface ConsultationTabProps {
   patients: Patient[];
   consultations: Consultation[];
   transfers: HospitalTransfer[];
-  onUpdateConsultation: (c: Consultation) => void;
+  onUpdateConsultation: (c: Consultation) => void | Promise<void>;
   onAddTransfer: (t: HospitalTransfer) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
@@ -85,7 +85,7 @@ export function ConsultationTab({
     setTfNotes('');
   };
 
-  const handleSaveTransfer = () => {
+  const handleSaveTransfer = async () => {
     if (!transferModal) return;
     const hospital = tfHospital === 'Other (specify)' ? tfHospitalOther : tfHospital;
     const reason = tfReason === 'Other' ? tfReasonOther : tfReason;
@@ -101,11 +101,17 @@ export function ConsultationTab({
       reason,
       transportMode: tfTransport,
       notes: tfNotes,
-      transferredBy: 'Grace Aquino, RN',
+      transferredBy: 'Dr. Rosario Mendez',
     };
     onAddTransfer(transfer);
-    onUpdateConsultation({ ...transferModal, transferred: true });
-    setTransferModal(null);
+    
+    try {
+      await onUpdateConsultation({ ...transferModal, transferred: true });
+      setTransferModal(null);
+    } catch (e) {
+      console.error('Failed to update consultation transfer status', e);
+      alert('Error saving transfer status.');
+    }
   };
 
   const catBadge = (cat?: string) => {

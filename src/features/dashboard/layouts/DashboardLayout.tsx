@@ -8,6 +8,7 @@ import { Page, AppNotification } from '@/types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import curaLogo from '@/assets/images/cura-logo-clean.png';
 import curaMascot from '@/assets/images/cura-mascot.png';
+import { authService } from '@/services/authService';
 
 interface NavItem {
   id: Page;
@@ -42,6 +43,15 @@ interface LayoutProps {
 export function Layout({ currentPage, onNavigate, onLogout, notifications, children, searchQuery, onSearchChange }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const unread = notifications.filter(n => !n.read).length;
+
+  const roles = authService.getRoles();
+  const isAdmin = roles.includes('Admin');
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.id === 'settings' && !isAdmin) return false;
+    // Add more role checks here based on requirements
+    return true;
+  });
 
   const isActive = (id: Page) =>
     currentPage === id ||
@@ -95,7 +105,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
         {/* Nav */}
         <nav className="flex-1 py-3 overflow-y-auto">
-          {navItems.map(item => {
+          {filteredNavItems.map(item => {
             const active = isActive(item.id);
             return (
               <button

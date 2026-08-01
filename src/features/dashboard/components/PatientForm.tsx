@@ -7,20 +7,20 @@ const PRIMARY = '#1E5AA8';
 interface PatientFormProps {
   patients: Patient[];
   editingPatientId: string | null;
-  onSave: (patient: Patient) => void;
+  onSave: (patient: Patient) => void | Promise<void>;
   onNavigate: (page: Page) => void;
 }
 
 const CATEGORIES: PatientCategory[] = ['Student', 'Employee', 'Outsider'];
 
-const defaultForm = (): Omit<Patient, 'id'> => ({
-  name: '', category: 'Student', contact: '', birthday: '', age: 0,
+const defaultForm = (): Patient => ({
+  id: '', name: '', category: 'Student', contact: '', birthday: '', age: 0,
   sex: 'Female', email: '', emergencyContact: '', emergencyPhone: '',
   course: '', yearLevel: '', position: '', department: '', address: '',
 });
 
 export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: PatientFormProps) {
-  const [form, setForm] = useState<Omit<Patient, 'id'>>(defaultForm());
+  const [form, setForm] = useState<Patient>(defaultForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = editingPatientId !== null;
@@ -29,15 +29,14 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     if (isEditing) {
       const p = patients.find(p => p.id === editingPatientId);
       if (p) {
-        const { id, ...rest } = p;
-        setForm(rest);
+        setForm(p);
       }
     } else {
       setForm(defaultForm());
     }
   }, [editingPatientId]);
 
-  const set = (field: keyof Omit<Patient, 'id'>, value: string | number) => {
+  const set = (field: keyof Patient, value: string | number) => {
     setForm(f => ({ ...f, [field]: value }));
     if (errors[field]) setErrors(e => { const n = { ...e }; delete n[field]; return n; });
   };
@@ -45,6 +44,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = 'Name is required';
+    if (form.category !== 'Outsider' && !form.id?.trim()) e.id = 'ID is required';
     if (!form.contact.trim()) e.contact = 'Contact is required';
     if (!form.birthday) e.birthday = 'Birthday is required';
     if (form.category === 'Student' && !form.course?.trim()) e.course = 'Course is required';
@@ -53,15 +53,20 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const id = isEditing ? editingPatientId! : generateId(form.category);
+    const finalId = isEditing ? editingPatientId! : (form.category === 'Outsider' ? generateId('Outsider') : form.id);
     // Calculate age from birthday
     const bday = new Date(form.birthday);
     const age = new Date().getFullYear() - bday.getFullYear();
-    onSave({ id, ...form, age });
-    onNavigate('patients');
+    try {
+      await onSave({ ...form, id: finalId, age });
+      onNavigate('patients');
+    } catch (error) {
+      console.error('Save failed', error);
+      alert('Failed to save patient data.');
+    }
   };
 
   const generateId = (category: PatientCategory): string => {
@@ -71,7 +76,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     return `${prefix}-2026-${String(num).padStart(3, '0')}`;
   };
 
-  const field = (label: string, key: keyof Omit<Patient, 'id'>, type = 'text', placeholder = '') => (
+  const field = (label: string, key: keyof Patient, type = 'text', placeholder = '') => (
     <div key={key}>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
       <input
@@ -156,6 +161,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
             <h3 className="text-gray-800 mb-4">Student Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {field('Student ID', 'id', 'text', 'e.g., 202012345')}
               {field('Course / Program', 'course', 'text', 'e.g., BS Nursing')}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Year Level</label>
@@ -178,6 +184,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
             <h3 className="text-gray-800 mb-4">Employee Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {field('Employee ID', 'id', 'text', 'e.g., EMP-1234')}
               {field('Position / Designation', 'position', 'text', 'e.g., Professor')}
               {field('Department', 'department', 'text', 'e.g., College of Nursing')}
             </div>

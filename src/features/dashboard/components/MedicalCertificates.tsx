@@ -9,8 +9,8 @@ interface MedicalCertificatesProps {
   medicalCerts: MedicalCertificate[];
   patients: Patient[];
   selectedPatientId: string | null;
-  onAddCert: (cert: MedicalCertificate) => void;
-  onUpdateCert: (cert: MedicalCertificate) => void;
+  onAddCert: (cert: MedicalCertificate) => void | Promise<void>;
+  onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
 }
 
 const emptyForm = (): Omit<MedicalCertificate, 'id' | 'patientId'> => ({
@@ -45,19 +45,23 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setShowForm(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedPatient && !editingCert) return;
-    if (editingCert) {
-      onUpdateCert({ ...editingCert, ...form });
-    } else {
-      onAddCert({ id: `MC-${Date.now()}`, patientId: selectedPatient, ...form });
-    }
-    setShowForm(false);
-    setEditingCert(null);
+    try {
+      if (editingCert) {
+        await onUpdateCert({ ...editingCert, ...form });
+      } else {
+        await onAddCert({ id: `MC-${Date.now()}`, patientId: selectedPatient, ...form });
+      }
+      setShowForm(false);
+      setEditingCert(null);
+    } catch (e) { console.error(e); }
   };
 
-  const handleDuplicate = (cert: MedicalCertificate) => {
-    onAddCert({ ...cert, id: `MC-${Date.now()}`, date: '2026-06-27' });
+  const handleDuplicate = async (cert: MedicalCertificate) => {
+    try {
+      await onAddCert({ ...cert, id: `MC-${Date.now()}`, date: new Date().toISOString().split('T')[0] });
+    } catch (e) { console.error(e); }
   };
 
   const patient = (id: string) => patients.find(p => p.id === id);

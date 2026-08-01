@@ -48,7 +48,7 @@ function useDurationTimers(beds: Bed[]) {
 interface BedsManagementProps {
   beds: Bed[];
   patients: Patient[];
-  onUpdateBed: (bed: Bed) => void;
+  onUpdateBed: (bed: Bed) => void | Promise<void>;
 }
 
 export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementProps) {
@@ -70,21 +70,23 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     return histCount + currentCount;
   };
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!assignModal || !selectedPatient) return;
     const p = patients.find(pt => pt.id === selectedPatient);
-    onUpdateBed({
-      ...assignModal,
-      status: 'Occupied',
-      patientName: p?.name,
-      patientId: p?.id,
-      timeOccupied: new Date().toISOString(),
-    });
-    setAssignModal(null);
-    setSelectedPatient('');
+    try {
+      await onUpdateBed({
+        ...assignModal,
+        status: 'Occupied',
+        patientName: p?.name,
+        patientId: p?.id,
+        timeOccupied: new Date().toISOString(),
+      });
+      setAssignModal(null);
+      setSelectedPatient('');
+    } catch (e) { console.error(e); }
   };
 
-  const handleRelease = () => {
+  const handleRelease = async () => {
     if (!releaseModal) return;
     const now = new Date();
     const start = releaseModal.timeOccupied ? new Date(releaseModal.timeOccupied) : now;
@@ -99,15 +101,17 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       timeOut: now.toTimeString().slice(0, 5),
       duration: `${h}h ${m}m`,
     };
-    onUpdateBed({
-      ...releaseModal,
-      status: 'Available',
-      patientName: undefined,
-      patientId: undefined,
-      timeOccupied: undefined,
-      history: [...releaseModal.history, entry],
-    });
-    setReleaseModal(null);
+    try {
+      await onUpdateBed({
+        ...releaseModal,
+        status: 'Available',
+        patientName: undefined,
+        patientId: undefined,
+        timeOccupied: undefined,
+        history: [...releaseModal.history, entry],
+      });
+      setReleaseModal(null);
+    } catch (e) { console.error(e); }
   };
 
   // Tracker history filtered

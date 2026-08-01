@@ -23,7 +23,7 @@ const UNITS = ['tablet', 'capsule', 'sachet', 'lozenge', 'piece', 'bottle', 'mL'
 
 interface NewConsultationProps {
   patient: Patient;
-  onSave: (consultation: Consultation) => void;
+  onSave: (consultation: Consultation) => void | Promise<void>;
   onNavigate: (page: Page) => void;
 }
 
@@ -70,7 +70,7 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
     setTreatments(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const consultation: Consultation = {
       id: `CON-${Date.now()}`,
@@ -87,8 +87,13 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
       nurseNotes, recommendations, followUp,
       status: doctorConsulted ? 'Consultation' : status,
     };
-    onSave(consultation);
-    onNavigate('patients');
+    try {
+      await onSave(consultation);
+      onNavigate('patients');
+    } catch (err) {
+      console.error('Failed to save consultation', err);
+      alert('Failed to save consultation. Please check console for details.');
+    }
   };
 
   const sectionCard = (title: string, children: React.ReactNode) => (

@@ -8,7 +8,7 @@ const YELLOW = '#F4C542';
 interface NonConsultationTabProps {
   patients: Patient[];
   consultations: Consultation[];
-  onConvertToConsultation: (id: string) => void;
+  onConvertToConsultation: (id: string) => void | Promise<void>;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
@@ -28,12 +28,16 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
     return matchSearch && matchDate;
   }).sort((a, b) => b.date.localeCompare(a.date) || b.timeIn.localeCompare(a.timeIn));
 
-  const handleConvert = (id: string) => {
+  const handleConvert = async (id: string) => {
     setConverting(id);
-    setTimeout(() => {
-      onConvertToConsultation(id);
+    try {
+      await onConvertToConsultation(id);
+    } catch (e) {
+      console.error('Failed to convert', e);
+      alert('Error converting record.');
+    } finally {
       setConverting(null);
-    }, 600);
+    }
   };
 
   return (
