@@ -133,7 +133,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[990px] lg:h-[990px] rounded-full"
+            className="hidden lg:block absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[990px] lg:h-[990px] rounded-full"
             style={{
               opacity: 1,
               left: stage !== "form" ? (isDesktop ? "-35%" : "-300px") : "auto",
@@ -166,21 +166,21 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  <span style={{ color: "#001e50" }}>C</span>
-                  <span style={{ color: "#001e50" }}>U</span>
-                  <span style={{ color: "#001e50" }}>R</span>
-                  <span style={{ color: "#001e50" }}>A</span>
+                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">C</span>
+                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">U</span>
+                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">R</span>
+                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">A</span>
                 </h1>
 
                 <p
-                  className="text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8"
+                  className="text-white/90 lg:text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 drop-shadow-md lg:drop-shadow-none transition-colors duration-500"
                   style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.1em" }}
                 >
                   Centralized University Healthcare Records and Administration
                 </p>
 
                 <p
-                  className="text-[#001e50]/90 font-bold mb-12"
+                  className="text-white lg:text-[#001e50]/90 font-bold mb-12 drop-shadow-md lg:drop-shadow-none transition-colors duration-500"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "1.15rem",
@@ -223,7 +223,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   {/* Welcome Back Heading */}
                   <div className="mb-8 flex flex-col items-center text-center z-20 relative">
                     <h2
-                      className="text-white font-bold mb-1"
+                      className="text-white lg:text-white font-extrabold mb-1 drop-shadow-md lg:drop-shadow-none"
                       style={{
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
                         fontSize: "1.25rem",
@@ -233,7 +233,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       Welcome Back
                     </h2>
                     <p
-                      className="text-white/70 text-xs"
+                      className="text-white/80 lg:text-white/70 text-xs font-medium"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       Sign in to your CURA account.
@@ -242,17 +242,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
                   <div className="relative w-full">
                     {/* Mascot perched on the top-right edge of the card */}
-                    <div className="absolute bottom-full -right-4 sm:-right-6 translate-y-5 sm:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
-                      <AnimatedMascot focusedField={focusedField} className="w-[120px] sm:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
+                    <div className="absolute bottom-full right-0 lg:-right-6 translate-y-8 lg:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
+                      <AnimatedMascot focusedField={focusedField} className="w-[100px] lg:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
                     </div>
 
                     {/* Form card */}
                     <div
-                      className="w-full rounded-2xl p-6 relative z-10"
+                      className="w-full rounded-[24px] p-6 sm:p-8 relative z-10 backdrop-blur-xl bg-white/20 lg:bg-[#F0F7FA] border border-white/40 lg:border-white shadow-[0_8px_32px_0_rgba(0,30,80,0.3)] lg:shadow-none"
                       style={{
-                        background: "#F0F7FA",
-                        border: "1px solid #FFFFFF",
-                        boxShadow: "none",
                       }}
                     >
                     <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -277,12 +274,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
                           placeholder="Enter your username"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
+                          className="w-full pl-10 pr-4 py-3.5 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/50 outline-none shadow-inner bg-white/80 lg:bg-white focus:bg-white transition-all"
                           style={{
                             fontFamily: "'Inter', sans-serif",
-                            background: "#FFFFFF",
-                            border: "1px solid #a8cde5",
-                            transition: "background-color 5000s ease-in-out 0s, all 0.2s",
+                            border: "1px solid rgba(168, 205, 229, 0.5)",
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
@@ -320,12 +315,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Enter your password"
-                          className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
+                          className="w-full pl-10 pr-10 py-3.5 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/50 outline-none shadow-inner bg-white/80 lg:bg-white focus:bg-white transition-all"
                           style={{
                             fontFamily: "'Inter', sans-serif",
-                            background: "#FFFFFF",
-                            border: "1px solid #a8cde5",
-                            transition: "background-color 5000s ease-in-out 0s, all 0.2s",
+                            border: "1px solid rgba(168, 205, 229, 0.5)",
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
@@ -423,7 +416,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed drop-shadow-md" style={{ fontFamily: "'Inter', sans-serif" }}>
               The First Catholic Archdiocesan <br />
               University in the Philippines and in Asia.
             </p>
