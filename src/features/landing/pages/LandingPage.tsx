@@ -48,6 +48,13 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [focusedField, setFocusedField] = useState<'username' | 'password' | null>(null)
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024)
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,12 +86,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       </div>
 
       {/* ── TOP LOGOS (FIXED WITH CROSSFADE) ── */}
-      <div className="absolute top-8 left-12 z-30 pointer-events-none">
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-12 z-30 pointer-events-none">
         <AnimatePresence>
           {(stage === "idle" || stage === "form") && (
             <motion.div
               key={stage}
-              className="absolute top-0 left-0 flex items-center gap-3 w-max"
+              className="absolute top-0 left-0 flex items-center gap-2 lg:gap-3 w-max"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -95,10 +102,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               <img
                 src={uaLogo}
                 alt="University of the Assumption"
-                className="object-contain"
+                className="object-contain w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32"
                 style={{
-                  height: "128px",
-                  width: "128px",
                   filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.35))",
                 }}
               />
@@ -107,8 +112,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 className="flex flex-col justify-center text-left"
                 style={{ color: stage === "idle" ? "#001e50" : "#ffffff" }}
               >
-                <span className="font-extrabold text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
-                <span className="font-extrabold text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
+                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
+                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
               </div>
             </motion.div>
           )}
@@ -117,29 +122,29 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
       {/* ── LEFT PANEL ── */}
       <motion.div
-        className="relative z-10 flex flex-col justify-center w-1/2 h-full"
-        animate={{ x: stage === "idle" ? "0%" : "100%" }}
+        className="relative z-10 flex flex-col justify-center w-full lg:w-1/2 h-full"
+        animate={{ x: stage === "idle" ? "0%" : (isDesktop ? "100%" : "0%") }}
         transition={{ duration: 0.8, ease }}
       >
         {/* Blobs (Large organic solid shapes without straight cuts) */}
-        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: -1 }}>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden lg:overflow-visible" style={{ zIndex: -1 }}>
           {/* Light Blue Solid Blob */}
           <motion.div
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute top-[-15%] w-[990px] h-[990px] rounded-full"
+            className="absolute top-[-5%] lg:top-[-15%] w-[120vw] h-[120vw] lg:w-[990px] lg:h-[990px] rounded-full"
             style={{
               opacity: 1,
-              left: stage !== "form" ? "-35%" : "auto",
-              right: stage === "form" ? "-35%" : "auto"
+              left: stage !== "form" ? (isDesktop ? "-35%" : "-10%") : "auto",
+              right: stage === "form" ? (isDesktop ? "-35%" : "-10%") : "auto"
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
         </div>
 
         {/* Content area */}
-        <div className="relative z-10 px-16 w-full h-full flex flex-col justify-center">
+        <div className="relative z-10 px-6 sm:px-16 w-full h-full flex flex-col justify-center">
 
           <AnimatePresence mode="popLayout">
             {/* ── IDLE CONTENT ── */}
@@ -156,7 +161,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   className="leading-none mb-2 font-extrabold"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "clamp(5.5rem, 9.5vw, 8.5rem)",
+                    fontSize: "clamp(4rem, 12vw, 8.5rem)",
                     fontWeight: 800,
                     letterSpacing: "-0.01em",
                   }}
@@ -210,7 +215,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0, transition: { duration: 0.5, delay: 0.3 } }}
                 exit={{ opacity: 0, x: -20, transition: { duration: 0.3 } }}
-                className="w-full h-full flex flex-col items-center justify-center pl-8 lg:pl-[20%]"
+                className="w-full h-full flex flex-col items-center justify-center px-6 lg:px-0 lg:pl-[20%]"
               >
                 {/* Unified Mascot + Form Container */}
                 <div className="relative flex flex-col items-center w-full max-w-[340px]">
@@ -401,10 +406,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       {/* ── UA TAGLINE (Centered in Empty Space, Avoids Blob) ── */}
       <motion.div
         layout
-        className="absolute bottom-12 z-20 flex flex-col"
+        className="absolute bottom-6 lg:bottom-12 z-20 flex flex-col px-6 lg:px-0 w-full lg:w-auto items-center lg:items-start text-center lg:text-left"
         style={{
-          left: stage === "form" ? "auto" : "51%",
-          right: stage === "form" ? "45%" : "auto",
+          left: isDesktop ? (stage === "form" ? "auto" : "51%") : "0",
+          right: isDesktop ? (stage === "form" ? "45%" : "auto") : "0",
         }}
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -418,7 +423,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="text-white/95 text-base md:text-[17px] font-bold leading-relaxed text-left" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
               The First Catholic Archdiocesan <br />
               University in the Philippines and in Asia.
             </p>
