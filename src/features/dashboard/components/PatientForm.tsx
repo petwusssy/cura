@@ -79,13 +79,26 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
       console.error('Save failed', error);
       let errMsg = 'Failed to save patient data.';
       if (error.response?.data) {
-        if (typeof error.response.data === 'object') {
+        if (typeof error.response.data === 'string') {
+          // If it's a 404 HTML page or plain text
+          errMsg = `Server Error (${error.response.status}): ${error.message}`;
+        } else if (typeof error.response.data === 'object') {
           const values = Object.values(error.response.data);
           if (values.length > 0) {
-            errMsg = Array.isArray(values[0]) ? values[0][0] : String(values[0]);
+            const firstValue = values[0];
+            errMsg = Array.isArray(firstValue) ? String(firstValue[0]) : String(firstValue);
+            if (errMsg === '[object Object]') errMsg = 'Failed to save patient data. (Invalid server response)';
           }
         }
+      } else if (error.message) {
+        errMsg = error.message;
       }
+      
+      // If VITE_API_URL is missing, it tries to fetch from itself (Vercel) and gets 404
+      if (error.response?.status === 404 && window.location.hostname.includes('vercel.app')) {
+        errMsg = "CRITICAL: The frontend doesn't know where the backend is! Please set VITE_API_URL in your Vercel Environment Variables.";
+      }
+
       alert(errMsg);
     }
   };
