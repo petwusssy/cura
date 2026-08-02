@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Patient, PatientCategory, Page } from '../types';
+import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
 const CATEGORIES: PatientCategory[] = ['Student', 'Employee', 'Outsider'];
+const STUDENT_CATEGORIES: StudentCategory[] = ['Elementary', 'Junior High School', 'Senior High School', 'College'];
+
+const studentCategoryColors: Record<StudentCategory, { bg: string; text: string }> = {
+  'Elementary':         { bg: '#FFF3E0', text: '#E65100' },
+  'Junior High School': { bg: '#E8F5E9', text: '#2E7D32' },
+  'Senior High School': { bg: '#E3F2FD', text: '#1565C0' },
+  'College':            { bg: '#F3E5F5', text: '#6A1B9A' },
+};
 
 const categoryColors: Record<PatientCategory, { bg: string; text: string }> = {
   Student:  { bg: '#E3F2FD', text: '#1B3A6B' },
@@ -22,6 +30,7 @@ interface PatientManagementProps {
 export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
+  const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
   const ROWS = 10;
 
@@ -29,7 +38,8 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
     const q = localSearch.toLowerCase();
     const matchSearch = !q || p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.contact.includes(q);
     const matchCat = categoryFilter === 'All' || p.category === categoryFilter;
-    return matchSearch && matchCat;
+    const matchStudentCat = categoryFilter !== 'Student' || studentCategoryFilter === 'All' || p.studentCategory === studentCategoryFilter;
+    return matchSearch && matchCat && matchStudentCat;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS));
@@ -77,7 +87,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
           {(['All', ...CATEGORIES] as (PatientCategory | 'All')[]).map(cat => (
             <button
               key={cat}
-              onClick={() => { setCategoryFilter(cat); setPage(1); }}
+              onClick={() => { setCategoryFilter(cat); setStudentCategoryFilter('All'); setPage(1); }}
               className="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
               style={{
                 background: categoryFilter === cat ? 'white' : 'transparent',
@@ -90,6 +100,30 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
           ))}
         </div>
       </div>
+
+      {/* Student sub-category filter */}
+      {categoryFilter === 'Student' && (
+        <div className="bg-white rounded-xl px-4 py-3 flex items-center gap-2"
+          style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">Level:</span>
+          <div className="flex gap-1 flex-wrap">
+            {(['All', ...STUDENT_CATEGORIES] as (StudentCategory | 'All')[]).map(sc => (
+              <button
+                key={sc}
+                onClick={() => { setStudentCategoryFilter(sc); setPage(1); }}
+                className="px-3 py-1 rounded-full text-xs font-semibold transition-all border"
+                style={{
+                  background: studentCategoryFilter === sc ? PRIMARY : 'transparent',
+                  color: studentCategoryFilter === sc ? 'white' : '#6b7280',
+                  borderColor: studentCategoryFilter === sc ? PRIMARY : '#e5e7eb',
+                }}
+              >
+                {sc}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
@@ -142,7 +176,20 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                     <td className="px-5 py-3.5 text-sm text-gray-600">{p.contact}</td>
                     <td className="px-5 py-3.5 text-sm text-gray-600">{p.birthday}</td>
                     <td className="px-5 py-3.5 text-sm text-gray-500">
-                      {p.category === 'Student' && <span>{p.course}, {p.yearLevel}</span>}
+                      {p.category === 'Student' && (
+                        <span className="flex flex-col gap-0.5">
+                          {p.studentCategory && (
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold w-fit"
+                              style={{
+                                background: studentCategoryColors[p.studentCategory]?.bg ?? '#f3f4f6',
+                                color: studentCategoryColors[p.studentCategory]?.text ?? '#374151',
+                              }}>
+                              {p.studentCategory}
+                            </span>
+                          )}
+                          <span>{p.course}{p.gradeLevel ? `Grade ${p.gradeLevel}` : ''}{p.yearLevel ? `, ${p.yearLevel}` : ''}</span>
+                        </span>
+                      )}
                       {p.category === 'Employee' && <span>{p.position}</span>}
                       {p.category === 'Outsider' && <span className="truncate max-w-[120px] inline-block">{p.address}</span>}
                     </td>

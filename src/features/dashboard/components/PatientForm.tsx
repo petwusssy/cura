@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Save, User } from 'lucide-react';
-import { Patient, PatientCategory, Page } from '../types';
+import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
 
@@ -13,10 +13,20 @@ interface PatientFormProps {
 
 const CATEGORIES: PatientCategory[] = ['Student', 'Employee', 'Outsider'];
 
+const STUDENT_CATEGORIES: StudentCategory[] = [
+  'Elementary',
+  'Junior High School',
+  'Senior High School',
+  'College',
+];
+
+const MINOR_CATEGORIES: StudentCategory[] = ['Elementary', 'Junior High School', 'Senior High School'];
+
 const defaultForm = (): Patient => ({
   id: '', name: '', category: 'Student', contact: '', birthday: '', age: 0,
   sex: 'Female', email: '', emergencyContact: '', emergencyPhone: '',
   course: '', yearLevel: '', position: '', department: '', address: '',
+  studentCategory: 'College', guardianName: '', gradeLevel: '',
 });
 
 export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: PatientFormProps) {
@@ -29,7 +39,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     if (isEditing) {
       const p = patients.find(p => p.id === editingPatientId);
       if (p) {
-        setForm(p);
+        // Merge with defaultForm so new fields (e.g. studentCategory) always have a value
+        setForm({ ...defaultForm(), ...p, studentCategory: p.studentCategory ?? 'College' });
       }
     } else {
       setForm(defaultForm());
@@ -47,7 +58,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     if (form.category !== 'Outsider' && !form.id?.trim()) e.id = 'ID is required';
     if (!form.contact.trim()) e.contact = 'Contact is required';
     if (!form.birthday) e.birthday = 'Birthday is required';
-    if (form.category === 'Student' && !form.course?.trim()) e.course = 'Course is required';
+    if (form.category === 'Student' && form.studentCategory === 'College' && !form.course?.trim()) e.course = 'Course is required';
+    if (form.category === 'Student' && MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && !form.gradeLevel?.trim()) e.gradeLevel = 'Grade level is required';
     if (form.category === 'Employee' && !form.position?.trim()) e.position = 'Position is required';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -162,20 +174,52 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
             <h3 className="text-gray-800 mb-4">Student Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Student ID', 'id', 'text', 'e.g., 202012345')}
-              {field('Course / Program', 'course', 'text', 'e.g., BS Nursing')}
+
+              {/* Student Category Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Year Level</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Student Category</label>
                 <select
-                  value={form.yearLevel ?? ''}
-                  onChange={e => set('yearLevel', e.target.value)}
+                  value={form.studentCategory ?? 'College'}
+                  onChange={e => set('studentCategory', e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white"
                 >
-                  <option value="">Select Year</option>
-                  {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate'].map(y => (
-                    <option key={y} value={y}>{y}</option>
+                  {STUDENT_CATEGORIES.map(sc => (
+                    <option key={sc} value={sc}>{sc}</option>
                   ))}
                 </select>
               </div>
+
+              {/* Grade Level — shown for Elementary, JHS, SHS */}
+              {MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && (
+                field('Grade Level', 'gradeLevel', 'text', 'e.g., Grade 7')
+              )}
+
+              {/* Course / Program — shown for College */}
+              {form.studentCategory === 'College' && (
+                field('Course / Program', 'course', 'text', 'e.g., BS Nursing')
+              )}
+
+              {/* Year Level — shown for College */}
+              {form.studentCategory === 'College' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Year Level</label>
+                  <select
+                    value={form.yearLevel ?? ''}
+                    onChange={e => set('yearLevel', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white"
+                  >
+                    <option value="">Select Year</option>
+                    {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate'].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Guardian Name — shown for Elementary, JHS, SHS */}
+              {MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && (
+                field('Guardian Name', 'guardianName', 'text', 'e.g., Maria Dela Cruz (Mother)')
+              )}
             </div>
           </div>
         )}

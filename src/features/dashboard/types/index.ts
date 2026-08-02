@@ -17,6 +17,8 @@ export type Page =
   | 'notifications'
   | 'settings';
 
+export type StudentCategory = 'Elementary' | 'Junior High School' | 'Senior High School' | 'College';
+
 export interface Patient {
   id: string;
   name: string;
@@ -33,6 +35,9 @@ export interface Patient {
   position?: string;
   department?: string;
   address?: string;
+  studentCategory?: StudentCategory;
+  guardianName?: string;
+  gradeLevel?: string;
 }
 
 export interface Treatment {
@@ -76,6 +81,11 @@ export interface Consultation {
   status: 'Consultation' | 'Non-Consultation';
   prescriptionImage?: string;
   transferred?: boolean;
+  dismissalDestination?: string;
+  fetcherIdImage?: string;
+  purposeOfVisit?: string;
+  operationalNotes?: string;
+  assistingNurse?: string;
 }
 
 export interface HospitalTransfer {

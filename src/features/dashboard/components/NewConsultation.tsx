@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Plus, Trash2, Save, Clock } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
 
-const CASE_CATEGORIES = [
+const DEFAULT_CASE_CATEGORIES = [
   'Fever', 'Headache/Dizziness', 'Cough/Colds', 'Sore Throat', 'Nausea/Vomiting',
   'Abdominal Pain', 'Diarrhea', 'Hypertension', 'Hypoglycemia', 'Wounds (abrasion/laceration/puncture)',
   'Pain (upper and lower body)', 'Allergy/Rashes', 'Asthma', 'UTI (urinary tract infection)',
@@ -32,26 +32,51 @@ const now = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+const today = () => {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+};
+
 export function NewConsultation({ patient, onSave, onNavigate }: NewConsultationProps) {
-  const [date] = useState('2026-06-27');
-  const [timeIn] = useState(now());
+  const [date, setDate] = useState(today());
+  const [timeIn, setTimeIn] = useState(now());
   const [complaint, setComplaint] = useState('');
+  
+  const [caseCategoriesList, setCaseCategoriesList] = useState(DEFAULT_CASE_CATEGORIES);
   const [categories, setCategories] = useState<string[]>([]);
-  const [doctorConsulted, setDoctorConsulted] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
+
   const [doctorName, setDoctorName] = useState('Dr. Rosario Mendez');
-  const [whoConsulted, setWhoConsulted] = useState('');
+  const [assistingNurse, setAssistingNurse] = useState('Grace Aquino, RN');
+  
   const [vitals, setVitals] = useState({ height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
   const [treatments, setTreatments] = useState<Treatment[]>([]);
+  
   const [earlyDismissal, setEarlyDismissal] = useState(false);
+  const [dismissalDestination, setDismissalDestination] = useState('Sent Home');
   const [earlyReason, setEarlyReason] = useState('');
   const [fetcherName, setFetcherName] = useState('');
+  const [fetcherIdImage, setFetcherIdImage] = useState('');
+  
   const [nurseNotes, setNurseNotes] = useState('');
   const [recommendations, setRecommendations] = useState('');
   const [followUp, setFollowUp] = useState('');
   const [status, setStatus] = useState<'Consultation' | 'Non-Consultation'>('Non-Consultation');
 
+  const [purposeOfVisit, setPurposeOfVisit] = useState('');
+  const [operationalNotes, setOperationalNotes] = useState('');
+  const [prescriptionImage, setPrescriptionImage] = useState('');
+
   const toggleCategory = (cat: string) => {
     setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  };
+
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !caseCategoriesList.includes(newCategory.trim())) {
+      setCaseCategoriesList(prev => [...prev, newCategory.trim()]);
+      setCategories(prev => [...prev, newCategory.trim()]);
+      setNewCategory('');
+    }
   };
 
   const addTreatment = () => {
@@ -70,22 +95,47 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
     setTreatments(prev => prev.filter(t => t.id !== id));
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setter(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isConsultation = status === 'Consultation';
+
+    const sanitizedTreatments = treatments.map(t => {
+      const { id, nextDose, ...rest } = t;
+      return {
+        ...rest,
+        nextDose: nextDose === '' ? undefined : nextDose,
+      } as any;
+    });
+
     const consultation: Consultation = {
       id: `CON-${Date.now()}`,
       patientId: patient.id,
       date, timeIn,
-      timeOut: doctorConsulted ? now() : undefined,
+      timeOut: isConsultation ? now() : undefined,
       complaint, categories,
-      doctorConsulted, doctorName: doctorConsulted ? doctorName : undefined,
-      whoConsulted: doctorConsulted ? whoConsulted : undefined,
-      vitals, treatments,
-      earlyDismissal,
-      earlyDismissalReason: earlyDismissal ? earlyReason : undefined,
-      fetcherName: earlyDismissal ? fetcherName : undefined,
-      nurseNotes, recommendations, followUp,
-      status: doctorConsulted ? 'Consultation' : status,
+      doctorConsulted: isConsultation,
+      doctorName: isConsultation ? doctorName : undefined,
+      assistingNurse,
+      vitals, treatments: sanitizedTreatments,
+      earlyDismissal: isConsultation ? earlyDismissal : false,
+      dismissalDestination: (isConsultation && earlyDismissal) ? dismissalDestination : undefined,
+      earlyDismissalReason: (isConsultation && earlyDismissal) ? earlyReason : undefined,
+      fetcherName: (isConsultation && earlyDismissal && dismissalDestination === 'Sent Home') ? fetcherName : undefined,
+      fetcherIdImage: (isConsultation && earlyDismissal && dismissalDestination === 'Sent Home') ? fetcherIdImage : undefined,
+      nurseNotes: isConsultation ? nurseNotes : undefined,
+      recommendations: isConsultation ? recommendations : undefined,
+      followUp: isConsultation ? followUp : undefined,
+      status,
+      purposeOfVisit: !isConsultation ? purposeOfVisit : undefined,
+      operationalNotes: !isConsultation ? operationalNotes : undefined,
+      prescriptionImage: prescriptionImage || undefined,
     };
     try {
       await onSave(consultation);
@@ -108,7 +158,6 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => onNavigate('patients')} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
           <ChevronLeft size={20} />
@@ -125,13 +174,17 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelCls}>Date</label>
-              <input type="text" readOnly value={date} className={inputCls + ' bg-gray-50'} />
+              <div className="relative">
+                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls + ' pl-8'} required />
+              </div>
             </div>
             <div>
               <label className={labelCls}>Time In</label>
               <div className="relative">
                 <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" readOnly value={timeIn} className={inputCls + ' pl-8 bg-gray-50'} />
+                {/* Notice step="60" to avoid seconds, using standard time picker which supports 12-hour format depending on browser */}
+                <input type="time" value={timeIn} onChange={e => setTimeIn(e.target.value)} className={inputCls + ' pl-8'} required />
               </div>
             </div>
             <div>
@@ -140,6 +193,24 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
                 <option value="Non-Consultation">Non-Consultation</option>
                 <option value="Consultation">Consultation</option>
               </select>
+            </div>
+          </div>
+        ))}
+
+        {/* Minor Visit Purpose (Non-Consultation ONLY) */}
+        {status === 'Non-Consultation' && sectionCard('Minor Visit Purpose', (
+          <div className="space-y-4">
+            <div>
+              <label className={labelCls}>Purpose of Visit</label>
+              <input type="text" value={purposeOfVisit} onChange={e => setPurposeOfVisit(e.target.value)} placeholder="e.g., Medicine refill, blood pressure check..." className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Assisting Nurse</label>
+              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Operational Notes & Readings</label>
+              <textarea value={operationalNotes} onChange={e => setOperationalNotes(e.target.value)} rows={3} placeholder="Notes, readings, observations..." className={inputCls + ' resize-none'} />
             </div>
           </div>
         ))}
@@ -160,8 +231,8 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
             </div>
             <div>
               <label className={labelCls}>Case Categories</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {CASE_CATEGORIES.map(cat => (
+              <div className="flex flex-wrap gap-2 mt-1 mb-3">
+                {caseCategoriesList.map(cat => (
                   <button
                     key={cat}
                     type="button"
@@ -177,45 +248,38 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
                   </button>
                 ))}
               </div>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newCategory} 
+                  onChange={e => setNewCategory(e.target.value)} 
+                  placeholder="New category name" 
+                  className={inputCls}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddCategory}
+                  className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 whitespace-nowrap" 
+                  style={{ background: PRIMARY }}
+                >
+                  Add Case
+                </button>
+              </div>
             </div>
           </div>
         ))}
 
-        {/* Doctor Consultation */}
-        {sectionCard('Doctor Consultation', (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Doctor Consulted?</label>
-              <div className="flex gap-3">
-                {[true, false].map(v => (
-                  <button
-                    key={String(v)}
-                    type="button"
-                    onClick={() => setDoctorConsulted(v)}
-                    className="px-4 py-2 rounded-lg border text-sm font-medium transition-all"
-                    style={{
-                      background: doctorConsulted === v ? PRIMARY : 'white',
-                      color: doctorConsulted === v ? 'white' : '#6b7280',
-                      borderColor: doctorConsulted === v ? PRIMARY : '#e5e7eb',
-                    }}
-                  >
-                    {v ? 'Yes' : 'No'}
-                  </button>
-                ))}
-              </div>
+        {/* Doctor Consultation (Consultation ONLY) */}
+        {status === 'Consultation' && sectionCard('Doctor Consultation', (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Doctor's Name</label>
+              <input type="text" value={doctorName} onChange={e => setDoctorName(e.target.value)} className={inputCls} />
             </div>
-            {doctorConsulted && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Doctor's Name</label>
-                  <input type="text" value={doctorName} onChange={e => setDoctorName(e.target.value)} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Who Consulted</label>
-                  <input type="text" value={whoConsulted} onChange={e => setWhoConsulted(e.target.value)} placeholder="e.g., Patient, Parent" className={inputCls} />
-                </div>
-              </div>
-            )}
+            <div>
+              <label className={labelCls}>Assisting Nurse</label>
+              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} placeholder="e.g., Grace Aquino, RN" className={inputCls} />
+            </div>
           </div>
         ))}
 
@@ -316,8 +380,8 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
           </div>
         ))}
 
-        {/* Early Dismissal */}
-        {sectionCard('Early Dismissal', (
+        {/* Early Dismissal (Consultation ONLY) */}
+        {status === 'Consultation' && sectionCard('Early Dismissal', (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <label className="text-sm font-medium text-gray-700">Early Dismissal?</label>
@@ -340,27 +404,47 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
               </div>
             </div>
             {earlyDismissal && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-4 pt-2">
                 <div>
-                  <label className={labelCls}>Reason</label>
-                  <input type="text" value={earlyReason} onChange={e => setEarlyReason(e.target.value)} placeholder="Reason for early dismissal" className={inputCls} />
+                  <label className={labelCls}>Destination</label>
+                  <select value={dismissalDestination} onChange={e => setDismissalDestination(e.target.value)} className={inputCls}>
+                    <option value="Sent Home">Sent Home</option>
+                    <option value="Sent to Hospital">Sent to Hospital</option>
+                  </select>
                 </div>
-                <div>
-                  <label className={labelCls}>Fetcher Name</label>
-                  <input type="text" value={fetcherName} onChange={e => setFetcherName(e.target.value)} placeholder="Name of person picking up" className={inputCls} />
-                </div>
+                
+                {dismissalDestination === 'Sent Home' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Reason for sending home</label>
+                      <input type="text" value={earlyReason} onChange={e => setEarlyReason(e.target.value)} placeholder="Reason for sending home" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Fetcher Name</label>
+                      <input type="text" value={fetcherName} onChange={e => setFetcherName(e.target.value)} placeholder="Name of person picking up" className={inputCls} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={labelCls}>Fetcher's ID Picture</label>
+                      <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setFetcherIdImage)} className={inputCls} />
+                      {fetcherIdImage && <img src={fetcherIdImage} alt="Fetcher ID" className="mt-2 h-32 object-contain border rounded-lg" />}
+                    </div>
+                  </div>
+                )}
+                
+                {dismissalDestination === 'Sent to Hospital' && (
+                  <div>
+                    <label className={labelCls}>Reason for sending to hospital</label>
+                    <input type="text" value={earlyReason} onChange={e => setEarlyReason(e.target.value)} placeholder="Reason for hospital transfer" className={inputCls} />
+                  </div>
+                )}
               </div>
             )}
           </div>
         ))}
 
-        {/* Nurse Notes */}
-        {sectionCard('Nurse Notes & Recommendations', (
+        {/* Nurse Notes (Consultation ONLY) */}
+        {status === 'Consultation' && sectionCard('Nurse Notes & Recommendations', (
           <div className="space-y-4">
-            <div>
-              <label className={labelCls}>Assisting Nurse</label>
-              <input type="text" defaultValue="Grace Aquino, RN" readOnly className={inputCls + ' bg-gray-50'} />
-            </div>
             <div>
               <label className={labelCls}>Nurse Notes</label>
               <textarea value={nurseNotes} onChange={e => setNurseNotes(e.target.value)} rows={2} placeholder="Nursing observations and interventions..." className={inputCls + ' resize-none'} />
@@ -373,6 +457,15 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
               <label className={labelCls}>Follow-up</label>
               <input type="text" value={followUp} onChange={e => setFollowUp(e.target.value)} placeholder="e.g., Return if fever persists after 3 days" className={inputCls} />
             </div>
+          </div>
+        ))}
+
+        {/* Prescription Attachment (Consultation ONLY) */}
+        {status === 'Consultation' && sectionCard('Prescription Attachment', (
+          <div>
+            <label className={labelCls}>Upload Prescription Image</label>
+            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setPrescriptionImage)} className={inputCls} />
+            {prescriptionImage && <img src={prescriptionImage} alt="Prescription" className="mt-2 h-48 object-contain border rounded-lg" />}
           </div>
         ))}
 
@@ -389,3 +482,4 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
     </div>
   );
 }
+
