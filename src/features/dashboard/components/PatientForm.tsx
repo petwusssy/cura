@@ -94,9 +94,15 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         errMsg = error.message;
       }
       
-      // If VITE_API_URL is missing, it tries to fetch from itself (Vercel) and gets 404
-      if (error.response?.status === 404 && window.location.hostname.includes('vercel.app')) {
+      // If it tries to fetch from itself (Vercel) and gets 404, the API URL is missing.
+      if (
+        error.response?.status === 404 && 
+        window.location.hostname.includes('vercel.app') &&
+        error.config?.url?.includes(window.location.hostname)
+      ) {
         errMsg = "CRITICAL: The frontend doesn't know where the backend is! Please set VITE_API_URL in your Vercel Environment Variables.";
+      } else if (error.response?.status === 404) {
+        errMsg = `Backend URL is incorrect or the server is down. Attempted to connect to: ${error.config?.baseURL}${error.config?.url}`;
       }
 
       alert(errMsg);
