@@ -122,7 +122,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
       {/* ── LEFT PANEL ── */}
       <motion.div
-        className="relative z-10 flex flex-col justify-center w-full lg:w-1/2 h-full"
+        className="relative z-10 flex flex-col justify-center w-full lg:w-1/2 h-full shrink-0"
         animate={{ x: stage === "idle" ? "0%" : (isDesktop ? "100%" : "0%") }}
         transition={{ duration: 0.8, ease }}
       >
@@ -133,11 +133,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute top-[-5%] lg:top-[-15%] w-[120vw] h-[120vw] lg:w-[990px] lg:h-[990px] rounded-full"
+            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[990px] lg:h-[990px] rounded-full"
             style={{
               opacity: 1,
-              left: stage !== "form" ? (isDesktop ? "-35%" : "-10%") : "auto",
-              right: stage === "form" ? (isDesktop ? "-35%" : "-10%") : "auto"
+              left: stage !== "form" ? (isDesktop ? "-35%" : "-300px") : "auto",
+              right: stage === "form" ? (isDesktop ? "-35%" : "-300px") : "auto"
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
@@ -398,7 +398,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
       {/* ── RIGHT PANEL (Empty Placeholder) ── */}
       <motion.div
-        className="relative flex items-center justify-center w-1/2 h-full overflow-hidden"
+        className="hidden lg:flex relative items-center justify-center w-1/2 h-full overflow-hidden shrink-0"
         animate={{ x: stage === "splitting" ? "-200%" : stage === "form" ? "-100%" : "0%" }}
         transition={{ duration: 0.8, ease }}
       />
