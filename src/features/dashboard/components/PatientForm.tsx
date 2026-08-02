@@ -75,9 +75,18 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     try {
       await onSave({ ...form, id: finalId, age });
       onNavigate('patients');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save failed', error);
-      alert('Failed to save patient data.');
+      let errMsg = 'Failed to save patient data.';
+      if (error.response?.data) {
+        if (typeof error.response.data === 'object') {
+          const values = Object.values(error.response.data);
+          if (values.length > 0) {
+            errMsg = Array.isArray(values[0]) ? values[0][0] : String(values[0]);
+          }
+        }
+      }
+      alert(errMsg);
     }
   };
 
