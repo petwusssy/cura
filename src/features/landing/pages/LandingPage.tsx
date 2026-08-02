@@ -133,11 +133,13 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="hidden lg:block absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[990px] lg:h-[990px] rounded-full"
+            className="absolute lg:top-[-15%] w-[200vw] h-[200vw] lg:w-[990px] lg:h-[990px] rounded-full"
             style={{
               opacity: 1,
-              left: stage !== "form" ? (isDesktop ? "-35%" : "-300px") : "auto",
-              right: stage === "form" ? (isDesktop ? "-35%" : "-300px") : "auto"
+              top: isDesktop ? "auto" : "calc(-100vw + 20vh)",
+              left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "50%",
+              right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto",
+              x: isDesktop ? 0 : "-50%",
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
@@ -166,21 +168,21 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">C</span>
-                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">U</span>
-                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">R</span>
-                  <span className="text-white lg:text-[#001e50] drop-shadow-lg lg:drop-shadow-none transition-colors duration-500">A</span>
+                  <span className="text-[#001e50] transition-colors duration-500">C</span>
+                  <span className="text-[#001e50] transition-colors duration-500">U</span>
+                  <span className="text-[#001e50] transition-colors duration-500">R</span>
+                  <span className="text-[#001e50] transition-colors duration-500">A</span>
                 </h1>
 
                 <p
-                  className="text-white/90 lg:text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 drop-shadow-md lg:drop-shadow-none transition-colors duration-500"
+                  className="text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 transition-colors duration-500"
                   style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.1em" }}
                 >
                   Centralized University Healthcare Records and Administration
                 </p>
 
                 <p
-                  className="text-white lg:text-[#001e50]/90 font-bold mb-12 drop-shadow-md lg:drop-shadow-none transition-colors duration-500"
+                  className="text-[#001e50]/90 font-bold mb-12 transition-colors duration-500"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "1.15rem",
