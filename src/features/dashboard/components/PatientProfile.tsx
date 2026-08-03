@@ -19,8 +19,25 @@ interface PatientProfileProps {
 }
 
 export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient }: PatientProfileProps) {
-  const patientConsultations = consultations.filter(c => c.patientId === patient.id)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const patientConsultations = consultations
+    .filter(c => c.patientId === patient.id)
+    .sort((a, b) => {
+      const timeA = new Date(`${a.date}T${a.timeIn || '00:00'}`).getTime();
+      const timeB = new Date(`${b.date}T${b.timeIn || '00:00'}`).getTime();
+      return timeB - timeA;
+    });
+
+  const formatComplaint = (complaint: string) => {
+    if (complaint.includes('[CONVERTED]')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 flex-wrap">
+          <span>{complaint.replace(' [CONVERTED]', '')}</span>
+          <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Converted</span>
+        </span>
+      );
+    }
+    return complaint;
+  };
   const patientCerts = medicalCerts.filter(m => m.patientId === patient.id);
   const catColor = categoryColors[patient.category] ?? { bg: '#f3f4f6', text: '#374151' };
 
@@ -145,7 +162,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                         <td className="py-2.5 pr-3 text-sm text-gray-500">{patientConsultations.length - i}</td>
                         <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{c.date}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
-                          <div className="truncate">{c.complaint}</div>
+                          <div className="truncate">{formatComplaint(c.complaint)}</div>
                         </td>
                         <td className="py-2.5 pr-3 text-sm text-gray-600">{c.doctorConsulted ? c.doctorName : <span className="text-gray-400">None</span>}</td>
                         <td className="py-2.5 pr-3 text-sm text-gray-600">
@@ -193,7 +210,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                           {c.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{c.complaint}</p>
+                      <div className="text-sm text-gray-600 mt-1">{formatComplaint(c.complaint)}</div>
                       {c.treatments.length > 0 && (
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <Pill size={12} className="text-gray-400" />
