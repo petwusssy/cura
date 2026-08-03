@@ -24,7 +24,14 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
     .sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeIn || '00:00'}`).getTime();
       const timeB = new Date(`${b.date}T${b.timeIn || '00:00'}`).getTime();
-      return timeB - timeA;
+      
+      if (timeA === timeB) {
+        const aConverted = a.complaint.includes('[CONVERTED]');
+        const bConverted = b.complaint.includes('[CONVERTED]');
+        if (aConverted && !bConverted) return -1; // old (converted) comes first
+        if (!aConverted && bConverted) return 1;
+      }
+      return timeA - timeB; // Ascending order (oldest first)
     });
 
   const formatComplaint = (complaint: string) => {
@@ -159,7 +166,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                   <tbody className="divide-y divide-gray-50">
                     {patientConsultations.map((c, i) => (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 pr-3 text-sm text-gray-500">{patientConsultations.length - i}</td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
                         <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{c.date}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
                           <div className="truncate">{formatComplaint(c.complaint)}</div>
