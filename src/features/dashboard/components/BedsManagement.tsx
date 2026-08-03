@@ -174,7 +174,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
 
       {/* Bed Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {beds.map(bed => {
+        {[...beds].sort((a, b) => a.bedNumber - b.bedNumber).map(bed => {
           const isOccupied = bed.status === 'Occupied';
           const dur = durations[bed.id];
           const usageCount = bedUsageCount(bed, gridFilter);
