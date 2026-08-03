@@ -178,15 +178,13 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           const isOccupied = bed.status === 'Occupied';
           const dur = durations[bed.id];
           const usageCount = bedUsageCount(bed, gridFilter);
-          const isSelected = selectedBedTracker?.id === bed.id;
-
           return (
             <div
               key={bed.id}
               className="bg-white rounded-xl p-5 transition-all flex flex-col"
               style={{
-                boxShadow: isSelected ? `0 0 0 2px ${PRIMARY}` : isOccupied ? `0 4px 20px ${RED}15` : '0 2px 12px rgba(0,0,0,0.06)',
-                border: isSelected ? `2px solid ${PRIMARY}` : isOccupied ? `1px solid ${RED}30` : '1px solid #f0f0f0',
+                boxShadow: isOccupied ? `0 4px 20px ${RED}15` : '0 2px 12px rgba(0,0,0,0.06)',
+                border: isOccupied ? `1px solid ${RED}30` : '1px solid #f0f0f0',
                 minHeight: '200px'
               }}
             >
@@ -223,9 +221,8 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                       Release
                     </button>
                     <button
-                      onClick={() => setSelectedBedTracker(isSelected ? null : bed)}
-                      className="rounded-lg border transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0"
-                      style={{ borderColor: isSelected ? PRIMARY : '#e5e7eb', color: isSelected ? PRIMARY : '#9ca3af', background: isSelected ? `${PRIMARY}10` : 'white' }}>
+                      onClick={() => setSelectedBedTracker(bed)}
+                      className="rounded-lg border border-gray-200 transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0 text-[#1B3A6B] hover:bg-blue-50">
                       <History size={14} />
                     </button>
                   </div>
@@ -240,9 +237,8 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                       Assign Patient
                     </button>
                     <button
-                      onClick={() => setSelectedBedTracker(isSelected ? null : bed)}
-                      className="rounded-lg border transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0"
-                      style={{ borderColor: isSelected ? PRIMARY : '#e5e7eb', color: isSelected ? PRIMARY : '#9ca3af', background: isSelected ? `${PRIMARY}10` : 'white' }}>
+                      onClick={() => setSelectedBedTracker(bed)}
+                      className="rounded-lg border border-gray-200 transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0 text-[#1B3A6B] hover:bg-blue-50">
                       <History size={14} />
                     </button>
                   </div>
@@ -256,94 +252,102 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       {/* ── Per-bed Tracker Panel ── */}
       {selectedBedTracker && (
         <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: `2px solid ${PRIMARY}30` }}>
-          {/* Panel header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100" style={{ background: `${PRIMARY}06` }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
-                <BedDouble size={18} />
-              </div>
-              <div>
-                <div className="font-bold text-gray-900">Bed {selectedBedTracker.bedNumber} — Usage History</div>
-                <div className="text-xs text-gray-400">
-                  {bedUsageCount(selectedBedTracker, trackerFilter)} patient{bedUsageCount(selectedBedTracker, trackerFilter) !== 1 ? 's' : ''} — {filterLabels[trackerFilter].toLowerCase()}
+      {/* ── Per-bed Tracker Modal ── */}
+      {selectedBedTracker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+                  <BedDouble size={20} />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-gray-900">Bed {selectedBedTracker.bedNumber} — Usage History</div>
+                  <div className="text-sm text-gray-500">
+                    {bedUsageCount(selectedBedTracker, trackerFilter)} patient{bedUsageCount(selectedBedTracker, trackerFilter) !== 1 ? 's' : ''} — {filterLabels[trackerFilter].toLowerCase()}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Tracker date filter */}
-              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
-                  <button key={f} onClick={() => setTrackerFilter(f)}
-                    className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-                    style={{ background: trackerFilter === f ? 'white' : 'transparent', color: trackerFilter === f ? PRIMARY : '#6b7280', boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                    {filterLabels[f]}
-                  </button>
-                ))}
+              <div className="flex items-center gap-4">
+                {/* Tracker date filter */}
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                  {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
+                    <button key={f} onClick={() => setTrackerFilter(f)}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                      style={{ background: trackerFilter === f ? 'white' : 'transparent', color: trackerFilter === f ? PRIMARY : '#6b7280', boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                      {filterLabels[f]}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setSelectedBedTracker(null)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={() => setSelectedBedTracker(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-                <X size={16} />
-              </button>
             </div>
-          </div>
 
-          {/* History table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ background: '#f8fafd' }}>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">#</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient Name</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Time In</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Time Out</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Duration</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {trackerHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-400">
-                      <BedDouble size={28} className="mx-auto mb-2 opacity-25" />
-                      No usage records for {filterLabels[trackerFilter].toLowerCase()}
-                    </td>
-                  </tr>
-                ) : trackerHistory.map((h, i) => (
-                  <tr key={i} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3 text-sm text-gray-400">{i + 1}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ background: PRIMARY }}>
-                          {h.patientName.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-800">{h.patientName}</div>
-                          {h.patientId && <div className="text-xs text-gray-400">{h.patientId}</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{h.date}</td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{h.timeIn}</td>
-                    <td className="px-5 py-3 text-sm text-gray-600">
-                      {h.timeOut === '(current)' ? (
-                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${RED}15`, color: RED }}>
-                          Current / Occupied
-                        </span>
-                      ) : h.timeOut}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{ background: `${PRIMARY}10`, color: PRIMARY }}>
-                        {h.duration}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* History table */}
+            <div className="overflow-y-auto flex-grow p-6">
+              <div className="rounded-xl border border-gray-100 overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ background: '#f8fafd' }}>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">#</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient Name</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Time In</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Time Out</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {trackerHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-gray-400">
+                          <BedDouble size={32} className="mx-auto mb-3 opacity-25" />
+                          <p className="text-sm">No usage records for {filterLabels[trackerFilter].toLowerCase()}</p>
+                        </td>
+                      </tr>
+                    ) : trackerHistory.map((h, i) => (
+                      <tr key={i} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-4 text-sm text-gray-400">{i + 1}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              style={{ background: PRIMARY }}>
+                              {h.patientName.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-800">{h.patientName}</div>
+                              {h.patientId && <div className="text-xs text-gray-400">{h.patientId}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-sm text-gray-600">{h.date}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">{h.timeIn}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">
+                          {h.timeOut === '(current)' ? (
+                            <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: `${RED}15`, color: RED }}>
+                              Current / Occupied
+                            </span>
+                          ) : h.timeOut}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-xs px-3 py-1 rounded-full font-medium"
+                            style={{ background: `${PRIMARY}10`, color: PRIMARY }}>
+                            {h.duration}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
 
       {/* ── Full History Table ── */}
       <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
