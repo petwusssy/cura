@@ -57,7 +57,22 @@ export function ConsultationTab({
   const [tfTransport, setTfTransport] = useState('Ambulance');
   const [tfNotes, setTfNotes] = useState('');
 
-  const doctorConsultations = consultations.filter(c => c.status === 'Consultation');
+  const doctorConsultations = Object.values(
+    consultations
+      .filter(c => c.status === 'Consultation')
+      .reduce((acc, c) => {
+        if (!acc[c.patientId]) {
+          acc[c.patientId] = c;
+        } else {
+          const cTime = new Date(`${c.date}T${c.timeIn || '00:00'}`).getTime();
+          const currTime = new Date(`${acc[c.patientId].date}T${acc[c.patientId].timeIn || '00:00'}`).getTime();
+          if (cTime > currTime) {
+            acc[c.patientId] = c;
+          }
+        }
+        return acc;
+      }, {} as Record<string, Consultation>)
+  );
 
   const filtered = doctorConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);

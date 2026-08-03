@@ -18,7 +18,22 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const [dateFilter, setDateFilter] = useState('');
   const [converting, setConverting] = useState<string | null>(null);
 
-  const nonConsultations = consultations.filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]'));
+  const nonConsultations = Object.values(
+    consultations
+      .filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]'))
+      .reduce((acc, c) => {
+        if (!acc[c.patientId]) {
+          acc[c.patientId] = c;
+        } else {
+          const cTime = new Date(`${c.date}T${c.timeIn || '00:00'}`).getTime();
+          const currTime = new Date(`${acc[c.patientId].date}T${acc[c.patientId].timeIn || '00:00'}`).getTime();
+          if (cTime > currTime) {
+            acc[c.patientId] = c;
+          }
+        }
+        return acc;
+      }, {} as Record<string, Consultation>)
+  );
 
   const filtered = nonConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
