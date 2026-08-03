@@ -11,7 +11,6 @@ import {
 import uaLogo from "@/assets/images/ua-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
 import AnimatedMascot from "@/features/landing/components/AnimatedMascot"
-import SpriteMascot from "@/features/landing/components/SpriteMascot"
 import IdleMascot from "@/features/landing/components/IdleMascot"
 
 interface Props {
@@ -246,7 +245,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   <div className="relative w-full">
                     {/* Mascot perched on the top-right edge of the card */}
                     <div className="absolute bottom-full right-0 lg:-right-6 translate-y-8 lg:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
-                      <SpriteMascot focusedField={focusedField} className="w-[100px] lg:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
+                      <AnimatedMascot focusedField={focusedField} className="w-[100px] lg:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
                     </div>
 
                     {/* Form card */}
