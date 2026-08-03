@@ -18,7 +18,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const [dateFilter, setDateFilter] = useState('');
   const [converting, setConverting] = useState<string | null>(null);
 
-  const nonConsultations = consultations.filter(c => c.status === 'Non-Consultation');
+  const nonConsultations = consultations.filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]'));
 
   const filtered = nonConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);

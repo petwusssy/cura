@@ -118,10 +118,30 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const handleConvertToConsultation = async (id: string) => {
     try {
-      const res = await consultationService.updateConsultation(id, { status: 'Consultation' });
-      setConsultations(prev => prev.map(c => c.id === id ? res : c));
+      const existing = consultations.find(c => c.id === id);
+      if (!existing) return;
+
+      const { id: oldId, ...rest } = existing;
+      const newConsultation = {
+        ...rest,
+        status: 'Consultation' as const,
+        timeIn: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+        complaint: existing.complaint.replace(' [CONVERTED]', ''),
+      };
+      
+      const created = await consultationService.createConsultation(newConsultation);
+
+      const updatedOld = await consultationService.updateConsultation(id, { 
+        complaint: `${existing.complaint} [CONVERTED]` 
+      });
+
+      setConsultations(prev => {
+        const mapped = prev.map(c => c.id === id ? updatedOld : c);
+        return [...mapped, created];
+      });
     } catch (e) {
       console.error('Failed to convert consultation', e);
+      alert('Failed to convert consultation.');
     }
   };
 
