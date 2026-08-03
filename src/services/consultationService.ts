@@ -21,7 +21,7 @@ export const consultationService = {
   updateConsultation: async (id: string, data: Partial<Consultation>): Promise<Consultation> => {
     const { patientId, ...rest } = data;
     const payload = patientId ? { ...rest, patient: patientId } : rest;
-    const response = await api.put<any>(`/consultations/${id}/`, payload);
+    const response = await api.patch<any>(`/consultations/${id}/`, payload);
     return { ...response.data, patientId: response.data.patient };
   }
 };

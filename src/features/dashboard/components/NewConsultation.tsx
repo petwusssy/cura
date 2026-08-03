@@ -139,7 +139,11 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
     };
     try {
       await onSave(consultation);
-      onNavigate('patients');
+      if (status === 'Consultation') {
+        onNavigate('consultations');
+      } else {
+        onNavigate('non-consultations');
+      }
     } catch (err) {
       console.error('Failed to save consultation', err);
       alert('Failed to save consultation. Please check console for details.');
