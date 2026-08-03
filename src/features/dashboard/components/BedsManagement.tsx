@@ -94,8 +94,8 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const entry: BedHistory = {
-      patientName: releaseModal.patientName || '',
-      patientId: releaseModal.patientId || '',
+      patientName: releaseModal.patientName || 'Unknown Patient',
+      patientId: releaseModal.patientId || 'N/A',
       date: now.toISOString().slice(0, 10),
       timeIn: start.toTimeString().slice(0, 5),
       timeOut: now.toTimeString().slice(0, 5),
@@ -132,6 +132,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     : [];
 
   const filterLabels: Record<DateFilterType, string> = { today: 'Today', week: 'This Week', month: 'This Month' };
+
+  // Get list of patient IDs currently assigned to occupied beds
+  const occupiedPatientIds = beds
+    .filter(b => b.status === 'Occupied' && b.patientId)
+    .map(b => b.patientId);
+  const unassignedPatients = patients.filter(p => !occupiedPatientIds.includes(p.id));
 
   return (
     <div className="p-6 space-y-6">
