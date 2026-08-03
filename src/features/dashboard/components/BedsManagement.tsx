@@ -249,9 +249,6 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
         })}
       </div>
 
-      {/* ── Per-bed Tracker Panel ── */}
-      {selectedBedTracker && (
-        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: `2px solid ${PRIMARY}30` }}>
       {/* ── Per-bed Tracker Modal ── */}
       {selectedBedTracker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
