@@ -159,9 +159,9 @@ export interface Bed {
   id: string;
   bedNumber: number;
   status: 'Available' | 'Occupied';
-  patientName?: string;
-  patientId?: string;
-  timeOccupied?: string;
+  patientName?: string | null;
+  patientId?: string | null;
+  timeOccupied?: string | null;
   history: BedHistory[];
 }
 

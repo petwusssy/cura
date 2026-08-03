@@ -105,9 +105,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       await onUpdateBed({
         ...releaseModal,
         status: 'Available',
-        patientName: undefined,
-        patientId: undefined,
-        timeOccupied: undefined,
+        patientName: null,
+        patientId: null,
+        timeOccupied: null,
         history: [...releaseModal.history, entry],
       });
       setReleaseModal(null);
