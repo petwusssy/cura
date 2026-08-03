@@ -111,7 +111,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
         history: [...releaseModal.history, entry],
       });
       setReleaseModal(null);
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e);
+      alert('Failed to release bed: ' + JSON.stringify(e.response?.data || e.message));
+    }
   };
 
   // Tracker history filtered

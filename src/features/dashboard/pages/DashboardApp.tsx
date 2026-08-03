@@ -230,7 +230,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         };
         setNotifications(prev => [notif, ...prev]);
       }
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e);
+      alert('Update Bed Error: ' + JSON.stringify(e.response?.data || e.message));
+    }
   };
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
