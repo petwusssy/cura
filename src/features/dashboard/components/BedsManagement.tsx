@@ -96,7 +96,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     const entry: BedHistory = {
       patientName: releaseModal.patientName || '',
       patientId: releaseModal.patientId || '',
-      date: TODAY,
+      date: now.toISOString().slice(0, 10),
       timeIn: start.toTimeString().slice(0, 5),
       timeOut: now.toTimeString().slice(0, 5),
       duration: `${h}h ${m}m`,
@@ -183,71 +183,67 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           return (
             <div
               key={bed.id}
-              className="bg-white rounded-xl p-4 transition-all"
+              className="bg-white rounded-xl p-5 transition-all flex flex-col"
               style={{
                 boxShadow: isSelected ? `0 0 0 2px ${PRIMARY}` : isOccupied ? `0 4px 20px ${RED}15` : '0 2px 12px rgba(0,0,0,0.06)',
                 border: isSelected ? `2px solid ${PRIMARY}` : isOccupied ? `1px solid ${RED}30` : '1px solid #f0f0f0',
+                minHeight: '200px'
               }}
             >
               {/* Bed header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: isOccupied ? `${RED}15` : '#E8F5E915', color: isOccupied ? RED : '#2E7D32' }}>
-                    <BedDouble size={16} />
-                  </div>
-                  <span className="text-sm font-bold text-gray-800">Bed {bed.bedNumber}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3" style={{ color: PRIMARY }}>
+                  <BedDouble size={20} style={{ color: isOccupied ? RED : '#2E7D32' }} />
+                  <span className="text-sm font-bold text-gray-900">Bed {bed.bedNumber}</span>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                  style={{ background: isOccupied ? RED : '#E8F5E9', color: isOccupied ? 'white' : '#2E7D32' }}>
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: isOccupied ? `${RED}15` : '#E8F5E9', color: isOccupied ? RED : '#2E7D32' }}>
                   {bed.status}
                 </span>
               </div>
 
               {/* Usage count badge */}
-              <div className="flex items-center gap-1 mb-3 text-xs text-gray-500">
-                <Users size={11} />
+              <div className="flex items-center gap-1.5 mb-auto text-[11px] text-gray-400">
+                <Users size={12} />
                 <span>{usageCount} patient{usageCount !== 1 ? 's' : ''} — {filterLabels[gridFilter].toLowerCase()}</span>
               </div>
 
               {isOccupied ? (
-                <div className="space-y-2">
-                  <div>
-                    <div className="text-xs text-gray-400">Patient</div>
-                    <div className="text-sm font-semibold text-gray-800 truncate">{bed.patientName}</div>
+                <div className="mt-4 flex flex-col items-center">
+                  <div className="text-[11px] text-gray-400 mb-0.5">Occupied By</div>
+                  <div className="text-sm font-bold text-gray-900 truncate w-full text-center">{bed.patientName}</div>
+                  <div className="flex items-center gap-1 text-xs font-semibold mt-1" style={{ color: RED }}>
+                    <Clock size={12} />
+                    <span>{dur || 'calculating...'}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs" style={{ color: RED }}>
-                    <Clock size={11} />
-                    <span className="font-medium">{dur || 'calculating...'}</span>
-                  </div>
-                  <div className="flex gap-1.5 mt-2">
+                  <div className="flex gap-2 w-full mt-4">
                     <button onClick={() => setReleaseModal(bed)}
-                      className="flex-1 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
+                      className="flex-1 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
                       style={{ background: RED }}>
                       Release
                     </button>
                     <button
                       onClick={() => setSelectedBedTracker(isSelected ? null : bed)}
-                      className="p-1.5 rounded-lg border transition-colors"
+                      className="rounded-lg border transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0"
                       style={{ borderColor: isSelected ? PRIMARY : '#e5e7eb', color: isSelected ? PRIMARY : '#9ca3af', background: isSelected ? `${PRIMARY}10` : 'white' }}>
-                      <History size={13} />
+                      <History size={14} />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="text-xs text-gray-400 py-1 text-center">Unoccupied</div>
-                  <div className="flex gap-1.5">
+                <div className="mt-4 flex flex-col justify-end h-full">
+                  <div className="text-[11px] text-gray-400 pb-3 text-center">Unoccupied</div>
+                  <div className="flex gap-2 w-full mt-auto">
                     <button onClick={() => { setAssignModal(bed); setSelectedPatient(''); }}
-                      className="flex-1 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
+                      className="flex-1 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
                       style={{ background: PRIMARY }}>
                       Assign Patient
                     </button>
                     <button
                       onClick={() => setSelectedBedTracker(isSelected ? null : bed)}
-                      className="p-1.5 rounded-lg border transition-colors"
+                      className="rounded-lg border transition-colors flex items-center justify-center w-9 h-9 flex-shrink-0"
                       style={{ borderColor: isSelected ? PRIMARY : '#e5e7eb', color: isSelected ? PRIMARY : '#9ca3af', background: isSelected ? `${PRIMARY}10` : 'white' }}>
-                      <History size={13} />
+                      <History size={14} />
                     </button>
                   </div>
                 </div>
