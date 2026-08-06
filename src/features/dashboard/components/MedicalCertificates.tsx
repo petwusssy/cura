@@ -249,18 +249,24 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     // 2. Switch to static clean preview mode (remove editing underlines)
     setEditMode(false);
     setIsDownloading(true);
-    triggerToast("Generating automatic direct PDF file download... Please wait 2 seconds!");
+    triggerToast("Generating automatic direct PDF file download... Please wait!");
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const element = document.getElementById('official-med-cert-page');
       if (!element) {
         setIsDownloading(false);
+        setEditMode(true);
+        triggerToast("Error: Document element not found.");
         return;
       }
 
       const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
 
-      const performDownload = (html2pdfFn: any) => {
+      try {
+        // Dynamically import html2pdf to avoid initial bundle size issues or CDN blocks
+        const html2pdfModule = await import('html2pdf.js');
+        const html2pdf = html2pdfModule.default || html2pdfModule;
+
         const opt = {
           margin: 0,
           filename: filename,
@@ -269,34 +275,16 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
-        html2pdfFn().from(element).set(opt).save().then(() => {
-          setIsDownloading(false);
-          setEditMode(true);
-          triggerToast(`✅ Successfully downloaded ${filename} directly to your computer! Recorded to Archives.`);
-        }).catch((err: any) => {
-          console.error(err);
-          setIsDownloading(false);
-          setEditMode(true);
-          window.print(); // fallback to browser print if conversion encountered local restriction
-        });
-      };
-
-      // Ensure html2pdf bundle is loaded from reliable CDN
-      if ((window as any).html2pdf) {
-        performDownload((window as any).html2pdf);
-      } else {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        script.onload = () => {
-          performDownload((window as any).html2pdf);
-        };
-        script.onerror = () => {
-          setIsDownloading(false);
-          setEditMode(true);
-          triggerToast("PDF generator script offline. Opening standard system save dialog instead.");
-          window.print();
-        };
-        document.head.appendChild(script);
+        await html2pdf().from(element).set(opt).save();
+        
+        setIsDownloading(false);
+        setEditMode(true);
+        triggerToast(`✅ Successfully downloaded ${filename} directly to your computer! Recorded to Archives.`);
+      } catch (err: any) {
+        console.error('PDF Generation Error:', err);
+        setIsDownloading(false);
+        setEditMode(true);
+        triggerToast("Failed to generate PDF. Please try again or check your browser settings.");
       }
     }, 400);
   };
