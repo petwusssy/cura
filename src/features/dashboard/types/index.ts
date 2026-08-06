@@ -152,6 +152,15 @@ export interface MedicalCertificate {
   doctor?: string;
   issuedBy?: string;
   notes?: string;
+  patientName?: string;
+  age?: number | string;
+  sex?: string;
+  statusDesignation?: string;
+  examinedDueTo?: string;
+  treatment?: string;
+  doctorTitle?: string;
+  licenseNo?: string;
+  ptrNo?: string;
 }
 
 export interface BedHistory {
