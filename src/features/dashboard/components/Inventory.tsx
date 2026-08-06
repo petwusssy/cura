@@ -25,7 +25,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(true);
   const [newMed, setNewMed] = useState({
     name: '',
     batchNumber: '',
@@ -138,7 +138,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
 
     try {
       await onAddMedicine(med);
-      setShowAddForm(false);
       setNewMed({ name: '', batchNumber: '', stock: '', dateAdded: new Date().toISOString().split('T')[0], unit: 'Tablet', threshold: '15' });
     } catch (e) {
       console.error(e);
@@ -323,7 +322,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
         {/* Table Column (3spans) with Vertical Scroll Container */}
         <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="overflow-x-auto overflow-y-auto max-h-[680px]">
+          <div className="overflow-x-auto overflow-y-auto h-[480px] max-h-[500px]">
             <table className="w-full border-collapse text-left relative">
               <thead className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-md shadow-2xs">
                 <tr className="border-b border-gray-200">
