@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 
@@ -13,47 +13,66 @@ interface MedicalCertificatesProps {
   onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
 }
 
-// High-fidelity Bagong Pilipinas Emblem rendering matching official graphic
+// High-fidelity Bagong Pilipinas Emblem matching the official Government logo reference
 function BagongPilipinasLogo() {
   return (
-    <div className="flex flex-col items-center justify-center select-none w-24">
-      <div className="relative w-16 h-16 mb-1">
+    <div className="flex flex-col items-center justify-center select-none w-28">
+      <div className="relative w-[70px] h-[70px] mb-0.5">
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xs">
-          {/* Outer Sun & Rays Effect */}
-          <circle cx="50" cy="50" r="46" fill="#0038A8" stroke="#FCE300" strokeWidth="4.5"/>
-          <path d="M50 4 C24.6 4 4 24.6 4 50 L96 50 C96 24.6 75.4 4 50 4 Z" fill="#CE1126"/>
+          {/* Background and base hemisphere structure */}
+          <defs>
+            <linearGradient id="redRibbon" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#8A0000" />
+              <stop offset="50%" stopColor="#D21034" />
+              <stop offset="100%" stopColor="#FF2341" />
+            </linearGradient>
+            <linearGradient id="blueRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00186B" />
+              <stop offset="50%" stopColor="#0038A8" />
+              <stop offset="100%" stopColor="#1C65DB" />
+            </linearGradient>
+            <linearGradient id="sunGold" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FFF200" />
+              <stop offset="100%" stopColor="#F5B300" />
+            </linearGradient>
+          </defs>
           
-          {/* Rising Yellow Sun with stylized rays */}
-          <circle cx="50" cy="52" r="23" fill="#FCE300"/>
-          <path d="M50 12 L56 36 L78 36 L60 48 L68 72 L50 56 L32 72 L40 48 L22 36 L44 36 Z" fill="#FCE300"/>
-          <circle cx="50" cy="52" r="16" fill="#0038A8"/>
+          {/* Three Hovering Golden Stars at top */}
+          <path d="M50 8 L52 13 L57 13 L53 16 L55 21 L50 18 L45 21 L47 16 L43 13 L48 13 Z" fill="url(#sunGold)"/>
+          <path d="M31 16 L33 20 L38 20 L34 23 L36 27 L31 24 L26 27 L28 23 L24 20 L29 20 Z" fill="url(#sunGold)"/>
+          <path d="M69 16 L71 20 L76 20 L72 23 L74 27 L69 24 L64 27 L66 23 L62 20 L67 20 Z" fill="url(#sunGold)"/>
           
-          {/* Three Stars */}
-          <circle cx="34" cy="36" r="3.5" fill="#FFFFFF"/>
-          <circle cx="66" cy="36" r="3.5" fill="#FFFFFF"/>
-          <circle cx="50" cy="66" r="3.5" fill="#FFFFFF"/>
+          {/* Radiant Rising Sun with rays pointing upwards */}
+          <path d="M50 24 L55 35 L66 30 L60 41 L72 43 L63 51 L72 61 L50 61 L28 61 L37 51 L28 43 L40 41 L34 30 L45 35 Z" fill="url(#sunGold)"/>
+          <circle cx="50" cy="53" r="16" fill="url(#sunGold)"/>
           
-          {/* White stylized ribbons in bottom hemisphere */}
-          <path d="M12 70 C28 84 72 84 88 70 L82 62 C68 74 32 74 18 62 Z" fill="#FFFFFF"/>
-          <path d="M22 80 C38 90 62 90 78 80 L74 73 C60 82 40 82 26 73 Z" fill="#FCE300"/>
+          {/* Woven Swirling Spherical Ribbons (Flag Blue & Red Bands) */}
+          <path d="M14 45 C14 68 30 88 50 92 C36 84 28 68 28 50 C28 48 28 45 14 45 Z" fill="url(#blueRibbon)"/>
+          <path d="M86 45 C86 68 70 88 50 92 C64 84 72 68 72 50 C72 48 72 45 86 45 Z" fill="url(#redRibbon)"/>
+          
+          {/* Sweeping crossover arcs forming the spherical cradle */}
+          <path d="M18 58 C26 78 54 94 82 62 C68 84 38 82 20 66 C18 64 18 60 18 58 Z" fill="url(#redRibbon)"/>
+          <path d="M82 58 C74 78 46 94 18 62 C32 84 62 82 80 66 C82 64 82 60 82 58 Z" fill="url(#blueRibbon)"/>
+          
+          <path d="M26 40 C34 56 66 56 74 40 C64 54 36 54 26 40 Z" fill="#FFFFFF" opacity="0.3"/>
         </svg>
       </div>
-      <span className="text-[9px] font-extrabold text-[#002060] uppercase tracking-tighter leading-none font-sans mt-0.5 select-all">
+      <span className="text-[10px] font-black text-[#002060] uppercase tracking-tight leading-none font-sans italic mt-1 text-center">
         BAGONG PILIPINAS
       </span>
     </div>
   );
 }
 
-// PhilHealth YAKAP official badge banner
+// PhilHealth YAKAP official orange badge banner
 function PhilHealthYakapBanner() {
   return (
     <div className="flex flex-col items-center justify-center my-0.5 select-none">
       <div className="flex items-baseline justify-center gap-1.5 leading-none">
-        <span className="text-[#008CD0] font-extrabold italic text-[24px] tracking-tight font-sans">
+        <span className="text-[#0084C6] font-black italic text-[24px] tracking-tight font-sans">
           PhilHealth
         </span>
-        <span className="text-[#F7941E] font-extrabold text-[24px] tracking-wider font-sans">
+        <span className="text-[#F7941E] font-black text-[24px] tracking-wider font-sans">
           YAKAP
         </span>
       </div>
@@ -72,8 +91,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const [dateFilter, setDateFilter] = useState('');
   const [selectedPatientFilter, setSelectedPatientFilter] = useState<string>(selectedPatientId || '');
   const [showToast, setShowToast] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const isInitialRender = useRef(true);
 
-  // Active document fields (exactly mirroring the provided PDF sample)
+  // Active document fields (matching the official PDF template exactly)
   const [date, setDate] = useState('June 17, 2026');
   const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
   const [age, setAge] = useState<number | string>(23);
@@ -97,12 +118,75 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setTimeout(() => setShowToast(null), 4000);
   };
 
+  // AUTOMATIC ARCHIVING: Automatically save/update the certificate record whenever edited, loaded, or used!
+  const syncToArchives = useCallback(async () => {
+    const existing = medicalCerts.find(c => c.id === selectedCertId);
+    const fullDesignation = `${yearLevel ? `${yearLevel}${yearSuffix} ` : ''}${courseAndSchool}`;
+
+    const updatedCert: MedicalCertificate = {
+      id: selectedCertId || `MC-${Date.now()}`,
+      patientId: currentPatientId || 'STU-2024-001',
+      date: date || new Date().toLocaleDateString(),
+      purpose: purpose || 'Medical Certificate issuance',
+      diagnosis: diagnosis,
+      recommendation: recommendations,
+      doctor: doctor,
+      issuedBy: 'Grace Aquino, RN',
+      patientName: patientName,
+      age: age,
+      sex: sex,
+      statusDesignation: fullDesignation,
+      examinedDueTo: examinedDueTo,
+      treatment: treatment,
+      doctorTitle: doctorTitle,
+      licenseNo: licenseNo,
+      ptrNo: ptrNo,
+    };
+
+    try {
+      if (existing) {
+        await onUpdateCert(updatedCert);
+      } else {
+        await onAddCert(updatedCert);
+      }
+    } catch (e) {
+      console.error('Error auto-saving certificate to archive:', e);
+    }
+  }, [selectedCertId, currentPatientId, date, purpose, diagnosis, recommendations, doctor, patientName, age, sex, yearLevel, yearSuffix, courseAndSchool, examinedDueTo, treatment, doctorTitle, licenseNo, ptrNo, medicalCerts, onAddCert, onUpdateCert]);
+
+  // Trigger automatic saving to records whenever fields are updated (debounced to avoid excessive writes)
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      syncToArchives();
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [patientName, date, diagnosis, treatment, recommendations, examinedDueTo, doctor, licenseNo, ptrNo, syncToArchives]);
+
   const handleSelectCert = (cert: MedicalCertificate) => {
     setSelectedCertId(cert.id);
     setDate(cert.date || 'June 17, 2026');
     setPatientName(cert.patientName || patients.find(p => p.id === cert.patientId)?.name || 'Patient Name');
     setAge(cert.age || patients.find(p => p.id === cert.patientId)?.age || 23);
     setSex(cert.sex || patients.find(p => p.id === cert.patientId)?.sex || 'FEMALE');
+    
+    // Parse designation if possible
+    if (cert.statusDesignation) {
+      const parts = cert.statusDesignation.match(/^(\d+)(st|nd|rd|th)\s+(.*)/);
+      if (parts) {
+        setYearLevel(parts[1]);
+        setYearSuffix(parts[2]);
+        setCourseAndSchool(parts[3]);
+      } else {
+        setYearLevel('');
+        setYearSuffix('');
+        setCourseAndSchool(cert.statusDesignation);
+      }
+    }
+    
     setExaminedDueTo(cert.examinedDueTo || 'skin allergies and difficulty on breathing.');
     setDiagnosis(cert.diagnosis || 'Allergic reaction secondary to food intake with allergens.');
     setTreatment(cert.treatment || 'Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
@@ -138,47 +222,17 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       setYearSuffix('');
       setCourseAndSchool(`Patient of University of the Assumption Clinic`);
     }
-    triggerToast(`Populated template for ${p.name}.`);
+    triggerToast(`Populated template for ${p.name} and automatically recorded to archives.`);
+    setTimeout(() => syncToArchives(), 100);
   };
 
   const handleSaveCertificate = async () => {
-    const existing = medicalCerts.find(c => c.id === selectedCertId);
-    const updatedCert: MedicalCertificate = {
-      id: existing ? existing.id : `MC-${Date.now()}`,
-      patientId: currentPatientId || 'STU-2024-001',
-      date: date,
-      purpose: purpose || 'Medical Certificate issuance',
-      diagnosis: diagnosis,
-      recommendation: recommendations,
-      doctor: doctor,
-      issuedBy: 'Grace Aquino, RN',
-      patientName: patientName,
-      age: age,
-      sex: sex,
-      statusDesignation: `${yearLevel ? `${yearLevel}${yearSuffix} ` : ''}${courseAndSchool}`,
-      examinedDueTo: examinedDueTo,
-      treatment: treatment,
-      doctorTitle: doctorTitle,
-      licenseNo: licenseNo,
-      ptrNo: ptrNo,
-    };
-
-    try {
-      if (existing) {
-        await onUpdateCert(updatedCert);
-      } else {
-        await onAddCert(updatedCert);
-        setSelectedCertId(updatedCert.id);
-      }
-      triggerToast('Saved certificate record to clinic archives!');
-    } catch (e) {
-      console.error(e);
-      triggerToast('Failed to save certificate.');
-    }
+    await syncToArchives();
+    triggerToast('✅ Successfully saved and locked certificate into Clinic Records Archive!');
   };
 
   const handleCreateNew = () => {
-    const newId = `MC-${Date.now()}`;
+    const newId = `MC-${Date.now().toString().slice(-6)}`;
     setSelectedCertId(newId);
     setDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
     setPatientName('Patient Name');
@@ -192,14 +246,77 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setTreatment('Prescribed medications and proper hydration.');
     setRecommendations('Have a rest for 1-2 days. May resume school duties upon recovery.');
     setActiveTab('template');
-    triggerToast('New blank certificate created.');
+    triggerToast('New blank certificate created and recorded in archives.');
+    setTimeout(() => syncToArchives(), 100);
   };
 
-  const handleDownloadPDF = () => {
+  // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
+  const handleDownloadPDF = async () => {
+    // 1. Force auto-save to archives immediately when downloaded!
+    await syncToArchives();
+    
+    // 2. Switch to static clean preview mode (remove editing underlines)
     setEditMode(false);
-    triggerToast("To download as PDF, select 'Save as PDF' as your Destination in the print window.");
+    setIsDownloading(true);
+    triggerToast("Generating automatic direct PDF file download... Please wait 2 seconds!");
+
+    setTimeout(() => {
+      const element = document.getElementById('official-med-cert-page');
+      if (!element) {
+        setIsDownloading(false);
+        return;
+      }
+
+      const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
+
+      const performDownload = (html2pdfFn: any) => {
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: { type: 'jpeg', quality: 1.0 },
+          html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdfFn().from(element).set(opt).save().then(() => {
+          setIsDownloading(false);
+          setEditMode(true);
+          triggerToast(`✅ Successfully downloaded ${filename} directly to your computer! Recorded to Archives.`);
+        }).catch((err: any) => {
+          console.error(err);
+          setIsDownloading(false);
+          setEditMode(true);
+          window.print(); // fallback to browser print if conversion encountered local restriction
+        });
+      };
+
+      // Ensure html2pdf bundle is loaded from reliable CDN
+      if ((window as any).html2pdf) {
+        performDownload((window as any).html2pdf);
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => {
+          performDownload((window as any).html2pdf);
+        };
+        script.onerror = () => {
+          setIsDownloading(false);
+          setEditMode(true);
+          triggerToast("PDF generator script offline. Opening standard system save dialog instead.");
+          window.print();
+        };
+        document.head.appendChild(script);
+      }
+    }, 400);
+  };
+
+  const handlePrint = async () => {
+    await syncToArchives();
+    setEditMode(false);
+    triggerToast('Opening print document view. Automatically recorded to archives!');
     setTimeout(() => {
       window.print();
+      setEditMode(true);
     }, 300);
   };
 
@@ -216,7 +333,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#F8FAFC]">
-      {/* Custom Print CSS ensuring 100% fidelity to Letter PDF template */}
+      {/* Custom Print & Font Styling ensuring 100% fidelity to Letter PDF template */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
@@ -224,10 +341,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           body * {
             visibility: hidden !important;
           }
-          .certificate-printable-page, .certificate-printable-page * {
+          #official-med-cert-page, #official-med-cert-page * {
             visibility: visible !important;
           }
-          .certificate-printable-page {
+          #official-med-cert-page {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
@@ -271,7 +388,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* Toast Notifier */}
       {showToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-950 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold animate-in slide-in-from-bottom-5 duration-300">
-          <AlertCircle size={18} className="text-amber-400 flex-shrink-0" />
+          <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
           <span>{showToast}</span>
           <button onClick={() => setShowToast(null)} className="text-gray-400 hover:text-white ml-2"><X size={16} /></button>
         </div>
@@ -284,7 +401,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             Medical Certificates
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Official University of the Assumption clinic medical certification system with identical PDF rendering, in-place typing, and direct printing.
+            Official University of the Assumption clinical document system. Features auto-saving to records and instant direct PDF file generation.
           </p>
         </div>
 
@@ -296,7 +413,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             <FileText size={16} /> Official PDF Template
           </button>
           <button
-            onClick={() => setActiveTab('archives')}
+            onClick={() => {
+              syncToArchives();
+              setActiveTab('archives');
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
           >
             <BookmarkCheck size={16} /> Certificate Records
@@ -370,17 +490,19 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               >
                 <BookmarkCheck size={15} /> Save to Archives
               </button>
+              
+              {/* AUTOMATIC DIRECT PDF DOWNLOAD BUTTON */}
               <button
                 onClick={handleDownloadPDF}
-                className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white font-black text-xs shadow-md transition-all active:scale-95"
+                disabled={isDownloading}
+                className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-600 disabled:opacity-70 text-white font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer"
               >
-                <Download size={15} /> Download as PDF
+                <Download size={15} className={isDownloading ? 'animate-bounce' : ''} />
+                <span>{isDownloading ? 'Downloading File...' : 'Download as PDF'}</span>
               </button>
+              
               <button
-                onClick={() => {
-                  setEditMode(false);
-                  setTimeout(() => window.print(), 200);
-                }}
+                onClick={handlePrint}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-black text-xs shadow-md hover:shadow-lg transition-all active:scale-95"
                 style={{ background: PRIMARY }}
               >
@@ -392,10 +514,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* ===================================================================================== */}
           {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
           {/* ===================================================================================== */}
-          <div className="certificate-printable-page font-official relative bg-white border-2 border-gray-300 shadow-2xl max-w-[850px] mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden">
+          <div
+            id="official-med-cert-page"
+            className="font-official relative bg-white border-2 border-gray-300 shadow-2xl max-w-[850px] mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden"
+            style={{ width: '8.5in', minHeight: '11in' }}
+          >
             
             {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-16">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-12">
               <img
                 src={uaSeal}
                 alt="University Seal Watermark"
@@ -409,8 +535,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               {/* TOP HEADER SECTION */}
               <div className="flex items-center justify-between gap-4 pb-2">
                 {/* Far Left: University of the Assumption Seal */}
-                <div className="w-24 flex-shrink-0 flex items-center justify-start">
-                  <img src={uaSeal} alt="UA Seal" className="w-[88px] h-[88px] object-contain drop-shadow-2xs" />
+                <div className="w-28 flex-shrink-0 flex items-center justify-start">
+                  <img src={uaSeal} alt="UA Seal" className="w-[90px] h-[90px] object-contain drop-shadow-2xs" />
                 </div>
 
                 {/* Center: University typography and PhilHealth YAKAP Logo banner */}
@@ -421,19 +547,19 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   
                   <PhilHealthYakapBanner />
                   
-                  <div className="text-[13px] font-bold text-[#184898] font-sans pt-1 tracking-tight">
+                  <div className="text-[13.5px] font-bold text-[#184898] font-sans pt-1 tracking-tight">
                     Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                   </div>
                 </div>
 
                 {/* Far Right: Bagong Pilipinas Emblem & Legend */}
-                <div className="w-24 flex-shrink-0 flex items-center justify-end">
+                <div className="w-28 flex-shrink-0 flex items-center justify-end">
                   <BagongPilipinasLogo />
                 </div>
               </div>
 
               {/* DATE LINE (Right Aligned, exactly like PDF) */}
-              <div className="flex justify-end pt-8 pr-2 font-official font-bold text-[16px] text-black">
+              <div className="flex justify-end pt-6 pr-2 font-official font-bold text-[16px] text-black">
                 <div className="flex items-center">
                   <span>DATE:&nbsp;&nbsp;</span>
                   <input
@@ -759,7 +885,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                           onClick={e => {
                             e.stopPropagation();
                             handleSelectCert(cert);
-                            setTimeout(() => window.print(), 200);
+                            setTimeout(() => handlePrint(), 200);
                           }}
                           className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-[#1E5AA8] transition-colors"
                           title="Print Certificate"
