@@ -136,6 +136,10 @@ export interface PurchaseRequest {
   date: string;
   status: 'Pending' | 'Partial' | 'Complete';
   history: PurchaseHistory[];
+  description?: string;
+  unit?: string;
+  prfNo?: string;
+  unitPrice?: number;
 }
 
 export interface MedicalCertificate {
