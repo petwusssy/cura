@@ -239,8 +239,75 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     return blocks;
   };
 
+  const handleExportPDF = (title: string) => {
+    const prevTitle = document.title;
+    const cleanName = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    document.title = `${cleanName}_${new Date().toISOString().split('T')[0]}`;
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
+  };
+
+  const handleExportExcel = (title: string) => {
+    const container = document.getElementById("report-export-area");
+    if (!container) return;
+    
+    const clone = container.cloneNode(true) as HTMLElement;
+    const noExportEls = clone.querySelectorAll('.no-export, .print-bar-ui');
+    noExportEls.forEach(el => el.remove());
+
+    const htmlContent = clone.innerHTML;
+    const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    
+    const excelTemplate = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+            xmlns:x="urn:schemas-microsoft-com:office:excel" 
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>${title.slice(0, 31).replace(/[\\/?*><]|:/g, '')}</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+          th, td { border: 1px solid #000000; padding: 6px 10px; font-size: 11pt; }
+          th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+          .text-center { text-align: center; }
+          .font-bold { font-weight: bold; }
+          .font-black { font-weight: 900; }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${cleanTitle}_${new Date().toISOString().split('T')[0]}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const PrintBar = ({ title }: { title: string }) => (
-    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100" style={{ background: '#f8fafd' }}>
+    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 print-bar-ui" style={{ background: '#f8fafd' }}>
       <div className="flex items-center gap-2">
         <img src={uaSeal} alt="UA" className="w-7 h-7 object-contain opacity-70" />
         <div>
@@ -250,14 +317,16 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       </div>
       <div className="flex gap-2">
         <button onClick={() => window.print()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
           <Printer size={12} /> Print
         </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all"
+        <button onClick={() => handleExportPDF(title)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
           style={{ background: PRIMARY }}>
           <Download size={12} /> Export PDF
         </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all"
+        <button onClick={() => handleExportExcel(title)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
           style={{ background: '#2E7D32' }}>
           <Download size={12} /> Export Excel
         </button>
@@ -267,8 +336,36 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
   return (
     <div className="p-6 space-y-5">
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .print-report-container, .print-report-container * {
+            visibility: visible !important;
+          }
+          .print-report-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: visible !important;
+          }
+          .print-bar-ui, .no-export {
+            display: none !important;
+          }
+          @page {
+            size: landscape;
+            margin: 10mm;
+          }
+        }
+      `}</style>
       {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-3 print:hidden">
         <div>
           <h1 className="text-gray-900">Reports</h1>
           <p className="text-sm text-gray-500 mt-0.5">Generate, edit, and export clinic reports</p>
@@ -299,7 +396,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Report type selector sidebar (Kept 100% untouched) */}
-        <div className="bg-white rounded-xl p-3 space-y-0.5 h-fit" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="bg-white rounded-xl p-3 space-y-0.5 h-fit print:hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 pb-2">Report Type</div>
           {reportTypes.map(r => (
             <button key={r.id} onClick={() => setActiveReport(r.id)}
@@ -312,7 +409,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         </div>
 
         {/* Report content workspace */}
-        <div className="lg:col-span-4 bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div id="report-export-area" className="lg:col-span-4 bg-white rounded-xl overflow-hidden print-report-container" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
           {/* ── 1. DAILY REPORT (Updated ONLY to exact attached PDF template layout) ── */}
           {activeReport === 'daily' && (
@@ -537,7 +634,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
               <PrintBar title="MONTHLY INVENTORY OF MEDICINES & SUPPLIES" />
               <div className="p-5 space-y-4">
                 {/* Sub-tab switcher between attached Medicines template and Supplies template */}
-                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                <div className="flex items-center gap-2 pb-3 border-b border-gray-200 no-export print:hidden">
                   <button onClick={() => setInventoryTab('medicines')} className={`px-4 py-2 rounded-xl font-black text-xs transition-all flex items-center gap-2 ${inventoryTab === 'medicines' ? 'bg-[#1B3A6B] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                     <span>💊 Monthly Inventory of Medicines</span>
                   </button>
