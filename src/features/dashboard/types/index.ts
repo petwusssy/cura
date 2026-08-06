@@ -170,6 +170,7 @@ export interface BedHistory {
   timeIn: string;
   timeOut: string;
   duration: string;
+  reason?: string;
 }
 
 export interface Bed {
@@ -179,6 +180,8 @@ export interface Bed {
   patientName?: string | null;
   patientId?: string | null;
   timeOccupied?: string | null;
+  reason?: string | null;
+  allottedTime?: number | null;
   history: BedHistory[];
 }
 

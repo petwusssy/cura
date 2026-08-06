@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BedDouble, Clock, X, UserCheck, History, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import { Bed, Patient, BedHistory } from '../types';
 
 const PRIMARY = '#1B3A6B';
@@ -23,39 +24,51 @@ function isInRange(date: string, filter: DateFilterType): boolean {
 }
 
 function useDurationTimers(beds: Bed[]) {
-  const [durations, setDurations] = useState<Record<string, string>>(() => {
-    const now = new Date();
-    const d: Record<string, string> = {};
-    beds.forEach(b => {
-      if (b.status === 'Occupied' && b.timeOccupied) {
-        const diff = now.getTime() - new Date(b.timeOccupied).getTime();
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        d[b.id] = `${h}h ${m}m`;
-      }
-    });
-    return d;
-  });
+  const [durations, setDurations] = useState<Record<string, string>>({});
+  const [countdowns, setCountdowns] = useState<Record<string, string>>({});
+  const alertedBeds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const calc = () => {
       const now = new Date();
       const d: Record<string, string> = {};
+      const c: Record<string, string> = {};
+      
       beds.forEach(b => {
         if (b.status === 'Occupied' && b.timeOccupied) {
-          const diff = now.getTime() - new Date(b.timeOccupied).getTime();
+          const start = new Date(b.timeOccupied).getTime();
+          const diff = now.getTime() - start;
           const h = Math.floor(diff / 3600000);
           const m = Math.floor((diff % 3600000) / 60000);
           d[b.id] = `${h}h ${m}m`;
+
+          if (b.allottedTime) {
+            const allottedMs = b.allottedTime * 60000;
+            const remaining = allottedMs - diff;
+            if (remaining <= 0) {
+              c[b.id] = "Time's up!";
+              const alertKey = `${b.id}-${b.timeOccupied}`;
+              if (!alertedBeds.current.has(alertKey)) {
+                toast.error(`Time is up for ${b.patientName} in Bed ${b.bedNumber}!`, { duration: 10000 });
+                alertedBeds.current.add(alertKey);
+              }
+            } else {
+              const rh = Math.floor(remaining / 3600000);
+              const rm = Math.floor((remaining % 3600000) / 60000);
+              const rs = Math.floor((remaining % 60000) / 1000);
+              c[b.id] = `${rh > 0 ? `${rh}h ` : ''}${rm}m ${rs}s remaining`;
+            }
+          }
         }
       });
       setDurations(d);
+      setCountdowns(c);
     };
     calc();
-    const id = setInterval(calc, 60000);
+    const id = setInterval(calc, 1000);
     return () => clearInterval(id);
   }, [beds]);
-  return durations;
+  return { durations, countdowns };
 }
 
 interface BedsManagementProps {
@@ -71,7 +84,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   const [trackerFilter, setTrackerFilter] = useState<DateFilterType>('today');
   const [gridFilter, setGridFilter] = useState<DateFilterType>('today');
   const [selectedPatient, setSelectedPatient] = useState('');
-  const durations = useDurationTimers(beds);
+  const [assignReason, setAssignReason] = useState('');
+  const [assignTime, setAssignTime] = useState('');
+  const { durations, countdowns } = useDurationTimers(beds);
 
   const available = beds.filter(b => b.status === 'Available').length;
   const occupied = beds.filter(b => b.status === 'Occupied').length;
@@ -104,11 +119,15 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       patientName: p.name,
       patientId: p.id,
       timeOccupied: new Date().toISOString(),
+      reason: assignReason || null,
+      allottedTime: assignTime ? parseInt(assignTime) : null,
     };
 
     // Immediately close modal and reset form for 0ms instantaneous responsiveness
     setAssignModal(null);
     setSelectedPatient('');
+    setAssignReason('');
+    setAssignTime('');
 
     try {
       await onUpdateBed(updatedBed);
@@ -129,6 +148,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       timeIn: start.toTimeString().slice(0, 5),
       timeOut: now.toTimeString().slice(0, 5),
       duration: `${h}h ${m}m`,
+      reason: releaseModal.reason || 'N/A',
     };
 
     const releasedBed: Bed = {
@@ -137,6 +157,8 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       patientName: null,
       patientId: null,
       timeOccupied: null,
+      reason: null,
+      allottedTime: null,
       history: [...releaseModal.history, entry],
     };
 
@@ -269,9 +291,14 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 <div className="mt-4 flex flex-col items-center">
                   <div className="text-[11px] text-gray-400 mb-0.5">Occupied By</div>
                   <div className="text-sm font-bold text-gray-900 truncate w-full text-center">{bed.patientName}</div>
+                  {bed.reason && (
+                    <div className="text-[11px] text-gray-500 mt-1 w-full text-center truncate px-2" title={bed.reason}>
+                      Reason: {bed.reason}
+                    </div>
+                  )}
                   <div className="flex items-center gap-1 text-xs font-semibold mt-1" style={{ color: RED }}>
                     <Clock size={12} />
-                    <span>{dur || 'calculating...'}</span>
+                    <span>{countdowns[bed.id] || dur || 'calculating...'}</span>
                   </div>
                   <div className="flex gap-2 w-full mt-4">
                     <button onClick={() => setReleaseModal(bed)}
@@ -290,7 +317,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 <div className="mt-4 flex flex-col justify-end h-full">
                   <div className="text-[11px] text-gray-400 pb-3 text-center">Unoccupied</div>
                   <div className="flex gap-2 w-full mt-auto">
-                    <button onClick={() => { setAssignModal(bed); setSelectedPatient(''); }}
+                    <button onClick={() => { 
+                        setAssignModal(bed); 
+                        setSelectedPatient(''); 
+                        setAssignReason(''); 
+                        setAssignTime(''); 
+                      }}
                       className="flex-1 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
                       style={{ background: PRIMARY }}>
                       Assign Patient
@@ -472,6 +504,18 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   );
                 })}
               </select>
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reason for Assignment</label>
+              <input type="text" value={assignReason} onChange={e => setAssignReason(e.target.value)}
+                placeholder="e.g. Resting, Observation"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Allotted Time (minutes)</label>
+              <input type="number" value={assignTime} onChange={e => setAssignTime(e.target.value)}
+                placeholder="e.g. 10 (Optional)" min="1"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
             </div>
             <div className="flex gap-3 mt-5">
               <button onClick={() => setAssignModal(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
