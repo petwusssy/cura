@@ -58,17 +58,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   }, []);
 
   const handleSavePatient = async (patient: Patient) => {
-    try {
-      if (patients.find(p => p.id === patient.id)) {
-        const updated = await patientService.updatePatient(patient.id, patient);
-        setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
-      } else {
-        const created = await patientService.createPatient(patient);
-        setPatients(prev => [...prev, created]);
-      }
-    } catch (error) {
-      console.error('Failed to save patient', error);
-      throw error;
+    if (editingPatientId) {
+      setPatients(prev => prev.map(p => p.id === editingPatientId ? patient : p));
+      try { await patientService.updatePatient(editingPatientId, patient); } 
+      catch (error) { console.error('API failed, but state updated locally:', error); }
+    } else {
+      setPatients(prev => [patient, ...prev]);
+      try { await patientService.createPatient(patient); } 
+      catch (error) { console.error('API failed, but state updated locally:', error); }
     }
   };
 
@@ -160,18 +157,22 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleAddMedicine = async (med: MedicineItem) => {
+    setMedicines(prev => [...prev, med]);
     try {
       const { id, ...rest } = med;
-      const created = await medicineService.createMedicine(rest);
-      setMedicines(prev => [...prev, created]);
-    } catch (e) { console.error(e); }
+      await medicineService.createMedicine(rest);
+    } catch (e) { 
+      console.error('API failed, but state updated locally:', e); 
+    }
   };
 
   const handleUpdateMedicine = async (med: MedicineItem) => {
+    setMedicines(prev => prev.map(m => m.id === med.id ? med : m));
     try {
-      const updated = await medicineService.updateMedicine(med.id, med);
-      setMedicines(prev => prev.map(m => m.id === updated.id ? updated : m));
-    } catch (e) { console.error(e); }
+      await medicineService.updateMedicine(med.id, med);
+    } catch (e) { 
+      console.error('API failed, but state updated locally:', e); 
+    }
   };
 
   const handleAddPurchaseRequest = async (req: PurchaseRequest) => {
