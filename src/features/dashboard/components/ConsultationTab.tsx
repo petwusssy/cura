@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Eye, Edit2, Upload, Calendar, Ambulance, X, Save, CheckCircle } from 'lucide-react';
+import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, CheckCircle } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
 
 const PRIMARY = '#1B3A6B';
@@ -261,13 +261,13 @@ export function ConsultationTab({
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1">
-                          <button onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
-                            title="View Patient" className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors" style={{ color: PRIMARY }}>
+                          <button onClick={() => setViewDetail(c)} title="View Details"
+                            className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors" style={{ color: PRIMARY }}>
                             <Eye size={15} />
                           </button>
-                          <button onClick={() => setViewDetail(c)} title="View Details"
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                            <Edit2 size={15} />
+                          <button onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
+                            title="View Patient Profile" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                            <User size={15} />
                           </button>
                           <button
                             onClick={() => openTransferModal(c)}
@@ -449,74 +449,206 @@ export function ConsultationTab({
       {viewDetail && (() => {
         const patient = patients.find(p => p.id === viewDetail.patientId);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
                 <div>
-                  <h3 className="text-gray-900">{patient?.name}</h3>
-                  <p className="text-sm text-gray-400">{viewDetail.date} • {viewDetail.timeIn}</p>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Consultation Record: {patient?.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn} - {viewDetail.timeOut || 'Present'}</p>
                 </div>
-                <button onClick={() => setViewDetail(null)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">
-                  <X size={18} />
+                <button
+                  onClick={() => setViewDetail(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  <X size={20} />
                 </button>
               </div>
-              <div className="p-5 space-y-4">
-                <div>
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Complaint</div>
-                  <div className="text-sm text-gray-700">{viewDetail.complaint}</div>
-                </div>
-                {Object.values(viewDetail.vitals).some(v => v) && (
-                  <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Vital Signs</div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[['Height', viewDetail.vitals.height, 'cm'], ['Weight', viewDetail.vitals.weight, 'kg'], ['Temp', viewDetail.vitals.temp, '°C'], ['BP', viewDetail.vitals.bp, 'mmHg'], ['HR', viewDetail.vitals.hr, 'bpm'], ['RR', viewDetail.vitals.rr, 'rpm'], ['O2 Sat', viewDetail.vitals.o2, '%']].map(([label, val, unit]) => val ? (
-                        <div key={label as string} className="bg-gray-50 rounded-xl p-2 text-center">
-                          <div className="text-xs text-gray-400">{label}</div>
-                          <div className="text-sm font-semibold text-gray-800">{val} <span className="text-xs font-normal text-gray-400">{unit}</span></div>
-                        </div>
-                      ) : null)}
-                    </div>
-                  </div>
-                )}
-                {viewDetail.treatments.length > 0 && (
-                  <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Treatments</div>
-                    <div className="space-y-2">
-                      {viewDetail.treatments.map(t => (
-                        <div key={t.id} className="flex items-center gap-3 p-2.5 bg-green-50 rounded-xl">
-                          <span className="text-sm font-medium text-green-800">{t.medicineName}</span>
-                          <span className="text-xs text-green-600">×{t.quantity} {t.unit}</span>
-                          <span className="text-xs text-green-600">Given: {t.timeGiven}</span>
-                          {t.nextDose && <span className="text-xs text-green-600">Next: {t.nextDose}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {viewDetail.nurseNotes && (
-                  <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nurse Notes</div>
-                    <div className="text-sm text-gray-700 bg-yellow-50 rounded-xl p-3">{viewDetail.nurseNotes}</div>
-                  </div>
-                )}
-                {/* Prescription upload */}
-                <div>
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Doctor's Prescription</div>
-                  <label className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all text-sm text-gray-500">
-                    <Upload size={16} />
-                    <span>{viewDetail.prescriptionImage ? 'Change prescription image' : 'Upload prescription image'}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
-                      if (e.target.files?.[0]) {
-                        const reader = new FileReader();
-                        reader.onload = ev => onUpdateConsultation({ ...viewDetail, prescriptionImage: ev.target?.result as string });
-                        reader.readAsDataURL(e.target.files[0]);
-                      }
-                    }} />
-                  </label>
-                  {viewDetail.prescriptionImage && (
-                    <img src={viewDetail.prescriptionImage} alt="Prescription" className="mt-2 rounded-xl max-h-48 object-contain" />
-                  )}
-                </div>
+              
+              {/* Content */}
+              <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-gray-50/30">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {/* Main Details */}
+                   <div className="space-y-4">
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Main Details</h4>
+                       <div className="space-y-3">
+                         <div>
+                           <span className="text-xs text-gray-500 block mb-1">Complaint</span>
+                           <div className="text-sm font-medium text-gray-800">{viewDetail.complaint}</div>
+                         </div>
+                         
+                         <div>
+                           <span className="text-xs text-gray-500 block mb-1">Categories</span>
+                           <div className="flex flex-wrap gap-1.5">
+                             {viewDetail.categories?.length ? viewDetail.categories.map((cat, idx) => (
+                               <span key={idx} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">{cat}</span>
+                             )) : <span className="text-sm text-gray-500">—</span>}
+                           </div>
+                         </div>
+                         <div className="grid grid-cols-2 gap-3">
+                           <div>
+                             <span className="text-xs text-gray-500 block mb-1">Doctor Consulted</span>
+                             <span className="text-sm text-gray-800">{viewDetail.doctorConsulted ? 'Yes' : 'No'}</span>
+                           </div>
+                           {viewDetail.doctorConsulted && (
+                             <div>
+                               <span className="text-xs text-gray-500 block mb-1">Doctor's Name</span>
+                               <span className="text-sm text-gray-800">{viewDetail.doctorName}</span>
+                             </div>
+                           )}
+                         </div>
+                         {viewDetail.whoConsulted && (
+                           <div className="pt-1">
+                             <span className="text-xs text-gray-500 block mb-1">Other Consultant</span>
+                             <span className="text-sm text-gray-800">{viewDetail.whoConsulted}</span>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                     
+                     {/* Vital Signs */}
+                     {viewDetail.vitals && (
+                       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Vital Signs</h4>
+                         <div className="grid grid-cols-3 gap-3">
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">BP</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.bp || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">HR</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.hr || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">Temp</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.temp || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">Weight</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.weight || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">Height</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.height || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">Resp. Rate</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.rr || '—'}</div>
+                           </div>
+                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase">O2 Sat</span>
+                             <div className="text-sm font-semibold">{viewDetail.vitals.o2 || '—'}</div>
+                           </div>
+                         </div>
+                         {viewDetail.vitals.notes && (
+                           <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                             <span className="text-[10px] text-gray-500 uppercase block mb-1">Vital Notes</span>
+                             <div className="text-sm font-semibold text-gray-700">{viewDetail.vitals.notes}</div>
+                           </div>
+                         )}
+                       </div>
+                     )}
+                   </div>
+  
+                   {/* Right Column */}
+                   <div className="space-y-4">
+                     {/* Treatments */}
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Medicines & Treatments</h4>
+                       {viewDetail.treatments && viewDetail.treatments.length > 0 ? (
+                         <div className="space-y-2.5">
+                           {viewDetail.treatments.map((t, idx) => (
+                             <div key={idx} className="flex items-center justify-between p-2.5 bg-green-50/50 rounded-lg border border-green-100/50">
+                               <div className="flex items-center gap-2.5">
+                                 <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
+                                   <Pill size={14} />
+                                 </div>
+                                 <div>
+                                   <div className="text-sm font-bold text-gray-800">{t.medicineName}</div>
+                                   <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {t.timeGiven}</div>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       ) : (
+                         <div className="text-sm text-gray-500 italic">No medicines dispensed</div>
+                       )}
+                     </div>
+                     
+                     {/* Notes & Actions */}
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                       <div>
+                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nurse's Notes</h4>
+                         <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.nurseNotes || '—'}</div>
+                       </div>
+                       <div className="border-t border-gray-100 pt-3">
+                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recommendations</h4>
+                         <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.recommendations || '—'}</div>
+                       </div>
+                       {viewDetail.followUp && (
+                         <div className="border-t border-gray-100 pt-3">
+                           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Follow-up Notes</h4>
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.followUp}</div>
+                         </div>
+                       )}
+                       
+                       {viewDetail.earlyDismissal && (
+                         <div className="bg-orange-50 text-orange-800 p-3 rounded-lg text-sm border border-orange-100 mt-2">
+                           <strong>Early Dismissal:</strong> {viewDetail.earlyDismissalReason}
+                           {viewDetail.fetcherName && <div><br/><strong>Fetcher:</strong> {viewDetail.fetcherName}</div>}
+                         </div>
+                       )}
+  
+                       {viewDetail.transferred && (
+                         <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm border border-red-100 mt-2">
+                           <strong>Hospital Transfer:</strong> {viewDetail.dismissalDestination}
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+                 
+                 {/* Attached Images */}
+                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-6">
+                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Attached Documents</h4>
+                   
+                   {/* Prescription Upload / View */}
+                   <div className="mb-4">
+                     <span className="text-xs font-bold text-gray-500 mb-2 block">Doctor's Prescription</span>
+                     <label className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all text-sm text-gray-500 w-fit mb-3">
+                       <Upload size={16} />
+                       <span>{viewDetail.prescriptionImage ? 'Change prescription image' : 'Upload prescription image'}</span>
+                       <input type="file" accept="image/*" className="hidden" onChange={e => {
+                         if (e.target.files?.[0]) {
+                           const reader = new FileReader();
+                           reader.onload = ev => onUpdateConsultation({ ...viewDetail, prescriptionImage: ev.target?.result as string });
+                           reader.readAsDataURL(e.target.files[0]);
+                         }
+                       }} />
+                     </label>
+                   </div>
+                   
+                   {(viewDetail.prescriptionImage || viewDetail.fetcherIdImage) && (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       {viewDetail.prescriptionImage && (
+                         <div>
+                           <span className="text-xs font-bold text-gray-500 mb-2 block">Prescription Image</span>
+                           <img src={viewDetail.prescriptionImage} alt="Prescription" className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-50" />
+                         </div>
+                       )}
+                       {viewDetail.fetcherIdImage && (
+                         <div>
+                           <span className="text-xs font-bold text-gray-500 mb-2 block">Fetcher ID Image</span>
+                           <img src={viewDetail.fetcherIdImage} alt="Fetcher ID" className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-50" />
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
               </div>
             </div>
           </div>
