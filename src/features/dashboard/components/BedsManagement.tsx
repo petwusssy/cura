@@ -23,7 +23,20 @@ function isInRange(date: string, filter: DateFilterType): boolean {
 }
 
 function useDurationTimers(beds: Bed[]) {
-  const [durations, setDurations] = useState<Record<string, string>>({});
+  const [durations, setDurations] = useState<Record<string, string>>(() => {
+    const now = new Date();
+    const d: Record<string, string> = {};
+    beds.forEach(b => {
+      if (b.status === 'Occupied' && b.timeOccupied) {
+        const diff = now.getTime() - new Date(b.timeOccupied).getTime();
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        d[b.id] = `${h}h ${m}m`;
+      }
+    });
+    return d;
+  });
+
   useEffect(() => {
     const calc = () => {
       const now = new Date();
@@ -73,12 +86,24 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   const handleAssign = async () => {
     if (!assignModal || !selectedPatient) return;
     const p = patients.find(pt => pt.id === selectedPatient);
+    if (!p) return;
+
+    // Prevent duplicate assignment if patient is already assigned to another occupied bed
+    const existingBed = beds.find(b => b.status === 'Occupied' && (
+      (b.patientId && b.patientId === p.id) || 
+      (b.patientName && p.name && b.patientName.trim().toLowerCase() === p.name.trim().toLowerCase())
+    ));
+    if (existingBed) {
+      alert(`⚠️ Cannot assign ${p.name} to Bed ${assignModal.bedNumber}: This patient is already currently assigned to Bed ${existingBed.bedNumber}! Please release them from Bed ${existingBed.bedNumber} first.`);
+      return;
+    }
+
     try {
       await onUpdateBed({
         ...assignModal,
         status: 'Occupied',
-        patientName: p?.name,
-        patientId: p?.id,
+        patientName: p.name,
+        patientId: p.id,
         timeOccupied: new Date().toISOString(),
       });
       setAssignModal(null);
@@ -136,11 +161,28 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
 
   const filterLabels: Record<DateFilterType, string> = { today: 'Today', week: 'This Week', month: 'This Month' };
 
-  // Get list of patient IDs currently assigned to occupied beds
+  // Get list of patient IDs and names currently assigned to occupied beds
   const occupiedPatientIds = beds
     .filter(b => b.status === 'Occupied' && b.patientId)
     .map(b => b.patientId);
-  const unassignedPatients = patients.filter(p => !occupiedPatientIds.includes(p.id));
+  const occupiedPatientNames = beds
+    .filter(b => b.status === 'Occupied' && b.patientName)
+    .map(b => b.patientName?.trim().toLowerCase());
+
+  const allUsageHistory = beds.flatMap(bed =>
+    [...bed.history, ...(bed.status === 'Occupied' ? [{
+      patientName: bed.patientName || '',
+      patientId: bed.patientId || '',
+      date: TODAY,
+      timeIn: bed.timeOccupied ? new Date(bed.timeOccupied).toTimeString().slice(0, 5) : '—',
+      timeOut: '(current)',
+      duration: durations[bed.id] || '—',
+      _bedNumber: bed.bedNumber,
+    }] : [])].map((h) => ({
+      ...h,
+      _bedNumber: (h as any)._bedNumber ?? bed.bedNumber,
+    }))
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -371,45 +413,24 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {beds.flatMap(bed =>
-                [...bed.history, ...(bed.status === 'Occupied' ? [{
-                  patientName: bed.patientName || '',
-                  patientId: bed.patientId || '',
-                  date: TODAY,
-                  timeIn: bed.timeOccupied ? new Date(bed.timeOccupied).toTimeString().slice(0, 5) : '—',
-                  timeOut: '(current)',
-                  duration: durations[bed.id] || '—',
-                  _bedNumber: bed.bedNumber,
-                }] : [])].map((h, i) => ({
-                  ...h,
-                  _bedNumber: (h as any)._bedNumber ?? bed.bedNumber,
-                }))
-              ).length === 0 ? (
+              {allUsageHistory.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No records</td></tr>
-              ) : beds.flatMap(bed => [
-                ...bed.history.map((h, i) => (
-                  <tr key={`${bed.id}-hist-${i}`} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3 text-sm font-medium text-gray-700">Bed {bed.bedNumber}</td>
-                    <td className="px-5 py-3 text-sm text-gray-700">{h.patientName}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{h.date}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{h.timeIn}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{h.timeOut}</td>
-                    <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 font-medium" style={{ color: PRIMARY }}>{h.duration}</span></td>
-                  </tr>
-                )),
-                ...(bed.status === 'Occupied' ? [(
-                  <tr key={`${bed.id}-current`} className="hover:bg-red-50/30 transition-colors">
-                    <td className="px-5 py-3 text-sm font-medium text-gray-700">Bed {bed.bedNumber}</td>
-                    <td className="px-5 py-3 text-sm text-gray-700">{bed.patientName}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{TODAY}</td>
-                    <td className="px-5 py-3 text-sm text-gray-500">{bed.timeOccupied ? new Date(bed.timeOccupied).toTimeString().slice(0, 5) : '—'}</td>
-                    <td className="px-5 py-3">
+              ) : allUsageHistory.map((h, i) => (
+                <tr key={`${h._bedNumber}-hist-${i}`} className={h.timeOut === '(current)' ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
+                  <td className="px-5 py-3 text-sm font-medium text-gray-700">Bed {h._bedNumber}</td>
+                  <td className="px-5 py-3 text-sm text-gray-700">{h.patientName}</td>
+                  <td className="px-5 py-3 text-sm text-gray-500">{h.date}</td>
+                  <td className="px-5 py-3 text-sm text-gray-500">{h.timeIn}</td>
+                  <td className="px-5 py-3">
+                    {h.timeOut === '(current)' ? (
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${RED}15`, color: RED }}>Current</span>
-                    </td>
-                    <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 font-medium" style={{ color: PRIMARY }}>{durations[bed.id] || '—'}</span></td>
-                  </tr>
-                )] : []),
-              ])}
+                    ) : (
+                      <span className="text-sm text-gray-500">{h.timeOut}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 font-medium" style={{ color: PRIMARY }}>{h.duration}</span></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -428,7 +449,20 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               <select value={selectedPatient} onChange={e => setSelectedPatient(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]">
                 <option value="">Select a patient...</option>
-                {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
+                {patients.map(p => {
+                  const isAlreadyOccupied = occupiedPatientIds.includes(p.id) || (p.name && occupiedPatientNames.includes(p.name.trim().toLowerCase()));
+                  const assignedBed = beds.find(b => b.status === 'Occupied' && (b.patientId === p.id || (b.patientName && p.name && b.patientName.trim().toLowerCase() === p.name.trim().toLowerCase())));
+                  return (
+                    <option 
+                      key={p.id} 
+                      value={p.id} 
+                      disabled={isAlreadyOccupied}
+                      style={isAlreadyOccupied ? { color: '#9ca3af', backgroundColor: '#f3f4f6' } : undefined}
+                    >
+                      {p.name} ({p.category}){isAlreadyOccupied ? ` — Already Occupied in Bed ${assignedBed?.bedNumber}` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="flex gap-3 mt-5">

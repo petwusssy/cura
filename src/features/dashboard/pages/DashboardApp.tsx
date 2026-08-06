@@ -16,6 +16,10 @@ import { medicineService } from '@/services/medicineService';
 import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
+import {
+  mockPatients, mockConsultations, mockTransfers, mockMedicines,
+  mockPurchaseRequests, mockMedicalCerts, mockBeds, mockNotifications,
+} from '../services/mockData';
 
 interface DashboardAppProps {
   onLogout: () => void;
@@ -27,14 +31,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
 
-  const [patients, setPatients]                 = useState<Patient[]>([]);
-  const [consultations, setConsultations]       = useState<Consultation[]>([]);
-  const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
-  const [medicines, setMedicines]               = useState<MedicineItem[]>([]);
-  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
-  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
-  const [beds, setBeds]                         = useState<Bed[]>([]);
-  const [notifications, setNotifications]       = useState<AppNotification[]>([]);
+  // Initialize with instant fallbacks so page appears in 0ms without waiting for slow API response
+  const [patients, setPatients]                 = useState<Patient[]>(mockPatients);
+  const [consultations, setConsultations]       = useState<Consultation[]>(mockConsultations);
+  const [transfers, setTransfers]               = useState<HospitalTransfer[]>(mockTransfers);
+  const [medicines, setMedicines]               = useState<MedicineItem[]>(mockMedicines);
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>(mockPurchaseRequests);
+  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(mockMedicalCerts);
+  const [beds, setBeds]                         = useState<Bed[]>(mockBeds);
+  const [notifications, setNotifications]       = useState<AppNotification[]>(mockNotifications);
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
@@ -42,13 +47,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   useEffect(() => {
-    patientService.getPatients().then(setPatients).catch(console.error);
-    consultationService.getConsultations().then(setConsultations).catch(console.error);
-    medicineService.getMedicines().then(setMedicines).catch(console.error);
-    medicineService.getPurchaseRequests().then(setPurchaseRequests).catch(console.error);
-    bedService.getBeds().then(setBeds).catch(console.error);
-    certificateService.getCertificates().then(setMedicalCerts).catch(console.error);
-    notificationService.getNotifications().then(setNotifications).catch(console.error);
+    patientService.getPatients().then(d => d && d.length > 0 && setPatients(d)).catch(console.error);
+    consultationService.getConsultations().then(d => d && d.length > 0 && setConsultations(d)).catch(console.error);
+    medicineService.getMedicines().then(d => d && d.length > 0 && setMedicines(d)).catch(console.error);
+    medicineService.getPurchaseRequests().then(d => d && d.length > 0 && setPurchaseRequests(d)).catch(console.error);
+    bedService.getBeds().then(d => d && d.length > 0 && setBeds(d)).catch(console.error);
+    certificateService.getCertificates().then(d => d && d.length > 0 && setMedicalCerts(d)).catch(console.error);
+    notificationService.getNotifications().then(d => d && d.length > 0 && setNotifications(d)).catch(console.error);
   }, []);
 
   const handleSavePatient = async (patient: Patient) => {
