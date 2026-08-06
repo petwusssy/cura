@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
+import html2pdf from 'html2pdf.js';
 
 const PRIMARY = '#1E5AA8';
 
@@ -19,7 +20,7 @@ function BagongPilipinasLogo() {
     <div className="flex flex-col items-center justify-center select-none w-32 flex-shrink-0">
       <div className="flex flex-col items-center justify-center w-full">
         <div className="relative w-[76px] h-[76px] mb-0.5">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xs">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
             <defs>
               <linearGradient id="redRibbon" x1="0%" y1="100%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#8A0000" />
@@ -67,7 +68,7 @@ function PhilHealthYakapBanner() {
           YAKAP
         </span>
       </div>
-      <div className="bg-gradient-to-r from-[#F7941E] via-[#F9A033] to-[#F7941E] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 shadow-2xs font-sans border border-amber-500/30">
+      <div className="bg-gradient-to-r from-[#F7941E] via-[#F9A033] to-[#F7941E] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 font-sans border border-amber-500/30">
         PARA MALAYO SA SAKIT
       </div>
     </div>
@@ -263,15 +264,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
 
       try {
-        // Dynamically import html2pdf to avoid initial bundle size issues or CDN blocks
-        const html2pdfModule = await import('html2pdf.js');
-        const html2pdf = html2pdfModule.default || html2pdfModule;
-
         const opt = {
           margin: 0,
           filename: filename,
           image: { type: 'jpeg', quality: 1.0 },
-          html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+          html2canvas: { scale: 2, useCORS: true, logging: true, scrollY: 0, scale: 2 },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
@@ -515,7 +512,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <div className="flex items-center justify-between gap-4 pb-2">
                 {/* Far Left: University of the Assumption Seal */}
                 <div className="w-28 flex-shrink-0 flex items-center justify-start">
-                  <img src={uaSeal} alt="UA Seal" className="w-[90px] h-[90px] object-contain drop-shadow-2xs" />
+                  <img src={uaSeal} alt="UA Seal" className="w-[90px] h-[90px] object-contain" />
                 </div>
 
                 {/* Center: University typography and PhilHealth YAKAP Logo banner */}
