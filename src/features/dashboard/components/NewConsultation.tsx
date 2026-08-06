@@ -22,7 +22,8 @@ const MEDICINES = [
 const UNITS = ['tablet', 'capsule', 'sachet', 'lozenge', 'piece', 'bottle', 'mL', 'application'];
 
 interface NewConsultationProps {
-  patient: Patient;
+  patient?: Patient;
+  patients?: Patient[];
   onSave: (consultation: Consultation) => void | Promise<void>;
   onNavigate: (page: Page) => void;
 }
@@ -37,7 +38,8 @@ const today = () => {
   return d.toISOString().split('T')[0];
 };
 
-export function NewConsultation({ patient, onSave, onNavigate }: NewConsultationProps) {
+export function NewConsultation({ patient, patients = [], onSave, onNavigate }: NewConsultationProps) {
+  const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || '');
   const [date, setDate] = useState(today());
   const [timeIn, setTimeIn] = useState(now());
   const [complaint, setComplaint] = useState('');
@@ -104,6 +106,11 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedPatientId) {
+      alert('Please select a patient first.');
+      return;
+    }
+
     const isConsultation = status === 'Consultation';
 
     const sanitizedTreatments = treatments.map(t => {
@@ -116,7 +123,7 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
 
     const consultation: Consultation = {
       id: `CON-${Date.now()}`,
-      patientId: patient.id,
+      patientId: selectedPatientId,
       date, timeIn,
       timeOut: isConsultation ? now() : undefined,
       complaint, categories,
@@ -163,16 +170,33 @@ export function NewConsultation({ patient, onSave, onNavigate }: NewConsultation
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => onNavigate('patients')} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <button onClick={() => onNavigate(patient ? 'patient-profile' : 'consultations')} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
           <ChevronLeft size={20} />
         </button>
         <div>
           <h1 className="text-gray-900">New Consultation</h1>
-          <p className="text-sm text-gray-400">Patient: <strong>{patient.name}</strong> ({patient.id})</p>
+          <p className="text-sm text-gray-400">
+            {patient ? (
+              <>Patient: <strong>{patient.name}</strong> ({patient.id})</>
+            ) : 'Create a new consultation or non-consultation record'}
+          </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Select Patient */}
+        {!patient && sectionCard('Select Patient', (
+          <div>
+            <label className={labelCls}>Patient *</label>
+            <select value={selectedPatientId} onChange={e => setSelectedPatientId(e.target.value)} className={inputCls} required>
+              <option value="">-- Select Patient --</option>
+              {patients.map(p => (
+                <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
+              ))}
+            </select>
+          </div>
+        ))}
+
         {/* Visit Info */}
         {sectionCard('Visit Information', (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

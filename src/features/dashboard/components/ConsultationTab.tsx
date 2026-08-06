@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, CheckCircle } from 'lucide-react';
+import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
 
 const PRIMARY = '#1B3A6B';
@@ -148,9 +148,16 @@ export function ConsultationTab({
           <p className="text-sm text-gray-500 mt-0.5">Patients seen by doctor</p>
         </div>
         <div className="flex gap-2">
-          <span className="px-3 py-1.5 rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>
+          <span className="px-3 py-1.5 flex items-center rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>
             {filtered.length} records
           </span>
+          <button
+            onClick={() => { onSelectPatient(''); onNavigate('new-consultation'); }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
+          >
+            <Plus size={16} />
+            Add Consultation
+          </button>
         </div>
       </div>
 

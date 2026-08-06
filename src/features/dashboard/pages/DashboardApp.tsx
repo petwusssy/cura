@@ -280,10 +280,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           />
         );
       case 'new-consultation':
-        if (!selectedPatient) { navigate('patients'); return null; }
         return (
           <NewConsultation
             patient={selectedPatient}
+            patients={patients}
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
         );
