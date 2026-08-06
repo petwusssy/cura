@@ -7,6 +7,8 @@ export type Page =
   | 'patient-profile'
   | 'patient-form'
   | 'new-consultation'
+  | 'new-consultation-tab'
+  | 'new-non-consultation-tab'
   | 'consultations'
   | 'non-consultations'
   | 'inventory'

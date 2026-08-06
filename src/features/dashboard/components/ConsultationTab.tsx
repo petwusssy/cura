@@ -152,7 +152,7 @@ export function ConsultationTab({
             {filtered.length} records
           </span>
           <button
-            onClick={() => { onSelectPatient(''); onNavigate('new-consultation'); }}
+            onClick={() => { onSelectPatient(''); onNavigate('new-consultation-tab'); }}
             className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
           >
             <Plus size={16} />

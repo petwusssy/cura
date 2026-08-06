@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ArrowRight, Calendar, Eye } from 'lucide-react';
+import { Search, ArrowRight, Calendar, Eye, Plus } from 'lucide-react';
 import { Patient, Consultation, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
@@ -62,7 +62,16 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
           <h1 className="text-gray-900">Non-Consultation</h1>
           <p className="text-sm text-gray-500 mt-0.5">Patients not seen by doctor</p>
         </div>
-        <span className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">{filtered.length} records</span>
+        <div className="flex gap-2">
+          <span className="px-3 py-1.5 flex items-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">{filtered.length} records</span>
+          <button
+            onClick={() => { onSelectPatient(''); onNavigate('new-non-consultation-tab'); }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
+          >
+            <Plus size={16} />
+            Add Non-Consultation
+          </button>
+        </div>
       </div>
 
       {/* Info Banner */}

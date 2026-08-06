@@ -287,6 +287,24 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
         );
+      case 'new-consultation-tab':
+        return (
+          <NewConsultation
+            patient={selectedPatient}
+            patients={patients}
+            forcedStatus="Consultation"
+            onSave={handleSaveConsultation} onNavigate={navigate}
+          />
+        );
+      case 'new-non-consultation-tab':
+        return (
+          <NewConsultation
+            patient={selectedPatient}
+            patients={patients}
+            forcedStatus="Non-Consultation"
+            onSave={handleSaveConsultation} onNavigate={navigate}
+          />
+        );
       case 'consultations':
         return (
           <ConsultationTab
