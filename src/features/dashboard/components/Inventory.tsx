@@ -25,7 +25,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
-  const [showAddForm, setShowAddForm] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [newMed, setNewMed] = useState({
     name: '',
     batchNumber: '',
@@ -138,6 +138,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
 
     try {
       await onAddMedicine(med);
+      setShowAddForm(false);
       setNewMed({ name: '', batchNumber: '', stock: '', dateAdded: new Date().toISOString().split('T')[0], unit: 'Tablet', threshold: '15' });
     } catch (e) {
       console.error(e);
@@ -264,7 +265,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
                 onClick={() => setShowAddForm(false)}
                 className="px-6 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors shadow-2xs"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="button"
@@ -272,7 +273,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
                 className="px-8 py-2 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95"
                 style={{ background: '#0A369D' }}
               >
-                Create
+                CREATE
               </button>
             </div>
           </div>
