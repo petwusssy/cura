@@ -1,4 +1,5 @@
-import { ChevronLeft, Stethoscope, FileText, Plus, Eye, Clock, Pill, User, Phone, Mail, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, Stethoscope, FileText, Plus, Eye, Clock, Pill, User, Phone, Mail, AlertCircle, X } from 'lucide-react';
 import { Patient, Consultation, MedicalCertificate, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
@@ -19,6 +20,8 @@ interface PatientProfileProps {
 }
 
 export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient }: PatientProfileProps) {
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+
   const patientConsultations = consultations
     .filter(c => c.patientId === patient.id)
     .sort((a, b) => {
@@ -160,7 +163,8 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                       <th className="text-left pb-3 pr-3">Complaint</th>
                       <th className="text-left pb-3 pr-3">Doctor</th>
                       <th className="text-left pb-3 pr-3">Medicine</th>
-                      <th className="text-left pb-3">Status</th>
+                      <th className="text-left pb-3 pr-3">Status</th>
+                      <th className="text-right pb-3">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -180,6 +184,15 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                             ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
                             {c.status}
                           </span>
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <button 
+                            onClick={() => setSelectedConsultation(c)}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -256,6 +269,173 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
           )}
         </div>
       </div>
+
+      {/* Consultation Details Modal */}
+      {selectedConsultation && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {selectedConsultation.status === 'Consultation' ? 'Consultation Record' : 'Non-Consultation Record'}
+                </h3>
+                <p className="text-sm text-gray-500">{selectedConsultation.date} • {selectedConsultation.timeIn} - {selectedConsultation.timeOut || 'Present'}</p>
+              </div>
+              <button
+                onClick={() => setSelectedConsultation(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-gray-50/30">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Main Details */}
+                 <div className="space-y-4">
+                   <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Main Details</h4>
+                     <div className="space-y-3">
+                       <div>
+                         <span className="text-xs text-gray-500 block mb-1">Complaint</span>
+                         <div className="text-sm font-medium text-gray-800">{formatComplaint(selectedConsultation.complaint)}</div>
+                       </div>
+                       
+                       {selectedConsultation.status === 'Consultation' ? (
+                         <>
+                           <div>
+                             <span className="text-xs text-gray-500 block mb-1">Categories</span>
+                             <div className="flex flex-wrap gap-1.5">
+                               {selectedConsultation.categories?.length ? selectedConsultation.categories.map((cat, idx) => (
+                                 <span key={idx} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">{cat}</span>
+                               )) : <span className="text-sm text-gray-500">—</span>}
+                             </div>
+                           </div>
+                           <div className="grid grid-cols-2 gap-3">
+                             <div>
+                               <span className="text-xs text-gray-500 block mb-1">Doctor Consulted</span>
+                               <span className="text-sm text-gray-800">{selectedConsultation.doctorConsulted ? 'Yes' : 'No'}</span>
+                             </div>
+                             {selectedConsultation.doctorConsulted && (
+                               <div>
+                                 <span className="text-xs text-gray-500 block mb-1">Doctor's Name</span>
+                                 <span className="text-sm text-gray-800">{selectedConsultation.doctorName}</span>
+                               </div>
+                             )}
+                           </div>
+                         </>
+                       ) : (
+                         <>
+                           <div>
+                             <span className="text-xs text-gray-500 block mb-1">Purpose of Visit</span>
+                             <div className="text-sm font-medium text-gray-800">{selectedConsultation.purposeOfVisit || '—'}</div>
+                           </div>
+                           <div className="grid grid-cols-2 gap-3">
+                             <div>
+                               <span className="text-xs text-gray-500 block mb-1">Assisting Nurse</span>
+                               <span className="text-sm text-gray-800">{selectedConsultation.assistingNurse || '—'}</span>
+                             </div>
+                           </div>
+                         </>
+                       )}
+                     </div>
+                   </div>
+                   
+                   {/* Vital Signs */}
+                   {selectedConsultation.status === 'Consultation' && selectedConsultation.vitals && (
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Vital Signs</h4>
+                       <div className="grid grid-cols-3 gap-3">
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">BP</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.bp || '—'}</div>
+                         </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">HR</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.hr || '—'}</div>
+                         </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">Temp</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.temp || '—'}</div>
+                         </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">Weight</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.weight || '—'}</div>
+                         </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">Height</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.height || '—'}</div>
+                         </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">Resp. Rate</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.rr || '—'}</div>
+                         </div>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Right Column */}
+                 <div className="space-y-4">
+                   {/* Treatments */}
+                   <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Medicines & Treatments</h4>
+                     {selectedConsultation.treatments && selectedConsultation.treatments.length > 0 ? (
+                       <div className="space-y-2.5">
+                         {selectedConsultation.treatments.map((t, idx) => (
+                           <div key={idx} className="flex items-center justify-between p-2.5 bg-green-50/50 rounded-lg border border-green-100/50">
+                             <div className="flex items-center gap-2.5">
+                               <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
+                                 <Pill size={14} />
+                               </div>
+                               <div>
+                                 <div className="text-sm font-bold text-gray-800">{t.medicineName}</div>
+                                 <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {t.timeGiven}</div>
+                               </div>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <div className="text-sm text-gray-500 italic">No medicines dispensed</div>
+                     )}
+                   </div>
+                   
+                   {/* Notes & Actions */}
+                   <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                     {selectedConsultation.status === 'Consultation' ? (
+                       <>
+                         <div>
+                           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nurse's Notes</h4>
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{selectedConsultation.nurseNotes || '—'}</div>
+                         </div>
+                         <div className="border-t border-gray-100 pt-3">
+                           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recommendations</h4>
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{selectedConsultation.recommendations || '—'}</div>
+                         </div>
+                       </>
+                     ) : (
+                       <div>
+                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Operational Notes</h4>
+                         <div className="text-sm text-gray-700 whitespace-pre-line">{selectedConsultation.operationalNotes || '—'}</div>
+                       </div>
+                     )}
+                     
+                     {selectedConsultation.earlyDismissal && (
+                       <div className="bg-orange-50 text-orange-800 p-3 rounded-lg text-sm border border-orange-100 mt-2">
+                         <strong>Early Dismissal:</strong> {selectedConsultation.earlyDismissalReason}
+                         {selectedConsultation.fetcherName && <div><br/><strong>Fetcher:</strong> {selectedConsultation.fetcherName}</div>}
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
