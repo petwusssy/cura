@@ -325,6 +325,12 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                                </div>
                              )}
                            </div>
+                           {selectedConsultation.whoConsulted && (
+                             <div className="pt-1">
+                               <span className="text-xs text-gray-500 block mb-1">Other Consultant</span>
+                               <span className="text-sm text-gray-800">{selectedConsultation.whoConsulted}</span>
+                             </div>
+                           )}
                          </>
                        ) : (
                          <>
@@ -372,7 +378,17 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                            <span className="text-[10px] text-gray-500 uppercase">Resp. Rate</span>
                            <div className="text-sm font-semibold">{selectedConsultation.vitals.rr || '—'}</div>
                          </div>
+                         <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase">O2 Sat</span>
+                           <div className="text-sm font-semibold">{selectedConsultation.vitals.o2 || '—'}</div>
+                         </div>
                        </div>
+                       {selectedConsultation.vitals.notes && (
+                         <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                           <span className="text-[10px] text-gray-500 uppercase block mb-1">Vital Notes</span>
+                           <div className="text-sm font-semibold text-gray-700">{selectedConsultation.vitals.notes}</div>
+                         </div>
+                       )}
                      </div>
                    )}
                  </div>
@@ -415,6 +431,12 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recommendations</h4>
                            <div className="text-sm text-gray-700 whitespace-pre-line">{selectedConsultation.recommendations || '—'}</div>
                          </div>
+                         {selectedConsultation.followUp && (
+                           <div className="border-t border-gray-100 pt-3">
+                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Follow-up Notes</h4>
+                             <div className="text-sm text-gray-700 whitespace-pre-line">{selectedConsultation.followUp}</div>
+                           </div>
+                         )}
                        </>
                      ) : (
                        <div>
@@ -429,9 +451,36 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                          {selectedConsultation.fetcherName && <div><br/><strong>Fetcher:</strong> {selectedConsultation.fetcherName}</div>}
                        </div>
                      )}
+
+                     {selectedConsultation.transferred && (
+                       <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm border border-red-100 mt-2">
+                         <strong>Hospital Transfer:</strong> {selectedConsultation.dismissalDestination}
+                       </div>
+                     )}
                    </div>
                  </div>
                </div>
+               
+               {/* Attached Images */}
+               {(selectedConsultation.prescriptionImage || selectedConsultation.fetcherIdImage) && (
+                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-6">
+                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Attached Documents</h4>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {selectedConsultation.prescriptionImage && (
+                       <div>
+                         <span className="text-xs font-bold text-gray-500 mb-2 block">Prescription Image</span>
+                         <img src={selectedConsultation.prescriptionImage} alt="Prescription" className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-50" />
+                       </div>
+                     )}
+                     {selectedConsultation.fetcherIdImage && (
+                       <div>
+                         <span className="text-xs font-bold text-gray-500 mb-2 block">Fetcher ID Image</span>
+                         <img src={selectedConsultation.fetcherIdImage} alt="Fetcher ID" className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-50" />
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               )}
             </div>
           </div>
         </div>
