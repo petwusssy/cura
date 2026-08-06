@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ArrowRight, Calendar, Eye, Plus } from 'lucide-react';
+import { Search, ArrowRight, Calendar, Eye, Plus, User, X, Pill } from 'lucide-react';
 import { Patient, Consultation, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
@@ -17,6 +17,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [converting, setConverting] = useState<string | null>(null);
+  const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
 
   const nonConsultations = Object.values(
     consultations
@@ -165,11 +166,18 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
-                          title="View Patient"
+                          onClick={() => setViewDetail(c)}
+                          title="View Details"
                           className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
                         >
                           <Eye size={15} />
+                        </button>
+                        <button
+                          onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
+                          title="View Patient"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                        >
+                          <User size={15} />
                         </button>
                         <button
                           onClick={() => handleConvert(c.id)}
@@ -189,6 +197,111 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
           </table>
         </div>
       </div>
+
+      {/* ── Non-Consultation Detail Modal ── */}
+      {viewDetail && (() => {
+        const patient = patients.find(p => p.id === viewDetail.patientId);
+        return (
+          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Non-Consultation Record: {patient?.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn}</p>
+                </div>
+                <button
+                  onClick={() => setViewDetail(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-gray-50/30">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {/* Main Details */}
+                   <div className="space-y-4">
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Visit Details</h4>
+                       <div className="space-y-3">
+                         {viewDetail.purposeOfVisit && (
+                           <div>
+                             <span className="text-xs text-gray-500 block mb-1">Purpose of Visit</span>
+                             <div className="text-sm font-medium text-gray-800">{viewDetail.purposeOfVisit}</div>
+                           </div>
+                         )}
+                         <div>
+                           <span className="text-xs text-gray-500 block mb-1">Complaint / Issue</span>
+                           <div className="text-sm font-medium text-gray-800">{viewDetail.complaint}</div>
+                         </div>
+                         <div>
+                           <span className="text-xs text-gray-500 block mb-1">Categories</span>
+                           <div className="flex flex-wrap gap-1.5">
+                             {viewDetail.categories?.length ? viewDetail.categories.map((cat, idx) => (
+                               <span key={idx} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">{cat}</span>
+                             )) : <span className="text-sm text-gray-500">—</span>}
+                           </div>
+                         </div>
+                         {viewDetail.assistingNurse && (
+                           <div>
+                             <span className="text-xs text-gray-500 block mb-1">Assisting Nurse</span>
+                             <div className="text-sm font-medium text-gray-800">{viewDetail.assistingNurse}</div>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+  
+                   {/* Right Column */}
+                   <div className="space-y-4">
+                     {/* Notes */}
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                       <div>
+                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Operational Notes & Readings</h4>
+                         <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.operationalNotes || '—'}</div>
+                       </div>
+                       {viewDetail.nurseNotes && (
+                         <div className="border-t border-gray-100 pt-3">
+                           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nurse's Notes</h4>
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.nurseNotes}</div>
+                         </div>
+                       )}
+                     </div>
+
+                     {/* Treatments */}
+                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Medicines & Treatments</h4>
+                       {viewDetail.treatments && viewDetail.treatments.length > 0 ? (
+                         <div className="space-y-2.5">
+                           {viewDetail.treatments.map((t, idx) => (
+                             <div key={idx} className="flex items-center justify-between p-2.5 bg-green-50/50 rounded-lg border border-green-100/50">
+                               <div className="flex items-center gap-2.5">
+                                 <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
+                                   <Pill size={14} />
+                                 </div>
+                                 <div>
+                                   <div className="text-sm font-bold text-gray-800">{t.medicineName}</div>
+                                   <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {t.timeGiven}</div>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       ) : (
+                         <div className="text-sm text-gray-500 italic">No medicines dispensed</div>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
