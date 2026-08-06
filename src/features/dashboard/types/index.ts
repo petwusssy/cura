@@ -119,6 +119,7 @@ export interface MedicineItem {
   batchNumber?: string;
   beginningQty?: number;
   dispensed?: number;
+  threshold?: number;
 }
 
 export interface PurchaseHistory {
