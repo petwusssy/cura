@@ -22,7 +22,7 @@ interface PatientProfileProps {
 export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient }: PatientProfileProps) {
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
 
-  const patientConsultations = consultations
+  const allPatientConsultations = consultations
     .filter(c => c.patientId === patient.id)
     .sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeIn || '00:00'}`).getTime();
@@ -36,6 +36,9 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
       }
       return timeA - timeB; // Ascending order (oldest first)
     });
+
+  const patientConsultations = allPatientConsultations.filter(c => c.status === 'Consultation');
+  const patientNonConsultations = allPatientConsultations.filter(c => c.status === 'Non-Consultation');
 
   const formatComplaint = (complaint: string) => {
     if (complaint.includes('[CONVERTED]')) {
@@ -202,14 +205,75 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
             )}
           </div>
 
+          {/* Non-Consultation History */}
+          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-800">Non-Consultation History</h3>
+              <span className="text-xs text-gray-400">{patientNonConsultations.length} record{patientNonConsultations.length !== 1 ? 's' : ''}</span>
+            </div>
+
+            {patientNonConsultations.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Stethoscope size={32} className="mx-auto mb-2 opacity-30" />
+                <p>No non-consultation records</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      <th className="text-left pb-3 pr-3">No.</th>
+                      <th className="text-left pb-3 pr-3">Date</th>
+                      <th className="text-left pb-3 pr-3">Complaint</th>
+                      <th className="text-left pb-3 pr-3">Doctor</th>
+                      <th className="text-left pb-3 pr-3">Medicine</th>
+                      <th className="text-left pb-3 pr-3">Status</th>
+                      <th className="text-right pb-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {patientNonConsultations.map((c, i) => (
+                      <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{c.date}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
+                          <div className="truncate">{formatComplaint(c.complaint)}</div>
+                        </td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600">{c.doctorConsulted ? c.doctorName : <span className="text-gray-400">None</span>}</td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600">
+                          {c.treatments.length > 0 ? c.treatments.map(t => t.medicineName).join(', ').slice(0, 30) + (c.treatments.map(t => t.medicineName).join(', ').length > 30 ? '...' : '') : <span className="text-gray-400">None</span>}
+                        </td>
+                        <td className="py-2.5">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap
+                            ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <button 
+                            onClick={() => setSelectedConsultation(c)}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* Timeline */}
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
             <h3 className="text-gray-800 mb-4">Visit Timeline</h3>
-            {patientConsultations.length === 0 ? (
+            {allPatientConsultations.length === 0 ? (
               <div className="text-center py-6 text-gray-400 text-sm">No visits recorded</div>
             ) : (
               <div className="space-y-4">
-                {patientConsultations.map((c, i) => (
+                {allPatientConsultations.map((c, i) => (
                   <div key={c.id} className="flex gap-4">
                     {/* Line */}
                     <div className="flex flex-col items-center">
@@ -217,7 +281,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                         style={{ background: c.status === 'Consultation' ? `${PRIMARY}15` : '#f3f4f6' }}>
                         <Stethoscope size={14} style={{ color: c.status === 'Consultation' ? PRIMARY : '#9ca3af' }} />
                       </div>
-                      {i < patientConsultations.length - 1 && (
+                      {i < allPatientConsultations.length - 1 && (
                         <div className="w-0.5 flex-1 mt-1" style={{ background: '#e5e7eb', minHeight: 16 }} />
                       )}
                     </div>
