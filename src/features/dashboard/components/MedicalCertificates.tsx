@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle } from 'lucide-react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 
@@ -13,42 +13,74 @@ interface MedicalCertificatesProps {
   onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
 }
 
-// Inline rendering of Bagong Pilipinas emblem to ensure pixel-perfect printing
+// High-fidelity Bagong Pilipinas Emblem rendering matching official graphic
 function BagongPilipinasLogo() {
   return (
-    <div className="flex flex-col items-center justify-center select-none">
-      <svg className="w-12 h-12 mb-1" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="46" fill="#0038A8" stroke="#FCE300" strokeWidth="4"/>
-        <path d="M50 4 C24.6 4 4 24.6 4 50 L96 50 C96 24.6 75.4 4 50 4 Z" fill="#CE1126"/>
-        <circle cx="50" cy="50" r="22" fill="#FCE300"/>
-        <path d="M50 18 L55 38 L75 43 L55 48 L50 68 L45 48 L25 43 L45 38 Z" fill="#FCE300"/>
-        <circle cx="50" cy="50" r="14" fill="#0038A8"/>
-        <circle cx="36" cy="36" r="3" fill="#FFFFFF"/>
-        <circle cx="64" cy="36" r="3" fill="#FFFFFF"/>
-        <circle cx="50" cy="62" r="3" fill="#FFFFFF"/>
-        <path d="M15 72 C30 85 70 85 85 72 L80 65 C68 75 32 75 20 65 Z" fill="#FFFFFF"/>
-      </svg>
-      <span className="text-[8px] font-extrabold text-[#002060] uppercase tracking-tighter leading-none font-sans">
+    <div className="flex flex-col items-center justify-center select-none w-24">
+      <div className="relative w-16 h-16 mb-1">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xs">
+          {/* Outer Sun & Rays Effect */}
+          <circle cx="50" cy="50" r="46" fill="#0038A8" stroke="#FCE300" strokeWidth="4.5"/>
+          <path d="M50 4 C24.6 4 4 24.6 4 50 L96 50 C96 24.6 75.4 4 50 4 Z" fill="#CE1126"/>
+          
+          {/* Rising Yellow Sun with stylized rays */}
+          <circle cx="50" cy="52" r="23" fill="#FCE300"/>
+          <path d="M50 12 L56 36 L78 36 L60 48 L68 72 L50 56 L32 72 L40 48 L22 36 L44 36 Z" fill="#FCE300"/>
+          <circle cx="50" cy="52" r="16" fill="#0038A8"/>
+          
+          {/* Three Stars */}
+          <circle cx="34" cy="36" r="3.5" fill="#FFFFFF"/>
+          <circle cx="66" cy="36" r="3.5" fill="#FFFFFF"/>
+          <circle cx="50" cy="66" r="3.5" fill="#FFFFFF"/>
+          
+          {/* White stylized ribbons in bottom hemisphere */}
+          <path d="M12 70 C28 84 72 84 88 70 L82 62 C68 74 32 74 18 62 Z" fill="#FFFFFF"/>
+          <path d="M22 80 C38 90 62 90 78 80 L74 73 C60 82 40 82 26 73 Z" fill="#FCE300"/>
+        </svg>
+      </div>
+      <span className="text-[9px] font-extrabold text-[#002060] uppercase tracking-tighter leading-none font-sans mt-0.5 select-all">
         BAGONG PILIPINAS
       </span>
     </div>
   );
 }
 
+// PhilHealth YAKAP official badge banner
+function PhilHealthYakapBanner() {
+  return (
+    <div className="flex flex-col items-center justify-center my-0.5 select-none">
+      <div className="flex items-baseline justify-center gap-1.5 leading-none">
+        <span className="text-[#008CD0] font-extrabold italic text-[24px] tracking-tight font-sans">
+          PhilHealth
+        </span>
+        <span className="text-[#F7941E] font-extrabold text-[24px] tracking-wider font-sans">
+          YAKAP
+        </span>
+      </div>
+      <div className="bg-gradient-to-r from-[#F7941E] via-[#F9A033] to-[#F7941E] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 shadow-2xs font-sans border border-amber-500/30">
+        PARA MALAYO SA SAKIT
+      </div>
+    </div>
+  );
+}
+
 export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert }: MedicalCertificatesProps) {
   const [activeTab, setActiveTab] = useState<'template' | 'archives'>('template');
+  const [editMode, setEditMode] = useState(true);
   const [selectedCertId, setSelectedCertId] = useState<string>('MC-001');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedPatientFilter, setSelectedPatientFilter] = useState<string>(selectedPatientId || '');
   const [showToast, setShowToast] = useState<string | null>(null);
 
-  // Active editable document state (initialized with default PDF values)
+  // Active document fields (exactly mirroring the provided PDF sample)
   const [date, setDate] = useState('June 17, 2026');
   const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
   const [age, setAge] = useState<number | string>(23);
   const [sex, setSex] = useState('FEMALE');
-  const [statusDesignation, setStatusDesignation] = useState('4th year level of BS Arc student of University of the Assumption');
+  const [yearLevel, setYearLevel] = useState('4');
+  const [yearSuffix, setYearSuffix] = useState('th');
+  const [courseAndSchool, setCourseAndSchool] = useState('year level of BS Arc student of University of the Assumption');
   const [examinedDueTo, setExaminedDueTo] = useState('skin allergies and difficulty on breathing.');
   const [diagnosis, setDiagnosis] = useState('Allergic reaction secondary to food intake with allergens.');
   const [treatment, setTreatment] = useState('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
@@ -57,34 +89,24 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const [doctorTitle, setDoctorTitle] = useState('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
   const [licenseNo, setLicenseNo] = useState('0095055');
   const [ptrNo, setPtrNo] = useState('22483890');
-  const [purpose, setPurpose] = useState('Medical excuse and clinic clearance for school activities.');
+  const [purpose, setPurpose] = useState('Medical clearance and clinic verification for school attendance.');
   const [currentPatientId, setCurrentPatientId] = useState<string>('STU-2024-001');
 
   const triggerToast = (msg: string) => {
     setShowToast(msg);
-    setTimeout(() => setShowToast(null), 4500);
+    setTimeout(() => setShowToast(null), 4000);
   };
 
   const handleSelectCert = (cert: MedicalCertificate) => {
     setSelectedCertId(cert.id);
     setDate(cert.date || 'June 17, 2026');
     setPatientName(cert.patientName || patients.find(p => p.id === cert.patientId)?.name || 'Patient Name');
-    setAge(cert.age || patients.find(p => p.id === cert.patientId)?.age || 21);
+    setAge(cert.age || patients.find(p => p.id === cert.patientId)?.age || 23);
     setSex(cert.sex || patients.find(p => p.id === cert.patientId)?.sex || 'FEMALE');
-    setStatusDesignation(
-      cert.statusDesignation || 
-      (() => {
-        const p = patients.find(pt => pt.id === cert.patientId);
-        if (!p) return 'student of University of the Assumption';
-        if (p.category === 'Student') return `${p.yearLevel || '4th year'} level of ${p.course || 'BS'} student of University of the Assumption`;
-        if (p.category === 'Employee') return `${p.position || 'Employee'} of University of the Assumption`;
-        return `Patient of University of the Assumption`;
-      })()
-    );
     setExaminedDueTo(cert.examinedDueTo || 'skin allergies and difficulty on breathing.');
     setDiagnosis(cert.diagnosis || 'Allergic reaction secondary to food intake with allergens.');
     setTreatment(cert.treatment || 'Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
-    setRecommendations(cert.recommendation || 'Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies.');
+    setRecommendations(cert.recommendation || 'Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
     setDoctor(cert.doctor || 'JOHNNY MICHAEL P. MANGULABNAN, MD');
     setDoctorTitle(cert.doctorTitle || 'UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
     setLicenseNo(cert.licenseNo || '0095055');
@@ -92,7 +114,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setPurpose(cert.purpose || 'Medical clearance');
     setCurrentPatientId(cert.patientId || 'STU-2024-001');
     setActiveTab('template');
-    triggerToast(`Loaded certificate ${cert.id} into the interactive editor.`);
+    triggerToast(`Loaded certificate ${cert.id} into official template.`);
   };
 
   const handleQuickLoadPatient = (patientId: string) => {
@@ -103,13 +125,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setAge(p.age);
     setSex((p.sex || 'FEMALE').toUpperCase());
     if (p.category === 'Student') {
-      setStatusDesignation(`${p.yearLevel || '4th year'} level of ${p.course || 'BS Arc'} student of University of the Assumption`);
+      const yr = p.yearLevel?.replace(/\D/g, '') || '4';
+      setYearLevel(yr);
+      setYearSuffix(yr === '1' ? 'st' : yr === '2' ? 'nd' : yr === '3' ? 'rd' : 'th');
+      setCourseAndSchool(`year level of ${p.course || 'BS Arc'} student of University of the Assumption`);
     } else if (p.category === 'Employee') {
-      setStatusDesignation(`${p.position || 'Faculty Member'} of University of the Assumption`);
+      setYearLevel('');
+      setYearSuffix('');
+      setCourseAndSchool(`${p.position || 'Faculty Member'} of University of the Assumption`);
     } else {
-      setStatusDesignation(`Patient of University of the Assumption Clinic`);
+      setYearLevel('');
+      setYearSuffix('');
+      setCourseAndSchool(`Patient of University of the Assumption Clinic`);
     }
-    triggerToast(`Populated template with patient details for ${p.name}.`);
+    triggerToast(`Populated template for ${p.name}.`);
   };
 
   const handleSaveCertificate = async () => {
@@ -126,7 +155,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       patientName: patientName,
       age: age,
       sex: sex,
-      statusDesignation: statusDesignation,
+      statusDesignation: `${yearLevel ? `${yearLevel}${yearSuffix} ` : ''}${courseAndSchool}`,
       examinedDueTo: examinedDueTo,
       treatment: treatment,
       doctorTitle: doctorTitle,
@@ -141,7 +170,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         await onAddCert(updatedCert);
         setSelectedCertId(updatedCert.id);
       }
-      triggerToast('Certificate record saved successfully to clinic archives!');
+      triggerToast('Saved certificate record to clinic archives!');
     } catch (e) {
       console.error(e);
       triggerToast('Failed to save certificate.');
@@ -153,22 +182,25 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setSelectedCertId(newId);
     setDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
     setPatientName('Patient Name');
-    setAge('20');
+    setAge(21);
     setSex('FEMALE');
-    setStatusDesignation('4th year level of BS Arc student of University of the Assumption');
+    setYearLevel('4');
+    setYearSuffix('th');
+    setCourseAndSchool('year level of BS Arc student of University of the Assumption');
     setExaminedDueTo('symptoms experienced.');
-    setDiagnosis('General medical examination.');
-    setTreatment('Rest and prescribed supportive care.');
-    setRecommendations('Have a rest for 1-2 days. May resume regular classes/duties upon improvement.');
+    setDiagnosis('General clinic consultation and evaluation.');
+    setTreatment('Prescribed medications and proper hydration.');
+    setRecommendations('Have a rest for 1-2 days. May resume school duties upon recovery.');
     setActiveTab('template');
-    triggerToast('New blank certificate generated for editing.');
+    triggerToast('New blank certificate created.');
   };
 
   const handleDownloadPDF = () => {
-    triggerToast("To download as PDF, choose 'Save as PDF' as your printer destination in the print dialog.");
+    setEditMode(false);
+    triggerToast("To download as PDF, select 'Save as PDF' as your Destination in the print window.");
     setTimeout(() => {
       window.print();
-    }, 400);
+    }, 300);
   };
 
   const filteredCerts = medicalCerts.filter(c => {
@@ -183,9 +215,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   });
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#FAFBFD]">
-      {/* Print stylesheet for exact Letter page output */}
+    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#F8FAFC]">
+      {/* Custom Print CSS ensuring 100% fidelity to Letter PDF template */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
         @media print {
           body * {
             visibility: hidden !important;
@@ -198,16 +232,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             left: 0 !important;
             top: 0 !important;
             width: 8.5in !important;
-            height: 11in !important;
+            min-height: 11in !important;
             max-width: 100% !important;
-            max-height: 100% !important;
             border: none !important;
             box-shadow: none !important;
-            padding: 0.6in 0.8in !important;
+            padding: 0.7in 0.9in !important;
             margin: 0 !important;
             background: white !important;
             color: black !important;
-            font-size: 15px !important;
           }
           .no-print {
             display: none !important;
@@ -216,52 +248,58 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             border: none !important;
             background: transparent !important;
             padding: 0 !important;
+            margin: 0 !important;
             resize: none !important;
             color: #000 !important;
+            box-shadow: none !important;
             font-family: inherit !important;
           }
-          .watermark-img {
-            opacity: 0.15 !important;
+          .watermark-seal {
+            opacity: 0.18 !important;
           }
           @page {
             size: letter portrait;
             margin: 0;
           }
         }
+
+        .font-official {
+          font-family: 'Times New Roman', Times, 'Tinos', serif;
+        }
       `}</style>
 
-      {/* Notification Toast */}
+      {/* Toast Notifier */}
       {showToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold animate-in slide-in-from-bottom-5 duration-300">
-          <AlertCircle size={18} className="text-amber-400" />
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-950 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold animate-in slide-in-from-bottom-5 duration-300">
+          <AlertCircle size={18} className="text-amber-400 flex-shrink-0" />
           <span>{showToast}</span>
           <button onClick={() => setShowToast(null)} className="text-gray-400 hover:text-white ml-2"><X size={16} /></button>
         </div>
       )}
 
-      {/* Header & Mode Selector */}
+      {/* Header Bar */}
       <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: PRIMARY }}>
             Medical Certificates
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Issue, edit, download as PDF, and print official clinic medical certificates with live watermark template.
+            Official University of the Assumption clinic medical certification system with identical PDF rendering, in-place typing, and direct printing.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-200/60 p-1 rounded-xl">
+        <div className="flex items-center gap-2 bg-gray-200/60 p-1.5 rounded-xl">
           <button
             onClick={() => setActiveTab('template')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
           >
-            <FileText size={16} /> Official Certificate Editor
+            <FileText size={16} /> Official PDF Template
           </button>
           <button
             onClick={() => setActiveTab('archives')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
           >
-            <BookmarkCheck size={16} /> Certificate Archives
+            <BookmarkCheck size={16} /> Certificate Records
             <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-white text-[#1E5AA8] font-black">
               {medicalCerts.length}
             </span>
@@ -270,20 +308,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       </div>
 
       {/* ========================================================================================= */}
-      {/* VIEW 1: OFFICIAL INTERACTIVE MEDICAL CERTIFICATE TEMPLATE */}
+      {/* VIEW 1: OFFICIAL INTERACTIVE MEDICAL CERTIFICATE (EXACT PDF REPLICA) */}
       {/* ========================================================================================= */}
       {activeTab === 'template' && (
         <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Action Toolbar */}
+          {/* Action & Configuration Toolbar */}
           <div className="no-print flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <div className="flex items-center gap-3 w-full xl:w-auto flex-wrap">
-              <div className="flex items-center gap-2 bg-blue-50/80 text-[#1E5AA8] px-3.5 py-2 rounded-xl text-xs font-extrabold border border-blue-100">
+            <div className="flex items-center gap-2.5 w-full xl:w-auto flex-wrap">
+              <div className="flex items-center gap-2 bg-blue-50/80 text-[#1E5AA8] px-3.5 py-2 rounded-xl text-xs font-black border border-blue-100">
                 <UserCheck size={16} />
-                <span>Quick Load Patient Details:</span>
+                <span>Quick Load Patient:</span>
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="bg-white text-gray-800 font-bold px-2.5 py-1 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] text-xs cursor-pointer ml-1"
+                  className="bg-white text-gray-900 font-black px-2.5 py-1 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] text-xs cursor-pointer ml-1"
                 >
                   <option value="">Select patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
@@ -291,12 +329,23 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               </div>
 
               <button
+                onClick={() => setEditMode(!editMode)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black transition-colors ${editMode ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                title="Toggle visual highlights on editable words"
+              >
+                {editMode ? <Edit size={14} className="text-amber-600" /> : <Eye size={14} className="text-gray-500" />}
+                <span>{editMode ? 'Editing Mode On' : 'Preview Static Page'}</span>
+              </button>
+
+              <button
                 onClick={() => {
                   setDate('June 17, 2026');
                   setPatientName('Aaliyah Ysabella G. Cosino');
                   setAge(23);
                   setSex('FEMALE');
-                  setStatusDesignation('4th year level of BS Arc student of University of the Assumption');
+                  setYearLevel('4');
+                  setYearSuffix('th');
+                  setCourseAndSchool('year level of BS Arc student of University of the Assumption');
                   setExaminedDueTo('skin allergies and difficulty on breathing.');
                   setDiagnosis('Allergic reaction secondary to food intake with allergens.');
                   setTreatment('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
@@ -305,37 +354,34 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   setDoctorTitle('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
                   setLicenseNo('0095055');
                   setPtrNo('22483890');
-                  triggerToast('Reset document to sample Aaliyah Ysabella G. Cosino template.');
+                  triggerToast('Reset document to exact attached PDF sample.');
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors"
-                title="Reset to PDF sample"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black transition-colors"
+                title="Restore exact sample from attached PDF"
               >
-                <RefreshCw size={14} /> Reset Sample
-              </button>
-              <button
-                onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors"
-              >
-                <Plus size={14} /> New Certificate
+                <RefreshCw size={14} /> Reset PDF Sample
               </button>
             </div>
 
             <div className="flex items-center gap-3 w-full xl:w-auto justify-end">
               <button
                 onClick={handleSaveCertificate}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0D9488] hover:opacity-95 text-white font-bold text-xs shadow-sm transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0D9488] hover:opacity-95 text-white font-black text-xs shadow-sm transition-all active:scale-95"
               >
                 <BookmarkCheck size={15} /> Save to Archives
               </button>
               <button
                 onClick={handleDownloadPDF}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-600 text-white font-black text-xs shadow-md transition-all active:scale-95"
               >
                 <Download size={15} /> Download as PDF
               </button>
               <button
-                onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all active:scale-95"
+                onClick={() => {
+                  setEditMode(false);
+                  setTimeout(() => window.print(), 200);
+                }}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-black text-xs shadow-md hover:shadow-lg transition-all active:scale-95"
                 style={{ background: PRIMARY }}
               >
                 <Printer size={15} /> Print Certificate
@@ -343,187 +389,236 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             </div>
           </div>
 
-          {/* Interactive Editable Document Area (Letter format with background watermark) */}
-          <div className="certificate-printable-page relative bg-white border-2 border-gray-300 shadow-xl max-w-4xl mx-auto px-12 py-14 font-serif text-gray-900 text-base leading-relaxed overflow-hidden">
-            {/* Center Background Watermark */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
-              <img src={uaSeal} alt="Watermark Seal" className="watermark-img w-[480px] h-[480px] object-contain opacity-[0.15]" />
+          {/* ===================================================================================== */}
+          {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
+          {/* ===================================================================================== */}
+          <div className="certificate-printable-page font-official relative bg-white border-2 border-gray-300 shadow-2xl max-w-[850px] mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden">
+            
+            {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-16">
+              <img
+                src={uaSeal}
+                alt="University Seal Watermark"
+                className="watermark-seal w-[640px] h-[640px] object-contain opacity-[0.18]"
+              />
             </div>
 
             {/* Document Content Layer */}
-            <div className="relative z-10 space-y-8">
-              {/* Top Header */}
-              <div className="flex items-center justify-between gap-4 pb-4">
+            <div className="relative z-10 space-y-10 font-official font-bold text-black">
+              
+              {/* TOP HEADER SECTION */}
+              <div className="flex items-center justify-between gap-4 pb-2">
+                {/* Far Left: University of the Assumption Seal */}
                 <div className="w-24 flex-shrink-0 flex items-center justify-start">
-                  <img src={uaSeal} alt="UA Seal" className="w-20 h-20 object-contain" />
+                  <img src={uaSeal} alt="UA Seal" className="w-[88px] h-[88px] object-contain drop-shadow-2xs" />
                 </div>
 
-                <div className="flex-1 text-center font-sans space-y-1">
-                  <div className="text-2xl font-black uppercase tracking-wide text-[#002060] font-serif">
+                {/* Center: University typography and PhilHealth YAKAP Logo banner */}
+                <div className="flex-1 text-center space-y-0.5">
+                  <div className="text-[25px] font-bold text-[#002060] font-official tracking-tight leading-none">
                     UNIVERSITY of the ASSUMPTION
                   </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="font-black text-[#1E5AA8] text-lg tracking-tight">PhilHealth</span>
-                    <span className="font-black text-[#F59E0B] text-lg tracking-wider">YAKAP</span>
-                  </div>
-                  <div className="inline-block">
-                    <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-amber-500 text-white font-black text-[10px] px-4 py-0.5 rounded-full uppercase tracking-widest shadow-2xs border border-amber-600/20">
-                      PARA MALAYO SA SAKIT
-                    </div>
-                  </div>
-                  <div className="text-xs font-bold text-[#1E5AA8] pt-1">
+                  
+                  <PhilHealthYakapBanner />
+                  
+                  <div className="text-[13px] font-bold text-[#184898] font-sans pt-1 tracking-tight">
                     Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                   </div>
                 </div>
 
+                {/* Far Right: Bagong Pilipinas Emblem & Legend */}
                 <div className="w-24 flex-shrink-0 flex items-center justify-end">
                   <BagongPilipinasLogo />
                 </div>
               </div>
 
-              {/* Date Field (Right Aligned) */}
-              <div className="flex justify-end pt-4 font-serif font-bold text-base text-gray-900">
+              {/* DATE LINE (Right Aligned, exactly like PDF) */}
+              <div className="flex justify-end pt-8 pr-2 font-official font-bold text-[16px] text-black">
                 <div className="flex items-center">
-                  <span>DATE:&nbsp;</span>
+                  <span>DATE:&nbsp;&nbsp;</span>
                   <input
                     type="text"
                     value={date}
+                    readOnly={!editMode}
                     onChange={e => setDate(e.target.value)}
-                    className="border-b border-gray-400 font-bold text-gray-900 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 w-44"
+                    className={`font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
                 </div>
               </div>
 
-              {/* Title */}
-              <div className="text-center pt-4 pb-2">
-                <div className="text-2xl font-extrabold uppercase tracking-widest font-serif text-gray-950">
+              {/* DOCUMENT TITLE (Centered, bold, uppercase, no underline) */}
+              <div className="text-center pt-2 pb-4">
+                <h2 className="text-[23px] font-bold uppercase tracking-wide font-official text-black">
                   MEDICAL CERTIFICATE
-                </div>
+                </h2>
               </div>
 
-              {/* Body Paragraphs */}
-              <div className="space-y-6 text-gray-900 text-[16px] leading-8 text-justify font-serif">
-                {/* Certification statement */}
-                <div>
-                  This is to certify that{' '}
+              {/* BODY PARAGRAPHS (All text is uniformly font-bold text-[16px] leading-[1.8] justified) */}
+              <div className="space-y-7 text-black text-[16.5px] leading-[1.9] text-justify font-official font-bold px-2">
+                
+                {/* Paragraph 1: Certification statement */}
+                <div className="text-justify indent-10">
+                  <span>This is to certify that </span>
                   <input
                     type="text"
                     value={patientName}
+                    readOnly={!editMode}
                     onChange={e => setPatientName(e.target.value)}
-                    className="font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 font-serif text-[16px] text-gray-950 min-w-[200px]"
-                    placeholder="Patient Name"
+                    style={{ width: `${Math.max(220, patientName.length * 9.5)}px` }}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-0.5 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
-                  ,{' '}
+                  <span>, </span>
                   <input
                     type="number"
                     value={age}
+                    readOnly={!editMode}
                     onChange={e => setAge(e.target.value)}
-                    className="font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 text-center w-12 font-serif text-[16px] text-gray-950"
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-8 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
-                  {' '}years old,{' '}
+                  <span> years old, </span>
                   <input
                     type="text"
                     value={sex}
+                    readOnly={!editMode}
                     onChange={e => setSex(e.target.value.toUpperCase())}
-                    className="font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 text-center w-24 font-serif text-[16px] text-gray-950"
+                    style={{ width: `${Math.max(70, sex.length * 10)}px` }}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
-                  , a{' '}
+                  <span>, a </span>
+                  
+                  {/* Superscript formatting for year level (e.g. 4th) */}
+                  <span className="inline-flex items-baseline">
+                    <input
+                      type="text"
+                      value={yearLevel}
+                      readOnly={!editMode}
+                      onChange={e => setYearLevel(e.target.value)}
+                      className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    />
+                    <sup className="text-[12px] font-bold">
+                      <input
+                        type="text"
+                        value={yearSuffix}
+                        readOnly={!editMode}
+                        onChange={e => setYearSuffix(e.target.value)}
+                        className={`font-official font-bold text-[12px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                      />
+                    </sup>
+                  </span>
+                  <span> </span>
+                  
                   <input
                     type="text"
-                    value={statusDesignation}
-                    onChange={e => setStatusDesignation(e.target.value)}
-                    className="font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 font-serif text-[16px] text-gray-950 w-full sm:w-[480px]"
-                    placeholder="student / faculty status"
+                    value={courseAndSchool}
+                    readOnly={!editMode}
+                    onChange={e => setCourseAndSchool(e.target.value)}
+                    style={{ width: `${Math.max(380, courseAndSchool.length * 8.5)}px` }}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
-                  {' '}has been seen and examined due to{' '}
+                  <span> has been seen and examined due to </span>
                   <input
                     type="text"
                     value={examinedDueTo}
+                    readOnly={!editMode}
                     onChange={e => setExaminedDueTo(e.target.value)}
-                    className="font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 font-serif text-[16px] text-gray-950 w-full sm:w-[420px]"
-                    placeholder="symptoms / illness"
+                    style={{ width: `${Math.max(320, examinedDueTo.length * 8.5)}px` }}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
                 </div>
 
-                {/* Diagnosis Section */}
+                {/* Paragraph 2: Diagnosis */}
                 <div className="flex items-baseline gap-2 pt-2">
-                  <span className="font-extrabold whitespace-nowrap">Diagnosis:</span>
+                  <span className="font-official font-bold text-[16.5px] whitespace-nowrap">Diagnosis:</span>
                   <input
                     type="text"
                     value={diagnosis}
+                    readOnly={!editMode}
                     onChange={e => setDiagnosis(e.target.value)}
-                    className="flex-1 font-extrabold border-b border-gray-400 bg-transparent focus:outline-none focus:bg-yellow-50 px-1 font-serif text-[16px] text-gray-950"
-                    placeholder="Diagnosis description"
+                    className={`flex-1 font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-1 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                   />
                 </div>
 
-                {/* Treatment Section */}
-                <div className="flex items-start gap-2 pt-1">
-                  <span className="font-extrabold whitespace-nowrap mt-1">Treatment:</span>
-                  <textarea
-                    value={treatment}
-                    onChange={e => setTreatment(e.target.value)}
-                    rows={3}
-                    className="flex-1 font-extrabold border border-transparent hover:border-gray-200 bg-transparent focus:outline-none focus:bg-yellow-50 px-2 py-1 font-serif text-[16px] text-gray-950 leading-relaxed resize-none"
-                    placeholder="List medications, dosage, and duration..."
-                  />
+                {/* Paragraph 3: Treatment (Indented block layout exactly as seen in PDF) */}
+                <div className="flex items-start gap-4 pt-1">
+                  <span className="font-official font-bold text-[16.5px] whitespace-nowrap w-28 flex-shrink-0 mt-1">Treatment:</span>
+                  <div className="flex-1">
+                    <textarea
+                      value={treatment}
+                      readOnly={!editMode}
+                      onChange={e => setTreatment(e.target.value)}
+                      rows={treatment.split('\n').length || 2}
+                      className={`w-full font-official font-bold text-[16.5px] leading-[1.8] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 resize-none p-1 overflow-hidden ${editMode ? 'border border-dashed border-gray-300 rounded hover:border-gray-400' : 'border-none'}`}
+                      placeholder="Enter prescribed dosage and treatment course..."
+                    />
+                  </div>
                 </div>
 
-                {/* Recommendations Section */}
-                <div className="flex items-start gap-2 pt-1">
-                  <span className="font-extrabold whitespace-nowrap mt-1">Recommendations:</span>
-                  <textarea
-                    value={recommendations}
-                    onChange={e => setRecommendations(e.target.value)}
-                    rows={3}
-                    className="flex-1 font-extrabold border border-transparent hover:border-gray-200 bg-transparent focus:outline-none focus:bg-yellow-50 px-2 py-1 font-serif text-[16px] text-gray-950 leading-relaxed resize-none"
-                    placeholder="Rest instructions, return to school rules, health advice..."
-                  />
+                {/* Paragraph 4: Recommendations */}
+                <div className="pt-2 text-justify">
+                  <span className="font-official font-bold text-[16.5px]">Recommendations:&nbsp;</span>
+                  <span className="inline-block w-full">
+                    <textarea
+                      value={recommendations}
+                      readOnly={!editMode}
+                      onChange={e => setRecommendations(e.target.value)}
+                      rows={2}
+                      className={`w-full font-official font-bold text-[16.5px] leading-[1.8] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 resize-none p-1 text-justify ${editMode ? 'border border-dashed border-gray-300 rounded hover:border-gray-400' : 'border-none'}`}
+                    />
+                  </span>
                 </div>
 
-                {/* Standard Disclaimer */}
-                <div className="pt-6 text-gray-800 text-[15.5px] leading-7 font-normal">
+                {/* Paragraph 5: Standard Disclaimer */}
+                <div className="pt-8 text-black text-[16px] leading-[1.8] font-official font-bold text-justify">
                   This certificate is being issued upon the request of the above patient for whatever purpose it may serve. This certificate is not intended for use in legal matters or proceedings or for issuance claim.
                 </div>
               </div>
 
-              {/* Signature Block (Bottom Right Alignment) */}
-              <div className="flex justify-end pt-12">
-                <div className="w-80 text-center font-serif">
-                  <div className="border-b-2 border-gray-900 pb-1 font-extrabold text-base uppercase text-gray-950">
+              {/* SIGNATURE & PHYSICIAN CREDENTIALS BLOCK (Bottom Right Alignment) */}
+              <div className="flex justify-end pt-16 pr-4">
+                <div className="w-[360px] font-official font-bold text-black">
+                  
+                  {/* Solid signature dividing line */}
+                  <div className="border-b-[2px] border-black pb-1 mb-1 w-full">
                     <input
                       type="text"
                       value={doctor}
+                      readOnly={!editMode}
                       onChange={e => setDoctor(e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-yellow-50 font-extrabold uppercase"
-                    />
-                  </div>
-                  <div className="font-extrabold text-xs tracking-wider uppercase pt-1 text-gray-900">
-                    <input
-                      type="text"
-                      value={doctorTitle}
-                      onChange={e => setDoctorTitle(e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-yellow-50 font-extrabold uppercase"
+                      className={`w-full text-center bg-transparent focus:outline-none font-official font-bold text-[16px] uppercase ${editMode ? 'hover:bg-amber-50/50' : 'border-none'}`}
                     />
                   </div>
 
-                  <div className="space-y-1 pt-3 text-right pr-6 font-bold text-sm text-gray-900">
+                  {/* Physician Title */}
+                  <div className="font-official font-bold text-[15px] tracking-tight uppercase text-center text-black">
+                    <input
+                      type="text"
+                      value={doctorTitle}
+                      readOnly={!editMode}
+                      onChange={e => setDoctorTitle(e.target.value)}
+                      className={`w-full text-center bg-transparent focus:outline-none font-official font-bold uppercase ${editMode ? 'hover:bg-amber-50/50' : 'border-none'}`}
+                    />
+                  </div>
+
+                  {/* License and PTR numbers (Right-aligned with exact styling) */}
+                  <div className="space-y-1.5 pt-3.5 text-right pr-4 font-official font-bold text-[15.5px] text-black">
                     <div className="flex items-center justify-end">
-                      <span>LIC:&nbsp;</span>
+                      <span className="mr-1">LIC:</span>
                       <input
                         type="text"
                         value={licenseNo}
+                        readOnly={!editMode}
                         onChange={e => setLicenseNo(e.target.value)}
-                        className="w-28 border-b border-gray-400 font-extrabold bg-transparent focus:outline-none focus:bg-yellow-50 px-1 text-right"
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                       />
                     </div>
                     <div className="flex items-center justify-end">
-                      <span>PTR:&nbsp;</span>
+                      <span>PTR:</span>
                       <input
                         type="text"
                         value={ptrNo}
+                        readOnly={!editMode}
                         onChange={e => setPtrNo(e.target.value)}
-                        className="w-28 border-b border-gray-400 font-extrabold bg-transparent focus:outline-none focus:bg-yellow-50 px-1 text-right"
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
                       />
                     </div>
                   </div>
@@ -535,7 +630,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       )}
 
       {/* ========================================================================================= */}
-      {/* VIEW 2: CERTIFICATE ARCHIVES & RECORDS LIST */}
+      {/* VIEW 2: CERTIFICATE ARCHIVES & CLINIC RECORDS */}
       {/* ========================================================================================= */}
       {activeTab === 'archives' && (
         <div className="space-y-6 animate-in fade-in duration-300">
@@ -547,14 +642,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search patient name, diagnosis, or purpose..."
+                placeholder="Search patient name, diagnosis, or ID..."
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Patient:</label>
+                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Patient:</label>
                 <select
                   value={selectedPatientFilter}
                   onChange={e => setSelectedPatientFilter(e.target.value)}
@@ -569,10 +664,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <Calendar size={14} className="text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Filter year/date..."
+                  placeholder="Filter date..."
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="bg-transparent text-xs text-gray-700 font-semibold focus:outline-none w-28"
+                  className="bg-transparent text-xs text-gray-700 font-bold focus:outline-none w-28"
                 />
                 {dateFilter && (
                   <button onClick={() => setDateFilter('')} className="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-1.5 py-0.5 rounded">Clear</button>
@@ -595,7 +690,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <div className="col-span-full bg-white rounded-2xl border border-gray-200 p-16 text-center text-gray-400 font-medium">
                 <FileText size={42} className="mx-auto mb-3 text-gray-300" />
                 <p className="text-base font-bold text-gray-600">No medical certificates found</p>
-                <p className="text-xs text-gray-400 mt-1">Try resetting your search filter or generate a new clinic certificate.</p>
+                <p className="text-xs text-gray-400 mt-1">Try resetting your search filter or issue a new clinic certificate.</p>
               </div>
             ) : (
               filteredCerts.map(cert => {
@@ -646,7 +741,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
                     <div className="flex items-center justify-between pt-3 mt-1">
                       <span className="text-[11px] font-extrabold text-[#1E5AA8] group-hover:underline flex items-center gap-1">
-                        Open & Edit in Template &rarr;
+                        Open in Official Template &rarr;
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -667,7 +762,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             setTimeout(() => window.print(), 200);
                           }}
                           className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-[#1E5AA8] transition-colors"
-                          title="Print"
+                          title="Print Certificate"
                         >
                           <Printer size={15} />
                         </button>
@@ -683,4 +778,3 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     </div>
   );
 }
-
