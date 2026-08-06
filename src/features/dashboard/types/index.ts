@@ -114,8 +114,11 @@ export interface MedicineItem {
   stock: number;
   unit: string;
   dateAdded: string;
-  status: 'Normal' | 'Low Stock';
+  status: 'Normal' | 'Low Stock' | 'Healthy' | 'Out of Stock';
   stockHistory: StockHistory[];
+  batchNumber?: string;
+  beginningQty?: number;
+  dispensed?: number;
 }
 
 export interface PurchaseHistory {
