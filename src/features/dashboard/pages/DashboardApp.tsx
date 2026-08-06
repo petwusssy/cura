@@ -29,6 +29,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [currentPage, setCurrentPage]       = useState<Page>('dashboard');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
+  const [convertingId, setConvertingId]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
 
   // Initialize with instant fallbacks so page appears in 0ms without waiting for slow API response
@@ -122,31 +123,29 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleConvertToConsultation = async (id: string) => {
-    try {
-      const existing = consultations.find(c => c.id === id);
-      if (!existing) return;
+    setConvertingId(id);
+    navigate('convert-consultation-tab');
+  };
 
-      const { id: oldId, ...rest } = existing;
-      const newConsultation = {
-        ...rest,
-        status: 'Consultation' as const,
-        timeIn: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-        complaint: existing.complaint.replace(' [CONVERTED]', ''),
-      };
+  const handleSaveConversion = async (newConsultation: Consultation) => {
+    if (!convertingId) return;
+    try {
+      const existing = consultations.find(c => c.id === convertingId);
+      if (!existing) return;
       
       const created = await consultationService.createConsultation(newConsultation);
-
-      const updatedOld = await consultationService.updateConsultation(id, { 
+      const updatedOld = await consultationService.updateConsultation(convertingId, { 
         complaint: `${existing.complaint} [CONVERTED]` 
       });
 
       setConsultations(prev => {
-        const mapped = prev.map(c => c.id === id ? updatedOld : c);
+        const mapped = prev.map(c => c.id === convertingId ? updatedOld : c);
         return [...mapped, created];
       });
+      setConvertingId(null);
     } catch (e) {
-      console.error('Failed to convert consultation', e);
-      alert('Failed to convert consultation.');
+      console.error('Failed to save conversion', e);
+      throw e;
     }
   };
 
@@ -305,6 +304,23 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
         );
+      case 'convert-consultation-tab': {
+        const initialData = consultations.find(c => c.id === convertingId);
+        const p = patients.find(p => p.id === initialData?.patientId);
+        return (
+          <NewConsultation
+            patient={p}
+            patients={patients}
+            forcedStatus="Consultation"
+            initialData={initialData}
+            onSave={async (c) => {
+              await handleSaveConversion(c);
+              navigate('consultations');
+            }}
+            onNavigate={navigate}
+          />
+        );
+      }
       case 'consultations':
         return (
           <ConsultationTab

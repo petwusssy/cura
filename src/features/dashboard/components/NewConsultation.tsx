@@ -39,8 +39,8 @@ const today = () => {
   return d.toISOString().split('T')[0];
 };
 
-export function NewConsultation({ patient, patients = [], forcedStatus, onSave, onNavigate }: NewConsultationProps) {
-  const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || '');
+export function NewConsultation({ patient, patients = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {
+  const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || initialData?.patientId || '');
   const [patientSearch, setPatientSearch] = useState('');
   const [isPatientDropdownOpen, setIsPatientDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -60,34 +60,34 @@ export function NewConsultation({ patient, patients = [], forcedStatus, onSave, 
     p.id.toLowerCase().includes(patientSearch.toLowerCase())
   );
 
-  const [date, setDate] = useState(today());
-  const [timeIn, setTimeIn] = useState(now());
-  const [complaint, setComplaint] = useState('');
+  const [date, setDate] = useState(initialData?.date || today());
+  const [timeIn, setTimeIn] = useState(initialData?.timeIn || now());
+  const [complaint, setComplaint] = useState(initialData?.complaint?.replace(' [CONVERTED]', '') || '');
   
   const [caseCategoriesList, setCaseCategoriesList] = useState(DEFAULT_CASE_CATEGORIES);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(initialData?.categories || []);
   const [newCategory, setNewCategory] = useState('');
 
-  const [doctorName, setDoctorName] = useState('Dr. Rosario Mendez');
-  const [assistingNurse, setAssistingNurse] = useState('Grace Aquino, RN');
+  const [doctorName, setDoctorName] = useState(initialData?.doctorName || 'Dr. Rosario Mendez');
+  const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'Grace Aquino, RN');
   
-  const [vitals, setVitals] = useState({ height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
-  const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [vitals, setVitals] = useState(initialData?.vitals || { height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
+  const [treatments, setTreatments] = useState<Treatment[]>(initialData?.treatments || []);
   
-  const [earlyDismissal, setEarlyDismissal] = useState(false);
-  const [dismissalDestination, setDismissalDestination] = useState('Sent Home');
-  const [earlyReason, setEarlyReason] = useState('');
-  const [fetcherName, setFetcherName] = useState('');
-  const [fetcherIdImage, setFetcherIdImage] = useState('');
+  const [earlyDismissal, setEarlyDismissal] = useState(initialData?.earlyDismissal || false);
+  const [dismissalDestination, setDismissalDestination] = useState(initialData?.dismissalDestination || 'Sent Home');
+  const [earlyReason, setEarlyReason] = useState(initialData?.earlyDismissalReason || '');
+  const [fetcherName, setFetcherName] = useState(initialData?.fetcherName || '');
+  const [fetcherIdImage, setFetcherIdImage] = useState(initialData?.fetcherIdImage || '');
   
-  const [nurseNotes, setNurseNotes] = useState('');
-  const [recommendations, setRecommendations] = useState('');
-  const [followUp, setFollowUp] = useState('');
+  const [nurseNotes, setNurseNotes] = useState(initialData?.nurseNotes || '');
+  const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
+  const [followUp, setFollowUp] = useState(initialData?.followUp || '');
   const [status, setStatus] = useState<'Consultation' | 'Non-Consultation'>(forcedStatus || 'Non-Consultation');
 
-  const [purposeOfVisit, setPurposeOfVisit] = useState('');
-  const [operationalNotes, setOperationalNotes] = useState('');
-  const [prescriptionImage, setPrescriptionImage] = useState('');
+  const [purposeOfVisit, setPurposeOfVisit] = useState(initialData?.purposeOfVisit || '');
+  const [operationalNotes, setOperationalNotes] = useState(initialData?.operationalNotes || '');
+  const [prescriptionImage, setPrescriptionImage] = useState(initialData?.prescriptionImage || '');
 
   const toggleCategory = (cat: string) => {
     setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);

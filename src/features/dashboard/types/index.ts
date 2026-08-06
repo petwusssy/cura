@@ -9,6 +9,7 @@ export type Page =
   | 'new-consultation'
   | 'new-consultation-tab'
   | 'new-non-consultation-tab'
+  | 'convert-consultation-tab'
   | 'consultations'
   | 'non-consultations'
   | 'inventory'
