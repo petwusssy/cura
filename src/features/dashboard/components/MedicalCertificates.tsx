@@ -13,53 +13,57 @@ interface MedicalCertificatesProps {
   onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
 }
 
-// High-fidelity Bagong Pilipinas Emblem matching the official Government logo reference
+// High-fidelity Bagong Pilipinas Emblem rendering exact official graphic logo
 function BagongPilipinasLogo() {
+  const [imgError, setImgError] = useState(false);
+  
   return (
-    <div className="flex flex-col items-center justify-center select-none w-28">
-      <div className="relative w-[70px] h-[70px] mb-0.5">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xs">
-          {/* Background and base hemisphere structure */}
-          <defs>
-            <linearGradient id="redRibbon" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8A0000" />
-              <stop offset="50%" stopColor="#D21034" />
-              <stop offset="100%" stopColor="#FF2341" />
-            </linearGradient>
-            <linearGradient id="blueRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00186B" />
-              <stop offset="50%" stopColor="#0038A8" />
-              <stop offset="100%" stopColor="#1C65DB" />
-            </linearGradient>
-            <linearGradient id="sunGold" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFF200" />
-              <stop offset="100%" stopColor="#F5B300" />
-            </linearGradient>
-          </defs>
-          
-          {/* Three Hovering Golden Stars at top */}
-          <path d="M50 8 L52 13 L57 13 L53 16 L55 21 L50 18 L45 21 L47 16 L43 13 L48 13 Z" fill="url(#sunGold)"/>
-          <path d="M31 16 L33 20 L38 20 L34 23 L36 27 L31 24 L26 27 L28 23 L24 20 L29 20 Z" fill="url(#sunGold)"/>
-          <path d="M69 16 L71 20 L76 20 L72 23 L74 27 L69 24 L64 27 L66 23 L62 20 L67 20 Z" fill="url(#sunGold)"/>
-          
-          {/* Radiant Rising Sun with rays pointing upwards */}
-          <path d="M50 24 L55 35 L66 30 L60 41 L72 43 L63 51 L72 61 L50 61 L28 61 L37 51 L28 43 L40 41 L34 30 L45 35 Z" fill="url(#sunGold)"/>
-          <circle cx="50" cy="53" r="16" fill="url(#sunGold)"/>
-          
-          {/* Woven Swirling Spherical Ribbons (Flag Blue & Red Bands) */}
-          <path d="M14 45 C14 68 30 88 50 92 C36 84 28 68 28 50 C28 48 28 45 14 45 Z" fill="url(#blueRibbon)"/>
-          <path d="M86 45 C86 68 70 88 50 92 C64 84 72 68 72 50 C72 48 72 45 86 45 Z" fill="url(#redRibbon)"/>
-          
-          {/* Sweeping crossover arcs forming the spherical cradle */}
-          <path d="M18 58 C26 78 54 94 82 62 C68 84 38 82 20 66 C18 64 18 60 18 58 Z" fill="url(#redRibbon)"/>
-          <path d="M82 58 C74 78 46 94 18 62 C32 84 62 82 80 66 C82 64 82 60 82 58 Z" fill="url(#blueRibbon)"/>
-          
-          <path d="M26 40 C34 56 66 56 74 40 C64 54 36 54 26 40 Z" fill="#FFFFFF" opacity="0.3"/>
-        </svg>
-      </div>
-      <span className="text-[10px] font-black text-[#002060] uppercase tracking-tight leading-none font-sans italic mt-1 text-center">
-        BAGONG PILIPINAS
-      </span>
+    <div className="flex flex-col items-center justify-center select-none w-32 flex-shrink-0">
+      {!imgError ? (
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Bagong_Pilipinas_logo.svg/800px-Bagong_Pilipinas_logo.svg.png"
+          onError={() => setImgError(true)}
+          alt="Bagong Pilipinas Official Logo"
+          className="w-[92px] h-[92px] object-contain drop-shadow-2xs select-none pointer-events-none"
+          crossOrigin="anonymous"
+        />
+      ) : (
+        /* Fallback high-fidelity vector reproduction if network is unreachable */
+        <div className="flex flex-col items-center justify-center w-full">
+          <div className="relative w-[76px] h-[76px] mb-0.5">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xs">
+              <defs>
+                <linearGradient id="redRibbon" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#8A0000" />
+                  <stop offset="50%" stopColor="#D21034" />
+                  <stop offset="100%" stopColor="#FF2341" />
+                </linearGradient>
+                <linearGradient id="blueRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00186B" />
+                  <stop offset="50%" stopColor="#0038A8" />
+                  <stop offset="100%" stopColor="#1C65DB" />
+                </linearGradient>
+                <linearGradient id="sunGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF200" />
+                  <stop offset="100%" stopColor="#F5B300" />
+                </linearGradient>
+              </defs>
+              <path d="M50 6 L52.5 11.5 L58 11.5 L53.5 15 L55 20 L50 17 L45 20 L46.5 15 L42 11.5 L47.5 11.5 Z" fill="url(#sunGold)"/>
+              <path d="M30 14 L32 18 L37 18 L33 21 L35 25 L30 22 L25 25 L27 21 L23 18 L28 18 Z" fill="url(#sunGold)"/>
+              <path d="M70 14 L72 18 L77 18 L73 21 L75 25 L70 22 L65 25 L67 21 L63 18 L68 18 Z" fill="url(#sunGold)"/>
+              <path d="M50 22 L55 33 L66 28 L60 39 L72 41 L63 49 L72 59 L50 59 L28 59 L37 49 L28 41 L40 39 L34 28 L45 33 Z" fill="url(#sunGold)"/>
+              <circle cx="50" cy="51" r="16" fill="url(#sunGold)"/>
+              <path d="M12 44 C12 68 28 88 50 92 C36 84 26 68 26 50 C26 48 26 45 12 44 Z" fill="url(#blueRibbon)"/>
+              <path d="M88 44 C88 68 72 88 50 92 C64 84 74 68 74 50 C74 48 74 45 88 44 Z" fill="url(#redRibbon)"/>
+              <path d="M16 56 C24 78 54 94 84 62 C68 84 38 82 18 64 C16 62 16 58 16 56 Z" fill="url(#redRibbon)"/>
+              <path d="M84 56 C76 78 46 94 16 62 C32 84 62 82 82 64 C84 62 84 58 84 56 Z" fill="url(#blueRibbon)"/>
+            </svg>
+          </div>
+          <span className="text-[11px] font-black text-[#002060] uppercase tracking-tight leading-none font-sans italic mt-1 text-center select-all">
+            BAGONG PILIPINAS
+          </span>
+        </div>
+      )}
     </div>
   );
 }
