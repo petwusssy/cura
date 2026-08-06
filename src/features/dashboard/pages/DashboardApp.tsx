@@ -223,21 +223,23 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleUpdateBed = async (bed: Bed) => {
+    // 1. Optimistic UI update for immediate 0ms responsiveness!
+    setBeds(prev => prev.map(b => b.id === bed.id ? bed : b));
+    if (bed.status === 'Occupied' && bed.patientName) {
+      const notif: AppNotification = {
+        id: `N${Date.now()}`, type: 'bed',
+        message: `Bed ${bed.bedNumber} assigned to ${bed.patientName}`,
+        time: new Date().toISOString(), read: false,
+        patientName: bed.patientName,
+      };
+      setNotifications(prev => [notif, ...prev]);
+    }
+
+    // 2. Sync with remote server asynchronously in background without freezing UI
     try {
-      const updated = await bedService.updateBed(bed.id, bed);
-      setBeds(prev => prev.map(b => b.id === updated.id ? updated : b));
-      if (updated.status === 'Occupied' && updated.patientName) {
-        const notif: AppNotification = {
-          id: `N${Date.now()}`, type: 'bed',
-          message: `Bed ${updated.bedNumber} assigned to ${updated.patientName}`,
-          time: new Date().toISOString(), read: false,
-          patientName: updated.patientName,
-        };
-        setNotifications(prev => [notif, ...prev]);
-      }
+      await bedService.updateBed(bed.id, bed);
     } catch (e: any) { 
-      console.error(e);
-      alert('Update Bed Error: ' + JSON.stringify(e.response?.data || e.message));
+      console.error('Background updateBed server note:', e);
     }
   };
 

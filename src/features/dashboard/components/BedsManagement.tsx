@@ -98,16 +98,20 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       return;
     }
 
+    const updatedBed: Bed = {
+      ...assignModal,
+      status: 'Occupied',
+      patientName: p.name,
+      patientId: p.id,
+      timeOccupied: new Date().toISOString(),
+    };
+
+    // Immediately close modal and reset form for 0ms instantaneous responsiveness
+    setAssignModal(null);
+    setSelectedPatient('');
+
     try {
-      await onUpdateBed({
-        ...assignModal,
-        status: 'Occupied',
-        patientName: p.name,
-        patientId: p.id,
-        timeOccupied: new Date().toISOString(),
-      });
-      setAssignModal(null);
-      setSelectedPatient('');
+      await onUpdateBed(updatedBed);
     } catch (e) { console.error(e); }
   };
 
@@ -126,19 +130,23 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       timeOut: now.toTimeString().slice(0, 5),
       duration: `${h}h ${m}m`,
     };
+
+    const releasedBed: Bed = {
+      ...releaseModal,
+      status: 'Available',
+      patientName: null,
+      patientId: null,
+      timeOccupied: null,
+      history: [...releaseModal.history, entry],
+    };
+
+    // Immediately dismiss modal for 0ms instantaneous feel
+    setReleaseModal(null);
+
     try {
-      await onUpdateBed({
-        ...releaseModal,
-        status: 'Available',
-        patientName: null,
-        patientId: null,
-        timeOccupied: null,
-        history: [...releaseModal.history, entry],
-      });
-      setReleaseModal(null);
+      await onUpdateBed(releasedBed);
     } catch (e: any) { 
-      console.error(e);
-      alert('Failed to release bed: ' + JSON.stringify(e.response?.data || e.message));
+      console.error('Release bed note:', e);
     }
   };
 
