@@ -157,124 +157,124 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
             Track medicine batches, low stock alerts, and refill schedules.
           </p>
         </div>
-        {!showAddForm && (
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
-            style={{ background: PRIMARY }}
-          >
-            <Plus size={18} strokeWidth={2.5} /> Add Medicine
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
+          style={{ background: PRIMARY }}
+        >
+          <Plus size={18} strokeWidth={2.5} /> Add Medicine
+        </button>
       </div>
 
-      {/* Register New Medicine Batch Inline Form */}
+      {/* Floating Register New Medicine Batch Modal Popup */}
       {showAddForm && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-top-3 duration-300">
-          <h2 className="text-[13px] font-extrabold uppercase tracking-wider mb-5" style={{ color: '#1E5AA8' }}>
-            Register New Medicine Batch
-          </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-2xl w-full max-w-4xl mx-auto animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+            <h2 className="text-sm font-extrabold uppercase tracking-wider mb-6" style={{ color: '#1E5AA8' }}>
+              Register New Medicine Batch
+            </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Medicine Name
-              </label>
-              <input
-                type="text"
-                value={newMed.name}
-                onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}
-                placeholder="Biogesic 500mg tab"
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Medicine Name
+                </label>
+                <input
+                  type="text"
+                  value={newMed.name}
+                  onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}
+                  placeholder="Biogesic 500mg tab"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Batch Number
+                </label>
+                <input
+                  type="text"
+                  value={newMed.batchNumber}
+                  onChange={e => setNewMed(n => ({ ...n, batchNumber: e.target.value.toUpperCase() }))}
+                  placeholder="B-BGS101"
+                  className="w-full font-mono bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Beginning Inventory Qty
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={newMed.stock}
+                  onChange={e => setNewMed(n => ({ ...n, stock: e.target.value }))}
+                  placeholder="100"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Date Added
+                </label>
+                <input
+                  type="date"
+                  value={newMed.dateAdded}
+                  onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Batch Number
-              </label>
-              <input
-                type="text"
-                value={newMed.batchNumber}
-                onChange={e => setNewMed(n => ({ ...n, batchNumber: e.target.value.toUpperCase() }))}
-                placeholder="B-BGS101"
-                className="w-full font-mono bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Stock Unit Type
+                </label>
+                <select
+                  value={newMed.unit}
+                  onChange={e => setNewMed(n => ({ ...n, unit: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                >
+                  {['Tablet', 'Bottle', 'Capsule', 'Sachet', 'Ointment', 'Tube', 'Respules', 'Nebules', 'Vials', 'Packs', 'Granules', 'Drops', 'Piece'].map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Beginning Inventory Qty
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={newMed.stock}
-                onChange={e => setNewMed(n => ({ ...n, stock: e.target.value }))}
-                placeholder="100"
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
-            </div>
+              <div>
+                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Low Stock Threshold
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newMed.threshold}
+                  onChange={e => setNewMed(n => ({ ...n, threshold: e.target.value }))}
+                  placeholder="15"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Date Added
-              </label>
-              <input
-                type="date"
-                value={newMed.dateAdded}
-                onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Stock Unit Type
-              </label>
-              <select
-                value={newMed.unit}
-                onChange={e => setNewMed(n => ({ ...n, unit: e.target.value }))}
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              >
-                {['Tablet', 'Bottle', 'Capsule', 'Sachet', 'Ointment', 'Tube', 'Respules', 'Nebules', 'Vials', 'Packs', 'Granules', 'Drops', 'Piece'].map(u => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                Low Stock Threshold
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={newMed.threshold}
-                onChange={e => setNewMed(n => ({ ...n, threshold: e.target.value }))}
-                placeholder="15"
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
-            </div>
-
-            <div className="lg:col-span-2 flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="px-6 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors shadow-2xs"
-              >
-                CANCEL
-              </button>
-              <button
-                type="button"
-                onClick={handleAddNewMedicine}
-                className="px-8 py-2 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95"
-                style={{ background: '#0A369D' }}
-              >
-                CREATE
-              </button>
+              <div className="lg:col-span-2 flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors shadow-2xs"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddNewMedicine}
+                  className="px-8 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95"
+                  style={{ background: '#0A369D' }}
+                >
+                  CREATE
+                </button>
+              </div>
             </div>
           </div>
         </div>
