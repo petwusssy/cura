@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
-import { mockMedicines } from '../services/mockData';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -15,8 +14,7 @@ interface InventoryProps {
 }
 
 export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: InventoryProps) {
-  // Use provided medicines or fallback to mockMedicines if empty or missing clinic catalog
-  const displayMedicines = (medicines && medicines.length >= 40) ? medicines : mockMedicines;
+  const displayMedicines = medicines ?? [];
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock' | 'Healthy'>('All');

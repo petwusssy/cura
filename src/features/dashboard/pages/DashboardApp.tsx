@@ -17,7 +17,7 @@ import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
 import {
-  mockPatients, mockConsultations, mockTransfers, mockMedicines,
+  mockPatients, mockConsultations, mockTransfers,
   mockPurchaseRequests, mockMedicalCerts, mockBeds, mockNotifications,
 } from '../services/mockData';
 
@@ -36,7 +36,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [patients, setPatients]                 = useState<Patient[]>(mockPatients);
   const [consultations, setConsultations]       = useState<Consultation[]>(mockConsultations);
   const [transfers, setTransfers]               = useState<HospitalTransfer[]>(mockTransfers);
-  const [medicines, setMedicines]               = useState<MedicineItem[]>(mockMedicines);
+  const [medicines, setMedicines]               = useState<MedicineItem[]>([]);
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>(mockPurchaseRequests);
   const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(mockMedicalCerts);
   const [beds, setBeds]                         = useState<Bed[]>(mockBeds);
@@ -50,7 +50,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   useEffect(() => {
     patientService.getPatients().then(d => d && d.length > 0 && setPatients(d)).catch(console.error);
     consultationService.getConsultations().then(d => d && d.length > 0 && setConsultations(d)).catch(console.error);
-    medicineService.getMedicines().then(d => d && d.length > 0 && setMedicines(d)).catch(console.error);
+    medicineService.getMedicines().then(d => d !== undefined && d !== null && setMedicines(d)).catch(console.error);
     medicineService.getPurchaseRequests().then(d => d && d.length > 0 && setPurchaseRequests(d)).catch(console.error);
     bedService.getBeds().then(d => d && d.length > 0 && setBeds(d)).catch(console.error);
     certificateService.getCertificates().then(d => d && d.length > 0 && setMedicalCerts(d)).catch(console.error);
@@ -157,10 +157,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleAddMedicine = async (med: MedicineItem) => {
+    // Optimistically add to state immediately
     setMedicines(prev => [...prev, med]);
     try {
       const { id, ...rest } = med;
-      await medicineService.createMedicine(rest);
+      const created = await medicineService.createMedicine(rest);
+      // Replace temp local item with the server-assigned item (real UUID)
+      setMedicines(prev => prev.map(m => m.id === med.id ? created : m));
     } catch (e) { 
       console.error('API failed, but state updated locally:', e); 
     }
