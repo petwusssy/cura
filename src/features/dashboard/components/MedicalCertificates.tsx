@@ -244,17 +244,27 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
   const handleDownloadPDF = async () => {
-    // 1. Force auto-save to archives immediately when downloaded!
-    await syncToArchives();
-    
-    // 2. Switch to static clean preview mode (remove editing underlines)
-    setEditMode(false);
+    // 1. Lock UI immediately so user gets feedback right away
     setIsDownloading(true);
-    triggerToast("Generating automatic direct PDF file download... Please wait!");
+    triggerToast("Generating PDF file... Please wait!");
+
+    // 2. Auto-save to archives in the background (non-blocking — don't let API hang block PDF)
+    syncToArchives().catch(e => console.error('Background archive sync error:', e));
+
+    // 3. Switch to static clean preview mode (remove editing underlines)
+    setEditMode(false);
+
+    // 4. Set up a safety timeout — if html2pdf hangs for more than 15s, restore UI
+    const safetyTimeout = setTimeout(() => {
+      setIsDownloading(false);
+      setEditMode(true);
+      triggerToast("PDF generation timed out. Please try again.");
+    }, 15000);
 
     setTimeout(async () => {
       const element = document.getElementById('official-med-cert-page');
       if (!element) {
+        clearTimeout(safetyTimeout);
         setIsDownloading(false);
         setEditMode(true);
         triggerToast("Error: Document element not found.");
@@ -267,23 +277,31 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         const opt = {
           margin: 0,
           filename: filename,
-          image: { type: 'jpeg', quality: 1.0 },
-          html2canvas: { scale: 2, useCORS: true, logging: true, scrollY: 0, scale: 2 },
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: false,
+            allowTaint: true,
+            logging: false,
+            scrollY: 0,
+          },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
         await html2pdf().from(element).set(opt).save();
-        
+
+        clearTimeout(safetyTimeout);
         setIsDownloading(false);
         setEditMode(true);
-        triggerToast(`✅ Successfully downloaded ${filename} directly to your computer! Recorded to Archives.`);
+        triggerToast(`✅ Successfully downloaded ${filename} to your computer!`);
       } catch (err: any) {
+        clearTimeout(safetyTimeout);
         console.error('PDF Generation Error:', err);
         setIsDownloading(false);
         setEditMode(true);
         triggerToast("Failed to generate PDF. Please try again or check your browser settings.");
       }
-    }, 400);
+    }, 300);
   };
 
   const handlePrint = async () => {
