@@ -216,6 +216,16 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }
     } catch (e) { console.error(e); }
   };
+
+  const handleDeletePurchaseRequest = async (id: string) => {
+    // Optimistic update: remove from state immediately so tracker and PRF template sync instantly
+    setPurchaseRequests(prev => prev.filter(r => r.id !== id));
+    try {
+      await medicineService.deletePurchaseRequest(id);
+    } catch (e) {
+      console.error('API delete failed, but state updated locally:', e);
+    }
+  };
   const handleAddMedCert = async (cert: MedicalCertificate) => {
     try {
       const { id, ...rest } = cert;
@@ -363,6 +373,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             purchaseRequests={purchaseRequests} medicines={medicines}
             onUpdateRequest={handleUpdatePurchaseRequest}
             onAddRequest={handleAddPurchaseRequest}
+            onDeleteRequest={handleDeletePurchaseRequest}
           />
         );
       case 'medical-certificates':

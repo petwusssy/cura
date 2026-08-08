@@ -11,6 +11,7 @@ interface PurchaseReceiptsProps {
   medicines: MedicineItem[];
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
+  onDeleteRequest: (id: string) => void | Promise<void>;
 }
 
 interface PrfItemRow {
@@ -34,7 +35,7 @@ function reqToPrfRow(req: PurchaseRequest): PrfItemRow {
   };
 }
 
-export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest }: PurchaseReceiptsProps) {
+export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
@@ -839,6 +840,13 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                         >
                           <span>Delivery Log ({req.history.length})</span>
                           {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                        </button>
+                        <button
+                          onClick={() => onDeleteRequest(req.id)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors"
+                          title="Remove this item"
+                        >
+                          <Trash2 size={14} /> Remove
                         </button>
                       </div>
                     </div>

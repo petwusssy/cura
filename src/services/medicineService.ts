@@ -39,5 +39,9 @@ export const medicineService = {
   updatePurchaseRequest: async (id: string, data: Partial<PurchaseRequest>): Promise<PurchaseRequest> => {
     const response = await api.put<PurchaseRequest>(`/purchase-requests/${id}/`, data);
     return response.data;
-  }
+  },
+
+  deletePurchaseRequest: async (id: string): Promise<void> => {
+    await api.delete(`/purchase-requests/${id}/`);
+  },
 };
