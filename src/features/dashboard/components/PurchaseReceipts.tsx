@@ -47,7 +47,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
   // New Tracker Request state
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newReq, setNewReq] = useState({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', prfNo: 'PRF-2026-001' });
+  const [newReq, setNewReq] = useState({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: 'PRF-2026-001' });
 
   // Editable PRF Document state (so users can type immediately and print)
   const [prfNo, setPrfNo] = useState('PRF-2026-001');
@@ -118,7 +118,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       description: newReq.description || undefined,
       unit: newReq.unit || 'Tablet',
       prfNo: newReq.prfNo || prfNo,
-      unitPrice: 0,
+      unitPrice: parseFloat(newReq.unitPrice) || 0,
       requestedQty: parseInt(newReq.requestedQty) || 1,
       receivedQty: 0,
       date: new Date().toISOString().split('T')[0],
@@ -132,7 +132,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
         setPrfItems(prev => [...prev, reqToPrfRow(req)]);
       }
       setShowNewForm(false);
-      setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', prfNo: prfNo });
+      setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: prfNo });
     } catch (e) { console.error(e); }
   };
 
@@ -1002,6 +1002,18 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                     className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1">Unit Price (₱)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={newReq.unitPrice}
+                  onChange={e => setNewReq(n => ({ ...n, unitPrice: e.target.value }))}
+                  placeholder="0.00"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                />
               </div>
               <div>
                 <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1">PRF Reference No.</label>
