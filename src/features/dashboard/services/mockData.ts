@@ -217,42 +217,8 @@ export const mockMedicines: MedicineItem[] = [
   { id: 'med-43', name: 'Ventolin nebules', batchNumber: 'B-VEN028', beginningQty: 28, dispensed: 9, stock: 19, unit: 'Nebules', dateAdded: '2026-05-12', status: 'Healthy', stockHistory: [{ date: '2026-05-12', qty: 28, type: 'add', note: 'Beginning Inventory' }, { date: '2026-05-30', qty: 9, type: 'dispense', note: 'Monthly clinic consumption' }] },
 ];
 
-export const mockPurchaseRequests: PurchaseRequest[] = [
-  {
-    id: 'PR-001', prfNo: 'PRF-2026-001', medicine: '70 % Alcohol', description: 'Green cross Alcohol', unit: 'Gallon', unitPrice: 450, requestedQty: 2, receivedQty: 1, date: '2026-08-01',
-    status: 'Partial',
-    history: [
-      { date: '2026-08-01', qty: 0, note: 'Requisition submitted via PRF-2026-001' },
-      { date: '2026-08-03', qty: 1, note: 'Partial delivery received from Central Supply' },
-    ],
-  },
-  {
-    id: 'PR-002', prfNo: 'PRF-2026-001', medicine: 'Citirizine Dihydrochloride 10mg Tablet', description: 'Alnix', unit: 'Tablet', unitPrice: 15, requestedQty: 40, receivedQty: 0, date: '2026-08-01',
-    status: 'Pending',
-    history: [{ date: '2026-08-01', qty: 0, note: 'Requisition submitted via PRF-2026-001' }],
-  },
-  {
-    id: 'PR-003', prfNo: 'PRF-2026-001', medicine: 'Oral rehydration Salts', description: 'Hydrite', unit: 'Sachet', unitPrice: 12.5, requestedQty: 300, receivedQty: 300, date: '2026-07-28',
-    status: 'Complete',
-    history: [
-      { date: '2026-07-28', qty: 0, note: 'Requisition submitted via PRF-2026-001' },
-      { date: '2026-07-30', qty: 300, note: 'Full quantity received and verified' },
-    ],
-  },
-  {
-    id: 'PR-004', prfNo: 'PRF-2026-001', medicine: 'Domperidone 10mg Tablet', description: 'Motillium', unit: 'Tablet', unitPrice: 22, requestedQty: 20, receivedQty: 0, date: '2026-08-02',
-    status: 'Pending',
-    history: [{ date: '2026-08-02', qty: 0, note: 'Requisition submitted via PRF-2026-001' }],
-  },
-  {
-    id: 'PR-005', prfNo: 'PRF-2026-001', medicine: 'Pantoplus 40mg/30mg Tablet', description: 'Pantoplus', unit: 'Tablet', unitPrice: 35, requestedQty: 30, receivedQty: 15, date: '2026-08-02',
-    status: 'Partial',
-    history: [
-      { date: '2026-08-02', qty: 0, note: 'Requisition submitted via PRF-2026-001' },
-      { date: '2026-08-04', qty: 15, note: 'First batch delivered by supplier' },
-    ],
-  },
-];
+export const mockPurchaseRequests: PurchaseRequest[] = [];
+
 
 export const mockMedicalCerts: MedicalCertificate[] = [
   {

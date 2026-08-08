@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2 } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
@@ -22,22 +22,17 @@ interface PrfItemRow {
   unitPrice: number | string;
 }
 
-const initialPrfRows: PrfItemRow[] = [
-  { id: '1', qty: 2, unit: 'Gallon', item: '70 % Alcohol', description: 'Green cross Alcohol', unitPrice: 450 },
-  { id: '2', qty: 40, unit: 'Tablet', item: 'Citirizine Dihydrochloride 10mg Tablet', description: 'Alnix', unitPrice: 15 },
-  { id: '3', qty: 300, unit: 'Sachet', item: 'Oral rehydration Salts', description: 'Hydrite', unitPrice: 12.5 },
-  { id: '4', qty: 2, unit: 'pc', item: 'Hypromellose Eye Drops', description: 'Hypromellose 3mg/mL drops', unitPrice: 280 },
-  { id: '5', qty: 20, unit: 'Tablet', item: 'Domperidone 10mg Tablet', description: 'Motillium', unitPrice: 22 },
-  { id: '6', qty: 30, unit: 'Tablet', item: 'Pantoplus 40mg/30mg Tablet', description: 'Pantoplus', unitPrice: 35 },
-  { id: '7', qty: 20, unit: 'Tablet', item: 'Betahistine Dihydrochloride 16mg tablet', description: 'serc', unitPrice: 45 },
-  { id: '8', qty: 10, unit: 'Tablet', item: 'Clonidine 75 mcg /tablet', description: 'Catapres', unitPrice: 18 },
-  { id: '9', qty: 3, unit: 'pack', item: 'Band aid 100s', description: 'Band aid 100s', unitPrice: 120 },
-  { id: '10', qty: 10, unit: 'pc', item: 'Elastic Bandage', description: '2 inches', unitPrice: 35 },
-  { id: '11', qty: 10, unit: 'pc', item: 'Non Rebreather Mask', description: 'Adult', unitPrice: 150 },
-  { id: '12', qty: 15, unit: 'pc', item: 'Correction Tape', description: 'Standard 5m', unitPrice: 25 },
-  { id: '13', qty: 5, unit: 'pack', item: 'Super Elastic Ice Bag', description: '100s 4x12', unitPrice: 85 },
-  { id: '14', qty: 5, unit: 'pack', item: 'Ice Candy Bag', description: '1 ½ x10', unitPrice: 45 },
-];
+// Helper: convert a PurchaseRequest to a PrfItemRow
+function reqToPrfRow(req: PurchaseRequest): PrfItemRow {
+  return {
+    id: req.id,
+    qty: req.requestedQty,
+    unit: req.unit || 'pc',
+    item: req.medicine,
+    description: req.description || '',
+    unitPrice: req.unitPrice ?? 0,
+  };
+}
 
 export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
@@ -57,7 +52,23 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   // Editable PRF Document state (so users can type immediately and print)
   const [prfNo, setPrfNo] = useState('PRF-2026-001');
   const [department, setDepartment] = useState('Medical-Dental Clinic');
-  const [prfItems, setPrfItems] = useState<PrfItemRow[]>(initialPrfRows);
+
+  // prfItems is derived from purchaseRequests that match the current prfNo
+  const [prfItems, setPrfItems] = useState<PrfItemRow[]>(() =>
+    purchaseRequests
+      .filter(r => r.prfNo === 'PRF-2026-001')
+      .map(reqToPrfRow)
+  );
+
+  // Keep prfItems in sync whenever purchaseRequests changes (e.g. after a new Log Item is saved)
+  useEffect(() => {
+    setPrfItems(
+      purchaseRequests
+        .filter(r => r.prfNo === prfNo)
+        .map(reqToPrfRow)
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseRequests, prfNo]);
   const [purpose, setPurpose] = useState('Medical-Dental Clinic Routine Requisition & Replenishment');
   const [dateNeeded, setDateNeeded] = useState('To follow lead time in Purchasing');
 
@@ -100,12 +111,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
   const handleNewRequest = async () => {
     if (!newReq.medicine || !newReq.requestedQty) return;
+    const tempId = `PR-${Date.now()}`;
     const req: PurchaseRequest = {
-      id: `PR-${String(purchaseRequests.length + 1).padStart(3, '0')}`,
+      id: tempId,
       medicine: newReq.medicine,
       description: newReq.description || undefined,
       unit: newReq.unit || 'Tablet',
       prfNo: newReq.prfNo || prfNo,
+      unitPrice: 0,
       requestedQty: parseInt(newReq.requestedQty) || 1,
       receivedQty: 0,
       date: new Date().toISOString().split('T')[0],
@@ -114,6 +127,10 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     };
     try {
       await onAddRequest(req);
+      // Also add to PRF template immediately if it belongs to the current PRF
+      if ((newReq.prfNo || prfNo) === prfNo) {
+        setPrfItems(prev => [...prev, reqToPrfRow(req)]);
+      }
       setShowNewForm(false);
       setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', prfNo: prfNo });
     } catch (e) { console.error(e); }
@@ -265,9 +282,16 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 <BookmarkCheck size={15} /> Save to Delivery Tracker
               </button>
               <button
-                onClick={() => setPrfItems(initialPrfRows)}
+                onClick={() => {
+                  // Reset: re-derive from purchaseRequests for current prfNo
+                  setPrfItems(
+                    purchaseRequests
+                      .filter(r => r.prfNo === prfNo)
+                      .map(reqToPrfRow)
+                  );
+                }}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors"
-                title="Reset to sample data"
+                title="Reset to saved tracker data"
               >
                 <RefreshCw size={14} /> Reset
               </button>

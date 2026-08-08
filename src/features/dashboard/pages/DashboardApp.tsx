@@ -179,12 +179,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleAddPurchaseRequest = async (req: PurchaseRequest) => {
+    // Optimistic update: immediately add to state so PRF template reflects it instantly
+    setPurchaseRequests(prev => [req, ...prev]);
     try {
       const { id, ...rest } = req;
       const created = await medicineService.createPurchaseRequest(rest);
-      setPurchaseRequests(prev => [created, ...prev]);
-    } catch (e) { console.error(e); }
+      // Replace temp item with server-assigned item (real UUID)
+      setPurchaseRequests(prev => prev.map(r => r.id === req.id ? created : r));
+    } catch (e) {
+      console.error('API failed, but state updated locally:', e);
+    }
   };
+
 
   const handleUpdatePurchaseRequest = async (req: PurchaseRequest) => {
     try {
