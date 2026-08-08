@@ -126,13 +126,18 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setTimeout(() => setShowToast(null), 4000);
   };
 
-  // AUTOMATIC ARCHIVING: Automatically save/update the certificate record whenever edited, loaded, or used!
+  // Save the certificate record to archives explicitly
   const syncToArchives = useCallback(async () => {
-    const existing = medicalCerts.find(c => c.id === selectedCertId);
+    const certIdToUse = selectedCertId || `MC-${Date.now().toString().slice(-6)}`;
+    const existing = medicalCerts.find(c => c.id === certIdToUse);
     const fullDesignation = `${yearLevel ? `${yearLevel}${yearSuffix} ` : ''}${courseAndSchool}`;
 
+    if (!selectedCertId) {
+      setSelectedCertId(certIdToUse);
+    }
+
     const updatedCert: MedicalCertificate = {
-      id: selectedCertId || `MC-${Date.now()}`,
+      id: certIdToUse,
       patientId: currentPatientId || 'STU-2024-001',
       date: date || new Date().toLocaleDateString(),
       purpose: purpose || 'Medical Certificate issuance',
@@ -158,21 +163,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         await onAddCert(updatedCert);
       }
     } catch (e) {
-      console.error('Error auto-saving certificate to archive:', e);
+      console.error('Error saving certificate to archive:', e);
     }
   }, [selectedCertId, currentPatientId, date, purpose, diagnosis, recommendations, doctor, patientName, age, sex, yearLevel, yearSuffix, courseAndSchool, examinedDueTo, treatment, doctorTitle, licenseNo, ptrNo, medicalCerts, onAddCert, onUpdateCert]);
-
-  // Trigger automatic saving to records whenever fields are updated (debounced to avoid excessive writes)
-  useEffect(() => {
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
-      return;
-    }
-    const timer = setTimeout(() => {
-      syncToArchives();
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [patientName, date, diagnosis, treatment, recommendations, examinedDueTo, doctor, licenseNo, ptrNo, syncToArchives]);
 
   const handleSelectCert = (cert: MedicalCertificate) => {
     setSelectedCertId(cert.id);
@@ -230,8 +223,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       setYearSuffix('');
       setCourseAndSchool(`Patient of University of the Assumption Clinic`);
     }
-    triggerToast(`Populated template for ${p.name} and automatically recorded to archives.`);
-    setTimeout(() => syncToArchives(), 100);
+    triggerToast(`Populated template for ${p.name}. Click 'Save to Archives' to record it.`);
   };
 
   const handleSaveCertificate = async () => {
@@ -308,15 +300,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       ptrNo,
     };
 
-    try {
-      await onAddCert(newCert);
-    } catch (e) { console.error(e); }
-
     // Close modal, reset form, switch to template tab
     setShowIssueCertModal(false);
     setIssueCertForm({ patientId: '', date: '', name: '', age: '', gender: 'FEMALE', yearLevel: '', courseOrDepartment: '', complaint: '', diagnosis: '', treatment: '', recommendations: '' });
     setActiveTab('template');
-    triggerToast('✅ Certificate issued and loaded into Official PDF Template!');
+    triggerToast('✅ Certificate populated in template! Click "Save to Archives" to record it.');
   };
 
   // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
@@ -536,32 +524,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <span>{editMode ? 'Editing Mode On' : 'Preview Static Page'}</span>
               </button>
 
-              <button
-                onClick={() => {
-                  setDate('June 17, 2026');
-                  setPatientName('Aaliyah Ysabella G. Cosino');
-                  setAge(23);
-                  setSex('FEMALE');
-                  setYearLevel('4');
-                  setYearSuffix('th');
-                  setCourseAndSchool('year level of BS Arc student of University of the Assumption');
-                  setExaminedDueTo('skin allergies and difficulty on breathing.');
-                  setDiagnosis('Allergic reaction secondary to food intake with allergens.');
-                  setTreatment('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
-                  setRecommendations('Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
-                  setDoctor('JOHNNY MICHAEL P. MANGULABNAN, MD');
-                  setDoctorTitle('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
-                  setLicenseNo('0095055');
-                  setPtrNo('22483890');
-                  triggerToast('Reset document to exact attached PDF sample.');
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black transition-colors"
-                title="Restore exact sample from attached PDF"
-              >
-                <RefreshCw size={14} /> Reset PDF Sample
-              </button>
             </div>
-
             <div className="flex items-center gap-3 w-full xl:w-auto justify-end">
               <button
                 onClick={handleSaveCertificate}
