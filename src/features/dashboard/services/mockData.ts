@@ -220,65 +220,8 @@ export const mockMedicines: MedicineItem[] = [
 export const mockPurchaseRequests: PurchaseRequest[] = [];
 
 
-export const mockMedicalCerts: MedicalCertificate[] = [
-  {
-    id: 'MC-001',
-    patientId: 'STU-2024-001',
-    patientName: 'Aaliyah Ysabella G. Cosino',
-    age: 23,
-    sex: 'FEMALE',
-    statusDesignation: '4th year level of BS Arc student of University of the Assumption',
-    examinedDueTo: 'skin allergies and difficulty on breathing.',
-    date: 'June 17, 2026',
-    purpose: 'Medical excuse and clinic clearance for school activities.',
-    diagnosis: 'Allergic reaction secondary to food intake with allergens.',
-    treatment: 'Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.',
-    recommendation: 'Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.',
-    doctor: 'JOHNNY MICHAEL P. MANGULABNAN, MD',
-    doctorTitle: 'UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP',
-    licenseNo: '0095055',
-    ptrNo: '22483890',
-    issuedBy: 'Grace Aquino, RN',
-  },
-  {
-    id: 'MC-002',
-    patientId: 'EMP-2024-002',
-    patientName: 'Roberto Gomez',
-    age: 42,
-    sex: 'MALE',
-    statusDesignation: 'Faculty & Staff Member of University of the Assumption',
-    examinedDueTo: 'high fever and acute severe cough.',
-    date: 'June 27, 2026',
-    purpose: 'Medical certificate for employee sick leave.',
-    diagnosis: 'Upper respiratory tract infection with fever',
-    treatment: 'Paracetamol 500mg every 6 hours for fever.\nAmoxicillin 500mg capsules three times daily for 7 days.',
-    recommendation: 'Rest for 2-3 days. Complete prescribed oral antibiotics and increase fluid intake.',
-    doctor: 'JOHNNY MICHAEL P. MANGULABNAN, MD',
-    doctorTitle: 'UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP',
-    licenseNo: '0095055',
-    ptrNo: '22483890',
-    issuedBy: 'Grace Aquino, RN',
-  },
-  {
-    id: 'MC-003',
-    patientId: 'STU-2024-005',
-    patientName: 'Sofia Reyes',
-    age: 19,
-    sex: 'FEMALE',
-    statusDesignation: '1st year student of BS Nursing of University of the Assumption',
-    examinedDueTo: 'acute lower abdominal pain and cramping.',
-    date: 'June 25, 2026',
-    purpose: 'Medical certificate for excuse from PE class.',
-    diagnosis: 'Dysmenorrhea',
-    treatment: 'Mefenamic Acid 500mg capsule twice daily as needed for pain.\nWarm compress applied to lower abdominal area.',
-    recommendation: 'Excuse from strenuous physical education activities for 1-2 days.',
-    doctor: 'JOHNNY MICHAEL P. MANGULABNAN, MD',
-    doctorTitle: 'UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP',
-    licenseNo: '0095055',
-    ptrNo: '22483890',
-    issuedBy: 'Grace Aquino, RN',
-  },
-];
+export const mockMedicalCerts: MedicalCertificate[] = [];
+
 
 export const mockBeds: Bed[] = [
   {

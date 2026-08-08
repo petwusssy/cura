@@ -78,7 +78,7 @@ function PhilHealthYakapBanner() {
 export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert }: MedicalCertificatesProps) {
   const [activeTab, setActiveTab] = useState<'template' | 'archives'>('template');
   const [editMode, setEditMode] = useState(true);
-  const [selectedCertId, setSelectedCertId] = useState<string>('MC-001');
+  const [selectedCertId, setSelectedCertId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedPatientFilter, setSelectedPatientFilter] = useState<string>(selectedPatientId || '');
@@ -86,24 +86,40 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const [isDownloading, setIsDownloading] = useState(false);
   const isInitialRender = useRef(true);
 
+  // Issue Certificate modal state
+  const [showIssueCertModal, setShowIssueCertModal] = useState(false);
+  const [issueCertForm, setIssueCertForm] = useState({
+    patientId: '',
+    date: '',
+    name: '',
+    age: '',
+    gender: 'FEMALE',
+    yearLevel: '',
+    courseOrDepartment: '',
+    complaint: '',
+    diagnosis: '',
+    treatment: '',
+    recommendations: '',
+  });
+
   // Active document fields (matching the official PDF template exactly)
-  const [date, setDate] = useState('June 17, 2026');
-  const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
-  const [age, setAge] = useState<number | string>(23);
-  const [sex, setSex] = useState('FEMALE');
-  const [yearLevel, setYearLevel] = useState('4');
-  const [yearSuffix, setYearSuffix] = useState('th');
-  const [courseAndSchool, setCourseAndSchool] = useState('year level of BS Arc student of University of the Assumption');
-  const [examinedDueTo, setExaminedDueTo] = useState('skin allergies and difficulty on breathing.');
-  const [diagnosis, setDiagnosis] = useState('Allergic reaction secondary to food intake with allergens.');
-  const [treatment, setTreatment] = useState('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
-  const [recommendations, setRecommendations] = useState('Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
+  const [date, setDate] = useState('');
+  const [patientName, setPatientName] = useState('');
+  const [age, setAge] = useState<number | string>('');
+  const [sex, setSex] = useState('');
+  const [yearLevel, setYearLevel] = useState('');
+  const [yearSuffix, setYearSuffix] = useState('');
+  const [courseAndSchool, setCourseAndSchool] = useState('');
+  const [examinedDueTo, setExaminedDueTo] = useState('');
+  const [diagnosis, setDiagnosis] = useState('');
+  const [treatment, setTreatment] = useState('');
+  const [recommendations, setRecommendations] = useState('');
   const [doctor, setDoctor] = useState('JOHNNY MICHAEL P. MANGULABNAN, MD');
   const [doctorTitle, setDoctorTitle] = useState('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
   const [licenseNo, setLicenseNo] = useState('0095055');
   const [ptrNo, setPtrNo] = useState('22483890');
-  const [purpose, setPurpose] = useState('Medical clearance and clinic verification for school attendance.');
-  const [currentPatientId, setCurrentPatientId] = useState<string>('STU-2024-001');
+  const [purpose, setPurpose] = useState('');
+  const [currentPatientId, setCurrentPatientId] = useState<string>('');
 
   const triggerToast = (msg: string) => {
     setShowToast(msg);
@@ -227,19 +243,80 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const newId = `MC-${Date.now().toString().slice(-6)}`;
     setSelectedCertId(newId);
     setDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
-    setPatientName('Patient Name');
-    setAge(21);
+    setPatientName('');
+    setAge('');
     setSex('FEMALE');
-    setYearLevel('4');
-    setYearSuffix('th');
-    setCourseAndSchool('year level of BS Arc student of University of the Assumption');
-    setExaminedDueTo('symptoms experienced.');
-    setDiagnosis('General clinic consultation and evaluation.');
-    setTreatment('Prescribed medications and proper hydration.');
-    setRecommendations('Have a rest for 1-2 days. May resume school duties upon recovery.');
+    setYearLevel('');
+    setYearSuffix('');
+    setCourseAndSchool('');
+    setExaminedDueTo('');
+    setDiagnosis('');
+    setTreatment('');
+    setRecommendations('');
+    setPurpose('');
+    setCurrentPatientId('');
     setActiveTab('template');
-    triggerToast('New blank certificate created and recorded in archives.');
-    setTimeout(() => syncToArchives(), 100);
+    triggerToast('New blank certificate created.');
+  };
+
+  // Issue Certificate: populate template from form data and save to archives
+  const handleIssueCertSubmit = async () => {
+    const { patientId, date: fDate, name, age: fAge, gender, yearLevel: fYL, courseOrDepartment, complaint, diagnosis: fDiag, treatment: fTreat, recommendations: fRec } = issueCertForm;
+    if (!name || !fDate || !complaint || !fDiag) return;
+
+    const newId = `MC-${Date.now().toString().slice(-6)}`;
+
+    // Build year/suffix from yearLevel input
+    const ylNum = fYL.replace(/\D/g, '');
+    const suffix = ylNum === '1' ? 'st' : ylNum === '2' ? 'nd' : ylNum === '3' ? 'rd' : ylNum ? 'th' : '';
+    const designation = ylNum ? `${ylNum}${suffix} ${courseOrDepartment}` : courseOrDepartment;
+
+    // Populate the certificate template fields
+    setSelectedCertId(newId);
+    setCurrentPatientId(patientId);
+    setDate(fDate);
+    setPatientName(name);
+    setAge(fAge || '');
+    setSex(gender.toUpperCase());
+    setYearLevel(ylNum);
+    setYearSuffix(suffix);
+    setCourseAndSchool(ylNum ? `year level of ${courseOrDepartment}` : courseOrDepartment);
+    setExaminedDueTo(complaint);
+    setDiagnosis(fDiag);
+    setTreatment(fTreat);
+    setRecommendations(fRec);
+    setPurpose(`Medical certificate — ${complaint}`);
+
+    // Build and save the cert record
+    const newCert: MedicalCertificate = {
+      id: newId,
+      patientId: patientId || 'unknown',
+      date: fDate,
+      purpose: `Medical certificate — ${complaint}`,
+      diagnosis: fDiag,
+      recommendation: fRec,
+      doctor,
+      issuedBy: 'Grace Aquino, RN',
+      patientName: name,
+      age: fAge || '',
+      sex: gender.toUpperCase(),
+      statusDesignation: designation,
+      examinedDueTo: complaint,
+      treatment: fTreat,
+      doctorTitle,
+      licenseNo,
+      ptrNo,
+    };
+
+    try {
+      await onAddCert(newCert);
+    } catch (e) { console.error(e); }
+
+    // Close modal, reset form, switch to template tab
+    setShowIssueCertModal(false);
+    setIssueCertForm({ patientId: '', date: '', name: '', age: '', gender: 'FEMALE', yearLevel: '', courseOrDepartment: '', complaint: '', diagnosis: '', treatment: '', recommendations: '' });
+    setActiveTab('template');
+    triggerToast('✅ Certificate issued and loaded into Official PDF Template!');
   };
 
   // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
@@ -441,6 +518,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
                 </select>
               </div>
+
+              <button
+                onClick={() => setShowIssueCertModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-black transition-all shadow-sm hover:opacity-95 active:scale-95"
+                style={{ background: PRIMARY }}
+              >
+                <Plus size={14} /> Issue Certificate
+              </button>
 
               <button
                 onClick={() => setEditMode(!editMode)}
@@ -892,6 +977,188 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Issue Certificate Modal */}
+      {showIssueCertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 border border-gray-200 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-5">
+              <div>
+                <h3 className="text-base font-extrabold text-gray-900">Issue Medical Certificate</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Fill in the details — the template will reflect them automatically.</p>
+              </div>
+              <button onClick={() => setShowIssueCertModal(false)} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Select Patient */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Select Patient</label>
+                <select
+                  value={issueCertForm.patientId}
+                  onChange={e => {
+                    const p = patients.find(pt => pt.id === e.target.value);
+                    setIssueCertForm(f => ({
+                      ...f,
+                      patientId: e.target.value,
+                      name: p ? p.name : f.name,
+                      age: p ? String(p.age) : f.age,
+                      gender: p?.sex ? p.sex.toUpperCase() : f.gender,
+                      yearLevel: p?.yearLevel?.replace(/\D/g, '') || f.yearLevel,
+                      courseOrDepartment: p?.course || p?.department || p?.position || f.courseOrDepartment,
+                    }));
+                  }}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                >
+                  <option value="">Select patient...</option>
+                  {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
+                </select>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
+                <input
+                  type="text"
+                  placeholder="e.g., August 8, 2026"
+                  value={issueCertForm.date}
+                  onChange={e => setIssueCertForm(f => ({ ...f, date: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Full name of patient"
+                  value={issueCertForm.name}
+                  onChange={e => setIssueCertForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                />
+              </div>
+
+              {/* Age & Gender */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Age</label>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="e.g., 21"
+                    value={issueCertForm.age}
+                    onChange={e => setIssueCertForm(f => ({ ...f, age: e.target.value }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Gender</label>
+                  <select
+                    value={issueCertForm.gender}
+                    onChange={e => setIssueCertForm(f => ({ ...f, gender: e.target.value }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  >
+                    <option value="FEMALE">Female</option>
+                    <option value="MALE">Male</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Year Level & Course/Department */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Year Level</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 3 (leave blank if N/A)"
+                    value={issueCertForm.yearLevel}
+                    onChange={e => setIssueCertForm(f => ({ ...f, yearLevel: e.target.value }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Course / Department</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., BS Nursing / HR Dept"
+                    value={issueCertForm.courseOrDepartment}
+                    onChange={e => setIssueCertForm(f => ({ ...f, courseOrDepartment: e.target.value }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  />
+                </div>
+              </div>
+
+              {/* Examination Reason / Complaint */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Examination Reason / Complaint <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g., fever and body pain"
+                  value={issueCertForm.complaint}
+                  onChange={e => setIssueCertForm(f => ({ ...f, complaint: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                />
+              </div>
+
+              {/* Diagnosis */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Diagnosis <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g., Acute Viral Pharyngitis"
+                  value={issueCertForm.diagnosis}
+                  onChange={e => setIssueCertForm(f => ({ ...f, diagnosis: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                />
+              </div>
+
+              {/* Treatment */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Treatment</label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g., Paracetamol 500mg every 6 hours for 3 days."
+                  value={issueCertForm.treatment}
+                  onChange={e => setIssueCertForm(f => ({ ...f, treatment: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] resize-none"
+                />
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Recommendations</label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g., Rest for 2-3 days. May return to school upon full recovery."
+                  value={issueCertForm.recommendations}
+                  onChange={e => setIssueCertForm(f => ({ ...f, recommendations: e.target.value }))}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setShowIssueCertModal(false)}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                onClick={handleIssueCertSubmit}
+                disabled={!issueCertForm.name || !issueCertForm.date || !issueCertForm.complaint || !issueCertForm.diagnosis}
+                className="px-6 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                style={{ background: PRIMARY }}
+              >
+                <FileText size={14} /> ISSUE CERTIFICATE
+              </button>
+            </div>
           </div>
         </div>
       )}
