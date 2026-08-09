@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
 
-const PRIMARY = '#1E5AA8';
+const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
-const YELLOW = '#F4C542';
-const GREEN = '#1E8E3E';
+const YELLOW = '#F59E0B';
+const GREEN = '#2E7D32';
 
 interface InventoryProps {
   medicines: MedicineItem[];
@@ -144,142 +144,44 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
   };
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto space-y-6 bg-[#FAFBFD] min-h-screen">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-gray-200 gap-4">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: PRIMARY }}>
-            Pharmacy Inventory
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Track medicine batches, low stock alerts, and refill schedules.
-          </p>
+          <h1 className="text-gray-900">Pharmacy Inventory</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Track medicine batches, low stock alerts, and refill schedules</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition-all"
           style={{ background: PRIMARY }}
         >
-          <Plus size={18} strokeWidth={2.5} /> Add Medicine
+          <Plus size={18} /> Add Medicine
         </button>
       </div>
 
-      {/* Floating Register New Medicine Batch Modal Popup */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-2xl w-full max-w-4xl mx-auto animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
-            <h2 className="text-sm font-extrabold uppercase tracking-wider mb-6" style={{ color: '#1E5AA8' }}>
-              Register New Medicine Batch
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Medicine Name
-                </label>
-                <input
-                  type="text"
-                  value={newMed.name}
-                  onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}
-                  placeholder="Biogesic 500mg tab"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Batch Number
-                </label>
-                <input
-                  type="text"
-                  value={newMed.batchNumber}
-                  onChange={e => setNewMed(n => ({ ...n, batchNumber: e.target.value.toUpperCase() }))}
-                  placeholder="B-BGS101"
-                  className="w-full font-mono bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Beginning Inventory Qty
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={newMed.stock}
-                  onChange={e => setNewMed(n => ({ ...n, stock: e.target.value }))}
-                  placeholder="100"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Date Added
-                </label>
-                <input
-                  type="date"
-                  value={newMed.dateAdded}
-                  onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                />
-              </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Healthy Stock', value: healthyCount, color: '#2E7D32', bg: '#E8F5E9', icon: <CheckCircle2 size={20} /> },
+          { label: 'Low Stock', value: lowStockCount, color: YELLOW, bg: `${YELLOW}15`, icon: <AlertTriangle size={20} /> },
+          { label: 'Out of Stock', value: outOfStockCount, color: RED, bg: `${RED}15`, icon: <X size={20} /> },
+          { label: 'Total Items', value: displayMedicines.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <CheckCircle2 size={20} /> },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl p-4 flex items-center gap-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
+              {s.icon}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Stock Unit Type
-                </label>
-                <select
-                  value={newMed.unit}
-                  onChange={e => setNewMed(n => ({ ...n, unit: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                >
-                  {['Tablet', 'Bottle', 'Capsule', 'Sachet', 'Ointment', 'Tube', 'Respules', 'Nebules', 'Vials', 'Packs', 'Granules', 'Drops', 'Piece'].map(u => (
-                    <option key={u} value={u}>{u}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Low Stock Threshold
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={newMed.threshold}
-                  onChange={e => setNewMed(n => ({ ...n, threshold: e.target.value }))}
-                  placeholder="15"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-                />
-              </div>
-
-              <div className="lg:col-span-2 flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors shadow-2xs"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddNewMedicine}
-                  className="px-8 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95"
-                  style={{ background: '#0A369D' }}
-                >
-                  CREATE
-                </button>
-              </div>
+            <div>
+              <div className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-xs text-gray-400">{s.label}</div>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Search and Category Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+      {/* Grid date filter */}
+      <div className="flex items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -287,7 +189,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
             placeholder="Search by name, batch..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all shadow-sm"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] transition-colors"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -295,279 +197,228 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
             </button>
           )}
         </div>
-
-        <div className="flex items-center gap-1.5 bg-gray-200/60 p-1 rounded-xl self-end sm:self-auto">
-          {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => {
-            const active = statusFilter === s;
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={{
-                  background: active ? PRIMARY : 'transparent',
-                  color: active ? '#ffffff' : '#64748B',
-                  boxShadow: active ? '0 2px 6px rgba(30, 90, 168, 0.25)' : 'none'
-                }}
-              >
-                {s}
-              </button>
-            );
-          })}
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
+            <button key={s} onClick={() => setStatusFilter(s)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              style={{ background: statusFilter === s ? 'white' : 'transparent', color: statusFilter === s ? PRIMARY : '#6b7280', boxShadow: statusFilter === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Grid Layout: Table vs Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* Table Column (3spans) with Vertical Scroll Container */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="overflow-x-auto overflow-y-auto h-[480px] max-h-[500px]">
-            <table className="w-full border-collapse text-left relative">
-              <thead className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-md shadow-2xs">
-                <tr className="border-b border-gray-200">
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Medicine Name</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Batch Number</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Beg. Qty</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Dispensed</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Stock Count</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
-                  <th className="py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-right">Adjust</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-16 text-gray-400 text-sm">
-                      No medicines match the current search or filter.
+      {/* Full History Table */}
+      <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-gray-800">Inventory List</h3>
+          <span className="text-xs text-gray-400">{filtered.length} items found</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr style={{ background: '#f8fafd' }}>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Medicine Name</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Batch Number</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Beg. Qty</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Dispensed</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Stock Count</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No records</td></tr>
+              ) : filtered.map(m => {
+                const details = getMedicineDetails(m);
+                const isOut = details.status === 'Out of Stock';
+                const isLow = details.status === 'Low Stock';
+                return (
+                  <tr key={m.id} className={isOut ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
+                    <td className="px-5 py-3">
+                      <div className="text-sm font-medium text-gray-700">{m.name}</div>
+                      <div className="text-xs text-gray-400">Added: {m.dateAdded || 'N/A'}</div>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-700 font-mono">{details.batchNumber}</td>
+                    <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
+                    <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>
+                    <td className="px-5 py-3">
+                      <span className="text-sm font-semibold" style={{ color: isOut ? RED : isLow ? '#b45309' : '#374151' }}>
+                        {m.stock} <span className="text-xs text-gray-500 font-normal">{details.displayUnit}</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-center">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                        style={{ background: isOut ? `${RED}15` : isLow ? `${YELLOW}20` : '#E8F5E9', color: isOut ? RED : isLow ? '#b45309' : '#2E7D32' }}>
+                        {details.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => { setAdjustModal(m); setAdjustType('add'); setAdjustQty(''); setAdjustNote(''); }}
+                          className="px-3 py-1 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
+                          style={{ background: PRIMARY }}
+                        >
+                          Adjust
+                        </button>
+                        <button
+                          onClick={() => setHistoryModal(m)}
+                          className="rounded-lg border border-gray-200 transition-colors flex items-center justify-center w-8 h-8 flex-shrink-0 text-[#1B3A6B] hover:bg-blue-50"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : filtered.map(m => {
-                  const details = getMedicineDetails(m);
-                  const isLow = details.status === 'Low Stock';
-                  const isOut = details.status === 'Out of Stock';
-
-                  return (
-                    <tr
-                      key={m.id}
-                      className={`transition-colors hover:bg-blue-50/20 group ${
-                        isOut ? 'bg-rose-50/30 border-b-2 border-rose-300' : 
-                        isLow ? 'bg-amber-50/20 border-b-2 border-amber-300' : ''
-                      }`}
-                    >
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-gray-800 text-sm">{m.name}</div>
-                        <div className="text-[11px] text-gray-400 font-mono mt-0.5">Date Added: {m.dateAdded || '2026-05-12'}</div>
-                      </td>
-                      <td className="py-4 px-6 font-mono text-xs font-semibold text-gray-600">
-                        {details.batchNumber}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">
-                        {details.beginningQty} <span className="text-xs text-gray-400 font-normal">{details.displayUnit}</span>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-700 font-semibold">
-                        {details.dispensed}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`text-sm font-bold ${isOut ? 'text-rose-600' : isLow ? 'text-amber-700' : 'text-gray-900'}`}>
-                          {m.stock} <span className="text-xs font-normal text-gray-500">{details.displayUnit}</span>
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        {isOut ? (
-                          <span className="inline-block px-3 py-1 text-[11px] font-bold uppercase rounded-full bg-rose-100/90 text-rose-700 border border-rose-200">
-                            Out of Stock
-                          </span>
-                        ) : isLow ? (
-                          <span className="inline-block px-3 py-1 text-[11px] font-bold uppercase rounded-full bg-amber-100/90 text-amber-800 border border-amber-200">
-                            Low Stock
-                          </span>
-                        ) : (
-                          <span className="inline-block px-3 py-1 text-[11px] font-bold uppercase rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-200">
-                            Healthy
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => { setAdjustModal(m); setAdjustType('add'); setAdjustQty(''); setAdjustNote(''); }}
-                            className="px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs transition-all border border-blue-200/60 active:scale-95 shadow-2xs"
-                          >
-                            Adjust
-                          </button>
-                          <button
-                            onClick={() => setHistoryModal(m)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
-                            title="View Stock History"
-                          >
-                            <Eye size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Table Footer */}
-          <div className="bg-gray-50/80 px-6 py-3.5 border-t border-gray-200 text-right">
-            <span className="text-xs font-bold text-gray-400 tracking-wider uppercase">
-              Total Medicines Matching Current Classification: <strong className="text-gray-700">{filtered.length} Items</strong>
-            </span>
-          </div>
-        </div>
-
-        {/* Sidebar Controls (1 span) */}
-        <div className="space-y-6">
-          {/* Adjustment Controls Card */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-            <h3 className="text-[12px] font-bold text-blue-900 uppercase tracking-wider mb-4">
-              Adjustment Controls
-            </h3>
-            <div className="bg-gray-50/70 border border-dashed border-gray-200 rounded-xl p-6 text-center flex flex-col items-center justify-center space-y-3">
-              <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                <RefreshCw size={18} />
-              </div>
-              <p className="text-xs text-gray-500 leading-relaxed font-medium max-w-[200px]">
-                Click <span className="font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Adjust</span> on any medicine item row to record inventory intake, stock decrement, or manual audit adjustment.
-              </p>
-            </div>
-
-            {/* Divider */}
-            <hr className="my-6 border-gray-100" />
-
-            {/* Pharmacy Stock Summary */}
-            <h3 className="text-[12px] font-bold text-blue-900 uppercase tracking-wider mb-4">
-              Pharmacy Stock Summary
-            </h3>
-            <div className="space-y-3 font-mono text-sm">
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <span className="text-xs text-gray-500 font-sans font-medium">Healthy stock lines:</span>
-                <span className="font-bold text-emerald-600">{healthyCount} items</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <span className="text-xs text-gray-500 font-sans font-medium">Low stock warnings:</span>
-                <span className="font-bold text-amber-500">{lowStockCount} items</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-sans font-medium">Out of stock criticals:</span>
-                <span className="font-bold text-rose-600">{outOfStockCount} lines</span>
-              </div>
-            </div>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Adjust Stock Modal */}
+      {/* Adjust Modal */}
       {adjustModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Adjust Medicine Stock</h3>
+                <h3 className="text-gray-900 font-bold">Adjust Medicine Stock</h3>
                 <p className="text-xs text-gray-500 font-mono mt-0.5">{adjustModal.name} ({getMedicineDetails(adjustModal).batchNumber})</p>
               </div>
-              <button onClick={() => setAdjustModal(null)} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
-                <X size={18} />
-              </button>
+              <button onClick={() => setAdjustModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
-
-            <div className="space-y-4">
-              {/* Type toggle */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setAdjustType('add')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    adjustType === 'add' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <TrendingUp size={14} /> Intake / Restock (+)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAdjustType('dispense')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    adjustType === 'dispense' ? 'bg-white text-rose-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <TrendingDown size={14} /> Dispense / Deduct (−)
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  Quantity ({adjustModal.unit})
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={adjustQty}
-                  onChange={e => setAdjustQty(e.target.value)}
-                  placeholder="Enter quantity amount..."
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  Reason / Note (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={adjustNote}
-                  onChange={e => setAdjustNote(e.target.value)}
-                  placeholder={adjustType === 'add' ? 'e.g., Supplier replenishment shipment' : 'e.g., Discarded expired batch / Clinic dispense'}
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
+            
+            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl mb-4">
               <button
-                onClick={() => setAdjustModal(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdjustStock}
-                className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold transition-all shadow-sm ${
-                  adjustType === 'add' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+                type="button"
+                onClick={() => setAdjustType('add')}
+                className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  adjustType === 'add' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Confirm {adjustType === 'add' ? 'Intake' : 'Decrement'}
+                <TrendingUp size={14} /> Intake
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdjustType('dispense')}
+                className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  adjustType === 'dispense' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <TrendingDown size={14} /> Dispense
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Quantity ({adjustModal.unit})</label>
+              <input type="number" value={adjustQty} onChange={e => setAdjustQty(e.target.value)} min={1}
+                placeholder="Enter amount..."
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reason (Optional)</label>
+              <input type="text" value={adjustNote} onChange={e => setAdjustNote(e.target.value)}
+                placeholder="e.g. Delivery or Clinic dispense"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setAdjustModal(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleAdjustStock}
+                className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90"
+                style={{ background: adjustType === 'add' ? '#2E7D32' : RED }}>
+                Confirm
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Stock History Modal */}
-      {historyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 border border-gray-100 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{historyModal.name}</h3>
-                <p className="text-xs text-gray-500 font-mono mt-0.5">Batch: {getMedicineDetails(historyModal).batchNumber}</p>
-              </div>
-              <button onClick={() => setHistoryModal(null)} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
-                <X size={18} />
-              </button>
+      {/* Add Medicine Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-gray-900 font-bold text-lg">Register New Medicine</h3>
+              <button onClick={() => setShowAddForm(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
 
-            <div className="overflow-y-auto space-y-3 pr-1 flex-1">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Medicine Name</label>
+                <input type="text" value={newMed.name} onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}
+                  placeholder="e.g. Biogesic 500mg tab"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Batch Number</label>
+                <input type="text" value={newMed.batchNumber} onChange={e => setNewMed(n => ({ ...n, batchNumber: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. B-BGS101"
+                  className="w-full font-mono border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Beginning Inventory Qty</label>
+                <input type="number" min={0} value={newMed.stock} onChange={e => setNewMed(n => ({ ...n, stock: e.target.value }))}
+                  placeholder="e.g. 100"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Date Added</label>
+                <input type="date" value={newMed.dateAdded} onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Stock Unit Type</label>
+                <select value={newMed.unit} onChange={e => setNewMed(n => ({ ...n, unit: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]">
+                  {['Tablet', 'Bottle', 'Capsule', 'Sachet', 'Ointment', 'Tube', 'Respules', 'Nebules', 'Vials', 'Packs', 'Granules', 'Drops', 'Piece'].map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Low Stock Threshold</label>
+                <input type="number" min={1} value={newMed.threshold} onChange={e => setNewMed(n => ({ ...n, threshold: e.target.value }))}
+                  placeholder="e.g. 15"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowAddForm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleAddNewMedicine} disabled={!newMed.name || !newMed.stock}
+                className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                style={{ background: PRIMARY }}>
+                Create Medicine
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {historyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-gray-900 font-bold">{historyModal.name}</h3>
+                <p className="text-xs text-gray-500 font-mono mt-0.5">Batch: {getMedicineDetails(historyModal).batchNumber}</p>
+              </div>
+              <button onClick={() => setHistoryModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+            </div>
+
+            <div className="overflow-y-auto space-y-3 flex-1">
               {(!historyModal.stockHistory || historyModal.stockHistory.length === 0) ? (
                 <p className="text-center py-8 text-gray-400 text-sm">No transaction history recorded yet.</p>
               ) : historyModal.stockHistory.map((h, i) => (
                 <div key={i} className={`flex items-center gap-3.5 p-3.5 rounded-xl border ${
-                  h.type === 'add' ? 'bg-emerald-50/40 border-emerald-100' : 'bg-rose-50/40 border-rose-100'
+                  h.type === 'add' ? 'bg-green-50/40 border-green-100' : 'bg-red-50/40 border-red-100'
                 }`}>
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
-                    h.type === 'add' ? 'bg-emerald-500' : 'bg-rose-500'
+                    h.type === 'add' ? 'bg-[#2E7D32]' : 'bg-[#D64545]'
                   }`}>
                     {h.type === 'add' ? '+' : '−'}
                   </div>
@@ -584,7 +435,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: Invent
             <div className="mt-6 pt-4 border-t border-gray-100 text-right">
               <button
                 onClick={() => setHistoryModal(null)}
-                className="px-5 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
+                className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
               >
                 Close
               </button>
