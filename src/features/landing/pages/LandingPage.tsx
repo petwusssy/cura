@@ -80,18 +80,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         />
         {/* Navy Blue Overlay */}
         <div
-          className="absolute inset-0"
-          style={{ background: "rgba(0, 30, 80, 0.6)" }}
+          className="absolute inset-0 backdrop-blur-[2px] lg:backdrop-blur-none"
+          style={{ background: "rgba(0, 30, 80, 0.65)" }}
         />
       </div>
 
       {/* ── TOP LOGOS (FIXED WITH CROSSFADE) ── */}
-      <div className="absolute top-4 left-4 sm:top-8 sm:left-12 z-30 pointer-events-none">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-12 z-30 pointer-events-none w-full px-6 lg:w-auto lg:px-0">
         <AnimatePresence>
           {(stage === "idle" || stage === "form") && (
             <motion.div
               key={stage}
-              className="absolute top-0 left-0 flex items-center gap-2 lg:gap-3 w-max"
+              className="flex flex-col lg:flex-row items-center lg:items-center gap-3 lg:gap-3 w-full lg:w-max"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -102,18 +102,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               <img
                 src={uaLogo}
                 alt="University of the Assumption"
-                className="object-contain w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32"
+                className="object-contain w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32"
                 style={{
                   filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.35))",
                 }}
               />
               {/* UA Name */}
               <div
-                className="flex flex-col justify-center text-left"
-                style={{ color: stage === "idle" ? "#001e50" : "#ffffff" }}
+                className="flex flex-col justify-center text-center lg:text-left"
+                style={{ color: isDesktop && stage === "idle" ? "#001e50" : "#ffffff" }}
               >
-                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
-                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
+                <span className="font-extrabold text-[16px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
+                <span className="font-extrabold text-[16px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
               </div>
             </motion.div>
           )}
@@ -135,7 +135,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
             className="absolute w-[200vw] h-[200vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
-              opacity: 1,
+              opacity: isDesktop || stage === "splitting" ? 1 : 0,
               top: isDesktop ? "-15%" : "calc(-100vw + 20vh)",
               left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "50%",
               right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto",
@@ -157,32 +157,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-                className="mt-16 lg:mt-24"
+                className="mt-32 lg:mt-24 flex flex-col items-center lg:items-start text-center lg:text-left w-full"
               >
                 <h1
-                  className="leading-none mb-2 font-extrabold"
+                  className="leading-none mb-2 font-extrabold drop-shadow-md lg:drop-shadow-none"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "clamp(4rem, 12vw, 8.5rem)",
+                    fontSize: "clamp(5rem, 15vw, 8.5rem)",
                     fontWeight: 800,
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  <span className="text-[#001e50] transition-colors duration-500">C</span>
-                  <span className="text-[#001e50] transition-colors duration-500">U</span>
-                  <span className="text-[#001e50] transition-colors duration-500">R</span>
-                  <span className="text-[#001e50] transition-colors duration-500">A</span>
+                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">C</span>
+                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">U</span>
+                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">R</span>
+                  <span className="text-[#ffb81c] lg:text-[#001e50] transition-colors duration-500">A</span>
                 </h1>
 
                 <p
-                  className="text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 transition-colors duration-500"
+                  className="text-white/80 lg:text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 transition-colors duration-500"
                   style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.1em" }}
                 >
                   Centralized University Healthcare Records and Administration
                 </p>
 
                 <p
-                  className="text-[#001e50]/90 font-bold mb-12 transition-colors duration-500"
+                  className="text-white lg:text-[#001e50]/90 font-bold mb-10 transition-colors duration-500"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "1.15rem",
