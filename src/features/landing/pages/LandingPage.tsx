@@ -80,18 +80,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         />
         {/* Navy Blue Overlay */}
         <div
-          className="absolute inset-0 backdrop-blur-[2px] lg:backdrop-blur-none"
-          style={{ background: "rgba(0, 30, 80, 0.65)" }}
+          className="absolute inset-0"
+          style={{ background: "rgba(0, 30, 80, 0.6)" }}
         />
       </div>
 
       {/* ── TOP LOGOS (FIXED WITH CROSSFADE) ── */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-12 z-30 pointer-events-none w-full px-6 lg:w-auto lg:px-0">
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-12 z-30 pointer-events-none">
         <AnimatePresence>
           {(stage === "idle" || stage === "form") && (
             <motion.div
               key={stage}
-              className="flex flex-col lg:flex-row items-center lg:items-center gap-3 lg:gap-3 w-full lg:w-max"
+              className="absolute top-0 left-0 flex items-center gap-2 lg:gap-3 w-max"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -102,18 +102,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               <img
                 src={uaLogo}
                 alt="University of the Assumption"
-                className="object-contain w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32"
+                className="object-contain w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32"
                 style={{
                   filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.35))",
                 }}
               />
               {/* UA Name */}
               <div
-                className="flex flex-col justify-center text-center lg:text-left"
-                style={{ color: isDesktop && stage === "idle" ? "#001e50" : "#ffffff" }}
+                className="flex flex-col justify-center text-left"
+                style={{ color: stage === "idle" ? "#001e50" : "#ffffff" }}
               >
-                <span className="font-extrabold text-[16px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
-                <span className="font-extrabold text-[16px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
+                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
+                <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
               </div>
             </motion.div>
           )}
@@ -133,14 +133,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute w-[150vw] h-[150vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-[100%] lg:rounded-full"
+            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
               opacity: 1,
-              top: isDesktop ? "-15%" : "auto",
-              bottom: isDesktop ? "auto" : "calc(-150vw + 35vh)",
-              left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "50%",
-              right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto",
-              x: isDesktop ? 0 : "-50%",
+              left: stage !== "form" ? (isDesktop ? "-35%" : "-300px") : "auto",
+              right: stage === "form" ? (isDesktop ? "-35%" : "-300px") : "auto"
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
@@ -158,32 +155,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-                className="mt-32 lg:mt-24 flex flex-col items-center lg:items-start text-center lg:text-left w-full"
+                className="mt-16 lg:mt-24"
               >
                 <h1
-                  className="leading-none mb-2 font-extrabold drop-shadow-md lg:drop-shadow-none"
+                  className="leading-none mb-2 font-extrabold"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "clamp(5rem, 15vw, 8.5rem)",
+                    fontSize: "clamp(4rem, 12vw, 8.5rem)",
                     fontWeight: 800,
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">C</span>
-                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">U</span>
-                  <span className="text-white lg:text-[#001e50] transition-colors duration-500">R</span>
-                  <span className="text-[#ffb81c] lg:text-[#001e50] transition-colors duration-500">A</span>
+                  <span style={{ color: "#001e50" }}>C</span>
+                  <span style={{ color: "#001e50" }}>U</span>
+                  <span style={{ color: "#001e50" }}>R</span>
+                  <span style={{ color: "#001e50" }}>A</span>
                 </h1>
 
                 <p
-                  className="text-white/80 lg:text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8 transition-colors duration-500"
+                  className="text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8"
                   style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.1em" }}
                 >
                   Centralized University Healthcare Records and Administration
                 </p>
 
                 <p
-                  className="text-white lg:text-[#001e50]/90 font-bold mb-10 transition-colors duration-500"
+                  className="text-[#001e50]/90 font-bold mb-12"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "1.15rem",
@@ -226,7 +223,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   {/* Welcome Back Heading */}
                   <div className="mb-8 flex flex-col items-center text-center z-20 relative">
                     <h2
-                      className="text-white lg:text-white font-extrabold mb-1 drop-shadow-md lg:drop-shadow-none"
+                      className="text-white font-bold mb-1"
                       style={{
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
                         fontSize: "1.25rem",
@@ -236,7 +233,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       Welcome Back
                     </h2>
                     <p
-                      className="text-white/80 lg:text-white/70 text-xs font-medium"
+                      className="text-white/70 text-xs"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       Sign in to your CURA account.
@@ -245,14 +242,17 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
                   <div className="relative w-full">
                     {/* Mascot perched on the top-right edge of the card */}
-                    <div className="absolute bottom-full right-0 lg:-right-6 translate-y-8 lg:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
-                      <AnimatedMascot focusedField={focusedField} className="w-[100px] lg:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
+                    <div className="absolute bottom-full -right-4 sm:-right-6 translate-y-5 sm:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
+                      <AnimatedMascot focusedField={focusedField} className="w-[120px] sm:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
                     </div>
 
                     {/* Form card */}
                     <div
-                      className="w-full rounded-[24px] p-6 sm:p-8 relative z-10 backdrop-blur-xl bg-white/20 lg:bg-[#F0F7FA] border border-white/40 lg:border-white shadow-[0_8px_32px_0_rgba(0,30,80,0.3)] lg:shadow-none"
+                      className="w-full rounded-2xl p-6 relative z-10"
                       style={{
+                        background: "#F0F7FA",
+                        border: "1px solid #FFFFFF",
+                        boxShadow: "none",
                       }}
                     >
                     <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -277,10 +277,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
                           placeholder="Enter your username"
-                          className="w-full pl-10 pr-4 py-3.5 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/50 outline-none shadow-inner bg-white/80 lg:bg-white focus:bg-white transition-all"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
                           style={{
                             fontFamily: "'Inter', sans-serif",
-                            border: "1px solid rgba(168, 205, 229, 0.5)",
+                            background: "#FFFFFF",
+                            border: "1px solid #a8cde5",
+                            transition: "background-color 5000s ease-in-out 0s, all 0.2s",
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
@@ -318,10 +320,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Enter your password"
-                          className="w-full pl-10 pr-10 py-3.5 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/50 outline-none shadow-inner bg-white/80 lg:bg-white focus:bg-white transition-all"
+                          className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
                           style={{
                             fontFamily: "'Inter', sans-serif",
-                            border: "1px solid rgba(168, 205, 229, 0.5)",
+                            background: "#FFFFFF",
+                            border: "1px solid #a8cde5",
+                            transition: "background-color 5000s ease-in-out 0s, all 0.2s",
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
@@ -419,7 +423,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed drop-shadow-md" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
               The First Catholic Archdiocesan <br />
               University in the Philippines and in Asia.
             </p>
