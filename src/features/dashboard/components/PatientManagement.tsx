@@ -234,8 +234,8 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm"
-                      style={{ background: catColor }}>
-                      {p.name.charAt(0)}
+                      style={{ background: PRIMARY }}>
+                      {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-gray-900 leading-tight">{p.name}</span>
