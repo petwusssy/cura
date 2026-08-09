@@ -136,9 +136,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             className="absolute lg:translate-y-0 w-[200vw] h-[200vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
               opacity: 1,
-              top: isDesktop ? "-15%" : "-20vh",
-              left: stage !== "form" ? (isDesktop ? "-35%" : "-50vw") : "auto",
-              right: stage === "form" ? (isDesktop ? "-35%" : "-50vw") : "auto"
+              top: isDesktop ? "-15%" : "auto",
+              bottom: isDesktop ? "auto" : "calc(-200vw + 50vh)",
+              left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "-50vw",
+              right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto"
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
