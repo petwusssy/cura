@@ -133,11 +133,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[900px] h-[900px] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
+            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[max(150vw,150vh)] h-[max(150vw,150vh)] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
               opacity: 1,
-              left: stage !== "form" ? (isDesktop ? "-35%" : "-300px") : "auto",
-              right: stage === "form" ? (isDesktop ? "-35%" : "-300px") : "auto"
+              left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "50%",
+              right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto",
+              x: isDesktop ? 0 : "-50%",
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
@@ -423,7 +424,13 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="text-white/95 text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <p 
+              className="text-xs sm:text-sm md:text-base lg:text-[17px] font-bold leading-relaxed transition-colors duration-500" 
+              style={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: (stage === "idle" && !isDesktop) ? "#001e50" : "rgba(255, 255, 255, 0.95)"
+              }}
+            >
               The First Catholic Archdiocesan <br />
               University in the Philippines and in Asia.
             </p>
