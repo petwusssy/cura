@@ -133,12 +133,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute top-1/2 -translate-y-1/2 lg:translate-y-0 lg:top-[-15%] w-[max(150vw,150vh)] h-[max(150vw,150vh)] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
+            className="absolute lg:translate-y-0 w-[200vw] h-[200vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
               opacity: 1,
-              left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "50%",
-              right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto",
-              x: isDesktop ? 0 : "-50%",
+              top: isDesktop ? "-15%" : "-20vh",
+              left: stage !== "form" ? (isDesktop ? "-35%" : "-50vw") : "auto",
+              right: stage === "form" ? (isDesktop ? "-35%" : "-50vw") : "auto"
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
