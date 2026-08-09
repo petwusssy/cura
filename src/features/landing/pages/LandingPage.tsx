@@ -110,7 +110,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               {/* UA Name */}
               <div
                 className="flex flex-col justify-center text-left"
-                style={{ color: stage === "idle" ? "#001e50" : "#ffffff" }}
+                style={{ color: (stage === "idle" && isDesktop) ? "#001e50" : "#ffffff", transition: "color 0.5s" }}
               >
                 <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>UNIVERSITY OF THE</span>
                 <span className="font-extrabold text-[14px] sm:text-[20px] md:text-[26px] tracking-widest leading-tight mt-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>ASSUMPTION</span>
@@ -168,15 +168,20 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  <span style={{ color: "#001e50" }}>C</span>
-                  <span style={{ color: "#001e50" }}>U</span>
-                  <span style={{ color: "#001e50" }}>R</span>
-                  <span style={{ color: "#001e50" }}>A</span>
+                  <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>C</span>
+                  <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>U</span>
+                  <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>R</span>
+                  <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>A</span>
                 </h1>
 
                 <p
-                  className="text-[#001e50]/80 text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8"
-                  style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.1em" }}
+                  className="text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8"
+                  style={{ 
+                    fontFamily: "'Inter', sans-serif", 
+                    letterSpacing: "0.1em",
+                    color: !isDesktop ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 30, 80, 0.8)",
+                    transition: "color 0.5s"
+                  }}
                 >
                   Centralized University Healthcare Records and Administration
                 </p>
