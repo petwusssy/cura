@@ -32,15 +32,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [convertingId, setConvertingId]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
 
-  // Initialize with instant fallbacks so page appears in 0ms without waiting for slow API response
-  const [patients, setPatients]                 = useState<Patient[]>(mockPatients);
-  const [consultations, setConsultations]       = useState<Consultation[]>(mockConsultations);
-  const [transfers, setTransfers]               = useState<HospitalTransfer[]>(mockTransfers);
+  // Initialize with empty arrays to prevent mock data from showing before real data is fetched
+  const [patients, setPatients]                 = useState<Patient[]>([]);
+  const [consultations, setConsultations]       = useState<Consultation[]>([]);
+  const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
   const [medicines, setMedicines]               = useState<MedicineItem[]>([]);
-  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>(mockPurchaseRequests);
-  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(mockMedicalCerts);
-  const [beds, setBeds]                         = useState<Bed[]>(mockBeds);
-  const [notifications, setNotifications]       = useState<AppNotification[]>(mockNotifications);
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
+  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
+  const [beds, setBeds]                         = useState<Bed[]>([]);
+  const [notifications, setNotifications]       = useState<AppNotification[]>([]);
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
@@ -48,13 +48,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   useEffect(() => {
-    patientService.getPatients().then(d => d && d.length > 0 && setPatients(d)).catch(console.error);
-    consultationService.getConsultations().then(d => d && d.length > 0 && setConsultations(d)).catch(console.error);
-    medicineService.getMedicines().then(d => d !== undefined && d !== null && setMedicines(d)).catch(console.error);
-    medicineService.getPurchaseRequests().then(d => d && d.length > 0 && setPurchaseRequests(d)).catch(console.error);
-    bedService.getBeds().then(d => d && d.length > 0 && setBeds(d)).catch(console.error);
-    certificateService.getCertificates().then(d => d && d.length > 0 && setMedicalCerts(d)).catch(console.error);
-    notificationService.getNotifications().then(d => d && d.length > 0 && setNotifications(d)).catch(console.error);
+    patientService.getPatients().then(d => d !== undefined && setPatients(d)).catch(console.error);
+    consultationService.getConsultations().then(d => d !== undefined && setConsultations(d)).catch(console.error);
+    medicineService.getMedicines().then(d => d !== undefined && setMedicines(d)).catch(console.error);
+    medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
+    bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
+    certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
+    notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
   }, []);
 
   const handleSavePatient = async (patient: Patient) => {
