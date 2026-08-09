@@ -227,8 +227,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
 
         {/* Mobile Patient Cards */}
         <div className="flex flex-col gap-3 p-4 md:hidden bg-gray-50/50">
-          {currentPatients.map(p => {
-            const catColor = categoryColors[p.category];
+          {paged.map(p => {
             return (
               <div key={p.id} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-4 shadow-sm">
                 <div className="flex justify-between items-start">
