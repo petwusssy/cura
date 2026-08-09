@@ -16,10 +16,7 @@ import { medicineService } from '@/services/medicineService';
 import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
-import {
-  mockPatients, mockConsultations, mockTransfers,
-  mockPurchaseRequests, mockMedicalCerts, mockBeds, mockNotifications,
-} from '../services/mockData';
+
 
 interface DashboardAppProps {
   onLogout: () => void;
