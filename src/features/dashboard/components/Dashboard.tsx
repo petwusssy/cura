@@ -234,8 +234,9 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
               View all <ChevronRight size={14} />
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          
+            <div className="hidden md:block overflow-x-auto hide-scrollbar">
+              <table className="w-full">
               <thead>
                 <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   <th className="text-left pb-3 pr-4">Patient</th>
@@ -279,8 +280,47 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {filteredConsultations.slice(0, 6).map(c => {
+                const patient = patients.find(p => p.id === c.patientId);
+                return (
+                  <div key={c.id} className="bg-white p-4 rounded-xl border border-gray-100 flex flex-col gap-3" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #2a5298 100%)' }}>
+                          {patient?.name.charAt(0)}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-900 text-sm">{patient?.name}</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                                style={{
+                                  background: patient?.category === 'Student' ? '#E3F2FD' : patient?.category === 'Employee' ? '#E8F5E9' : '#F3E5F5',
+                                  color: patient?.category === 'Student' ? '#1B3A6B' : patient?.category === 'Employee' ? '#2E7D32' : '#6A1B9A',
+                                }}>
+                                {patient?.category}
+                            </span>
+                            <span className="text-xs text-gray-400">{c.timeIn}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wide flex-shrink-0 ${c.status === 'Consultation' ? 'text-blue-700 bg-blue-50' : 'text-gray-600 bg-gray-100'}`}>
+                        {c.status}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Complaint</span>
+                      <span className="text-sm text-gray-700 font-medium">{c.complaint}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
         </div>
       </div>
     </div>

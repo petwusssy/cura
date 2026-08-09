@@ -202,157 +202,204 @@ export function ConsultationTab({
 
       {/* ── Consultations Table ── */}
       {activeTab === 'consultations' && (
-        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ background: '#f8fafd' }}>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Complaint</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Doctor</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Medicine</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Status</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-12 text-gray-400"><Search size={32} className="mx-auto mb-2 opacity-30" />No consultations found</td></tr>
-                ) : filtered.map(c => {
-                  const patient = patients.find(p => p.id === c.patientId);
-                  const bc = catBadge(patient?.category);
-                  return (
-                    <tr key={c.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: PRIMARY }}>
-                            {patient?.name.charAt(0)}
+        <>
+          <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ background: '#f8fafd' }}>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Complaint</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Doctor</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Medicine</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Status</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={7} className="text-center py-12 text-gray-400"><Search size={32} className="mx-auto mb-2 opacity-30" />No consultations found</td></tr>
+                  ) : filtered.map(c => {
+                    const patient = patients.find(p => p.id === c.patientId);
+                    const bc = catBadge(patient?.category);
+                    return (
+                      <tr key={c.id} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: PRIMARY }}>
+                              {patient?.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: bc.bg, color: bc.text }}>{patient?.category}</span>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: bc.bg, color: bc.text }}>{patient?.category}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
-                        <div className="text-sm text-gray-700">{c.date}</div>
-                        <div className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</div>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px]">
-                        <div className="truncate">{c.complaint}</div>
-                        {c.categories.length > 0 && (
-                          <div className="flex gap-1 mt-1 flex-wrap">
-                            {c.categories.slice(0, 2).map(cat => (
-                              <span key={cat} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{cat}</span>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{c.doctorName || '—'}</td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden md:table-cell">
-                        {c.treatments.length === 0 ? <span className="text-gray-400">None</span> :
-                          <div className="space-y-0.5">
-                            {c.treatments.slice(0, 2).map(t => (
-                              <div key={t.id} className="text-xs">{t.medicineName} ×{t.quantity}</div>
-                            ))}
-                            {c.treatments.length > 2 && <div className="text-xs text-gray-400">+{c.treatments.length - 2}</div>}
-                          </div>
-                        }
-                      </td>
-                      <td className="px-5 py-3.5 hidden sm:table-cell">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-50 w-fit" style={{ color: PRIMARY }}>
-                            Consultation
-                          </span>
-                          {c.transferred && (
-                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-700 w-fit">Transferred</span>
+                        </td>
+                        <td className="px-5 py-3.5 hidden md:table-cell">
+                          <div className="text-sm text-gray-700">{c.date}</div>
+                          <div className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</div>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px]">
+                          <div className="truncate">{c.complaint}</div>
+                          {c.categories.length > 0 && (
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {c.categories.slice(0, 2).map(cat => (
+                                <span key={cat} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{cat}</span>
+                              ))}
+                            </div>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setViewDetail(c)} title="View Details"
-                            className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors" style={{ color: PRIMARY }}>
-                            <Eye size={15} />
-                          </button>
-                          <button onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
-                            title="View Patient Profile" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                            <User size={15} />
-                          </button>
-                          <button
-                            onClick={() => openTransferModal(c)}
-                            title="Transfer to Hospital"
-                            className="p-1.5 rounded-lg transition-colors"
-                            style={{ color: c.transferred ? '#9ca3af' : '#EA6C00', background: c.transferred ? 'transparent' : '#FFF3E0' }}
-                          >
-                            <Ambulance size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{c.doctorName || '—'}</td>
+                        <td className="px-5 py-3.5 text-sm text-gray-600 hidden md:table-cell">
+                          {c.treatments.length === 0 ? <span className="text-gray-400">None</span> :
+                            <div className="space-y-0.5">
+                              {c.treatments.slice(0, 2).map(t => (
+                                <div key={t.id} className="text-xs">{t.medicineName} ×{t.quantity}</div>
+                              ))}
+                              {c.treatments.length > 2 && <div className="text-xs text-gray-400">+{c.treatments.length - 2}</div>}
+                            </div>
+                          }
+                        </td>
+                        <td className="px-5 py-3.5 hidden sm:table-cell">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-50 w-fit" style={{ color: PRIMARY }}>
+                              Consultation
+                            </span>
+                            {c.transferred && (
+                              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-700 w-fit">Transferred</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => setViewDetail(c)} title="View Details"
+                              className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors" style={{ color: PRIMARY }}>
+                              <Eye size={15} />
+                            </button>
+                            <button onClick={() => { onSelectPatient(c.patientId); onNavigate('patient-profile'); }}
+                              title="View Patient Profile" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                              <User size={15} />
+                            </button>
+                            <button
+                              onClick={() => openTransferModal(c)}
+                              title="Transfer to Hospital"
+                              className="p-1.5 rounded-lg transition-colors"
+                              style={{ color: c.transferred ? '#9ca3af' : '#EA6C00', background: c.transferred ? 'transparent' : '#FFF3E0' }}
+                            >
+                              <Ambulance size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+          <div className="md:hidden space-y-3">
+            {filtered.map(c => {
+              const patient = patients.find(p => p.id === c.patientId);
+              return (
+                <div key={c.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-gray-800">{patient?.name}</div>
+                    <div className="text-xs text-gray-500">{c.date} • {c.complaint}</div>
+                  </div>
+                  <button onClick={() => setViewDetail(c)} className="p-2 bg-gray-50 rounded-lg text-gray-600"><Eye size={16} /></button>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* ── Transfers Table ── */}
       {activeTab === 'transfers' && (
-        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ background: '#f8fafd' }}>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Receiving Hospital</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Reason</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Transport</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Transferred By</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filteredTransfers.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-gray-400"><Ambulance size={32} className="mx-auto mb-2 opacity-30" />No transfers recorded</td></tr>
-                ) : filteredTransfers.map(t => {
-                  const patient = patients.find(p => p.id === t.patientId);
-                  return (
-                    <tr key={t.id} className="hover:bg-orange-50/30 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: '#EA6C00' }}>
-                            {patient?.name.charAt(0)}
+        <>
+          <div className="hidden md:block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <div className="overflow-x-auto hide-scrollbar">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ background: '#f8fafd' }}>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Receiving Hospital</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Reason</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Transport</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Transferred By</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredTransfers.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-12 text-gray-400"><Ambulance size={32} className="mx-auto mb-2 opacity-30" />No transfers recorded</td></tr>
+                  ) : filteredTransfers.map(t => {
+                    const patient = patients.find(p => p.id === t.patientId);
+                    return (
+                      <tr key={t.id} className="hover:bg-orange-50/30 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: '#EA6C00' }}>
+                              {patient?.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
+                              <div className="text-xs text-gray-400">{patient?.id}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
-                            <div className="text-xs text-gray-400">{patient?.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
-                        <div className="text-sm text-gray-700">{t.date}</div>
-                        <div className="text-xs text-gray-400">{t.time}</div>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-700 max-w-[200px]">
-                        <div className="truncate font-medium">{t.receivingHospital}</div>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px] hidden sm:table-cell">
-                        <div className="truncate">{t.reason}</div>
-                      </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 font-medium">{t.transportMode}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{t.transferredBy}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-5 py-3.5 hidden md:table-cell">
+                          <div className="text-sm text-gray-700">{t.date}</div>
+                          <div className="text-xs text-gray-400">{t.time}</div>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-700 max-w-[200px]">
+                          <div className="truncate font-medium">{t.receivingHospital}</div>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px] hidden sm:table-cell">
+                          <div className="truncate">{t.reason}</div>
+                        </td>
+                        <td className="px-5 py-3.5 hidden md:table-cell">
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 font-medium">{t.transportMode}</span>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{t.transferredBy}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+          
+          <div className="md:hidden space-y-3">
+            {filteredTransfers.map(t => {
+              const patient = patients.find(p => p.id === t.patientId);
+              return (
+                <div key={t.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-gray-900">{patient?.name}</div>
+                      <div className="text-xs text-gray-500">{t.date} • {t.time}</div>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide bg-orange-50 text-orange-700">
+                      {t.transportMode}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 space-y-2">
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Receiving Hospital</span>
+                      <span className="text-sm text-gray-700 font-medium">{t.receivingHospital}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Reason</span>
+                      <span className="text-sm text-gray-700">{t.reason}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* ── Transfer Modal ── */}

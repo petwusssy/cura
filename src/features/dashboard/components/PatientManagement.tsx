@@ -125,9 +125,9 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="overflow-x-auto">
+      {/* Table & Mobile Cards */}
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+        <div className="hidden md:block overflow-x-auto hide-scrollbar">
           <table className="w-full">
             <thead>
               <tr style={{ background: '#f8fafd' }}>
@@ -223,6 +223,77 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Patient Cards */}
+        <div className="flex flex-col gap-3 p-4 md:hidden bg-gray-50/50">
+          {currentPatients.map(p => {
+            const catColor = categoryColors[p.category];
+            return (
+              <div key={p.id} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-4 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm"
+                      style={{ background: catColor }}>
+                      {p.name.charAt(0)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900 leading-tight">{p.name}</span>
+                      <span className="text-xs text-gray-500 font-mono mt-0.5">{p.id}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wide flex-shrink-0"
+                    style={{
+                      background: p.category === 'Student' ? '#E3F2FD' : p.category === 'Employee' ? '#E8F5E9' : '#F3E5F5',
+                      color: p.category === 'Student' ? '#1B3A6B' : p.category === 'Employee' ? '#2E7D32' : '#6A1B9A',
+                    }}>
+                    {p.category}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact</span>
+                    <span className="text-sm text-gray-700">{p.contact}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Birthday</span>
+                    <span className="text-sm text-gray-700">{p.birthday}</span>
+                  </div>
+                  {p.studentCategory && (
+                    <div className="flex flex-col col-span-2 mt-1">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Course/Year</span>
+                      <span className="text-sm text-gray-700 font-medium">{p.studentCategory}</span>
+                    </div>
+                  )}
+                  {p.employeeDepartment && (
+                    <div className="flex flex-col col-span-2 mt-1">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Department</span>
+                      <span className="text-sm text-gray-700 font-medium">{p.employeeDepartment}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 mt-1">
+                  <button 
+                    onClick={() => { onSelectPatient(p.id); onNavigate('patient-profile'); }}
+                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">
+                    View Profile
+                  </button>
+                  <button 
+                    onClick={() => { onSelectPatient(p.id); onNavigate('new-consultation'); }}
+                    className="flex-1 py-2.5 bg-[#1B3A6B] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5">
+                    <Stethoscope size={14} /> Add Consult
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+          {paged.length === 0 && (
+            <div className="py-8 text-center text-gray-500 text-sm">
+              No patients found matching the criteria.
+            </div>
+          )}
         </div>
 
         {/* Pagination */}
