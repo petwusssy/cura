@@ -83,7 +83,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
         </div>
 
         {/* Category tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-shrink-0">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto overflow-x-auto">
           {(['All', ...CATEGORIES] as (PatientCategory | 'All')[]).map(cat => (
             <button
               key={cat}
@@ -131,12 +131,12 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
           <table className="w-full">
             <thead>
               <tr style={{ background: '#f8fafd' }}>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">ID</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">ID</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Category</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Contact</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Birthday</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Details</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Contact</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Birthday</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Details</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -154,7 +154,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                 const catColor = categoryColors[p.category];
                 return (
                   <tr key={p.id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="px-5 py-3.5 text-sm font-mono text-gray-600">{p.id}</td>
+                    <td className="px-5 py-3.5 text-sm font-mono text-gray-600 hidden md:table-cell">{p.id}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -173,9 +173,9 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                         {p.category}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-gray-600">{p.contact}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-600">{p.birthday}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500">
+                    <td className="px-5 py-3.5 text-sm text-gray-600 hidden md:table-cell">{p.contact}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{p.birthday}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 hidden md:table-cell">
                       {p.category === 'Student' && (
                         <span className="flex flex-col gap-0.5">
                           {p.studentCategory && (

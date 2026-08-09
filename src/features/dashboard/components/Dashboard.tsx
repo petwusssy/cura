@@ -81,13 +81,13 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900" style={{ color: '#1a1a2e' }}>Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
-        <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-1" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
             <button
               key={f}
@@ -239,9 +239,9 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
               <thead>
                 <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   <th className="text-left pb-3 pr-4">Patient</th>
-                  <th className="text-left pb-3 pr-4">Category</th>
+                  <th className="text-left pb-3 pr-4 hidden md:table-cell">Category</th>
                   <th className="text-left pb-3 pr-4">Complaint</th>
-                  <th className="text-left pb-3 pr-4">Time</th>
+                  <th className="text-left pb-3 pr-4 hidden md:table-cell">Time</th>
                   <th className="text-left pb-3">Status</th>
                 </tr>
               </thead>
@@ -259,7 +259,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                           <span className="text-sm font-medium text-gray-800 truncate max-w-[120px]">{patient?.name}</span>
                         </div>
                       </td>
-                      <td className="py-2.5 pr-4">
+                      <td className="py-2.5 pr-4 hidden md:table-cell">
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium"
                           style={{
                             background: patient?.category === 'Student' ? '#E3F2FD' : patient?.category === 'Employee' ? '#E8F5E9' : '#F3E5F5',
@@ -269,7 +269,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                         </span>
                       </td>
                       <td className="py-2.5 pr-4 text-sm text-gray-600 truncate max-w-[150px]">{c.complaint}</td>
-                      <td className="py-2.5 pr-4 text-sm text-gray-500">{c.timeIn}</td>
+                      <td className="py-2.5 pr-4 text-sm text-gray-500 hidden md:table-cell">{c.timeIn}</td>
                       <td className="py-2.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === 'Consultation' ? 'text-blue-700 bg-blue-50' : 'text-gray-600 bg-gray-100'}`}>
                           {c.status}

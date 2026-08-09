@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList, Package, ShoppingCart,
   FileText, BedDouble, BarChart2, Bell, Settings, Search, LogOut, Menu,
@@ -57,6 +57,12 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
     currentPage === id ||
     (id === 'patients' && ['patient-profile', 'patient-form', 'new-consultation'].includes(currentPage));
 
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setCollapsed(true);
+    }
+  }, []);
+
   return (
     <motion.div 
       className="flex h-screen overflow-hidden bg-gray-50"
@@ -64,12 +70,20 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Mobile Backdrop */}
+      {!collapsed && (
+        <div 
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
+
       {/* ── Sidebar ── */}
       <motion.aside
         initial={{ x: -250 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.25, ease: "easeOut", delay: 0.05 }}
-        className="flex flex-col flex-shrink-0 transition-all duration-300"
+        className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
         style={{
           width: collapsed ? 64 : 248,
           background: '#1B3A6B',
@@ -110,7 +124,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             return (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => { 
+                  onNavigate(item.id);
+                  if (window.innerWidth < 768) setCollapsed(true);
+                }}
                 title={collapsed ? item.label : undefined}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group"
                 style={{ color: active ? '#fff' : 'rgba(255,255,255,0.6)' }}

@@ -142,7 +142,7 @@ export function ConsultationTab({
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900">Consultations</h1>
           <p className="text-sm text-gray-500 mt-0.5">Patients seen by doctor</p>
@@ -162,7 +162,7 @@ export function ConsultationTab({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
         {([
           { id: 'consultations', label: 'Consultations' },
           { id: 'transfers', label: `Transfers (${transfers.length})` },
@@ -207,9 +207,13 @@ export function ConsultationTab({
             <table className="w-full">
               <thead>
                 <tr style={{ background: '#f8fafd' }}>
-                  {['Patient', 'Date & Time', 'Complaint', 'Doctor', 'Medicine', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
-                  ))}
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Complaint</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Doctor</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Medicine</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Status</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -231,7 +235,7 @@ export function ConsultationTab({
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 hidden md:table-cell">
                         <div className="text-sm text-gray-700">{c.date}</div>
                         <div className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</div>
                       </td>
@@ -245,8 +249,8 @@ export function ConsultationTab({
                           </div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">{c.doctorName || '—'}</td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
+                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{c.doctorName || '—'}</td>
+                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden md:table-cell">
                         {c.treatments.length === 0 ? <span className="text-gray-400">None</span> :
                           <div className="space-y-0.5">
                             {c.treatments.slice(0, 2).map(t => (
@@ -256,7 +260,7 @@ export function ConsultationTab({
                           </div>
                         }
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 hidden sm:table-cell">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-50 w-fit" style={{ color: PRIMARY }}>
                             Consultation
@@ -302,9 +306,12 @@ export function ConsultationTab({
             <table className="w-full">
               <thead>
                 <tr style={{ background: '#f8fafd' }}>
-                  {['Patient', 'Date & Time', 'Receiving Hospital', 'Reason', 'Transport', 'Transferred By'].map(h => (
-                    <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
-                  ))}
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date & Time</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Receiving Hospital</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Reason</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Transport</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Transferred By</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -325,20 +332,20 @@ export function ConsultationTab({
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 hidden md:table-cell">
                         <div className="text-sm text-gray-700">{t.date}</div>
                         <div className="text-xs text-gray-400">{t.time}</div>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-gray-700 max-w-[200px]">
                         <div className="truncate font-medium">{t.receivingHospital}</div>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px]">
+                      <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px] hidden sm:table-cell">
                         <div className="truncate">{t.reason}</div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 hidden md:table-cell">
                         <span className="text-xs px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 font-medium">{t.transportMode}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">{t.transferredBy}</td>
+                      <td className="px-5 py-3.5 text-sm text-gray-600 hidden lg:table-cell">{t.transferredBy}</td>
                     </tr>
                   );
                 })}
