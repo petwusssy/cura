@@ -87,12 +87,12 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
           <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
             <button
               key={f}
               onClick={() => setDateFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
                 ${dateFilter === f ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
               style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
             >
@@ -103,22 +103,22 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {statCards.map((card, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl p-4 flex flex-col gap-2 transition-transform hover:-translate-y-0.5"
+            className="bg-white rounded-xl p-3 sm:p-4 flex flex-col gap-2 transition-transform hover:-translate-y-0.5"
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: card.alert ? `1px solid ${RED}20` : '1px solid #f0f0f0' }}
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${card.color}15`, color: card.color }}>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center" style={{ background: `${card.color}15`, color: card.color }}>
                 {card.icon}
               </div>
               {card.alert && (
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: RED }} />
               )}
             </div>
-            <div className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</div>
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: card.color }}>{card.value}</div>
             <div>
               <div className="text-xs font-semibold text-gray-700 leading-tight">{card.label}</div>
               <div className="text-xs text-gray-400">{card.sub}</div>

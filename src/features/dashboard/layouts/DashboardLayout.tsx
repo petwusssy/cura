@@ -188,7 +188,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="bg-white border-b border-gray-100 flex items-center gap-4 px-6 py-3 flex-shrink-0"
+          className="bg-white border-b border-gray-100 flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0"
           style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}
         >
           <button
@@ -210,7 +210,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             />
           </div>
 
-          <div className="flex-1" />
+          <div className="hidden sm:block sm:flex-1" />
 
           {/* Notification bell */}
           <button
