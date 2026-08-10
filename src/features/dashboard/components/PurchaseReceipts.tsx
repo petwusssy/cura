@@ -246,7 +246,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-200/60 p-1 rounded-xl">
+        <div className="flex items-center gap-2 bg-gray-200/60 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
           <button
             onClick={() => setViewMode('template')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
@@ -276,7 +276,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               <AlertCircle size={16} className="text-[#1E5AA8]" />
               <span>Click any field in the template below to type or edit before printing.</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={handleRegisterAllToTracker}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488]"
@@ -749,7 +749,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
 
 
-            <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto justify-end overflow-x-auto">
+            <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto justify-start sm:justify-end overflow-x-auto hide-scrollbar">
               {(['All', 'Pending', 'Partial', 'Complete'] as const).map(s => (
                 <button
                   key={s}

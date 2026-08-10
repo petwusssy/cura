@@ -58,16 +58,16 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
 
   return (
     <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900">Non-Consultation</h1>
+          <h1 className="text-gray-900 text-2xl font-bold">Non-Consultation</h1>
           <p className="text-sm text-gray-500 mt-0.5">Patients not seen by doctor</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="px-3 py-1.5 flex items-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">{filtered.length} records</span>
           <button
             onClick={() => { onSelectPatient(''); onNavigate('new-non-consultation-tab'); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium flex-1 justify-center sm:flex-none sm:justify-start"
           >
             <Plus size={16} />
             Add Non-Consultation
@@ -76,11 +76,11 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
       </div>
 
       {/* Info Banner */}
-      <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: `${YELLOW}15`, border: `1px solid ${YELLOW}50` }}>
+      <div className="rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ background: `${YELLOW}15`, border: `1px solid ${YELLOW}50` }}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: YELLOW, color: '#000' }}>
           <ArrowRight size={16} />
         </div>
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 leading-relaxed">
           Use <strong>Convert to Consultation</strong> to move a record to the Consultations tab when the patient sees a doctor. This action cannot be undone.
         </div>
       </div>
@@ -89,12 +89,12 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
       <div className="bg-white rounded-xl p-4 flex gap-4 items-center flex-wrap"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
-        <div className="flex items-center gap-2">
-          <Calendar size={15} className="text-gray-400" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Calendar size={15} className="text-gray-400 flex-shrink-0" />
           <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1E5AA8] bg-gray-50" />
+            className="w-full sm:w-auto border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1E5AA8] bg-gray-50" />
           {dateFilter && (
-            <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Clear</button>
+            <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100 flex-shrink-0">Clear</button>
           )}
         </div>
       </div>

@@ -146,14 +146,14 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900">Pharmacy Inventory</h1>
+          <h1 className="text-gray-900 text-2xl font-bold">Pharmacy Inventory</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track medicine batches, low stock alerts, and refill schedules</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition-all"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition-all w-full sm:w-auto"
           style={{ background: PRIMARY }}
         >
           <Plus size={18} /> Add Medicine
@@ -181,9 +181,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       </div>
 
       {/* Grid date filter */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
           {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
