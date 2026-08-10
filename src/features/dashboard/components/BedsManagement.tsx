@@ -223,10 +223,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           <p className="text-sm text-gray-500 mt-0.5">Monitor bed occupancy and patient assignments</p>
         </div>
         {/* Grid date filter */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto w-full sm:w-auto hide-scrollbar">
+        <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
           {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
             <button key={f} onClick={() => setGridFilter(f)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap"
               style={{ background: gridFilter === f ? 'white' : 'transparent', color: gridFilter === f ? PRIMARY : '#6b7280', boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
               {filterLabels[f]}
             </button>
@@ -357,12 +357,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
                 {/* Tracker date filter */}
-                <div className="flex gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto hide-scrollbar">
+                <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
                   {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
                     <button key={f} onClick={() => setTrackerFilter(f)}
-                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-all text-center whitespace-nowrap"
                       style={{ background: trackerFilter === f ? 'white' : 'transparent', color: trackerFilter === f ? PRIMARY : '#6b7280', boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                       {filterLabels[f]}
                     </button>

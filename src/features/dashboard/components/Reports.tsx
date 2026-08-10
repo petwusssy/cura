@@ -372,23 +372,23 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         </div>
 
         {/* Date filter */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto w-full sm:w-auto hide-scrollbar">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-3 sm:mt-0">
+          <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
             {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap"
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
                 style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                 {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
           {filter === 'custom' && (
-            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-2 sm:mt-0">
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
+                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
               <span className="text-gray-400 text-xs">to</span>
               <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
+                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
             </div>
           )}
         </div>
