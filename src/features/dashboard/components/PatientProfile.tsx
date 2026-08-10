@@ -252,6 +252,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 ))}
               </div>
             </>
+            )}
           </div>
 
           {/* Non-Consultation History */}
@@ -362,6 +363,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 ))}
               </div>
             </>
+            )}
           </div>
 
           {/* Timeline */}
