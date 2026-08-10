@@ -420,7 +420,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         onLogout={onLogout}
         notifications={notifications}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          if (currentPage === 'dashboard' && q) {
+            setCurrentPage('patients');
+          }
+        }}
       >
         {renderPage()}
       </Layout>
