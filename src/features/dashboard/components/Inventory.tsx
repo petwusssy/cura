@@ -11,12 +11,12 @@ interface InventoryProps {
   medicines: MedicineItem[];
   onUpdateMedicine: (medicine: MedicineItem) => void | Promise<void>;
   onAddMedicine: (medicine: MedicineItem) => void | Promise<void>;
-  searchQuery: string;
 }
 
-export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQuery }: InventoryProps) {
+export function Inventory({ medicines, onUpdateMedicine, onAddMedicine }: InventoryProps) {
   const displayMedicines = medicines ?? [];
 
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock' | 'Healthy'>('All');
   const [adjustModal, setAdjustModal] = useState<MedicineItem | null>(null);
   const [adjustType, setAdjustType] = useState<'add' | 'dispense'>('add');
@@ -67,9 +67,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
 
   const filtered = displayMedicines.filter(m => {
     const details = getMedicineDetails(m);
-    const matchSearch = !searchQuery || 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      details.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = !search || 
+      m.name.toLowerCase().includes(search.toLowerCase()) || 
+      details.batchNumber.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || details.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -182,7 +182,21 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
 
       {/* Grid date filter */}
       <div className="flex items-center justify-between">
-
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name, batch..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] transition-colors"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
           {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}

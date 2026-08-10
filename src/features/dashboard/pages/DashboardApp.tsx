@@ -41,7 +41,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
-    setSearchQuery(''); // clear search when changing pages
+    if (page !== 'patients') setSearchQuery('');
   };
 
   useEffect(() => {
@@ -342,7 +342,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <ConsultationTab
             patients={patients} consultations={consultations}
-            transfers={transfers} searchQuery={searchQuery}
+            transfers={transfers}
             onUpdateConsultation={handleUpdateConsultation}
             onAddTransfer={handleAddTransfer}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
@@ -352,7 +352,6 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <NonConsultationTab
             patients={patients} consultations={consultations}
-            searchQuery={searchQuery}
             onConvertToConsultation={handleConvertToConsultation}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
@@ -360,7 +359,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       case 'inventory':
         return (
           <Inventory
-            medicines={medicines} searchQuery={searchQuery}
+            medicines={medicines}
             onUpdateMedicine={handleUpdateMedicine}
             onAddMedicine={handleAddMedicine}
           />
@@ -369,7 +368,6 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <PurchaseReceipts
             purchaseRequests={purchaseRequests} medicines={medicines}
-            searchQuery={searchQuery}
             onUpdateRequest={handleUpdatePurchaseRequest}
             onAddRequest={handleAddPurchaseRequest}
             onDeleteRequest={handleDeletePurchaseRequest}
@@ -379,7 +377,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <MedicalCertificates
             medicalCerts={medicalCerts} patients={patients}
-            selectedPatientId={selectedPatientId} searchQuery={searchQuery}
+            selectedPatientId={selectedPatientId}
             onAddCert={handleAddMedCert} onUpdateCert={handleUpdateMedCert}
           />
         );
@@ -420,12 +418,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         onLogout={onLogout}
         notifications={notifications}
         searchQuery={searchQuery}
-        onSearchChange={(q) => {
-          setSearchQuery(q);
-          if (currentPage === 'dashboard' && q) {
-            setCurrentPage('patients');
-          }
-        }}
+        onSearchChange={q => { setSearchQuery(q); if (q) navigate('patients'); }}
       >
         {renderPage()}
       </Layout>
