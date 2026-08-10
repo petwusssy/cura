@@ -11,7 +11,9 @@ interface PurchaseReceiptsProps {
   medicines: MedicineItem[];
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
+  onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
   onDeleteRequest: (id: string) => void | Promise<void>;
+  searchQuery: string;
 }
 
 interface PrfItemRow {
@@ -35,11 +37,10 @@ function reqToPrfRow(req: PurchaseRequest): PrfItemRow {
   };
 }
 
-export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest }: PurchaseReceiptsProps) {
+export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, searchQuery }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Delivery Receive Modal state
   const [receiveModal, setReceiveModal] = useState<PurchaseRequest | null>(null);
@@ -746,16 +747,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <div className="relative w-full sm:w-80">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search medicine, brand, or PRF No..."
-                className="w-full bg-gray-50/70 border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
-              />
-            </div>
+
 
             <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto justify-end overflow-x-auto">
               {(['All', 'Pending', 'Partial', 'Complete'] as const).map(s => (

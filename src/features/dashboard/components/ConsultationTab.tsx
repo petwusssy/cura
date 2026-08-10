@@ -38,12 +38,12 @@ interface ConsultationTabProps {
   onAddTransfer: (t: HospitalTransfer) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
+  searchQuery: string;
 }
 
 export function ConsultationTab({
-  patients, consultations, transfers, onUpdateConsultation, onAddTransfer, onNavigate, onSelectPatient,
+  patients, consultations, transfers, onUpdateConsultation, onAddTransfer, onNavigate, onSelectPatient, searchQuery
 }: ConsultationTabProps) {
-  const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
   const [transferModal, setTransferModal] = useState<Consultation | null>(null);
@@ -76,7 +76,7 @@ export function ConsultationTab({
 
   const filtered = doctorConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
-    const q = search.toLowerCase();
+    const q = searchQuery.toLowerCase();
     const matchSearch = !q || patient?.name.toLowerCase().includes(q) || c.complaint.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
     const matchDate = !dateFilter || c.date === dateFilter;
     return matchSearch && matchDate;
@@ -84,7 +84,7 @@ export function ConsultationTab({
 
   const filteredTransfers = transfers.filter(t => {
     const patient = patients.find(p => p.id === t.patientId);
-    const q = search.toLowerCase();
+    const q = searchQuery.toLowerCase();
     const matchSearch = !q || patient?.name.toLowerCase().includes(q) || t.receivingHospital.toLowerCase().includes(q);
     const matchDate = !dateFilter || t.date === dateFilter;
     return matchSearch && matchDate;
@@ -185,11 +185,7 @@ export function ConsultationTab({
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-wrap"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="relative w-full sm:flex-1 sm:min-w-48">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder={activeTab === 'consultations' ? 'Search patient or complaint...' : 'Search patient or hospital...'} value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B]" />
-        </div>
+
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Calendar size={15} className="text-gray-400" />
           <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
