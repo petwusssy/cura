@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
 import {
   Dashboard, PatientManagement, PatientForm, PatientProfile, NewConsultation,
@@ -24,7 +25,13 @@ interface DashboardAppProps {
 }
 
 export default function DashboardApp({ onLogout }: DashboardAppProps) {
-  const [currentPage, setCurrentPage]       = useState<Page>('dashboard');
+  const location = useLocation();
+  const routerNavigate = useNavigate();
+  
+  const pathParts = location.pathname.split('/');
+  const routePage = pathParts[2] || 'dashboard';
+  const currentPage = routePage as Page;
+
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
   const [convertingId, setConvertingId]           = useState<string | null>(null);
@@ -41,7 +48,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
 
   const navigate = (page: Page) => {
-    setCurrentPage(page);
+    routerNavigate(`/dashboard/${page === 'dashboard' ? '' : page}`);
     setSearchQuery(''); // clear search when changing pages
   };
 
