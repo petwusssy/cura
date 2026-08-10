@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
@@ -21,18 +21,14 @@ const categoryColors: Record<PatientCategory, { bg: string; text: string }> = {
 
 interface PatientManagementProps {
   patients: Patient[];
-  searchQuery: string;
+
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
   onEditPatient: (id: string | null) => void;
 }
 
-export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
-  const [localSearch, setLocalSearch] = useState(searchQuery);
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-    setPage(1);
-  }, [searchQuery]);
+export function PatientManagement({ patients, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
+  const [localSearch, setLocalSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
   const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
