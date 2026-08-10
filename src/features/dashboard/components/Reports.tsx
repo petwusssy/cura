@@ -372,18 +372,18 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         </div>
 
         {/* Date filter */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto w-full sm:w-auto hide-scrollbar">
             {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap"
                 style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                 {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
           {filter === 'custom' && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
                 className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
               <span className="text-gray-400 text-xs">to</span>

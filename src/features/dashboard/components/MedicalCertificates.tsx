@@ -464,10 +464,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-200/60 p-1.5 rounded-xl">
+        <div className="flex flex-wrap items-center gap-2 bg-gray-200/60 p-1.5 rounded-xl w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setActiveTab('template')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all whitespace-nowrap ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
           >
             <FileText size={16} /> Official PDF Template
           </button>
@@ -476,7 +476,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               syncToArchives();
               setActiveTab('archives');
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all whitespace-nowrap ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
           >
             <BookmarkCheck size={16} /> Certificate Records
             <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-white text-[#1E5AA8] font-black">
@@ -492,15 +492,17 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {activeTab === 'template' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Action & Configuration Toolbar */}
-          <div className="no-print flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <div className="flex items-center gap-2.5 w-full xl:w-auto flex-wrap">
-              <div className="flex items-center gap-2 bg-blue-50/80 text-[#1E5AA8] px-3.5 py-2 rounded-xl text-xs font-black border border-blue-100">
-                <UserCheck size={16} />
-                <span>Quick Load Patient:</span>
+          <div className="no-print flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+            <div className="flex items-start sm:items-center gap-2.5 w-full xl:w-auto flex-col sm:flex-row flex-wrap">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-blue-50/80 text-[#1E5AA8] px-3.5 py-2 rounded-xl text-xs font-black border border-blue-100 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <UserCheck size={16} />
+                  <span>Quick Load Patient:</span>
+                </div>
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="bg-white text-gray-900 font-black px-2.5 py-1 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] text-xs cursor-pointer ml-1"
+                  className="bg-white text-gray-900 font-black px-2.5 py-1.5 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] text-xs cursor-pointer w-full sm:w-auto"
                 >
                   <option value="">Select patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}

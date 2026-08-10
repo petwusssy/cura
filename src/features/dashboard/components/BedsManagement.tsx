@@ -217,13 +217,13 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900">Beds Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">Monitor bed occupancy and patient assignments</p>
         </div>
         {/* Grid date filter */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto w-full sm:w-auto hide-scrollbar">
           {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
             <button key={f} onClick={() => setGridFilter(f)}
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
@@ -344,10 +344,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       {selectedBedTracker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white shrink-0 gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
                   <BedDouble size={20} />
                 </div>
                 <div>
@@ -357,9 +357,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                 {/* Tracker date filter */}
-                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto hide-scrollbar">
                   {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
                     <button key={f} onClick={() => setTrackerFilter(f)}
                       className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
