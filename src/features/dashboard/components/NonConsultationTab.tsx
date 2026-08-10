@@ -11,10 +11,10 @@ interface NonConsultationTabProps {
   onConvertToConsultation: (id: string) => void | Promise<void>;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
+  searchQuery: string;
 }
 
-export function NonConsultationTab({ patients, consultations, onConvertToConsultation, onNavigate, onSelectPatient }: NonConsultationTabProps) {
-  const [search, setSearch] = useState('');
+export function NonConsultationTab({ patients, consultations, onConvertToConsultation, onNavigate, onSelectPatient, searchQuery }: NonConsultationTabProps) {
   const [dateFilter, setDateFilter] = useState('');
   const [converting, setConverting] = useState<string | null>(null);
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
@@ -38,7 +38,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
 
   const filtered = nonConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
-    const q = search.toLowerCase();
+    const q = searchQuery.toLowerCase();
     const matchSearch = !q || patient?.name.toLowerCase().includes(q) || c.complaint.toLowerCase().includes(q);
     const matchDate = !dateFilter || c.date === dateFilter;
     return matchSearch && matchDate;
@@ -88,11 +88,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 flex gap-4 items-center flex-wrap"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="relative flex-1 min-w-48">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search patient or complaint..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1E5AA8]" />
-        </div>
+
         <div className="flex items-center gap-2">
           <Calendar size={15} className="text-gray-400" />
           <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}

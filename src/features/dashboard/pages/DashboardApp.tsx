@@ -42,7 +42,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
-    if (page !== 'patients') setSearchQuery('');
+    setSearchQuery(''); // clear search when changing pages
   };
 
   useEffect(() => {
@@ -343,7 +343,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <ConsultationTab
             patients={patients} consultations={consultations}
-            transfers={transfers}
+            transfers={transfers} searchQuery={searchQuery}
             onUpdateConsultation={handleUpdateConsultation}
             onAddTransfer={handleAddTransfer}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
@@ -353,6 +353,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <NonConsultationTab
             patients={patients} consultations={consultations}
+            searchQuery={searchQuery}
             onConvertToConsultation={handleConvertToConsultation}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
@@ -360,7 +361,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       case 'inventory':
         return (
           <Inventory
-            medicines={medicines}
+            medicines={medicines} searchQuery={searchQuery}
             onUpdateMedicine={handleUpdateMedicine}
             onAddMedicine={handleAddMedicine}
           />
@@ -369,6 +370,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <PurchaseReceipts
             purchaseRequests={purchaseRequests} medicines={medicines}
+            searchQuery={searchQuery}
             onUpdateRequest={handleUpdatePurchaseRequest}
             onAddRequest={handleAddPurchaseRequest}
             onDeleteRequest={handleDeletePurchaseRequest}
@@ -378,7 +380,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <MedicalCertificates
             medicalCerts={medicalCerts} patients={patients}
-            selectedPatientId={selectedPatientId}
+            selectedPatientId={selectedPatientId} searchQuery={searchQuery}
             onAddCert={handleAddMedCert} onUpdateCert={handleUpdateMedCert}
           />
         );
@@ -427,7 +429,21 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               onNavigate={navigate}
               onSelectPatient={setSelectedPatientId}
             />
-          ) : null
+          ) : (
+            <div className="flex-1 max-w-md relative">
+              <input
+                type="text"
+                placeholder="Search this page..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] focus:bg-white transition-all"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+          )
         }
       >
         {renderPage()}

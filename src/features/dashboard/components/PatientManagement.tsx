@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
@@ -28,18 +28,13 @@ interface PatientManagementProps {
 }
 
 export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
-  const [localSearch, setLocalSearch] = useState(searchQuery);
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-    setPage(1);
-  }, [searchQuery]);
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
   const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
   const ROWS = 10;
 
   const filtered = patients.filter(p => {
-    const q = localSearch.toLowerCase();
+    const q = searchQuery.toLowerCase();
     const matchSearch = !q || p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.contact.includes(q);
     const matchCat = categoryFilter === 'All' || p.category === categoryFilter;
     const matchStudentCat = categoryFilter !== 'Student' || studentCategoryFilter === 'All' || p.studentCategory === studentCategoryFilter;
@@ -74,17 +69,6 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        {/* Search */}
-        <div className="relative w-full sm:flex-1 min-w-0">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by ID, name, or contact..."
-            value={localSearch}
-            onChange={e => { setLocalSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1E5AA8] transition-all"
-          />
-        </div>
 
         {/* Category tabs */}
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar">
