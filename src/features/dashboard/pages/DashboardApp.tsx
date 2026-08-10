@@ -4,6 +4,7 @@ import {
   Dashboard, PatientManagement, PatientForm, PatientProfile, NewConsultation,
   ConsultationTab, NonConsultationTab, Inventory, PurchaseReceipts,
   MedicalCertificates, BedsManagement, Reports, Notifications, Settings,
+  GlobalSearch,
 } from '../components';
 import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
@@ -417,8 +418,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         currentPage={currentPage} onNavigate={navigate}
         onLogout={onLogout}
         notifications={notifications}
-        searchQuery={searchQuery}
-        onSearchChange={q => { setSearchQuery(q); if (q) navigate('patients'); }}
+        headerSearchComponent={
+          <GlobalSearch
+            patients={patients}
+            consultations={consultations}
+            medicines={medicines}
+            onNavigate={navigate}
+            onSelectPatient={setSelectedPatientId}
+          />
+        }
       >
         {renderPage()}
       </Layout>

@@ -12,3 +12,4 @@ export { PatientProfile } from "./PatientProfile";
 export { PurchaseReceipts } from "./PurchaseReceipts";
 export { Reports } from "./Reports";
 export { Settings } from "./Settings";
+export { GlobalSearch } from "./GlobalSearch";

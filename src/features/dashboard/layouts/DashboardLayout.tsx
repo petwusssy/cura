@@ -36,11 +36,10 @@ interface LayoutProps {
   onLogout: () => void;
   notifications: AppNotification[];
   children: React.ReactNode;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  headerSearchComponent?: React.ReactNode;
 }
 
-export function Layout({ currentPage, onNavigate, onLogout, notifications, children, searchQuery, onSearchChange }: LayoutProps) {
+export function Layout({ currentPage, onNavigate, onLogout, notifications, children, headerSearchComponent }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const unread = notifications.filter(n => !n.read).length;
 
@@ -199,16 +198,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* Search */}
-          <div className="flex-1 max-w-md relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search patients, records..."
-              value={searchQuery}
-              onChange={e => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] focus:bg-white transition-all"
-            />
-          </div>
+          {headerSearchComponent}
 
           <div className="hidden sm:block sm:flex-1" />
 
