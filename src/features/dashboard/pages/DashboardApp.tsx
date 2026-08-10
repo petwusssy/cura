@@ -27,7 +27,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
   const [convertingId, setConvertingId]           = useState<string | null>(null);
-
+  const [searchQuery, setSearchQuery]       = useState('');
 
   // Initialize with empty arrays to prevent mock data from showing before real data is fetched
   const [patients, setPatients]                 = useState<Patient[]>([]);
@@ -41,7 +41,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
-    setCurrentPage(page);
+    if (page !== 'patients') setSearchQuery('');
   };
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       case 'patients':
         return (
           <PatientManagement
-            patients={patients}
+            patients={patients} searchQuery={searchQuery}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
             onEditPatient={setEditingPatientId}
           />
@@ -417,6 +417,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         currentPage={currentPage} onNavigate={navigate}
         onLogout={onLogout}
         notifications={notifications}
+        searchQuery={searchQuery}
+        onSearchChange={q => { setSearchQuery(q); if (q) navigate('patients'); }}
       >
         {renderPage()}
       </Layout>
