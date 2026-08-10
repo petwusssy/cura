@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
@@ -29,6 +29,10 @@ interface PatientManagementProps {
 
 export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+    setPage(1);
+  }, [searchQuery]);
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
   const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
