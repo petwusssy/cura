@@ -556,11 +556,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* ===================================================================================== */}
           {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
           {/* ===================================================================================== */}
-          <div
-            id="official-med-cert-page"
-            className="font-official relative bg-white border-2 border-gray-300 shadow-2xl max-w-[850px] mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden"
-            style={{ width: '8.5in', minHeight: '11in' }}
-          >
+          <div className="overflow-x-auto w-full pb-8 hide-scrollbar">
+            <div
+              id="official-med-cert-page"
+              className="font-official relative bg-white border-2 border-gray-300 shadow-2xl mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden"
+              style={{ width: '8.5in', minWidth: '8.5in', minHeight: '11in' }}
+            >
             
             {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-12">
@@ -793,6 +794,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}

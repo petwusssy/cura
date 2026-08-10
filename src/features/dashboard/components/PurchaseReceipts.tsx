@@ -308,8 +308,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           </div>
 
           {/* Printable PRF Document Container */}
-          <div className="prf-printable-area bg-white border-2 border-gray-400 p-8 md:p-12 shadow-lg max-w-5xl mx-auto text-black font-sans">
-            {/* Header section with Logo & Titles */}
+          <div className="overflow-x-auto w-full pb-8 hide-scrollbar">
+            <div className="prf-printable-area bg-white border-2 border-gray-400 p-8 md:p-12 shadow-lg max-w-5xl mx-auto text-black font-sans" style={{ minWidth: '800px' }}>
+              {/* Header section with Logo & Titles */}
             <div className="flex items-start justify-between pb-3">
               <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center">
                 <img src={uaSeal} alt="University Seal" className="w-20 h-20 object-contain" />
@@ -676,6 +677,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}
