@@ -115,7 +115,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
 
       {/* Table & Mobile Cards */}
       <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-        <div className="hidden md:block overflow-x-auto hide-scrollbar">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr style={{ background: '#f8fafd' }}>

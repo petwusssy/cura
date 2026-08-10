@@ -200,7 +200,7 @@ export function ConsultationTab({
       {activeTab === 'consultations' && (
         <>
           <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr style={{ background: '#f8fafd' }}>
@@ -315,7 +315,7 @@ export function ConsultationTab({
       {activeTab === 'transfers' && (
         <>
           <div className="hidden md:block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <div className="overflow-x-auto hide-scrollbar">
+            <div className="hidden md:block overflow-x-auto hide-scrollbar">
               <table className="w-full">
                 <thead>
                   <tr style={{ background: '#f8fafd' }}>

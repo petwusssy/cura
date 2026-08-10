@@ -376,7 +376,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
 
             {/* History table */}
             <div className="overflow-y-auto flex-grow p-6">
-              <div className="rounded-xl border border-gray-100 overflow-hidden">
+              <div className="hidden md:block rounded-xl border border-gray-100 overflow-hidden">
                 <table className="w-full">
                   <thead>
                     <tr style={{ background: '#f8fafd' }}>
@@ -431,6 +431,56 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Cards for Bed Tracker History */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {trackerHistory.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-xl border border-gray-100">
+                    <BedDouble size={32} className="mx-auto mb-3 opacity-25" />
+                    <p className="text-sm">No usage records for {filterLabels[trackerFilter].toLowerCase()}</p>
+                  </div>
+                ) : trackerHistory.map((h, i) => (
+                  <div key={i} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-2 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: PRIMARY }}>
+                          {h.patientName.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-900 text-sm leading-tight">{h.patientName}</div>
+                          {h.patientId && <div className="text-[10px] text-gray-400 font-mono mt-0.5">{h.patientId}</div>}
+                        </div>
+                      </div>
+                      <div className="text-xs font-bold text-gray-400">#{i + 1}</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time In</span>
+                        <span className="text-xs text-gray-700">{h.date} <br/> <span className="text-gray-500 font-medium">{h.timeIn}</span></span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time Out</span>
+                        <div className="mt-0.5">
+                          {h.timeOut === '(current)' ? (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide" style={{ background: `${RED}15`, color: RED }}>
+                              Current / Occupied
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-700">{h.timeOut}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col col-span-2 mt-1 border-t border-gray-200 pt-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Duration</span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-md w-fit" style={{ background: `${PRIMARY}10`, color: PRIMARY }}>
+                          {h.duration}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -438,7 +488,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
 
 
       {/* ── Full History Table ── */}
-      <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+      <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-gray-800">All Bed Usage History</h3>
           <span className="text-xs text-gray-400">All records</span>
@@ -474,6 +524,55 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Cards for Full History */}
+      <div className="flex flex-col gap-3 md:hidden">
+        <div className="px-1 flex items-center justify-between mb-1">
+          <h3 className="text-gray-800 font-bold">All Bed Usage History</h3>
+          <span className="text-xs text-gray-400">{allUsageHistory.length} records</span>
+        </div>
+        {allUsageHistory.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-100">
+            No records
+          </div>
+        ) : allUsageHistory.map((h, i) => (
+          <div key={`${h._bedNumber}-hist-${i}`} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-2 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold px-2 py-1 rounded-md text-white" style={{ background: PRIMARY }}>
+                  Bed {h._bedNumber}
+                </span>
+                <span className="font-bold text-gray-900 text-sm">{h.patientName}</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time In</span>
+                <span className="text-xs text-gray-700">{h.date} <br/> <span className="text-gray-500 font-medium">{h.timeIn}</span></span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time Out</span>
+                <div className="mt-0.5">
+                  {h.timeOut === '(current)' ? (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide" style={{ background: `${RED}15`, color: RED }}>
+                      Current
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-700">{h.timeOut}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col col-span-2 mt-1 border-t border-gray-200 pt-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Duration</span>
+                <span className="text-xs font-bold px-2 py-1 rounded-md w-fit bg-blue-50" style={{ color: PRIMARY }}>
+                  {h.duration}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Assign Modal */}

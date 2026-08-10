@@ -157,8 +157,9 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 <p>No consultation records</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
                   <thead>
                     <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                       <th className="text-left pb-3 pr-3">No.</th>
@@ -202,7 +203,55 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Mobile Cards for Consultation History */}
+              <div className="flex flex-col gap-3 md:hidden mt-2">
+                {patientConsultations.map((c, i) => (
+                  <div key={c.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-2 relative">
+                    <div className="absolute top-4 right-4">
+                      <button 
+                        onClick={() => setSelectedConsultation(c)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 bg-white shadow-sm rounded-lg transition-colors inline-flex"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="text-xs font-bold text-gray-400">Record #{i + 1}</div>
+                    
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{c.date} • {c.timeIn}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-200">
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Doctor</span>
+                        <div className="text-sm text-gray-700">{c.doctorConsulted ? c.doctorName : <span className="text-gray-400">None</span>}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Status</span>
+                        <div className="mt-0.5">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap
+                            ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {c.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="col-span-2 mt-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Medicine</span>
+                        <div className="text-sm text-gray-700">
+                          {c.treatments.length > 0 ? c.treatments.map(t => t.medicineName).join(', ') : <span className="text-gray-400">None</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           </div>
 
           {/* Non-Consultation History */}
@@ -218,8 +267,9 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 <p>No non-consultation records</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
                   <thead>
                     <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                       <th className="text-left pb-3 pr-3">No.</th>
@@ -263,7 +313,55 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Mobile Cards for Non-Consultation History */}
+              <div className="flex flex-col gap-3 md:hidden mt-2">
+                {patientNonConsultations.map((c, i) => (
+                  <div key={c.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-2 relative">
+                    <div className="absolute top-4 right-4">
+                      <button 
+                        onClick={() => setSelectedConsultation(c)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 bg-white shadow-sm rounded-lg transition-colors inline-flex"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="text-xs font-bold text-gray-400">Record #{i + 1}</div>
+                    
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{c.date} • {c.timeIn}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-200">
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Doctor</span>
+                        <div className="text-sm text-gray-700">{c.doctorConsulted ? c.doctorName : <span className="text-gray-400">None</span>}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Status</span>
+                        <div className="mt-0.5">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap
+                            ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {c.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="col-span-2 mt-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Medicine</span>
+                        <div className="text-sm text-gray-700">
+                          {c.treatments.length > 0 ? c.treatments.map(t => t.medicineName).join(', ') : <span className="text-gray-400">None</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           </div>
 
           {/* Timeline */}
