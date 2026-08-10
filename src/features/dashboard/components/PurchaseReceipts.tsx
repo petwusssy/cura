@@ -197,7 +197,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#FAFBFD]">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#FAFBFD]">
       {/* Print CSS specific to PRF Template */}
       <style>{`
         @media print {
@@ -279,7 +279,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={handleRegisterAllToTracker}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488]"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488] w-full sm:w-auto"
               >
                 <BookmarkCheck size={15} /> Save to Delivery Tracker
               </button>
@@ -292,14 +292,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                       .map(reqToPrfRow)
                   );
                 }}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors"
+                className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors w-full sm:w-auto"
                 title="Reset to saved tracker data"
               >
                 <RefreshCw size={14} /> Reset
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-md hover:shadow-lg active:scale-95"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-90 active:scale-95 w-full sm:w-auto"
                 style={{ background: PRIMARY }}
               >
                 <Printer size={15} /> Print PRF Form
@@ -616,94 +616,63 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             {/* Bottom Row Signatures (4 columns) */}
             <div className="border-x-2 border-b-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x-2 divide-black">
               {/* Row 2 Box 1: Budget / AFMS */}
-              <div className="p-3 flex flex-col justify-between min-h-[140px]">
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <span className="font-bold">Budget Amount:&nbsp;</span>
-                    <input
-                      type="text"
-                      value={budgetAmount}
-                      onChange={e => setBudgetAmount(e.target.value)}
-                      className="flex-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1"
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-bold">If CAPEX, Authority No.</span>
-                    <input
-                      type="text"
-                      value={capexNo}
-                      onChange={e => setCapexNo(e.target.value)}
-                      className="flex-1 ml-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50"
-                    />
-                  </div>
-                  <div className="pt-2 font-bold">Verified by/Date:</div>
-                  <input
-                    type="text"
-                    value={verifiedBy}
-                    onChange={e => setVerifiedBy(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50"
-                  />
+              <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                <div className="overflow-x-auto hide-scrollbar">
+                  <table className="w-full min-w-[200px] text-sm mb-2">
+                    <tbody>
+                      <tr>
+                        <td className="font-bold whitespace-nowrap">Budget Amount:</td>
+                        <td><input type="text" value={budgetAmount} onChange={e => setBudgetAmount(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" /></td>
+                      </tr>
+                      <tr>
+                        <td className="font-bold whitespace-nowrap">If CAPEX, Authority No.</td>
+                        <td><input type="text" value={capexNo} onChange={e => setCapexNo(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" /></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div className="pt-1 font-bold">Verified by/Date:</div>
+                  <input type="text" value={verifiedBy} onChange={e => setVerifiedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center font-bold mt-2 pt-3 border-t border-black">
+                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
                   HEAD, AFMS
                 </div>
               </div>
 
               {/* Row 2 Box 2: Source of Funds / Cluster Head */}
-              <div className="p-3 flex flex-col justify-between min-h-[140px]">
-                <div className="space-y-2">
+              <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                <div className="space-y-1">
                   <div className="font-bold">Source of Funds if without budget:</div>
-                  <input
-                    type="text"
-                    value={sourceOfFunds}
-                    onChange={e => setSourceOfFunds(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50"
-                  />
-                  <div className="font-bold pt-2">Endorsed by/Date:</div>
-                  <input
-                    type="text"
-                    value={endorsedBy}
-                    onChange={e => setEndorsedBy(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50"
-                  />
+                  <input type="text" value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
+                  <div className="font-bold pt-1">Endorsed by/Date:</div>
+                  <input type="text" value={endorsedBy} onChange={e => setEndorsedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center font-bold mt-2 pt-3 border-t border-black">
+                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
                   <div>CLUSTER HEAD</div>
                   <div className="text-[9px] font-normal">(VPAA, VPA,VPF, PRESIDENT)</div>
                 </div>
               </div>
 
               {/* Row 2 Box 3: VP Finance (>500K) */}
-              <div className="p-3 flex flex-col justify-between min-h-[140px]">
+              <div className="p-2 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-4">Recommended by/Date:</div>
-                  <input
-                    type="text"
-                    value={recFinance}
-                    onChange={e => setRecFinance(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 mb-2"
-                  />
+                  <div className="font-bold mb-2">Recommended by/Date:</div>
+                  <input type="text" value={recFinance} onChange={e => setRecFinance(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center mt-2 pt-3 border-t border-black">
+                <div className="text-center mt-2 pt-2 border-t border-black">
                   <div className="font-bold">VP FOR FINANCE</div>
                   <div className="text-[10px]">(more than 500K)</div>
                 </div>
               </div>
 
               {/* Row 2 Box 4: Approved by */}
-              <div className="p-3 flex flex-col justify-between min-h-[140px]">
+              <div className="p-2 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-4">Approved by/Date:</div>
-                  <input
-                    type="text"
-                    value={approvedBy}
-                    onChange={e => setApprovedBy(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 mb-2"
-                  />
+                  <div className="font-bold mb-2">Approved by/Date:</div>
+                  <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center mt-2 pt-3 border-t border-black">
+                <div className="text-center mt-2 pt-2 border-t border-black">
                   <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
-                  <div className="font-bold mt-1">PRESIDENT (more than 500K to 1M)</div>
+                  <div className="font-bold mt-0.5">PRESIDENT (more than 500K to 1M)</div>
                 </div>
               </div>
             </div>
@@ -747,8 +716,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-
-
             <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto justify-start sm:justify-end overflow-x-auto hide-scrollbar">
               {(['All', 'Pending', 'Partial', 'Complete'] as const).map(s => (
                 <button
@@ -817,7 +784,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center gap-2.5 self-end lg:self-center flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto mt-4 lg:mt-0">
                         {req.status !== 'Complete' && (
                           <button
                             onClick={() => { setReceiveModal(req); setReceiveQty(''); setReceiveNote(''); }}
@@ -853,8 +820,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           {req.history.map((h, i) => (
                             <div key={i} className="flex items-start gap-3 text-xs">
                               <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${h.qty > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                              <div className="flex-1">
-                                <span className="font-bold text-gray-800">{h.note}</span>
+                              <div className="flex-1 overflow-hidden">
+                                <span className="font-bold text-gray-800 break-words">{h.note}</span>
                                 <div className="text-gray-400 mt-0.5 font-medium">
                                   {h.date} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
                                 </div>

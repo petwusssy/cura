@@ -57,7 +57,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   };
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900 text-2xl font-bold">Non-Consultation</h1>
@@ -99,10 +99,10 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="overflow-x-auto hide-scrollbar">
+          <table className="w-full min-w-[800px]">
             <thead>
               <tr style={{ background: '#f8fafd' }}>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
@@ -192,6 +192,71 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-100">
+            <Search size={32} className="mx-auto mb-2 opacity-30" />
+            No non-consultation records found
+          </div>
+        ) : filtered.map(c => {
+          const patient = patients.find(p => p.id === c.patientId);
+          const isConverting = converting === c.id;
+          return (
+            <div key={c.id} className={`bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-3 shadow-sm ${isConverting ? 'bg-blue-50' : ''}`}>
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: '#9ca3af' }}>
+                    {patient?.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-900 leading-tight">{patient?.name}</span>
+                    <span className="text-xs text-gray-500">{patient?.category}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-1">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time</span>
+                  <span className="text-sm text-gray-700">{c.date} <br/> <span className="text-xs text-gray-500">{c.timeIn}</span></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Complaint</span>
+                  <span className="text-sm text-gray-700">{c.complaint}</span>
+                </div>
+                <div className="flex flex-col col-span-2 mt-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Treatment</span>
+                  {c.treatments.length === 0 ? (
+                    <span className="text-gray-400 text-sm">None</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {c.treatments.map(t => (
+                        <span key={t.id} className="text-xs text-gray-600 bg-gray-200 px-1.5 py-0.5 rounded">{t.medicineName} ×{t.quantity}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-1">
+                <button 
+                  onClick={() => setViewDetail(c)}
+                  className="flex-1 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-1.5">
+                  <Eye size={14} /> Details
+                </button>
+                <button 
+                  onClick={() => handleConvert(c.id)}
+                  disabled={isConverting}
+                  className="flex-1 py-2 bg-[#1B3A6B] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 disabled:opacity-60">
+                  <ArrowRight size={14} /> {isConverting ? 'Converting...' : 'Convert'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Non-Consultation Detail Modal ── */}
