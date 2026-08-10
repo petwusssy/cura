@@ -419,13 +419,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         onLogout={onLogout}
         notifications={notifications}
         headerSearchComponent={
-          <GlobalSearch
-            patients={patients}
-            consultations={consultations}
-            medicines={medicines}
-            onNavigate={navigate}
-            onSelectPatient={setSelectedPatientId}
-          />
+          currentPage === 'dashboard' ? (
+            <GlobalSearch
+              patients={patients}
+              consultations={consultations}
+              medicines={medicines}
+              onNavigate={navigate}
+              onSelectPatient={setSelectedPatientId}
+            />
+          ) : null
         }
       >
         {renderPage()}
