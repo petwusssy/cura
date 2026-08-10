@@ -51,16 +51,16 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
   };
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900">Patient Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">{patients.length} registered patients</p>
         </div>
         <button
           onClick={handleNewPatient}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 w-full sm:w-auto"
           style={{ background: PRIMARY }}
         >
           <Plus size={16} /> Add Patient
@@ -71,7 +71,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
       <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
         {/* Search */}
-        <div className="relative flex-1 min-w-0">
+        <div className="relative w-full sm:flex-1 min-w-0">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -83,7 +83,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
         </div>
 
         {/* Category tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar">
           {(['All', ...CATEGORIES] as (PatientCategory | 'All')[]).map(cat => (
             <button
               key={cat}

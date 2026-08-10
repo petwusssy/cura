@@ -140,20 +140,20 @@ export function ConsultationTab({
   };
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-gray-900">Consultations</h1>
           <p className="text-sm text-gray-500 mt-0.5">Patients seen by doctor</p>
         </div>
-        <div className="flex gap-2">
-          <span className="px-3 py-1.5 flex items-center rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>
             {filtered.length} records
           </span>
           <button
             onClick={() => { onSelectPatient(''); onNavigate('new-consultation-tab'); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium w-full sm:w-auto"
           >
             <Plus size={16} />
             Add Consultation
@@ -183,19 +183,19 @@ export function ConsultationTab({
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl p-4 flex gap-4 items-center flex-wrap"
+      <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-wrap"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="relative flex-1 min-w-48">
+        <div className="relative w-full sm:flex-1 sm:min-w-48">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder={activeTab === 'consultations' ? 'Search patient or complaint...' : 'Search patient or hospital...'} value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B]" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Calendar size={15} className="text-gray-400" />
           <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-gray-50" />
+            className="flex-1 sm:flex-none border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-gray-50 w-full sm:w-auto" />
           {dateFilter && (
-            <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Clear</button>
+            <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100 flex-shrink-0">Clear</button>
           )}
         </div>
       </div>

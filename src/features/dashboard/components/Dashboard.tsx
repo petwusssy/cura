@@ -79,7 +79,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -87,7 +87,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
           <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
             <button
               key={f}
@@ -103,7 +103,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         {statCards.map((card, i) => (
           <div
             key={i}
@@ -203,7 +203,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
         {/* Quick Actions */}
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
           <h3 className="text-gray-800 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
             {quickActions.map(a => (
               <button
                 key={a.label}
