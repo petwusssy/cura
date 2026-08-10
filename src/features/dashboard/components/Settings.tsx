@@ -23,7 +23,7 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: 'Grace Aquino', designation: 'Registered Nurse', email: 'g.aquino@ua.edu.ph',
+    name: 'UA CLINIC ADMIN', designation: 'Administrator', email: 'admin@ua.edu.ph',
     phone: '09121234567', department: 'Medical-Dental Clinic',
   });
 

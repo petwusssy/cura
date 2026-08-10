@@ -69,7 +69,7 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
   const [newCategory, setNewCategory] = useState('');
 
   const [doctorName, setDoctorName] = useState(initialData?.doctorName || 'Dr. Rosario Mendez');
-  const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'Grace Aquino, RN');
+  const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'UA CLINIC ADMIN');
   
   const [vitals, setVitals] = useState(initialData?.vitals || { height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
   const [treatments, setTreatments] = useState<Treatment[]>(initialData?.treatments || []);
@@ -366,7 +366,7 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
             </div>
             <div>
               <label className={labelCls}>Assisting Nurse</label>
-              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} placeholder="e.g., Grace Aquino, RN" className={inputCls} />
+              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} placeholder="e.g., UA CLINIC ADMIN" className={inputCls} />
             </div>
           </div>
         ))}

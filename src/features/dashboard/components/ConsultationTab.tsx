@@ -481,7 +481,7 @@ export function ConsultationTab({
                 {/* Transferred by */}
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Transferred By</label>
-                  <input type="text" defaultValue="Grace Aquino, RN" readOnly
+                  <input type="text" defaultValue="UA CLINIC ADMIN" readOnly
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-500" />
                 </div>
               </div>

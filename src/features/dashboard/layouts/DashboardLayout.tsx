@@ -224,11 +224,11 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
               style={{ background: '#1B3A6B' }}
             >
-              GA
+              UA
             </div>
-            <div className="hidden sm:block">
-              <div className="text-sm font-semibold text-gray-800">Grace Aquino, RN</div>
-              <div className="text-xs text-gray-400">Head Nurse</div>
+            <div className="hidden md:block">
+              <div className="text-sm font-semibold text-gray-800">UA CLINIC ADMIN</div>
+              <div className="text-xs text-gray-500 font-medium">Administrator</div>
             </div>
           </div>
         </motion.header>
