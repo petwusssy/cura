@@ -64,7 +64,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
   return (
     <motion.div 
-      className="flex h-screen overflow-hidden bg-gray-50"
+      className="flex h-[100dvh] overflow-hidden bg-gray-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -239,6 +239,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.25, ease: "easeOut" }}
           className="flex-1 overflow-y-auto"
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {children}
         </motion.main>

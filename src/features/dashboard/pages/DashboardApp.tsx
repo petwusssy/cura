@@ -433,7 +433,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             <div className="flex-1 max-w-md relative">
               <input
                 type="text"
-                placeholder="Search this page..."
+                placeholder={`Search in ${currentPage.replace('-', ' ')}...`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] focus:bg-white transition-all"
