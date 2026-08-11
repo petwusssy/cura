@@ -122,6 +122,7 @@ export interface MedicineItem {
   batchNumber?: string;
   beginningQty?: number;
   dispensed?: number;
+  category?: 'Medicine' | 'Supply';
   threshold?: number;
 }
 

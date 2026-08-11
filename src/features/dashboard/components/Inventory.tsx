@@ -71,7 +71,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
       details.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
     const matchStatus = statusFilter === 'All' || details.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchType = typeFilter === 'All' || m.category === typeFilter;
+    return matchSearch && matchStatus && matchType;
   });
 
   // Calculate stock summaries across all items
@@ -182,15 +183,25 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
 
       {/* Grid date filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
-          {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-              style={{ background: statusFilter === s ? 'white' : 'transparent', color: statusFilter === s ? PRIMARY : '#6b7280', boxShadow: statusFilter === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              {s}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
+            {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                style={{ background: statusFilter === s ? 'white' : 'transparent', color: statusFilter === s ? PRIMARY : '#6b7280', boxShadow: statusFilter === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
+            {(['All', 'Medicine', 'Supply'] as const).map(t => (
+              <button key={t} onClick={() => setTypeFilter(t)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                style={{ background: typeFilter === t ? 'white' : 'transparent', color: typeFilter === t ? PRIMARY : '#6b7280', boxShadow: typeFilter === t ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -411,6 +422,14 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Date Added</label>
                 <input type="date" value={newMed.dateAdded} onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                <select value={newMed.category} onChange={e => setNewMed(n => ({ ...n, category: e.target.value as any }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]">
+                  <option value="Medicine">Medicine</option>
+                  <option value="Supply">Supply</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Stock Unit Type</label>
