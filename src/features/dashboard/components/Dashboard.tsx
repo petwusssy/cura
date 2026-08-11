@@ -42,7 +42,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
 
-  const today = '2026-06-27';
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   const yesterday = '2026-06-26';
 
   const filteredConsultations = consultations.filter(c => {

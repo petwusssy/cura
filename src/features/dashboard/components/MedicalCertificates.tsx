@@ -139,7 +139,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const updatedCert: MedicalCertificate = {
       id: certIdToUse,
       patientId: currentPatientId || 'STU-2024-001',
-      date: date || new Date().toLocaleDateString(),
+      date: date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
       purpose: purpose || 'Medical Certificate issuance',
       diagnosis: diagnosis,
       recommendation: recommendations,
@@ -234,7 +234,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const handleCreateNew = () => {
     const newId = `MC-${Date.now().toString().slice(-6)}`;
     setSelectedCertId(newId);
-    setDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
+    setDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' , timeZone: 'Asia/Manila' }));
     setPatientName('');
     setAge('');
     setSex('FEMALE');

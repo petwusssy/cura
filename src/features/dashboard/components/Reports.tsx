@@ -116,8 +116,10 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 type ReportFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'purchase' | 'bed';
 
-const TODAY = '2026-06-27';
-const YESTERDAY = '2026-06-26';
+const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+const yesterdayDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+const YESTERDAY = yesterdayDate.toLocaleDateString('en-CA');
 
 function matchesFilter(date: string, filter: ReportFilter, customFrom: string, customTo: string): boolean {
   if (filter === 'today') return date === TODAY;

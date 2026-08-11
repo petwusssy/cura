@@ -8,7 +8,7 @@ const RED = '#D64545';
 
 type DateFilterType = 'today' | 'week' | 'month';
 
-const TODAY = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
+const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); // Gets YYYY-MM-DD in local time
 
 function isInRange(date: string, filter: DateFilterType): boolean {
   if (filter === 'today') return date === TODAY;

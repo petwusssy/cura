@@ -110,7 +110,7 @@ export function ConsultationTab({
       id: `TRF-${Date.now()}`,
       consultationId: transferModal.id,
       patientId: transferModal.patientId,
-      date: '2026-06-27',
+      date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
       time: new Date().toTimeString().slice(0, 5),
       receivingHospital: hospital,
       reason,
