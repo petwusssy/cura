@@ -30,34 +30,34 @@ const ALL_CASES = [
 // 32 Standard Supplies matching the uploaded May-26 Supplies Inventory template
 const SUPPLIES_LIST = [
   { no: 1, name: 'Adhesive steristrips packs 1/2"x4"', beg: 8, consumed: Array(31).fill(0), total: 0, end: 8 },
-  { no: 2, name: 'Absorbent cotton in balls/pack', beg: 8, consumed: [1,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 1,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 2, end: 6 },
+  { no: 2, name: 'Absorbent cotton in balls/pack', beg: 8, consumed: Array(31).fill(0), total: 0, end: 8 },
   { no: 3, name: 'Arm sling orthopedic small', beg: 4, consumed: Array(31).fill(0), total: 0, end: 4 },
   { no: 4, name: 'Arm sling orthopedic medium', beg: 2, consumed: Array(31).fill(0), total: 0, end: 2 },
   { no: 5, name: 'Arm sling orthopedic large', beg: 5, consumed: Array(31).fill(0), total: 0, end: 5 },
   { no: 6, name: 'Arm sling orthopedic x-large', beg: 4, consumed: Array(31).fill(0), total: 0, end: 4 },
-  { no: 7, name: 'Band-Aid 50 strips/box', beg: 320, consumed: [0,12,0,14,0, 16,0,18,0,0, 15,0,13,20,12, 0,15,17,0,15, 0,18,11,0,0, 0,0,0,0,0, 0], total: 196, end: 124 },
+  { no: 7, name: 'Band-Aid 50 strips/box', beg: 320, consumed: Array(31).fill(0), total: 0, end: 320 },
   { no: 8, name: 'Betadine 10% solution 120mL', beg: 8, consumed: Array(31).fill(0), total: 0, end: 8 },
-  { no: 9, name: 'Betadine gargle 1% oral antiseptic', beg: 10, consumed: [0,1,0,1,0, 1,0,0,0,0, 1,0,1,0,1, 0,0,1,0,0, 1,0,0,0,0, 1,0,0,0,0, 1], total: 9, end: 1 },
+  { no: 9, name: 'Betadine gargle 1% oral antiseptic', beg: 10, consumed: Array(31).fill(0), total: 0, end: 10 },
   { no: 10, name: 'Bactidol gargle 0.1% solution', beg: 0, consumed: Array(31).fill(0), total: 0, end: 0 },
   { no: 11, name: 'Disposable syringe with needle 3mL', beg: 50, consumed: Array(31).fill(0), total: 0, end: 50 },
   { no: 12, name: 'Disposable syringe with needle 5mL', beg: 4, consumed: Array(31).fill(0), total: 0, end: 4 },
   { no: 13, name: 'Disposable syringe with needle 1mL', beg: 6, consumed: Array(31).fill(0), total: 0, end: 6 },
   { no: 14, name: 'Efficascent oil ES 100mL', beg: 0, consumed: Array(31).fill(0), total: 0, end: 0 },
-  { no: 15, name: 'Efficascent oil regular 100mL', beg: 6, consumed: [0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,0, 1,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 2, end: 4 },
-  { no: 16, name: 'Elasctic bandage 2"', beg: 10, consumed: [0,0,0,1,0, 0,0,0,0,0, 1,0,0,0,0, 0,0,1,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 3, end: 7 },
+  { no: 15, name: 'Efficascent oil regular 100mL', beg: 6, consumed: Array(31).fill(0), total: 0, end: 6 },
+  { no: 16, name: 'Elasctic bandage 2"', beg: 10, consumed: Array(31).fill(0), total: 0, end: 10 },
   { no: 17, name: 'Elasctic bandage 3"', beg: 1, consumed: Array(31).fill(0), total: 0, end: 1 },
   { no: 18, name: 'Elasctic bandage 4"', beg: 3, consumed: Array(31).fill(0), total: 0, end: 3 },
-  { no: 19, name: 'Individually packed OS 2x2', beg: 541, consumed: [0,0,0,0,0, 0,0,0,0,0, 0,0,4,1,0, 2,0,1,0,2, 0,0,0,0,0, 0,0,0,0,0, 0], total: 10, end: 531 },
+  { no: 19, name: 'Individually packed OS 2x2', beg: 541, consumed: Array(31).fill(0), total: 0, end: 541 },
   { no: 20, name: 'Individually packed OS 4x4', beg: 336, consumed: Array(31).fill(0), total: 0, end: 336 },
   { no: 21, name: 'Micropore plaster 1 inch', beg: 10, consumed: Array(31).fill(0), total: 0, end: 10 },
-  { no: 22, name: 'Nebulizing kit ADULT', beg: 8, consumed: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 2,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 2, end: 6 },
+  { no: 22, name: 'Nebulizing kit ADULT', beg: 8, consumed: Array(31).fill(0), total: 0, end: 8 },
   { no: 23, name: 'Nebulizing kit PEDIA', beg: 39, consumed: Array(31).fill(0), total: 0, end: 39 },
   { no: 24, name: 'Non-Rebreathing Mask Adult', beg: 0, consumed: Array(31).fill(0), total: 0, end: 0 },
   { no: 25, name: 'NSS 1L for irrigation', beg: 1, consumed: Array(31).fill(0), total: 0, end: 1 },
-  { no: 26, name: 'Omega pain killer', beg: 6, consumed: [1,0,0,0,0, 0,0,0,0,0, 1,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 2, end: 4 },
-  { no: 27, name: 'Oxygen cannula/mask ADULT', beg: 3, consumed: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 1, end: 2 },
+  { no: 26, name: 'Omega pain killer', beg: 6, consumed: Array(31).fill(0), total: 0, end: 6 },
+  { no: 27, name: 'Oxygen cannula/mask ADULT', beg: 3, consumed: Array(31).fill(0), total: 0, end: 3 },
   { no: 28, name: 'Oxygen cannula PEDIA', beg: 6, consumed: Array(31).fill(0), total: 0, end: 6 },
-  { no: 29, name: 'Salonpas 10pcs/pack x2', beg: 102, consumed: [0,4,0,0,4, 0,0,8,0,0, 6,0,0,0,0, 0,0,0,0,0, 0,4,4,0,0, 0,0,0,0,0, 0], total: 22, end: 80 },
+  { no: 29, name: 'Salonpas 10pcs/pack x2', beg: 102, consumed: Array(31).fill(0), total: 0, end: 102 },
   { no: 30, name: 'Tongue depressors', beg: 350, consumed: Array(31).fill(0), total: 0, end: 350 },
   { no: 31, name: 'ALCOHOL GREENCROSS', beg: 1, consumed: Array(31).fill(0), total: 0, end: 1 },
   { no: 32, name: 'KN95 MASK 50 PCS/BOX', beg: 250, consumed: Array(31).fill(0), total: 0, end: 250 },
@@ -65,49 +65,49 @@ const SUPPLIES_LIST = [
 
 // Medicines Inventory matching exact May-26 Excel spreadsheet screenshot
 const MEDICINE_INVENTORY_TEMPLATE = [
-  { no: 1, name: 'Allerta 10mg tab', beg: 90, c: [0,0,0,1,0, 1,0,5,1,0, 2,4,2,0,0, 0,0,4,1,0, 0,0,0,4,0, 0,0,0,0,0, 0], total: 28, end: 62, status: '' },
+  { no: 1, name: 'Allerta 10mg tab', beg: 90, c: Array(31).fill(0), total: 0, end: 90, status: '' },
   { no: 2, name: 'Allerkid 60mL bottle', beg: 1, c: Array(31).fill(0), total: 0, end: 1, status: '' },
-  { no: 3, name: 'Alnix 10mg tab', beg: 103, c: [0,0,0,1,1, 0,0,1,0,0, 1,0,0,0,0, 0,1,0,1,0, 0,0,0,2,5, 0,0,0,0,0, 0], total: 11, end: 92, status: '' },
+  { no: 3, name: 'Alnix 10mg tab', beg: 103, c: Array(31).fill(0), total: 0, end: 103, status: '' },
   { no: 4, name: 'Aspilets-EC 80mg tab', beg: 4, c: Array(31).fill(0), total: 0, end: 4, status: '' },
   { no: 5, name: 'Benadryl 25mg', beg: 10, c: Array(31).fill(0), total: 0, end: 10, status: '' },
   { no: 6, name: 'Benadryl 50mg', beg: 9, c: Array(31).fill(0), total: 0, end: 9, status: '' },
   { no: 7, name: 'Benadryl 60mL bottle', beg: 1, c: Array(31).fill(0), total: 0, end: 1, status: '' },
-  { no: 8, name: 'Bioflu tab', beg: 85, c: [0,0,0,0,1, 0,0,4,0,0, 0,0,0,0,0, 0,0,1,1,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 7, end: 78, status: '' },
-  { no: 9, name: 'Biogesic 500mg tab', beg: 254, c: [0,0,3,0,13, 10,0,0,11,0, 5,7,7,0,5, 10,0,2,5,4, 5,0,0,3,0, 4,0,0,0,0, 0], total: 106, end: 148, status: '' },
-  { no: 10, name: 'Budecort respules 250mcg/mL', beg: 15, c: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 1, end: 14, status: '' },
-  { no: 11, name: 'Buscopan 10mg tab', beg: 20, c: [0,0,0,0,1, 0,0,0,0,0, 1,0,0,0,0, 0,0,0,0,2, 0,0,0,0,0, 0,0,1,0,0, 0], total: 5, end: 15, status: '' },
-  { no: 12, name: 'Buscopan Plus', beg: 59, c: [0,0,0,4,0, 0,0,0,0,4, 2,0,0,1,0, 0,0,1,2,4, 0,1,3,0,0, 0,0,0,0,0, 0], total: 29, end: 30, status: '' },
-  { no: 13, name: 'Calmoseptine ointment', beg: 12, c: [0,0,0,1,0, 0,0,0,0,1, 0,0,0,0,0, 1,1,0,1,1, 1,0,0,0,0, 0,0,0,0,0, 0], total: 9, end: 3, status: '' },
+  { no: 8, name: 'Bioflu tab', beg: 85, c: Array(31).fill(0), total: 0, end: 85, status: '' },
+  { no: 9, name: 'Biogesic 500mg tab', beg: 254, c: Array(31).fill(0), total: 0, end: 254, status: '' },
+  { no: 10, name: 'Budecort respules 250mcg/mL', beg: 15, c: Array(31).fill(0), total: 0, end: 15, status: '' },
+  { no: 11, name: 'Buscopan 10mg tab', beg: 20, c: Array(31).fill(0), total: 0, end: 20, status: '' },
+  { no: 12, name: 'Buscopan Plus', beg: 59, c: Array(31).fill(0), total: 0, end: 59, status: '' },
+  { no: 13, name: 'Calmoseptine ointment', beg: 12, c: Array(31).fill(0), total: 0, end: 12, status: '' },
   { no: 14, name: 'Catapres 75mcg', beg: 21, c: Array(31).fill(0), total: 0, end: 21, status: '' },
-  { no: 15, name: 'Celecoxib 200mg capsule', beg: 25, c: [0,0,0,4,1, 0,0,0,0,0, 7,1,4,0,0, 0,0,2,0,3, 0,0,0,0,0, 0,0,0,0,0, 0], total: 25, end: 0, status: '' },
+  { no: 15, name: 'Celecoxib 200mg capsule', beg: 25, c: Array(31).fill(0), total: 0, end: 25, status: '' },
   { no: 16, name: 'Dolcet 37.5mg/325mg tab', beg: 17, c: Array(31).fill(0), total: 0, end: 17, status: '' },
-  { no: 17, name: 'Dolfenal 500mg tab', beg: 291, c: [0,0,0,4,0, 0,0,0,1,6, 3,2,1,2,0, 0,0,1,0,0, 1,1,1,0,5, 0,0,2,0,0, 0], total: 31, end: 260, status: '' },
-  { no: 18, name: 'Duavent nebules', beg: 13, c: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 0,0,0,2,0, 0,0,0,0,0, 0], total: 4, end: 9, status: '' },
-  { no: 19, name: 'Erceflora Niblet', beg: 15, c: [0,0,0,1,0, 0,0,0,0,1, 0,0,0,0,0, 0,0,2,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 5, end: 10, status: '' },
+  { no: 17, name: 'Dolfenal 500mg tab', beg: 291, c: Array(31).fill(0), total: 0, end: 291, status: '' },
+  { no: 18, name: 'Duavent nebules', beg: 13, c: Array(31).fill(0), total: 0, end: 13, status: '' },
+  { no: 19, name: 'Erceflora Niblet', beg: 15, c: Array(31).fill(0), total: 0, end: 15, status: '' },
   { no: 20, name: 'Erythromycin ointment tubes', beg: 1, c: Array(31).fill(0), total: 0, end: 1, status: '' },
-  { no: 21, name: 'Flotera chewable', beg: 3, c: [0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,1,0,0, 0,0,0,1,0, 0,0,0,0,0, 0], total: 3, end: 0, status: '' },
-  { no: 22, name: 'Gaviscon sachet', beg: 88, c: [0,2,0,3,1, 0,0,0,5,0, 0,0,0,0,0, 0,4,0,2,2, 0,0,0,0,0, 0,4,0,0,0, 0], total: 26, end: 62, status: '' },
+  { no: 21, name: 'Flotera chewable', beg: 3, c: Array(31).fill(0), total: 0, end: 3, status: '' },
+  { no: 22, name: 'Gaviscon sachet', beg: 88, c: Array(31).fill(0), total: 0, end: 88, status: '' },
   { no: 23, name: 'Gaviscon tablet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'NO STOCK' },
-  { no: 24, name: 'Hidrasec 30mg granules', beg: 195, c: [0,0,0,3,0, 0,0,0,0,0, 1,2,1,2,2, 1,0,0,5,1, 0,0,3,0,0, 0,0,0,0,0, 0], total: 39, end: 156, status: '' },
-  { no: 25, name: 'Hydrite sachet', beg: 310, c: [0,2,0,3,3, 0,0,0,0,4, 3,4,4,3,4, 0,4,0,2,5, 0,4,0,2,0, 0,3,0,0,0, 0], total: 60, end: 250, status: '' },
+  { no: 24, name: 'Hidrasec 30mg granules', beg: 195, c: Array(31).fill(0), total: 0, end: 195, status: '' },
+  { no: 25, name: 'Hydrite sachet', beg: 310, c: Array(31).fill(0), total: 0, end: 310, status: '' },
   { no: 26, name: 'Hypromellose 3mg/mL drops', beg: 1, c: Array(31).fill(0), total: 0, end: 1, status: '' },
-  { no: 27, name: 'Imodium 2mg cap', beg: 213, c: [0,2,0,4,0, 0,0,0,0,2, 4,4,1,2,0, 0,0,3,2,1, 1,0,0,1,0, 0,0,1,0,0, 0], total: 31, end: 182, status: '' },
+  { no: 27, name: 'Imodium 2mg cap', beg: 213, c: Array(31).fill(0), total: 0, end: 213, status: '' },
   { no: 28, name: 'Isordil SL 5mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'NO STOCK' },
-  { no: 29, name: 'Kramil-S chewable pink', beg: 77, c: [0,0,1,0,0, 2,3,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 11, end: 66, status: '' },
+  { no: 29, name: 'Kramil-S chewable pink', beg: 77, c: Array(31).fill(0), total: 0, end: 77, status: '' },
   { no: 30, name: 'Kramil-S ADVANCE', beg: 32, c: Array(31).fill(0), total: 0, end: 32, status: '' },
-  { no: 31, name: 'Motilium 10mg', beg: 40, c: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,1,0,1,0, 0,0,0,2,0, 0,0,0,0,0, 0], total: 3, end: 37, status: '' },
-  { no: 32, name: 'Nafarin A', beg: 227, c: [0,0,0,0,0, 5,1,0,0,0, 0,0,0,0,0, 0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 14, end: 213, status: '' },
-  { no: 33, name: 'Norvasc 10mg tab', beg: 7, c: [0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 1, end: 6, status: '' },
+  { no: 31, name: 'Motilium 10mg', beg: 40, c: Array(31).fill(0), total: 0, end: 40, status: '' },
+  { no: 32, name: 'Nafarin A', beg: 227, c: Array(31).fill(0), total: 0, end: 227, status: '' },
+  { no: 33, name: 'Norvasc 10mg tab', beg: 7, c: Array(31).fill(0), total: 0, end: 7, status: '' },
   { no: 34, name: 'Omeprazole 20mg cap', beg: 2, c: Array(31).fill(0), total: 0, end: 2, status: '' },
-  { no: 35, name: 'Omeprazole 40mg cap', beg: 51, c: [0,0,0,2,1, 0,0,3,1,0, 2,0,0,2,1, 0,1,0,0,1, 0,0,5,6,1, 0,0,0,0,0, 0], total: 17, end: 34, status: '' },
-  { no: 36, name: 'Panto Plus cap', beg: 28, c: [0,0,0,2,1, 0,0,3,1,0, 2,0,0,3,0, 0,1,0,1,0, 0,0,1,3,0, 0,0,0,0,0, 0], total: 15, end: 13, status: '' },
+  { no: 35, name: 'Omeprazole 40mg cap', beg: 51, c: Array(31).fill(0), total: 0, end: 51, status: '' },
+  { no: 36, name: 'Panto Plus cap', beg: 28, c: Array(31).fill(0), total: 0, end: 28, status: '' },
   { no: 37, name: 'Paracetamol syrup', beg: 1, c: Array(31).fill(0), total: 0, end: 1, status: '' },
   { no: 38, name: 'Plavix 75mg tab', beg: 4, c: Array(31).fill(0), total: 0, end: 4, status: '' },
-  { no: 39, name: 'Ranitidine 150mg tab', beg: 53, c: [0,0,0,2,4, 0,0,6,1,0, 1,2,4,2,0, 0,1,0,0,0, 0,0,0,4,0, 0,0,0,0,0, 0], total: 17, end: 36, status: '' },
-  { no: 40, name: 'Serc 16mg cap', beg: 54, c: [0,0,0,2,1, 0,0,3,1,0, 2,0,1,1,0, 0,1,0,0,0, 0,0,0,2,0, 0,0,0,0,0, 0], total: 14, end: 40, status: '' },
-  { no: 41, name: 'Sinupret tab', beg: 125, c: [0,0,0,0,0, 0,0,0,0,0, 0,0,1,2,0, 0,1,0,2,0, 0,0,0,9,12, 0,0,0,0,0, 0], total: 18, end: 107, status: '' },
-  { no: 42, name: 'Strepsils lozenges (8xpack)', beg: 93, c: [0,4,0,4,0, 0,0,8,4,3, 4,3,5,10,8, 0,3,2,1,0, 4,0,2,0,0, 0,0,0,0,0, 0], total: 61, end: 32, status: '' },
-  { no: 43, name: 'Ventolin nebules', beg: 28, c: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,5,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0], total: 9, end: 19, status: '' }
+  { no: 39, name: 'Ranitidine 150mg tab', beg: 53, c: Array(31).fill(0), total: 0, end: 53, status: '' },
+  { no: 40, name: 'Serc 16mg cap', beg: 54, c: Array(31).fill(0), total: 0, end: 54, status: '' },
+  { no: 41, name: 'Sinupret tab', beg: 125, c: Array(31).fill(0), total: 0, end: 125, status: '' },
+  { no: 42, name: 'Strepsils lozenges (8xpack)', beg: 93, c: Array(31).fill(0), total: 0, end: 93, status: '' },
+  { no: 43, name: 'Ventolin nebules', beg: 28, c: Array(31).fill(0), total: 0, end: 28, status: '' }
 ];
 
 type ReportFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
@@ -440,18 +440,17 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </thead>
                   <tbody>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((day, idx) => {
-                      const isWeekend = day % 7 === 2 || day % 7 === 3;
-                      const col = isWeekend ? 0 : Math.floor(Math.random() * 20) + 10;
-                      const shs = isWeekend ? 0 : Math.floor(Math.random() * 15) + 5;
-                      const jhs = isWeekend ? 0 : Math.floor(Math.random() * 4);
-                      const gs = isWeekend ? 0 : Math.floor(Math.random() * 2);
-                      const emp = isWeekend ? 0 : Math.floor(Math.random() * 5) + 1;
-                      const total = col + shs + jhs + gs + emp;
-                      const cons = Math.floor(total * 0.15);
-                      const home = Math.floor(total * 0.12);
-                      const hosp = day === 14 ? 1 : 0;
-                      const pre = day === 1 ? 4 : 0;
-                      const vis = day === 5 ? 1 : 0;
+                      const col = 0;
+                      const shs = 0;
+                      const jhs = 0;
+                      const gs = 0;
+                      const emp = 0;
+                      const total = 0;
+                      const cons = 0;
+                      const home = 0;
+                      const hosp = 0;
+                      const pre = 0;
+                      const vis = 0;
 
                       return (
                         <tr key={day} className={`border border-black text-center font-bold text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/30`}>
@@ -472,17 +471,17 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     })}
                     <tr className="bg-[#FFE699] text-black font-black text-center border-2 border-black text-xs">
                       <td className="border-2 border-black py-1.5 px-2">TOTAL</td>
-                      <td className="border border-black py-1.5 px-1">380</td>
-                      <td className="border border-black py-1.5 px-1">210</td>
-                      <td className="border border-black py-1.5 px-1">42</td>
-                      <td className="border border-black py-1.5 px-1">12</td>
-                      <td className="border border-black py-1.5 px-1">84</td>
-                      <td className="border-2 border-black py-1.5 px-2 bg-[#FFC000] text-black font-mono text-sm font-black">728</td>
-                      <td className="border border-black py-1.5 px-1">68</td>
-                      <td className="border border-black py-1.5 px-1">52</td>
-                      <td className="border border-black py-1.5 px-1">1</td>
-                      <td className="border border-black py-1.5 px-1">4</td>
-                      <td className="border border-black py-1.5 px-1">1</td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border-2 border-black py-1.5 px-2 bg-[#FFC000] text-black font-mono text-sm font-black"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -515,14 +514,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </thead>
                   <tbody>
                     {ALL_CASES.map((c, index) => {
-                      let stu = 0, emp = 0;
-                      if (['Headache', 'Colds', 'Fever', 'Cough', 'Blister', 'Abdominal Pain/Stomachache', 'Dysmenorrhea', 'Wounds (abrasion,laceration,puncture)'].includes(c)) {
-                        stu = Math.floor(Math.random() * 60) + 30; emp = Math.floor(Math.random() * 10) + 2;
-                      } else if (['Hypertension', 'Gastritis/Hyperacidity/epigastric pain/heartburn', 'Allergy', 'Body pain', 'Sore throat'].includes(c)) {
-                        stu = Math.floor(Math.random() * 25) + 8; emp = Math.floor(Math.random() * 12) + 3;
-                      } else if (index % 4 === 0) {
-                        stu = Math.floor(Math.random() * 4); emp = Math.floor(Math.random() * 2);
-                      }
+                      const stu = caseCount(c, 'Student');
+                      const emp = caseCount(c, 'Personnel');
                       const total = stu + emp;
                       return (
                         <tr key={c} className={`border border-black font-bold text-xs ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'} hover:bg-green-50/30`}>
@@ -535,9 +528,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     })}
                     <tr className="bg-[#C6E0B4] text-black font-black text-center border-2 border-black text-sm">
                       <td className="border-2 border-black py-2 px-4 text-left font-extrabold">TOTAL CASES ATTENDED</td>
-                      <td className="border border-black py-2 px-4 font-mono">1142</td>
-                      <td className="border border-black py-2 px-4 font-mono">186</td>
-                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">1328</td>
+                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0) || ''}</td>
+                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0) || ''}</td>
+                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student') + caseCount(c, 'Personnel'), 0) || ''}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -766,16 +759,16 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black text-[11px]">
-                      <tr><td className="border border-black text-center py-1.5 font-mono">2</td><td className="border border-black text-center">Gallon</td><td className="border border-black px-2.5">70% Alcohol</td><td className="border border-black px-2.5">Green cross Alcohol</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">40</td><td className="border border-black text-center">Tablet</td><td className="border border-black px-2.5">Citirizine Dihydrochloride 10mg</td><td className="border border-black px-2.5">Alnix</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">300</td><td className="border border-black text-center">Sachet</td><td className="border border-black px-2.5">Oral rehydration Salts</td><td className="border border-black px-2.5">Hydrite</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">20</td><td className="border border-black text-center">Tablet</td><td className="border border-black px-2.5">Domperidone 10mg Tablet</td><td className="border border-black px-2.5">Motilitum</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">30</td><td className="border border-black text-center">Tablet</td><td className="border border-black px-2.5">Pantoplus 40mg/30mg Tablet</td><td className="border border-black px-2.5">Pantoplus</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">20</td><td className="border border-black text-center">Tablet</td><td className="border border-black px-2.5">Betahistine Dihydrochloride 16mg</td><td className="border border-black px-2.5">Serc</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">10</td><td className="border border-black text-center">Tablet</td><td className="border border-black px-2.5">Clonidine 75 mcg /tablet</td><td className="border border-black px-2.5">Catapress</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">3</td><td className="border border-black text-center">pack</td><td className="border border-black px-2.5">Band aid 100s</td><td className="border border-black px-2.5">Band aid 100s</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">10</td><td className="border border-black text-center">pc</td><td className="border border-black px-2.5">Elastic Bandage</td><td className="border border-black px-2.5">2 inches</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono">15</td><td className="border border-black text-center">pc</td><td className="border border-black px-2.5">Correction Tape</td><td className="border border-black px-2.5">Standard clinic stationary</td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
                     </tbody>
                   </table>
 
