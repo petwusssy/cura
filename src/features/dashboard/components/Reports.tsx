@@ -337,6 +337,25 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   return (
     <div className="p-6 space-y-5">
       <style>{`
+        /* Professional Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 10px;
+          width: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f8fafc;
+          border-radius: 10px;
+          margin: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+          border: 2px solid #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+
         @media print {
           body * {
             visibility: hidden !important;
@@ -415,7 +434,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {activeReport === 'daily' && (
             <div>
               <PrintBar title={`DAILY REPORT — ${MONTH_NAME} ${YEAR}`} />
-              <div className="p-5 overflow-x-auto">
+              <div className="p-5 overflow-x-auto custom-scrollbar">
                 <table className="w-full border-collapse border-2 border-black font-sans text-xs" style={{ minWidth: 900 }}>
                   <thead>
                     <tr>
@@ -493,8 +512,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {activeReport === 'cases' && (
             <div>
               <PrintBar title="CASES ATTENDED REPORT" />
-              <div className="p-5">
-                <table className="w-full border-collapse border-2 border-black font-sans text-xs max-w-[850px] mx-auto">
+              <div className="p-5 overflow-x-auto custom-scrollbar">
+                <table className="w-full border-collapse border-2 border-black font-sans text-xs max-w-[850px] mx-auto" style={{ minWidth: 700 }}>
                   <thead>
                     <tr>
                       <th colSpan={4} className="bg-[#C6E0B4] text-black border-2 border-black p-4 text-center font-black">
@@ -542,8 +561,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {activeReport === 'medcert' && (
             <div>
               <PrintBar title="MEDICAL CERTIFICATES ISSUED" />
-              <div className="overflow-x-auto p-4">
-                <table className="w-full border-collapse text-xs">
+              <div className="overflow-x-auto custom-scrollbar p-4">
+                <table className="w-full border-collapse text-xs" style={{ minWidth: 700 }}>
                   <thead>
                     <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
                       <th className="border border-blue-900 px-3 py-2 text-left">Cert ID</th>
@@ -586,8 +605,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {activeReport === 'nonconsult' && (
             <div>
               <PrintBar title="NON-CONSULTATION / OVER-THE-COUNTER REPORT" />
-              <div className="overflow-x-auto p-4">
-                <table className="w-full border-collapse text-xs">
+              <div className="overflow-x-auto custom-scrollbar p-4">
+                <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
                   <thead>
                     <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
                       <th className="border border-blue-900 px-3 py-2 text-left">Date & Time</th>
@@ -638,7 +657,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
                 {/* MEDICINES SPREADSHEET (Exact Excel screenshot) */}
                 {inventoryTab === 'medicines' && (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto custom-scrollbar pb-2">
                     <div className="text-center mb-3">
                       <div className="bg-[#D9E1F2] inline-block font-black text-sm px-6 py-1 border border-black uppercase text-black">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
                       <div className="font-extrabold text-xs text-black mt-1">Monthly Inventory of Medicines (Inclusive Dates): <span className="underline font-mono">May-26</span></div>
@@ -682,7 +701,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
                 {/* SUPPLIES SPREADSHEET (Exact PDF 2 template) */}
                 {inventoryTab === 'supplies' && (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto custom-scrollbar pb-2">
                     <div className="text-center mb-3">
                       <div className="bg-[#D9E1F2] inline-block font-black text-sm px-6 py-1 border border-black uppercase text-black">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
                       <div className="font-extrabold text-xs text-black mt-1">Monthly Inventory of Supplies (Inclusive Dates): <span className="underline font-mono">May-26</span></div>
@@ -729,8 +748,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {activeReport === 'purchase' && (
             <div>
               <PrintBar title="PURCHASE REQUISITION FORM (PRF)" />
-              <div className="p-6 overflow-x-auto bg-gray-100/50">
-                <div className="max-w-[850px] mx-auto bg-white border-2 border-gray-400 p-8 shadow-md font-sans text-black">
+              <div className="p-6 overflow-x-auto custom-scrollbar bg-gray-100/50">
+                <div className="max-w-[850px] mx-auto bg-white border-2 border-gray-400 p-8 shadow-md font-sans text-black" style={{ minWidth: 850 }}>
                   <div className="flex items-center justify-between border-b-2 border-black pb-4 mb-5">
                     <div className="flex items-center gap-3">
                       <img src={uaSeal} alt="UA Seal" className="w-16 h-16 object-contain" />
@@ -811,8 +830,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-xs">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
                     <thead>
                       <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
                         <th className="border border-blue-900 px-3 py-2 text-left">Bed ID & Number</th>
