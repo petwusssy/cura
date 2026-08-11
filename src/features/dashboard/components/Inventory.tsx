@@ -27,7 +27,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMed, setNewMed] = useState<{
     name: string;
-    batchNumber: string;
     stock: string;
     dateAdded: string;
     unit: string;
@@ -35,7 +34,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     category: 'Medicine' | 'Supply';
   }>({
     name: '',
-    batchNumber: '',
     stock: '',
     dateAdded: new Date().toISOString().split('T')[0],
     unit: 'Tablet',
@@ -44,14 +42,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   });
 
   const getMedicineDetails = (m: MedicineItem) => {
-    let batchNumber = m.batchNumber;
-    if (!batchNumber) {
-      const clean = m.name.replace(/[^a-zA-Z]/g, '').toUpperCase();
-      const prefix = (clean + 'MED').slice(0, 3);
-      const hash = m.name.split('').reduce((acc, c, i) => acc + c.charCodeAt(0) * (i + 1), 0) % 900 + 100;
-      batchNumber = `B-${prefix}${hash}`;
-    }
-
     const adds = (m.stockHistory || []).filter(h => h.type === 'add').reduce((sum, h) => sum + h.qty, 0);
     const dispenses = (m.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + h.qty, 0);
     const dispensed = m.dispensed ?? dispenses;
@@ -72,14 +62,13 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       displayUnit += 's';
     }
 
-    return { batchNumber, beginningQty, dispensed, status, displayUnit };
+    return { beginningQty, dispensed, status, displayUnit };
   };
 
   const filtered = displayMedicines.filter(m => {
     const details = getMedicineDetails(m);
     const matchSearch = !searchQuery || 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      details.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      m.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchStatus = statusFilter === 'All' || details.status === statusFilter;
     const matchType = typeFilter === 'All' || m.category === typeFilter;
     return matchSearch && matchStatus && matchType;
@@ -138,7 +127,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       unit: newMed.unit,
       dateAdded: newMed.dateAdded || new Date().toISOString().split('T')[0],
       status: qty === 0 ? 'Out of Stock' : qty <= thresh ? 'Low Stock' : 'Normal',
-      batchNumber: newMed.batchNumber || undefined,
       beginningQty: qty,
       dispensed: 0,
       threshold: thresh,
@@ -226,7 +214,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             <thead>
               <tr style={{ background: '#f8fafd' }}>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Medicine Name</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Batch Number</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Beg. Qty</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Dispensed</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Stock Count</th>
@@ -247,7 +234,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                       <div className="text-sm font-medium text-gray-700">{m.name}</div>
                       <div className="text-xs text-gray-400">Added: {m.dateAdded || 'N/A'}</div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-gray-700 font-mono">{details.batchNumber}</td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>
                     <td className="px-5 py-3">
@@ -300,7 +286,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
               <div className="flex justify-between items-start">
                 <div>
                   <div className="font-bold text-gray-900 leading-tight">{m.name}</div>
-                  <div className="text-xs text-gray-400 font-mono mt-0.5">Batch: {details.batchNumber}</div>
                 </div>
                 <span className="text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wide flex-shrink-0"
                   style={{ background: isOut ? `${RED}15` : isLow ? `${YELLOW}20` : '#E8F5E9', color: isOut ? RED : isLow ? '#b45309' : '#2E7D32' }}>
@@ -417,12 +402,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Batch Number</label>
-                <input type="text" value={newMed.batchNumber} onChange={e => setNewMed(n => ({ ...n, batchNumber: e.target.value.toUpperCase() }))}
-                  placeholder="e.g. B-BGS101"
-                  className="w-full font-mono border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
-              </div>
-              <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Beginning Inventory Qty</label>
                 <input type="number" min={0} value={newMed.stock} onChange={e => setNewMed(n => ({ ...n, stock: e.target.value }))}
                   placeholder="e.g. 100"
@@ -477,7 +456,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-900 font-bold">{historyModal.name}</h3>
-                <p className="text-xs text-gray-500 font-mono mt-0.5">Batch: {getMedicineDetails(historyModal).batchNumber}</p>
               </div>
               <button onClick={() => setHistoryModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
