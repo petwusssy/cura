@@ -207,6 +207,62 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     }).length;
   };
 
+  const monthMap: Record<string, string> = {
+    'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
+    'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
+  };
+  const monthNum = monthMap[MONTH_NAME] || '05';
+
+  const dailyReportsData = activeReport === 'daily' ? Array.from({ length: 31 }, (_, i) => {
+    const day = i + 1;
+    const dayStr = `${YEAR}-${monthNum}-${String(day).padStart(2, '0')}`;
+    const consForDay = filteredCons.filter(c => c.date === dayStr);
+
+    let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
+    let cons = 0, home = 0, hosp = 0, pre = 0;
+
+    consForDay.forEach(c => {
+      const p = getPatient(c.patientId);
+      if (p) {
+        if (p.category === 'Student') {
+          if (p.studentCategory === 'College') col++;
+          else if (p.studentCategory === 'Senior High School') shs++;
+          else if (p.studentCategory === 'Junior High School') jhs++;
+          else if (p.studentCategory === 'Elementary') gs++;
+        } else if (p.category === 'Employee') {
+          emp++;
+        } else if (p.category === 'Outsider') {
+          vis++;
+        }
+      }
+
+      if (c.status === 'Consultation') cons++;
+      if (c.earlyDismissal && c.dismissalDestination === 'Sent Home') home++;
+      if ((c.earlyDismissal && c.dismissalDestination === 'Sent to Hospital') || c.transferred) hosp++;
+      
+      const purpose = (c.purposeOfVisit || c.complaint || '').toLowerCase();
+      if (purpose.includes('pre-employment') || purpose.includes('pre employment')) pre++;
+    });
+
+    const total = col + shs + jhs + gs + emp + vis;
+    return { day, col, shs, jhs, gs, emp, vis, total, cons, home, hosp, pre };
+  }) : [];
+
+  const totals = dailyReportsData.reduce((acc, curr) => {
+    acc.col += curr.col;
+    acc.shs += curr.shs;
+    acc.jhs += curr.jhs;
+    acc.gs += curr.gs;
+    acc.emp += curr.emp;
+    acc.vis += curr.vis;
+    acc.total += curr.total;
+    acc.cons += curr.cons;
+    acc.home += curr.home;
+    acc.hosp += curr.hosp;
+    acc.pre += curr.pre;
+    return acc;
+  }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
+
   const reportTypes = [
     { id: 'daily'    as ReportType, label: 'Daily Report',              icon: <FileText size={15} /> },
     { id: 'cases'    as ReportType, label: 'Cases Attended',            icon: <BarChart2 size={15} /> },
@@ -489,64 +545,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         <div id="report-export-area" className="lg:col-span-4 bg-white rounded-xl overflow-hidden print-report-container" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
           {/* ── 1. DAILY REPORT (Updated ONLY to exact attached PDF template layout) ── */}
-          {activeReport === 'daily' && (() => {
-            const monthMap: Record<string, string> = {
-              'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
-              'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
-            };
-            const monthNum = monthMap[MONTH_NAME] || '05';
-
-            const dailyReportsData = Array.from({ length: 31 }, (_, i) => {
-              const day = i + 1;
-              const dayStr = `${YEAR}-${monthNum}-${String(day).padStart(2, '0')}`;
-              const consForDay = filteredCons.filter(c => c.date === dayStr);
-
-              let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
-              let cons = 0, home = 0, hosp = 0, pre = 0;
-
-              consForDay.forEach(c => {
-                const p = getPatient(c.patientId);
-                if (p) {
-                  if (p.category === 'Student') {
-                    if (p.studentCategory === 'College') col++;
-                    else if (p.studentCategory === 'Senior High School') shs++;
-                    else if (p.studentCategory === 'Junior High School') jhs++;
-                    else if (p.studentCategory === 'Elementary') gs++;
-                  } else if (p.category === 'Employee') {
-                    emp++;
-                  } else if (p.category === 'Outsider') {
-                    vis++;
-                  }
-                }
-
-                if (c.status === 'Consultation') cons++;
-                if (c.earlyDismissal && c.dismissalDestination === 'Sent Home') home++;
-                if ((c.earlyDismissal && c.dismissalDestination === 'Sent to Hospital') || c.transferred) hosp++;
-                
-                const purpose = (c.purposeOfVisit || c.complaint || '').toLowerCase();
-                if (purpose.includes('pre-employment') || purpose.includes('pre employment')) pre++;
-              });
-
-              const total = col + shs + jhs + gs + emp + vis;
-              return { day, col, shs, jhs, gs, emp, vis, total, cons, home, hosp, pre };
-            });
-
-            const totals = dailyReportsData.reduce((acc, curr) => {
-              acc.col += curr.col;
-              acc.shs += curr.shs;
-              acc.jhs += curr.jhs;
-              acc.gs += curr.gs;
-              acc.emp += curr.emp;
-              acc.vis += curr.vis;
-              acc.total += curr.total;
-              acc.cons += curr.cons;
-              acc.home += curr.home;
-              acc.hosp += curr.hosp;
-              acc.pre += curr.pre;
-              return acc;
-            }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
-
-            return (
+          {activeReport === 'daily' && (
             <div>
               <PrintBar title={`DAILY REPORT — ${MONTH_NAME} ${YEAR}`} />
               <div className="p-5 overflow-x-auto custom-scrollbar">
@@ -609,7 +608,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 </table>
               </div>
             </div>
-          )()}
+          )}
 
           {/* ── 2. CASES ATTENDED (Updated ONLY to exact attached SY 2025-2026 morbidity template) ── */}
           {activeReport === 'cases' && (
