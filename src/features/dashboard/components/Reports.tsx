@@ -180,8 +180,6 @@ interface ReportsProps {
   purchaseRequests: PurchaseRequest[];
 }
 
-const MONTH_NAME = 'MAY';
-const YEAR = '2026';
 
 export function Reports({ patients, consultations, medicines, beds, medicalCerts, purchaseRequests }: ReportsProps) {
   const [filter, setFilter] = useState<ReportFilter>('month');
@@ -190,6 +188,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
+  const [reportMonth, setReportMonth] = useState('JUNE');
+  const [reportYear, setReportYear] = useState('2026');
 
   const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
   const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
@@ -211,11 +211,12 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
     'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
   };
-  const monthNum = monthMap[MONTH_NAME] || '05';
+  const monthNum = monthMap[reportMonth] || '06';
 
-  const dailyReportsData = activeReport === 'daily' ? Array.from({ length: 31 }, (_, i) => {
+  const daysInMonth = new Date(parseInt(reportYear), parseInt(monthNum), 0).getDate();
+  const dailyReportsData = activeReport === 'daily' ? Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
-    const dayStr = `${YEAR}-${monthNum}-${String(day).padStart(2, '0')}`;
+    const dayStr = `${reportYear}-${monthNum}-${String(day).padStart(2, '0')}`;
     const consForDay = filteredCons.filter(c => c.date === dayStr);
 
     let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
@@ -504,25 +505,44 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           <p className="text-sm text-gray-500 mt-0.5">Generate, edit, and export clinic reports</p>
         </div>
 
-        {/* Date filter */}
+        {/* Date filter / Month selector */}
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-3 sm:mt-0">
-          <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
-            {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
-                style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-          {filter === 'custom' && (
-            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-2 sm:mt-0">
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
-              <span className="text-gray-400 text-xs">to</span>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
+          {['daily', 'cases', 'inventory'].includes(activeReport) ? (
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <label className="text-[10px] font-bold text-[#1B3A6B] uppercase tracking-wider mb-0.5 ml-1">Report Month</label>
+                <select value={reportMonth} onChange={e => setReportMonth(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] w-32 cursor-pointer bg-white">
+                  {Object.keys(monthMap).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-[10px] font-bold text-[#1B3A6B] uppercase tracking-wider mb-0.5 ml-1">Report Year</label>
+                <input type="number" value={reportYear} onChange={e => setReportYear(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] w-24 bg-white text-center" />
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+                {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
+                    style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                    {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {filter === 'custom' && (
+                <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-2 sm:mt-0">
+                  <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                    className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
+                  <span className="text-gray-400 text-xs">to</span>
+                  <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                    className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -547,13 +567,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           {/* ── 1. DAILY REPORT (Updated ONLY to exact attached PDF template layout) ── */}
           {activeReport === 'daily' && (
             <div>
-              <PrintBar title={`DAILY REPORT — ${MONTH_NAME} ${YEAR}`} />
+              <PrintBar title={`DAILY REPORT — ${reportMonth} ${reportYear}`} />
               <div className="p-5 overflow-x-auto custom-scrollbar">
                 <table className="w-full border-collapse border-2 border-black font-sans text-xs" style={{ minWidth: 900 }}>
                   <thead>
                     <tr>
                       <th colSpan={12} className="bg-[#B8CCE4] text-black font-extrabold text-base text-center py-2 uppercase border-2 border-black">
-                        DAILY REPORT {MONTH_NAME} {YEAR}
+                        DAILY REPORT {reportMonth} {reportYear}
                       </th>
                     </tr>
                     <tr className="bg-[#FFE699] text-black font-black uppercase text-center border-2 border-black text-[11px]">
@@ -575,7 +595,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     {dailyReportsData.map((data, idx) => {
                       return (
                         <tr key={data.day} className={`border border-black text-center font-bold text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/30`}>
-                          <td className="border border-black py-1 px-2 font-extrabold font-mono">{data.day}-{MONTH_NAME.slice(0, 3)}-{YEAR.slice(-2)}</td>
+                          <td className="border border-black py-1 px-2 font-extrabold font-mono">{data.day}-{reportMonth.slice(0, 3)}-{reportYear.slice(-2)}</td>
                           <td className="border border-black py-1 px-2">{data.col || ''}</td>
                           <td className="border border-black py-1 px-2">{data.shs || ''}</td>
                           <td className="border border-black py-1 px-2">{data.jhs || ''}</td>
@@ -622,7 +642,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         <div className="text-sm tracking-wider uppercase font-extrabold">UNIVERSITY OF THE ASSUMPTION</div>
                         <div className="text-sm tracking-wider uppercase font-extrabold">COLLEGE MEDICAL CLINIC</div>
                         <div className="text-xs font-extrabold text-gray-950 mt-1 uppercase">
-                          CASES ATTENDED SY: 2025-2026 (STUDENTS & PERSONNEL) MONTH: {MONTH_NAME} YEAR: {YEAR}
+                          CASES ATTENDED SY: 2025-2026 (STUDENTS & PERSONNEL) MONTH: {reportMonth} YEAR: {reportYear}
                         </div>
                       </th>
                     </tr>
@@ -772,7 +792,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                             Monthly Inventory of Medicines (Inclusive Dates):
                           </th>
                           <th colSpan={8} className="text-center py-2 bg-white border-b border-black font-black underline text-sm">
-                            {MONTH_NAME} {YEAR}
+                            {reportMonth} {reportYear}
                           </th>
                           <th colSpan={27} className="bg-white border-r-2 border-black"></th>
                         </tr>
@@ -827,7 +847,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                             Monthly Inventory of Supplies (Inclusive Dates):
                           </th>
                           <th colSpan={8} className="text-center py-2 bg-white border-b border-black font-black underline text-sm">
-                            {MONTH_NAME} {YEAR}
+                            {reportMonth} {reportYear}
                           </th>
                           <th colSpan={26} className="bg-white border-r-2 border-black"></th>
                         </tr>
