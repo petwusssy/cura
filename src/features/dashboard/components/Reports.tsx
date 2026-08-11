@@ -489,7 +489,64 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         <div id="report-export-area" className="lg:col-span-4 bg-white rounded-xl overflow-hidden print-report-container" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
           {/* ── 1. DAILY REPORT (Updated ONLY to exact attached PDF template layout) ── */}
-          {activeReport === 'daily' && (
+          {activeReport === 'daily' && (() => {
+            const monthMap: Record<string, string> = {
+              'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
+              'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
+            };
+            const monthNum = monthMap[MONTH_NAME] || '05';
+
+            const dailyReportsData = Array.from({ length: 31 }, (_, i) => {
+              const day = i + 1;
+              const dayStr = `${YEAR}-${monthNum}-${String(day).padStart(2, '0')}`;
+              const consForDay = filteredCons.filter(c => c.date === dayStr);
+
+              let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
+              let cons = 0, home = 0, hosp = 0, pre = 0;
+
+              consForDay.forEach(c => {
+                const p = getPatient(c.patientId);
+                if (p) {
+                  if (p.category === 'Student') {
+                    if (p.studentCategory === 'College') col++;
+                    else if (p.studentCategory === 'Senior High School') shs++;
+                    else if (p.studentCategory === 'Junior High School') jhs++;
+                    else if (p.studentCategory === 'Elementary') gs++;
+                  } else if (p.category === 'Employee') {
+                    emp++;
+                  } else if (p.category === 'Outsider') {
+                    vis++;
+                  }
+                }
+
+                if (c.status === 'Consultation') cons++;
+                if (c.earlyDismissal && c.dismissalDestination === 'Sent Home') home++;
+                if ((c.earlyDismissal && c.dismissalDestination === 'Sent to Hospital') || c.transferred) hosp++;
+                
+                const purpose = (c.purposeOfVisit || c.complaint || '').toLowerCase();
+                if (purpose.includes('pre-employment') || purpose.includes('pre employment')) pre++;
+              });
+
+              const total = col + shs + jhs + gs + emp + vis;
+              return { day, col, shs, jhs, gs, emp, vis, total, cons, home, hosp, pre };
+            });
+
+            const totals = dailyReportsData.reduce((acc, curr) => {
+              acc.col += curr.col;
+              acc.shs += curr.shs;
+              acc.jhs += curr.jhs;
+              acc.gs += curr.gs;
+              acc.emp += curr.emp;
+              acc.vis += curr.vis;
+              acc.total += curr.total;
+              acc.cons += curr.cons;
+              acc.home += curr.home;
+              acc.hosp += curr.hosp;
+              acc.pre += curr.pre;
+              return acc;
+            }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
+
+            return (
             <div>
               <PrintBar title={`DAILY REPORT — ${MONTH_NAME} ${YEAR}`} />
               <div className="p-5 overflow-x-auto custom-scrollbar">
@@ -516,55 +573,43 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day, idx) => {
-                      const col = 0;
-                      const shs = 0;
-                      const jhs = 0;
-                      const gs = 0;
-                      const emp = 0;
-                      const total = 0;
-                      const cons = 0;
-                      const home = 0;
-                      const hosp = 0;
-                      const pre = 0;
-                      const vis = 0;
-
+                    {dailyReportsData.map((data, idx) => {
                       return (
-                        <tr key={day} className={`border border-black text-center font-bold text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/30`}>
-                          <td className="border border-black py-1 px-2 font-extrabold font-mono">{day}-{MONTH_NAME.slice(0, 3)}-{YEAR.slice(-2)}</td>
-                          <td className="border border-black py-1 px-2">{col || ''}</td>
-                          <td className="border border-black py-1 px-2">{shs || ''}</td>
-                          <td className="border border-black py-1 px-2">{jhs || ''}</td>
-                          <td className="border border-black py-1 px-2">{gs || ''}</td>
-                          <td className="border border-black py-1 px-2">{emp || ''}</td>
-                          <td className="border-2 border-black py-1 px-2 bg-[#FFE699]/30 font-black text-black font-mono text-xs">{total || ''}</td>
-                          <td className="border border-black py-1 px-2">{cons || ''}</td>
-                          <td className="border border-black py-1 px-2">{home || ''}</td>
-                          <td className="border border-black py-1 px-2 text-red-600 font-black">{hosp || ''}</td>
-                          <td className="border border-black py-1 px-2">{pre || ''}</td>
-                          <td className="border border-black py-1 px-2">{vis || ''}</td>
+                        <tr key={data.day} className={`border border-black text-center font-bold text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/30`}>
+                          <td className="border border-black py-1 px-2 font-extrabold font-mono">{data.day}-{MONTH_NAME.slice(0, 3)}-{YEAR.slice(-2)}</td>
+                          <td className="border border-black py-1 px-2">{data.col || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.shs || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.jhs || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.gs || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.emp || ''}</td>
+                          <td className="border-2 border-black py-1 px-2 bg-[#FFE699]/30 font-black text-black font-mono text-xs">{data.total || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.cons || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.home || ''}</td>
+                          <td className="border border-black py-1 px-2 text-red-600 font-black">{data.hosp || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.pre || ''}</td>
+                          <td className="border border-black py-1 px-2">{data.vis || ''}</td>
                         </tr>
                       );
                     })}
                     <tr className="bg-[#FFE699] text-black font-black text-center border-2 border-black text-xs">
                       <td className="border-2 border-black py-1.5 px-2">TOTAL</td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border-2 border-black py-1.5 px-2 bg-[#FFC000] text-black font-mono text-sm font-black"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
-                      <td className="border border-black py-1.5 px-1"></td>
+                      <td className="border border-black py-1.5 px-1">{totals.col || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.shs || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.jhs || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.gs || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.emp || ''}</td>
+                      <td className="border-2 border-black py-1.5 px-2 bg-[#FFC000] text-black font-mono text-sm font-black">{totals.total || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.cons || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.home || ''}</td>
+                      <td className="border border-black py-1.5 px-1 text-red-700">{totals.hosp || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.pre || ''}</td>
+                      <td className="border border-black py-1.5 px-1">{totals.vis || ''}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-          )}
+          )()}
 
           {/* ── 2. CASES ATTENDED (Updated ONLY to exact attached SY 2025-2026 morbidity template) ── */}
           {activeReport === 'cases' && (
