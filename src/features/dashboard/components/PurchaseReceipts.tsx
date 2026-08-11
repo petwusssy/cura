@@ -11,7 +11,6 @@ interface PurchaseReceiptsProps {
   medicines: MedicineItem[];
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
-  onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
   onDeleteRequest: (id: string) => void | Promise<void>;
   searchQuery: string;
 }
@@ -129,10 +128,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     };
     try {
       await onAddRequest(req);
-      // Also add to PRF template immediately if it belongs to the current PRF
-      if ((newReq.prfNo || prfNo) === prfNo) {
-        setPrfItems(prev => [...prev, reqToPrfRow(req)]);
-      }
       setShowNewForm(false);
       setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: prfNo });
     } catch (e) { console.error(e); }
@@ -143,21 +138,38 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     for (const row of prfItems) {
       const qty = typeof row.qty === 'string' ? parseInt(row.qty) : row.qty;
       if (qty && qty > 0 && row.item.trim()) {
-        const req: PurchaseRequest = {
-          id: `PR-${Date.now()}-${addedCount}`,
-          medicine: row.item,
-          description: row.description || undefined,
-          unit: row.unit || 'pc',
-          prfNo: prfNo,
-          unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
-          requestedQty: qty,
-          receivedQty: 0,
-          date: new Date().toISOString().split('T')[0],
-          status: 'Pending',
-          history: [{ date: new Date().toISOString().split('T')[0], qty: 0, note: `Requisition registered via ${prfNo}` }],
-        };
-        await onAddRequest(req);
-        addedCount++;
+        const isExisting = purchaseRequests.find(r => r.id === row.id);
+        
+        if (isExisting) {
+          // If it exists, update it if changed
+          const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
+          if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
+            await onUpdateRequest({
+              ...isExisting,
+              requestedQty: qty,
+              medicine: row.item,
+              description: row.description || undefined,
+              unitPrice: unitPrice,
+            });
+          }
+        } else {
+          // New request
+          const req: PurchaseRequest = {
+            id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
+            medicine: row.item,
+            description: row.description || undefined,
+            unit: row.unit || 'pc',
+            prfNo: prfNo,
+            unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
+            requestedQty: qty,
+            receivedQty: 0,
+            date: new Date().toISOString().split('T')[0],
+            status: 'Pending',
+            history: [{ date: new Date().toISOString().split('T')[0], qty: 0, note: `Requisition registered via ${prfNo}` }],
+          };
+          await onAddRequest(req);
+          addedCount++;
+        }
       }
     }
     if (addedCount > 0) {
