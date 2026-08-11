@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Printer, Download, FileText, Package, BedDouble, BarChart2, ClipboardList, Award } from 'lucide-react';
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import html2pdf from 'html2pdf.js';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -240,79 +243,123 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   };
 
   const handleExportPDF = (title: string) => {
-    const prevTitle = document.title;
-    const cleanName = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    document.title = `${cleanName}_${new Date().toISOString().split('T')[0]}`;
-    window.print();
-    setTimeout(() => {
-      document.title = prevTitle;
-    }, 1000);
+    const element = document.getElementById("report-export-area");
+    if (!element) return;
+
+    const opt = {
+      margin: [10, 10],
+      filename: `${title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    // Temporarily hide elements with .no-export class
+    const noExportElements = element.querySelectorAll('.no-export, .print-bar-ui');
+    noExportElements.forEach(el => (el as HTMLElement).style.display = 'none');
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      // Restore elements
+      noExportElements.forEach(el => (el as HTMLElement).style.display = '');
+    });
   };
 
-  const handleExportExcel = (title: string) => {
+  const handleExportExcel = async (title: string) => {
     const container = document.getElementById("report-export-area");
     if (!container) return;
-    
-    const clone = container.cloneNode(true) as HTMLElement;
-    const noExportEls = clone.querySelectorAll('.no-export, .print-bar-ui');
-    noExportEls.forEach(el => el.remove());
 
-    const htmlContent = clone.innerHTML;
+    const table = container.querySelector('table');
+    if (!table) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Report');
+
+    // Parse table rows and cells
+    const rows = Array.from(table.rows);
+    rows.forEach((row, rowIndex) => {
+      const excelRow = worksheet.getRow(rowIndex + 1);
+      let colOffset = 0;
+
+      Array.from(row.cells).forEach((cell) => {
+        // Find the first empty column
+        while (excelRow.getCell(colOffset + 1).value !== null) {
+          colOffset++;
+        }
+
+        const excelCell = excelRow.getCell(colOffset + 1);
+        
+        // Strip HTML and clean text
+        excelCell.value = cell.innerText.replace(/\n/g, ' ').trim();
+        
+        // Alignment
+        excelCell.alignment = { 
+          vertical: 'middle', 
+          horizontal: cell.classList.contains('text-left') ? 'left' : 'center',
+          wrapText: true
+        };
+
+        // Borders
+        excelCell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+
+        // Font
+        excelCell.font = {
+          name: 'Calibri',
+          size: 9,
+          bold: cell.tagName === 'TH' || cell.classList.contains('font-bold') || cell.classList.contains('font-black') || cell.classList.contains('font-extrabold')
+        };
+        if (cell.classList.contains('text-white') || cell.style.color === 'white') {
+          excelCell.font.color = { argb: 'FFFFFFFF' };
+        }
+
+        // Background Color
+        let bgColor = '';
+        const bgStyle = cell.style.backgroundColor;
+        const classes = cell.className;
+
+        if (bgStyle.includes('rgb(255, 255, 0)') || classes.includes('bg-[#FFFF00]') || bgStyle === '#FFFF00') bgColor = 'FFFFFF00';
+        else if (bgStyle.includes('rgb(118, 146, 60)') || classes.includes('bg-[#76923C]') || bgStyle === '#76923C') bgColor = 'FF76923C';
+        else if (bgStyle.includes('rgb(227, 108, 9)') || classes.includes('bg-[#E36C09]') || bgStyle === '#E36C09') bgColor = 'FFE36C09';
+        else if (bgStyle.includes('rgb(49, 133, 155)') || classes.includes('bg-[#31859B]') || bgStyle === '#31859B') bgColor = 'FF31859B';
+        else if (bgStyle.includes('rgb(147, 137, 83)') || classes.includes('bg-[#938953]') || bgStyle === '#938953') bgColor = 'FF938953';
+        else if (bgStyle.includes('rgb(234, 153, 153)') || classes.includes('bg-[#EA9999]') || bgStyle === '#EA9999') bgColor = 'FFEA9999';
+        else if (bgStyle.includes('rgb(184, 204, 228)') || classes.includes('bg-[#B8CCE4]') || bgStyle === '#B8CCE4') bgColor = 'FFB8CCE4';
+        else if (bgStyle.includes('rgb(255, 230, 153)') || classes.includes('bg-[#FFE699]') || bgStyle === '#FFE699') bgColor = 'FFFFE699';
+        else if (bgStyle.includes('rgb(198, 224, 180)') || classes.includes('bg-[#C6E0B4]') || bgStyle === '#C6E0B4') bgColor = 'FFC6E0B4';
+        else if (bgStyle.includes('rgb(169, 209, 142)') || classes.includes('bg-[#A9D18E]') || bgStyle === '#A9D18E') bgColor = 'FFA9D18E';
+
+        if (bgColor) {
+          excelCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: bgColor }
+          };
+        }
+
+        // Handle Merged Cells
+        const rowSpan = cell.rowSpan || 1;
+        const colSpan = cell.colSpan || 1;
+        if (rowSpan > 1 || colSpan > 1) {
+          worksheet.mergeCells(rowIndex + 1, colOffset + 1, rowIndex + rowSpan, colOffset + colSpan);
+        }
+
+        colOffset += colSpan;
+      });
+    });
+
+    // Auto-adjust column widths
+    worksheet.columns.forEach(column => {
+      column.width = 12;
+    });
+    if (worksheet.columns[1]) worksheet.columns[1].width = 40; 
+
+    const buffer = await workbook.xlsx.writeBuffer();
     const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    
-    const excelTemplate = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" 
-            xmlns:x="urn:schemas-microsoft-com:office:excel" 
-            xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="UTF-8">
-        <!--[if gte mso 9]>
-        <xml>
-          <x:ExcelWorkbook>
-            <x:ExcelWorksheets>
-              <x:ExcelWorksheet>
-                <x:Name>${title.slice(0, 31).replace(/[\\\\/?*><]|:/g, '')}</x:Name>
-                <x:WorksheetOptions>
-                  <x:DisplayGridlines/>
-                </x:WorksheetOptions>
-              </x:ExcelWorksheet>
-            </x:ExcelWorksheets>
-          </x:ExcelWorkbook>
-        </xml>
-        <![endif]-->
-        <style>
-          table { border-collapse: collapse; width: 100%; font-family: Calibri, sans-serif; border: 2px solid black; }
-          th, td { border: 1px solid #000000; padding: 2px 4px; font-size: 9pt; }
-          .text-center { text-align: center; }
-          .text-left { text-align: left; }
-          .font-bold { font-weight: bold; }
-          .font-black { font-weight: 900; }
-          .underline { text-decoration: underline; }
-          .bg-white { background-color: #ffffff; }
-          /* Preserve the specific colors in Excel */
-          [style*="background-color: rgb(255, 255, 0)"], [style*="background-color: #FFFF00"] { background-color: #FFFF00 !important; }
-          [style*="background-color: rgb(118, 146, 60)"], [style*="background-color: #76923C"] { background-color: #76923C !important; color: #ffffff !important; }
-          [style*="background-color: rgb(227, 108, 9)"], [style*="background-color: #E36C09"] { background-color: #E36C09 !important; color: #ffffff !important; }
-          [style*="background-color: rgb(49, 133, 155)"], [style*="background-color: #31859B"] { background-color: #31859B !important; color: #ffffff !important; }
-          [style*="background-color: rgb(147, 137, 83)"], [style*="background-color: #938953"] { background-color: #938953 !important; color: #ffffff !important; }
-          [style*="background-color: rgb(234, 153, 153)"], [style*="background-color: #EA9999"] { background-color: #EA9999 !important; }
-        </style>
-      </head>
-      <body>
-        ${htmlContent}
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${cleanTitle}_${new Date().toISOString().split('T')[0]}.xls`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    saveAs(new Blob([buffer]), `${cleanTitle}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const PrintBar = ({ title }: { title: string }) => (
