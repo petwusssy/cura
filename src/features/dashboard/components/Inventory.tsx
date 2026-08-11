@@ -24,13 +24,22 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const [adjustNote, setAdjustNote] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newMed, setNewMed] = useState({
+  const [newMed, setNewMed] = useState<{
+    name: string;
+    batchNumber: string;
+    stock: string;
+    dateAdded: string;
+    unit: string;
+    threshold: string;
+    category: 'Medicine' | 'Supply';
+  }>({
     name: '',
     batchNumber: '',
     stock: '',
     dateAdded: new Date().toISOString().split('T')[0],
     unit: 'Tablet',
-    threshold: '15'
+    threshold: '15',
+    category: 'Medicine'
   });
 
   const getMedicineDetails = (m: MedicineItem) => {
