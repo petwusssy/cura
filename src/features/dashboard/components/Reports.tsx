@@ -175,7 +175,7 @@ interface ReportsProps {
   purchaseRequests: PurchaseRequest[];
 }
 
-const MONTH_NAME = 'JUNE';
+const MONTH_NAME = 'MAY';
 const YEAR = '2026';
 
 export function Reports({ patients, consultations, medicines, beds, medicalCerts, purchaseRequests }: ReportsProps) {
@@ -231,7 +231,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         );
       }
       blocks.push(
-        <td key={`subtot-${idx}`} className="border border-black px-1.5 py-1 text-center font-extrabold text-[11px] bg-[#F8CBAD] text-black font-mono shadow-inner min-w-[28px]">
+        <td key={`subtot-${idx}`} className="border border-black px-1.5 py-1 text-center font-extrabold text-[11px] bg-[#E36C09] text-white font-mono min-w-[28px]">
           {subTotal > 0 ? subTotal : 0}
         </td>
       );
@@ -271,7 +271,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           <x:ExcelWorkbook>
             <x:ExcelWorksheets>
               <x:ExcelWorksheet>
-                <x:Name>${title.slice(0, 31).replace(/[\\/?*><]|:/g, '')}</x:Name>
+                <x:Name>${title.slice(0, 31).replace(/[\\\\/?*><]|:/g, '')}</x:Name>
                 <x:WorksheetOptions>
                   <x:DisplayGridlines/>
                 </x:WorksheetOptions>
@@ -281,12 +281,21 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         </xml>
         <![endif]-->
         <style>
-          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
-          th, td { border: 1px solid #000000; padding: 6px 10px; font-size: 11pt; }
-          th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+          table { border-collapse: collapse; width: 100%; font-family: Calibri, sans-serif; border: 2px solid black; }
+          th, td { border: 1px solid #000000; padding: 2px 4px; font-size: 9pt; }
           .text-center { text-align: center; }
+          .text-left { text-align: left; }
           .font-bold { font-weight: bold; }
           .font-black { font-weight: 900; }
+          .underline { text-decoration: underline; }
+          .bg-white { background-color: #ffffff; }
+          /* Preserve the specific colors in Excel */
+          [style*="background-color: rgb(255, 255, 0)"], [style*="background-color: #FFFF00"] { background-color: #FFFF00 !important; }
+          [style*="background-color: rgb(118, 146, 60)"], [style*="background-color: #76923C"] { background-color: #76923C !important; color: #ffffff !important; }
+          [style*="background-color: rgb(227, 108, 9)"], [style*="background-color: #E36C09"] { background-color: #E36C09 !important; color: #ffffff !important; }
+          [style*="background-color: rgb(49, 133, 155)"], [style*="background-color: #31859B"] { background-color: #31859B !important; color: #ffffff !important; }
+          [style*="background-color: rgb(147, 137, 83)"], [style*="background-color: #938953"] { background-color: #938953 !important; color: #ffffff !important; }
+          [style*="background-color: rgb(234, 153, 153)"], [style*="background-color: #EA9999"] { background-color: #EA9999 !important; }
         </style>
       </head>
       <body>
@@ -658,39 +667,50 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 {/* MEDICINES SPREADSHEET (Exact Excel screenshot) */}
                 {inventoryTab === 'medicines' && (
                   <div className="overflow-x-auto custom-scrollbar pb-2">
-                    <div className="text-center mb-3">
-                      <div className="bg-[#D9E1F2] inline-block font-black text-sm px-6 py-1 border border-black uppercase text-black">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
-                      <div className="font-extrabold text-xs text-black mt-1">Monthly Inventory of Medicines (Inclusive Dates): <span className="underline font-mono">May-26</span></div>
-                    </div>
-                    <table className="w-full border-collapse border-2 border-black font-sans text-xs min-w-[1400px]">
+                    <table className="w-full border-collapse border-2 border-black font-sans text-xs min-w-[1450px]">
                       <thead>
-                        <tr className="text-black font-extrabold border-2 border-black text-center text-[10px]">
-                          <th rowSpan={2} className="border-2 border-black px-1 py-1.5 bg-[#CCC0DA] w-8">No.</th>
-                          <th rowSpan={2} className="border-2 border-black px-3 py-1.5 bg-[#CCC0DA] text-left w-52">Medicine</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#FFF2CC] w-16 leading-tight">Beg.<br/>Inv.</th>
-                          <th colSpan={37} className="border-2 border-black py-1 bg-[#D9E1F2] uppercase text-xs font-black">Consumption/s (Days 1 - 31)</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#A9D18E] w-16 leading-tight">End.<br/>Inv.</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#2FA4E7] text-white w-20 text-xs font-black">Sum Total<br/>Consumption</th>
-                          <th rowSpan={2} className="border-2 border-black px-2 py-1.5 bg-[#FFC000] text-black w-24 font-black">EXPIRATION</th>
+                        <tr>
+                          <th colSpan={43} className="text-center py-3 bg-white border-x-2 border-t-2 border-black">
+                            <div className="font-black text-lg uppercase tracking-tight">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
+                          </th>
                         </tr>
-                        <tr className="text-black font-bold border border-black text-center text-[9px] bg-gray-100">
-                          <th className="border border-black px-1">1</th><th className="border border-black px-1">2</th><th className="border border-black px-1">3</th><th className="border border-black px-1">4</th><th className="border border-black px-1">5</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">6</th><th className="border border-black px-1">7</th><th className="border border-black px-1">8</th><th className="border border-black px-1">9</th><th className="border border-black px-1">10</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">11</th><th className="border border-black px-1">12</th><th className="border border-black px-1">13</th><th className="border border-black px-1">14</th><th className="border border-black px-1">15</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">16</th><th className="border border-black px-1">17</th><th className="border border-black px-1">18</th><th className="border border-black px-1">19</th><th className="border border-black px-1">20</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">21</th><th className="border border-black px-1">22</th><th className="border border-black px-1">23</th><th className="border border-black px-1">24</th><th className="border border-black px-1">25</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">26</th><th className="border border-black px-1">27</th><th className="border border-black px-1">28</th><th className="border border-black px-1">29</th><th className="border border-black px-1">30</th><th className="border border-black px-1">31</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
+                        <tr>
+                          <th colSpan={8} className="text-left px-3 py-2 bg-white border-l-2 border-black font-bold text-sm">
+                            Monthly Inventory of Medicines (Inclusive Dates):
+                          </th>
+                          <th colSpan={8} className="text-center py-2 bg-white border-b border-black font-black underline text-sm">
+                            {MONTH_NAME} {YEAR}
+                          </th>
+                          <th colSpan={27} className="bg-white border-r-2 border-black"></th>
+                        </tr>
+                        <tr className="h-4 bg-white border-x-2 border-black"><th colSpan={43}></th></tr>
+                        <tr className="text-black font-extrabold border-2 border-black text-center text-[10px]">
+                          <th rowSpan={2} style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black px-1 py-1.5 w-8">No.</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black px-3 py-1.5 text-left w-52">Medicine</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#76923C' }} className="border-2 border-black px-1.5 py-1.5 text-white w-16 leading-tight">Beg.<br/>Inv.</th>
+                          <th colSpan={37} className="border-2 border-black py-1 bg-white uppercase text-xs font-black">Consumption/s (Days 1 - 31)</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#76923C' }} className="border-2 border-black px-1.5 py-1.5 text-white w-16 leading-tight">End.<br/>Inv.</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#31859B' }} className="border-2 border-black px-1.5 py-1.5 text-white w-20 text-xs font-black">Sum Total<br/>Consumption</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#938953' }} className="border-2 border-black px-2 py-1.5 text-white w-24 font-black uppercase">EXPIRATION</th>
+                        </tr>
+                        <tr className="text-black font-bold border border-black text-center text-[9px] bg-white">
+                          <th className="border border-black px-1">1</th><th className="border border-black px-1">2</th><th className="border border-black px-1">3</th><th className="border border-black px-1">4</th><th className="border border-black px-1">5</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">6</th><th className="border border-black px-1">7</th><th className="border border-black px-1">8</th><th className="border border-black px-1">9</th><th className="border border-black px-1">10</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">11</th><th className="border border-black px-1">12</th><th className="border border-black px-1">13</th><th className="border border-black px-1">14</th><th className="border border-black px-1">15</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">16</th><th className="border border-black px-1">17</th><th className="border border-black px-1">18</th><th className="border border-black px-1">19</th><th className="border border-black px-1">20</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">21</th><th className="border border-black px-1">22</th><th className="border border-black px-1">23</th><th className="border border-black px-1">24</th><th className="border border-black px-1">25</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">26</th><th className="border border-black px-1">27</th><th className="border border-black px-1">28</th><th className="border border-black px-1">29</th><th className="border border-black px-1">30</th><th className="border border-black px-1">31</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {MEDICINE_INVENTORY_TEMPLATE.map(med => (
-                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${med.status === 'NO STOCK' ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/30'}`}>
-                            <td className={`border-2 border-black py-1 px-1 text-center font-extrabold font-mono ${med.status === 'NO STOCK' ? 'bg-[#E6B8B7] text-black' : 'bg-[#FFFF00] text-black'}`}>{med.no}</td>
-                            <td className={`border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap ${med.status === 'NO STOCK' ? 'bg-[#EA9999] text-gray-900' : 'bg-[#FFFF99] text-gray-950'}`}>{med.name}</td>
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#A9D18E]">{med.beg}</td>
+                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${med.status === 'NO STOCK' ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/10'}`}>
+                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{med.no}</td>
+                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{med.name}</td>
+                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'}`}>{med.beg}</td>
                             {renderConsumptionCells(med.c)}
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#A9D18E]">{med.end}</td>
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#92CDD3] text-xs">{med.total}</td>
+                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'}`}>{med.end}</td>
+                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
                             <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${med.status === 'NO STOCK' ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{med.status || ''}</td>
                           </tr>
                         ))}
@@ -702,38 +722,49 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 {/* SUPPLIES SPREADSHEET (Exact PDF 2 template) */}
                 {inventoryTab === 'supplies' && (
                   <div className="overflow-x-auto custom-scrollbar pb-2">
-                    <div className="text-center mb-3">
-                      <div className="bg-[#D9E1F2] inline-block font-black text-sm px-6 py-1 border border-black uppercase text-black">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
-                      <div className="font-extrabold text-xs text-black mt-1">Monthly Inventory of Supplies (Inclusive Dates): <span className="underline font-mono">May-26</span></div>
-                    </div>
-                    <table className="w-full border-collapse border-2 border-black font-sans text-xs min-w-[1380px]">
+                    <table className="w-full border-collapse border-2 border-black font-sans text-xs min-w-[1400px]">
                       <thead>
-                        <tr className="text-black font-extrabold border-2 border-black text-center text-[10px]">
-                          <th rowSpan={2} className="border-2 border-black px-1 py-1.5 bg-[#FFFF00] w-8">No.</th>
-                          <th rowSpan={2} className="border-2 border-black px-3 py-1.5 bg-[#A9D18E] text-left w-52">Supplies</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#C6E0B4] w-16 leading-tight">Beg.<br/>Inv.</th>
-                          <th colSpan={37} className="border-2 border-black py-1 bg-[#FCE4D6] uppercase text-xs font-black">Consumption/s (Days 1 - 31)</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#A9D18E] w-16 leading-tight">End.<br/>Inv.</th>
-                          <th rowSpan={2} className="border-2 border-black px-1.5 py-1.5 bg-[#9DC3E6] w-20 text-xs font-black">Sum Total<br/>Consumption</th>
+                        <tr>
+                          <th colSpan={42} className="text-center py-3 bg-white border-x-2 border-t-2 border-black">
+                            <div className="font-black text-lg uppercase tracking-tight">UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC</div>
+                          </th>
                         </tr>
-                        <tr className="text-black font-bold border border-black text-center text-[9px] bg-gray-100">
-                          <th className="border border-black px-1">1</th><th className="border border-black px-1">2</th><th className="border border-black px-1">3</th><th className="border border-black px-1">4</th><th className="border border-black px-1">5</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">6</th><th className="border border-black px-1">7</th><th className="border border-black px-1">8</th><th className="border border-black px-1">9</th><th className="border border-black px-1">10</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">11</th><th className="border border-black px-1">12</th><th className="border border-black px-1">13</th><th className="border border-black px-1">14</th><th className="border border-black px-1">15</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">16</th><th className="border border-black px-1">17</th><th className="border border-black px-1">18</th><th className="border border-black px-1">19</th><th className="border border-black px-1">20</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">21</th><th className="border border-black px-1">22</th><th className="border border-black px-1">23</th><th className="border border-black px-1">24</th><th className="border border-black px-1">25</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
-                          <th className="border border-black px-1">26</th><th className="border border-black px-1">27</th><th className="border border-black px-1">28</th><th className="border border-black px-1">29</th><th className="border border-black px-1">30</th><th className="border border-black px-1">31</th><th className="border border-black px-1 bg-[#ED7D31] text-white font-black">Total</th>
+                        <tr>
+                          <th colSpan={8} className="text-left px-3 py-2 bg-white border-l-2 border-black font-bold text-sm">
+                            Monthly Inventory of Supplies (Inclusive Dates):
+                          </th>
+                          <th colSpan={8} className="text-center py-2 bg-white border-b border-black font-black underline text-sm">
+                            {MONTH_NAME} {YEAR}
+                          </th>
+                          <th colSpan={26} className="bg-white border-r-2 border-black"></th>
+                        </tr>
+                        <tr className="h-4 bg-white border-x-2 border-black"><th colSpan={42}></th></tr>
+                        <tr className="text-black font-extrabold border-2 border-black text-center text-[10px]">
+                          <th rowSpan={2} style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black px-1 py-1.5 w-8">No.</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black px-3 py-1.5 text-left w-52">Supplies</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#76923C' }} className="border-2 border-black px-1.5 py-1.5 text-white w-16 leading-tight">Beg.<br/>Inv.</th>
+                          <th colSpan={37} className="border-2 border-black py-1 bg-white uppercase text-xs font-black">Consumption/s (Days 1 - 31)</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#76923C' }} className="border-2 border-black px-1.5 py-1.5 text-white w-16 leading-tight">End.<br/>Inv.</th>
+                          <th rowSpan={2} style={{ backgroundColor: '#31859B' }} className="border-2 border-black px-1.5 py-1.5 text-white w-20 text-xs font-black">Sum Total<br/>Consumption</th>
+                        </tr>
+                        <tr className="text-black font-bold border border-black text-center text-[9px] bg-white">
+                          <th className="border border-black px-1">1</th><th className="border border-black px-1">2</th><th className="border border-black px-1">3</th><th className="border border-black px-1">4</th><th className="border border-black px-1">5</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">6</th><th className="border border-black px-1">7</th><th className="border border-black px-1">8</th><th className="border border-black px-1">9</th><th className="border border-black px-1">10</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">11</th><th className="border border-black px-1">12</th><th className="border border-black px-1">13</th><th className="border border-black px-1">14</th><th className="border border-black px-1">15</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">16</th><th className="border border-black px-1">17</th><th className="border border-black px-1">18</th><th className="border border-black px-1">19</th><th className="border border-black px-1">20</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">21</th><th className="border border-black px-1">22</th><th className="border border-black px-1">23</th><th className="border border-black px-1">24</th><th className="border border-black px-1">25</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
+                          <th className="border border-black px-1">26</th><th className="border border-black px-1">27</th><th className="border border-black px-1">28</th><th className="border border-black px-1">29</th><th className="border border-black px-1">30</th><th className="border border-black px-1">31</th><th style={{ backgroundColor: '#E36C09' }} className="border border-black px-1 text-white font-black">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {SUPPLIES_LIST.map(sup => (
-                          <tr key={sup.no} className="border border-black text-[11px] hover:bg-amber-50/40 font-semibold">
-                            <td className="border-2 border-black py-1 px-1 text-center font-bold bg-[#FFFF99] font-mono">{sup.no}</td>
-                            <td className="border-2 border-black py-1 px-2 font-black bg-[#E2EFDA] text-left whitespace-nowrap">{sup.name}</td>
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#A9D18E]/60">{sup.beg}</td>
+                          <tr key={sup.no} className="border border-black text-[11px] hover:bg-amber-50/10 font-semibold">
+                            <td style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{sup.no}</td>
+                            <td style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{sup.name}</td>
+                            <td style={{ backgroundColor: '#76923C' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white">{sup.beg}</td>
                             {renderConsumptionCells(sup.consumed)}
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#A9D18E]">{sup.end}</td>
-                            <td className="border-2 border-black py-1 px-1.5 text-center font-black font-mono bg-[#9DC3E6] text-xs">{sup.total}</td>
+                            <td style={{ backgroundColor: '#76923C' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white">{sup.end}</td>
+                            <td style={{ backgroundColor: '#31859B' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white text-xs">{sup.total}</td>
                           </tr>
                         ))}
                       </tbody>
