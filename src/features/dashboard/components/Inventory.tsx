@@ -18,6 +18,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const displayMedicines = medicines ?? [];
 
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock' | 'Healthy'>('All');
+  const [typeFilter, setTypeFilter] = useState<'All' | 'Medicine' | 'Supply'>('All');
   const [adjustModal, setAdjustModal] = useState<MedicineItem | null>(null);
   const [adjustType, setAdjustType] = useState<'add' | 'dispense'>('add');
   const [adjustQty, setAdjustQty] = useState('');
@@ -51,8 +52,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       batchNumber = `B-${prefix}${hash}`;
     }
 
-    const adds = m.stockHistory.filter(h => h.type === 'add').reduce((sum, h) => sum + h.qty, 0);
-    const dispenses = m.stockHistory.filter(h => h.type === 'dispense').reduce((sum, h) => sum + h.qty, 0);
+    const adds = (m.stockHistory || []).filter(h => h.type === 'add').reduce((sum, h) => sum + h.qty, 0);
+    const dispenses = (m.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + h.qty, 0);
     const dispensed = m.dispensed ?? dispenses;
     const beginningQty = m.beginningQty !== undefined ? m.beginningQty : (adds > 0 ? adds : m.stock + dispensed);
 
