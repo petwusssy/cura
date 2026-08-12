@@ -62,14 +62,14 @@ function PhilHealthYakapBanner() {
   return (
     <div className="flex flex-col items-center justify-center my-0.5 select-none">
       <div className="flex items-baseline justify-center gap-1.5 leading-none">
-        <span className="text-[#0084C6] font-black italic text-[24px] tracking-tight font-sans">
+        <span className="text-[#367BB8] font-black italic text-[24px] tracking-tight font-sans">
           PhilHealth
         </span>
-        <span className="text-[#F7941E] font-black text-[24px] tracking-wider font-sans">
+        <span className="text-[#FFB81C] font-black text-[24px] tracking-wider font-sans">
           YAKAP
         </span>
       </div>
-      <div className="bg-gradient-to-r from-[#F7941E] via-[#F9A033] to-[#F7941E] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 font-sans border border-amber-500/30">
+      <div className="bg-[#FFB81C] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 font-sans">
         PARA MALAYO SA SAKIT
       </div>
     </div>
@@ -576,7 +576,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <img
                 src={uaSeal}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[640px] h-[640px] object-contain opacity-[0.18]"
+                className="watermark-seal w-[640px] h-[640px] object-contain opacity-[0.18] grayscale"
               />
             </div>
 
