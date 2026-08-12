@@ -217,7 +217,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const dailyReportsData = activeReport === 'daily' ? Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const dayStr = `${reportYear}-${monthNum}-${String(day).padStart(2, '0')}`;
-    const consForDay = filteredCons.filter(c => c.date === dayStr);
+    const consForDay = consultations.filter(c => c.date === dayStr);
 
     let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
     let cons = 0, home = 0, hosp = 0, pre = 0;
