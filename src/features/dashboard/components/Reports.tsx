@@ -517,6 +517,98 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     saveAs(new Blob([buffer]), `daily_report_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
   };
 
+  const exportCasesAttendedExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Cases Attended');
+
+    // Title Rows
+    worksheet.mergeCells('A1:D1');
+    worksheet.mergeCells('A2:D2');
+    worksheet.mergeCells('A3:D3');
+    
+    const r1 = worksheet.getCell('A1');
+    r1.value = 'UNIVERSITY OF THE ASSUMPTION';
+    const r2 = worksheet.getCell('A2');
+    r2.value = 'COLLEGE MEDICAL CLINIC';
+    const r3 = worksheet.getCell('A3');
+    r3.value = `CASES ATTENDED SY: 2025-2026      (STUDENTS & PERSONNEL) MONTH: ${reportMonth.toUpperCase()} YEAR: ${reportYear}`;
+
+    [1, 2, 3].forEach(rowNum => {
+      for (let col = 1; col <= 4; col++) {
+        const cell = worksheet.getCell(rowNum, col);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6E0B4' } }; // Light green
+        cell.font = { name: 'Calibri', size: 11, bold: true };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        
+        let borders: any = {};
+        if (rowNum === 1) borders.top = { style: 'thin' };
+        if (rowNum === 3) borders.bottom = { style: 'thin' };
+        if (col === 1) borders.left = { style: 'thin' };
+        if (col === 4) borders.right = { style: 'thin' };
+        cell.border = borders;
+      }
+    });
+
+    // Header Row
+    const headerRow = worksheet.addRow(['CASES/COMPLAINS', 'STUDENT', 'PERSONNEL', 'TOTAL']);
+    headerRow.eachCell((cell, colNumber) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colNumber === 4 ? 'FFFFC000' : 'FFFFE699' } };
+      cell.font = { name: 'Calibri', size: 11, bold: true };
+      cell.alignment = { vertical: 'middle', horizontal: colNumber === 1 ? 'left' : 'center' };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // Data Rows
+    ALL_CASES.forEach((c) => {
+      if (c === 'Vision blurring') {
+        const othersRow = worksheet.addRow(['Others:', '', '', '']);
+        othersRow.eachCell((cell, colNumber) => {
+          cell.font = { name: 'Calibri', size: 11 };
+          cell.alignment = { vertical: 'middle', horizontal: colNumber === 1 ? 'left' : 'center' };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+      }
+      
+      const stu = caseCount(c, 'Student');
+      const emp = caseCount(c, 'Personnel');
+      const total = stu + emp;
+      
+      const row = worksheet.addRow([
+        c,
+        stu || '',
+        emp || '',
+        total // always show 0 in Excel for total
+      ]);
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: 'Calibri', size: 11 };
+        cell.alignment = { vertical: 'middle', horizontal: colNumber === 1 ? 'left' : 'center' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+    });
+
+    // Footer Row
+    const totalStu = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0);
+    const totalEmp = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0);
+    const totalSum = totalStu + totalEmp;
+    
+    const footerRow = worksheet.addRow(['TOTAL', totalStu || '', totalEmp || '', totalSum]);
+    footerRow.eachCell((cell, colNumber) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colNumber === 4 ? 'FFA9D18E' : 'FFC6E0B4' } }; 
+      cell.font = { name: 'Calibri', size: 11, bold: true };
+      cell.alignment = { vertical: 'middle', horizontal: colNumber === 1 ? 'left' : 'center' };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // Column Widths
+    worksheet.getColumn(1).width = 45; // CASES/COMPLAINS
+    worksheet.getColumn(2).width = 12; // STUDENT
+    worksheet.getColumn(3).width = 14; // PERSONNEL
+    worksheet.getColumn(4).width = 12; // TOTAL
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `cases_attended_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+  };
+
   const PrintBar = ({ title }: { title: string }) => (
     <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 print-bar-ui" style={{ background: '#f8fafd' }}>
       <div className="flex items-center gap-2">
@@ -536,7 +628,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           style={{ background: PRIMARY }}>
           <Download size={12} /> Export PDF
         </button>
-        <button onClick={() => activeReport === 'daily' ? exportDailyReportExcel() : handleExportExcel(title)}
+        <button onClick={() => {
+            if (activeReport === 'daily') exportDailyReportExcel();
+            else if (activeReport === 'cases') exportCasesAttendedExcel();
+            else handleExportExcel(title);
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
           style={{ background: '#2E7D32' }}>
           <Download size={12} /> Export Excel
