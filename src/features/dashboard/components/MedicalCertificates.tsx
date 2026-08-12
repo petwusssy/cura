@@ -572,11 +572,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             >
             
             {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-12">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-16">
               <img
                 src={uaSeal}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[640px] h-[640px] object-contain opacity-[0.18] grayscale"
+                className="watermark-seal w-[750px] h-[750px] object-contain opacity-40 grayscale"
               />
             </div>
 
