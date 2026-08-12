@@ -109,80 +109,81 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Live Status Broadcaster Banner */}
-      <div className="rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.badgeBorder}` }}>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
-            <Megaphone size={20} className="sm:w-6 sm:h-6" />
+      <div className="rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.badgeBorder}` }}>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
+            <Megaphone size={20} />
           </div>
-          <div className="flex flex-col gap-0.5 sm:gap-1">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Live Status Broadcaster</span>
-              <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" style={{ color: colors.badgeText, border: `1px solid ${colors.badgeBorder}` }}>
-                Clinic is {broadcastStatus}
+              <span className="text-sm font-semibold" style={{ color: colors.iconBg }}>Live Clinic Status</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase" style={{ color: colors.badgeText, border: `1px solid ${colors.badgeBorder}` }}>
+                {broadcastStatus}
               </span>
             </div>
-            <p className="text-[13px] sm:text-[15px] font-bold text-[#1a1a2e] leading-snug">{broadcastMessage}</p>
+            <p className="text-sm text-gray-800 font-medium">{broadcastMessage}</p>
           </div>
         </div>
-        <div className="flex flex-col items-start sm:items-end text-left sm:text-right mt-1 sm:mt-0 pl-14 sm:pl-0">
-          <span className="text-[9px] sm:text-[10px] font-bold text-[#1E5AA8]/60 uppercase tracking-wider">Broadcast Updated</span>
-          <span className="text-[11px] sm:text-xs font-semibold text-[#1E5AA8]">{lastUpdated}</span>
+        <div className="flex flex-col items-start sm:items-end text-left sm:text-right mt-1 sm:mt-0">
+          <span className="text-xs text-gray-500">Last updated</span>
+          <span className="text-xs font-medium text-gray-700">{lastUpdated}</span>
         </div>
       </div>
 
       {/* Admin Broadcaster Controls */}
-      <div className="bg-white rounded-xl p-4 sm:p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="flex items-center justify-between mb-4 sm:mb-5">
+      <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xs sm:text-[14px] font-bold text-[#1E5AA8] uppercase">Clinic Status Board (Admin Broadcaster)</h3>
-            <p className="text-[11px] sm:text-[13px] text-gray-500 mt-0.5">Set the status of the clinic to notify users & patients</p>
+            <h3 className="text-gray-800">Clinic Status Board</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Set the status of the clinic to notify users & patients</p>
           </div>
-          <span className="text-[9px] sm:text-[11px] font-bold text-[#1E5AA8] bg-[#1E5AA8]/10 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap ml-2">
+          <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
             Broadcaster Active
           </span>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-end">
-          <div className="flex-shrink-0 w-full xl:w-auto">
-            <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Operation Status</label>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+          <div className="flex-shrink-0 w-full md:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Operation Status</label>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setDraftStatus('Open')}
-                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-medium transition-all ${draftStatus === 'Open' ? 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#2E7D32]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Open' ? 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#2E7D32]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
               >
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#4CAF50]"></span> Open
+                <span className="w-2 h-2 rounded-full bg-[#4CAF50]"></span> Open
               </button>
               <button
                 onClick={() => setDraftStatus('Closed')}
-                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-medium transition-all ${draftStatus === 'Closed' ? 'border-[#F44336] bg-[#F44336]/10 text-[#C62828]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Closed' ? 'border-[#F44336] bg-[#F44336]/10 text-[#C62828]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
               >
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#F44336]"></span> Closed
+                <span className="w-2 h-2 rounded-full bg-[#F44336]"></span> Closed
               </button>
               <button
                 onClick={() => setDraftStatus('Half Day')}
-                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-medium transition-all ${draftStatus === 'Half Day' ? 'border-[#FF9800] bg-[#FF9800]/10 text-[#EF6C00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Half Day' ? 'border-[#FF9800] bg-[#FF9800]/10 text-[#EF6C00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
               >
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#FF9800]"></span> Half Day
+                <span className="w-2 h-2 rounded-full bg-[#FF9800]"></span> Half Day
               </button>
             </div>
           </div>
 
           <div className="flex-1 w-full">
-            <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Announcement / Advisory Message</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Announcement / Advisory Message</label>
             <input
               type="text"
               value={draftMessage}
               onChange={(e) => setDraftMessage(e.target.value)}
-              className="w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-[#1E5AA8] transition-colors"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-white"
               placeholder="Enter announcement message..."
             />
           </div>
 
           <button
             onClick={handlePushUpdate}
-            className="flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-xl bg-[#1B3A6B] text-white text-xs sm:text-sm font-medium hover:bg-[#1B3A6B]/90 transition-all flex-shrink-0 h-[34px] sm:h-[38px] w-full xl:w-auto"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 flex-shrink-0 w-full md:w-auto"
+            style={{ background: PRIMARY }}
           >
-            <Megaphone size={16} className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Push Update
+            <Megaphone size={16} /> Push Update
           </button>
         </div>
       </div>
