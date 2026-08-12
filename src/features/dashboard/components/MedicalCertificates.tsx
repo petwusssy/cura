@@ -57,6 +57,22 @@ function BagongPilipinasLogo() {
   );
 }
 
+// Auto-resizing input that perfectly hugs text without any fixed gaps
+const AutoResizeInput = ({ value, onChange, readOnly, placeholder = ' ', minWidth = '1ch' }: any) => (
+  <span className="inline-grid items-baseline" style={{ minWidth }}>
+    <span className="invisible col-start-1 row-start-1 whitespace-pre">{value || placeholder}</span>
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      readOnly={readOnly}
+      placeholder={placeholder}
+      className="col-start-1 row-start-1 w-full bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
+      style={{ minWidth }}
+    />
+  </span>
+);
+
 // PhilHealth YAKAP official orange badge banner
 function PhilHealthYakapBanner() {
   return (
@@ -615,7 +631,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     value={date}
                     readOnly={!editMode}
                     onChange={e => setDate(e.target.value)}
-                    className={`font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 border-b-[1.5px] border-gray-400`}
+                    className="font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 border-none"
                   />
                 </div>
               </div>
@@ -633,83 +649,34 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
                   <span>This is to certify that </span>
-                  <input
-                    type="text"
-                    value={patientName}
-                    readOnly={!editMode}
-                    onChange={e => setPatientName(e.target.value)}
-                    style={{ width: `${Math.max(220, patientName.length * 9.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-0.5 border-b-[1.5px] border-gray-400`}
-                  />
+                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} minWidth="150px" />
                   <span>, </span>
-                  <input
-                    type="number"
-                    value={age}
-                    readOnly={!editMode}
-                    onChange={e => setAge(e.target.value)}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-8 border-b-[1.5px] border-gray-400`}
-                  />
+                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} minWidth="2ch" />
                   <span> years old, </span>
-                  <input
-                    type="text"
-                    value={sex}
-                    readOnly={!editMode}
-                    onChange={e => setSex(e.target.value.toUpperCase())}
-                    style={{ width: `${Math.max(70, sex.length * 10)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center border-b-[1.5px] border-gray-400`}
-                  />
+                  <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} minWidth="50px" />
                   <span>, a </span>
                   
                   {/* Superscript formatting for year level (e.g. 4th) */}
                   <span className="inline-flex items-baseline">
-                    <input
-                      type="text"
-                      value={yearLevel}
-                      readOnly={!editMode}
-                      onChange={e => setYearLevel(e.target.value)}
-                      className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 border-b-[1.5px] border-gray-400`}
-                    />
+                    <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} minWidth="2ch" />
                     <sup className="text-[12px] font-bold">
-                      <input
-                        type="text"
-                        value={yearSuffix}
-                        readOnly={!editMode}
-                        onChange={e => setYearSuffix(e.target.value)}
-                        className={`font-official font-bold text-[12px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 border-b-[1.5px] border-gray-400`}
-                      />
+                      <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} minWidth="2ch" />
                     </sup>
                   </span>
                   <span> </span>
                   
-                  <input
-                    type="text"
-                    value={courseAndSchool}
-                    readOnly={!editMode}
-                    onChange={e => setCourseAndSchool(e.target.value)}
-                    style={{ width: `${Math.max(380, courseAndSchool.length * 8.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 border-b-[1.5px] border-gray-400`}
-                  />
+                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} minWidth="200px" />
                   <span> has been seen and examined due to </span>
-                  <input
-                    type="text"
-                    value={examinedDueTo}
-                    readOnly={!editMode}
-                    onChange={e => setExaminedDueTo(e.target.value)}
-                    style={{ width: `${Math.max(320, examinedDueTo.length * 8.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 border-b-[1.5px] border-gray-400`}
-                  />
+                  <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} minWidth="150px" />
+                  <span>.</span>
                 </div>
 
                 {/* Paragraph 2: Diagnosis */}
                 <div className="flex items-baseline gap-2 pt-2">
                   <span className="font-official font-bold text-[16.5px] whitespace-nowrap">Diagnosis:</span>
-                  <input
-                    type="text"
-                    value={diagnosis}
-                    readOnly={!editMode}
-                    onChange={e => setDiagnosis(e.target.value)}
-                    className={`flex-1 font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-1 border-b-[1.5px] border-gray-400`}
-                  />
+                  <div className="flex-1">
+                    <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} minWidth="100%" />
+                  </div>
                 </div>
 
                 {/* Paragraph 3: Treatment (Indented block layout exactly as seen in PDF) */}
@@ -782,7 +749,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                         value={licenseNo}
                         readOnly={!editMode}
                         onChange={e => setLicenseNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-b-[1.5px] border-gray-400`}
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-none ${editMode ? 'hover:bg-amber-50/50 focus:bg-amber-50/50' : ''}`}
                       />
                     </div>
                     <div className="flex items-center justify-end">
@@ -792,7 +759,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                         value={ptrNo}
                         readOnly={!editMode}
                         onChange={e => setPtrNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-b-[1.5px] border-gray-400`}
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-none ${editMode ? 'hover:bg-amber-50/50 focus:bg-amber-50/50' : ''}`}
                       />
                     </div>
                   </div>
