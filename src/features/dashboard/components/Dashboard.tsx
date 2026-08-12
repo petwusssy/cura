@@ -107,101 +107,21 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   ];
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      {/* Live Status Broadcaster Banner */}
-      <div className="rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.badgeBorder}` }}>
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
-            <Megaphone size={20} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold" style={{ color: colors.iconBg }}>Live Clinic Status</span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase" style={{ color: colors.badgeText, border: `1px solid ${colors.badgeBorder}` }}>
-                {broadcastStatus}
-              </span>
-            </div>
-            <p className="text-sm text-gray-800 font-medium">{broadcastMessage}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-start sm:items-end text-left sm:text-right mt-1 sm:mt-0">
-          <span className="text-xs text-gray-500">Last updated</span>
-          <span className="text-xs font-medium text-gray-700">{lastUpdated}</span>
-        </div>
-      </div>
-
-      {/* Admin Broadcaster Controls */}
-      <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-gray-800">Clinic Status Board</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Set the status of the clinic to notify users & patients</p>
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
-            Broadcaster Active
-          </span>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-          <div className="flex-shrink-0 w-full md:w-auto">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Operation Status</label>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setDraftStatus('Open')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Open' ? 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#2E7D32]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#4CAF50]"></span> Open
-              </button>
-              <button
-                onClick={() => setDraftStatus('Closed')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Closed' ? 'border-[#F44336] bg-[#F44336]/10 text-[#C62828]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#F44336]"></span> Closed
-              </button>
-              <button
-                onClick={() => setDraftStatus('Half Day')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${draftStatus === 'Half Day' ? 'border-[#FF9800] bg-[#FF9800]/10 text-[#EF6C00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#FF9800]"></span> Half Day
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Announcement / Advisory Message</label>
-            <input
-              type="text"
-              value={draftMessage}
-              onChange={(e) => setDraftMessage(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-white"
-              placeholder="Enter announcement message..."
-            />
-          </div>
-
-          <button
-            onClick={handlePushUpdate}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 flex-shrink-0 w-full md:w-auto"
-            style={{ background: PRIMARY }}
-          >
-            <Megaphone size={16} /> Push Update
-          </button>
-        </div>
-      </div>
-
-      {/* Header */}
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-[#f8f9fa] min-h-full">
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900" style={{ color: '#1a1a2e' }}>Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900" style={{ color: '#1a1a2e' }}>Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
-        <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
             <button
               key={f}
               onClick={() => setDateFilter(f)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
-                ${dateFilter === f ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
+                ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
             >
               {f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -210,41 +130,116 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* 2. Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {statCards.map((card, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl p-3 sm:p-4 flex flex-col gap-2 transition-transform hover:-translate-y-0.5"
-            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: card.alert ? `1px solid ${RED}20` : '1px solid #f0f0f0' }}
+            className="bg-white rounded-xl p-4 flex flex-col gap-2 transition-all hover:shadow-lg hover:-translate-y-1"
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: card.alert ? `1px solid ${RED}30` : '1px solid #f1f3f5' }}
           >
             <div className="flex items-center justify-between">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center" style={{ background: `${card.color}15`, color: card.color }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors" style={{ background: `${card.color}15`, color: card.color }}>
                 {card.icon}
               </div>
               {card.alert && (
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: RED }} />
+                <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: RED, boxShadow: `0 0 8px ${RED}` }} />
               )}
             </div>
-            <div className="text-xl sm:text-2xl font-bold" style={{ color: card.color }}>{card.value}</div>
-            <div>
-              <div className="text-xs font-semibold text-gray-700 leading-tight">{card.label}</div>
-              <div className="text-xs text-gray-400">{card.sub}</div>
+            <div className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: card.color }}>{card.value}</div>
+            <div className="mt-auto">
+              <div className="text-xs font-bold text-gray-700 uppercase tracking-wide">{card.label}</div>
+              <div className="text-[11px] text-gray-400 font-medium mt-0.5">{card.sub}</div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* 3. Live Status & Broadcaster */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-4">
+          <div className="rounded-xl p-5 flex flex-col gap-4 h-full" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.badgeBorder}` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm" style={{ backgroundColor: colors.iconBg }}>
+                <Megaphone size={24} />
+              </div>
+              <div>
+                <div className="text-sm font-bold" style={{ color: colors.iconBg }}>Live Clinic Status</div>
+                <span className="inline-block text-[11px] font-black px-2.5 py-0.5 mt-1 rounded-md uppercase tracking-wider" style={{ color: colors.badgeText, background: `${colors.iconBg}15`, border: `1px solid ${colors.badgeBorder}` }}>
+                  {broadcastStatus}
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-800 font-semibold leading-relaxed flex-1">{broadcastMessage}</p>
+            <div className="text-[11px] text-gray-500 font-medium pt-3 border-t" style={{ borderColor: `${colors.badgeBorder}50` }}>
+              Last updated: {lastUpdated}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-gray-900 font-bold">Status Broadcaster</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Update the clinic's public advisory message</p>
+            </div>
+            <span className="text-[11px] px-3 py-1 rounded-full font-bold uppercase tracking-wider" style={{ background: `${PRIMARY}10`, color: PRIMARY }}>
+              Admin Only
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setDraftStatus('Open')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Open' ? 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#2E7D32]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#4CAF50]"></span> Open
+              </button>
+              <button
+                onClick={() => setDraftStatus('Closed')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Closed' ? 'border-[#F44336] bg-[#F44336]/10 text-[#C62828]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#F44336]"></span> Closed
+              </button>
+              <button
+                onClick={() => setDraftStatus('Half Day')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Half Day' ? 'border-[#FF9800] bg-[#FF9800]/10 text-[#EF6C00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#FF9800]"></span> Half Day
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={draftMessage}
+                onChange={(e) => setDraftMessage(e.target.value)}
+                className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-[#1E5AA8] focus:ring-2 focus:ring-[#1E5AA8]/20 transition-all bg-gray-50 focus:bg-white"
+                placeholder="Enter announcement message..."
+              />
+              <button
+                onClick={handlePushUpdate}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-bold transition-all hover:opacity-90 hover:shadow-md"
+                style={{ background: PRIMARY }}
+              >
+                <Megaphone size={16} /> Push
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timeline Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-gray-800">Daily Activity Timeline</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Consultations per hour</p>
+              <h3 className="text-gray-900 font-bold">Daily Activity Timeline</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Consultations per hour</p>
             </div>
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <Activity size={14} /> Live
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50">
+              <Activity size={14} /> LIVE
             </div>
           </div>
           <ResponsiveContainer width="100%" height={180}>
@@ -255,17 +250,17 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                   <stop offset="95%" stopColor={PRIMARY} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f8f9fa" />
               <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }} />
-              <Area type="monotone" dataKey="consultations" stroke={PRIMARY} strokeWidth={2} fill="url(#colorCon)" dot={{ fill: PRIMARY, r: 3 }} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, fontWeight: 'bold' }} />
+              <Area type="monotone" dataKey="consultations" stroke={PRIMARY} strokeWidth={3} fill="url(#colorCon)" dot={{ fill: PRIMARY, r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Medication Reminders */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${YELLOW}20`, color: '#c49b00' }}>
               <Clock size={16} />
@@ -309,8 +304,8 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <h3 className="text-gray-800 mb-4">Quick Actions</h3>
+        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+          <h3 className="text-gray-900 font-bold mb-5">Quick Actions</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
             {quickActions.map(a => (
               <button
@@ -331,12 +326,12 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
         </div>
 
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-800">Recent Activity</h3>
+        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-gray-900 font-bold">Recent Activity</h3>
             <button
               onClick={() => onNavigate('consultations')}
-              className="text-sm flex items-center gap-1 font-medium hover:opacity-80"
+              className="text-sm flex items-center gap-1 font-bold hover:opacity-80 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
               style={{ color: PRIMARY }}
             >
               View all <ChevronRight size={14} />
