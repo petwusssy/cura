@@ -11,6 +11,20 @@ const DEFAULT_CASE_CATEGORIES = [
   'Pain (upper and lower body)', 'Allergy/Rashes', 'Asthma', 'UTI (urinary tract infection)',
   'Eye Complaint', 'Ear Complaint', 'Toothache', 'Seizure', 'Fainting/Syncope',
   'Sprain', 'Stiff Neck', 'Back Pain', 'Chest Pain', 'Palpitation', 'Others',
+  'Abdominal Pain/Stomachache', 'Accidents', 'Acute Gingivitis', 'Acute Resp. Tract Infection',
+  'Allergy', 'Allergic Rhinitis', 'Anxiety', 'Blister', 'Body weakness/malaise', 'Body pain',
+  'Burns', 'Cat bite/scratch', 'Cellulitis', 'Chicken pox', 'Chest pain/tightness/Palpitation',
+  'Colds', 'Contusion/bumps', 'Cough', 'Cyst', 'Dengue Fever', 'Diarrhea/LBM', 'Dislocation/Fracture',
+  'Dizziness', 'Dyspepsia', 'Dog bite/scratch', 'Dysmenorrhea', 'Difficulty of breathing',
+  'Ear pain', 'Eye irritation/Sore eyes', 'Fainting', 'Furuncle/carbuncle/boils',
+  'Gastritis/Hyperacidity/epigastric pain/heartburn', 'Headache', 'Heat stress',
+  'Hypotension', 'Hyperventilation', 'Infected toenail', 'Inflammation/swelling',
+  'Insect bites', 'Joint pain', 'Lack of sleep', 'Measles', 'Migraine', 'Mouth sore',
+  'Mumps', 'Muscle pain', 'Nape pain', 'Nausea', 'Nose bleeding (epistaxis)',
+  'Pain Right lower quadrant (T/C Appendicitis)', 'Pruritus/skin irritation/skin condition',
+  'Rashes', 'Splinter', 'Tinnitus', 'Vaccine site pain', 'Vertigo', 'Vomiting',
+  'Vision blurring', 'Lab works reading', 'Constipation', 'Hair loss', 'Indigestion',
+  'Lethargic', 'Fracture', 'Sinusitis'
 ];
 
 const MEDICINES = [
