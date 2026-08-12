@@ -609,6 +609,188 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     saveAs(new Blob([buffer]), `cases_attended_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
   };
 
+  const exportInventoryExcel = async (tab: 'medicines' | 'supplies') => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(tab === 'medicines' ? 'Medicine Inventory' : 'Supplies Inventory');
+    const isMed = tab === 'medicines';
+    const numCols = isMed ? 43 : 42;
+
+    // Row 1
+    worksheet.mergeCells(1, 1, 1, numCols);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = 'UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC';
+    titleCell.font = { name: 'Calibri', size: 18, bold: true };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Row 2
+    worksheet.mergeCells(2, 1, 2, 8);
+    const subtitleCell = worksheet.getCell(2, 1);
+    subtitleCell.value = `Monthly Inventory of ${isMed ? 'Medicines' : 'Supplies'} (Inclusive Dates):`;
+    subtitleCell.font = { name: 'Calibri', size: 11, bold: true };
+    
+    worksheet.mergeCells(2, 9, 2, 16);
+    const dateCell = worksheet.getCell(2, 9);
+    dateCell.value = `${reportMonth} ${reportYear}`;
+    dateCell.font = { name: 'Calibri', size: 11, bold: true, underline: true };
+    dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    worksheet.addRow([]); // Blank row 3
+
+    // Row 4 and 5 (Headers)
+    worksheet.mergeCells(4, 1, 5, 1);
+    const hNo = worksheet.getCell(4, 1);
+    hNo.value = 'No.';
+    hNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+
+    worksheet.mergeCells(4, 2, 5, 2);
+    const hName = worksheet.getCell(4, 2);
+    hName.value = isMed ? 'Medicine' : 'Supplies';
+    hName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+
+    worksheet.mergeCells(4, 3, 5, 3);
+    const hBeg = worksheet.getCell(4, 3);
+    hBeg.value = 'Beg.\nInv.';
+    hBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+    hBeg.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hBeg.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+    worksheet.mergeCells(4, 4, 4, 40);
+    const hCons = worksheet.getCell(4, 4);
+    hCons.value = 'Consumption/s (Days 1 - 31)';
+    hCons.font = { name: 'Calibri', size: 11, bold: true };
+    hCons.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    worksheet.mergeCells(4, 41, 5, 41);
+    const hEnd = worksheet.getCell(4, 41);
+    hEnd.value = 'End.\nInv.';
+    hEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+    hEnd.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hEnd.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+    worksheet.mergeCells(4, 42, 5, 42);
+    const hSum = worksheet.getCell(4, 42);
+    hSum.value = 'Sum Total\nConsumption';
+    hSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF31859B' } };
+    hSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hSum.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+    if (isMed) {
+      worksheet.mergeCells(4, 43, 5, 43);
+      const hExp = worksheet.getCell(4, 43);
+      hExp.value = 'EXPIRATION';
+      hExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF938953' } };
+      hExp.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      hExp.alignment = { vertical: 'middle', horizontal: 'center' };
+    }
+
+    // Row 5 for Consumption subtotals
+    const intervals = [
+      { start: 1, end: 5 }, { start: 6, end: 10 }, { start: 11, end: 15 }, 
+      { start: 16, end: 20 }, { start: 21, end: 25 }, { start: 26, end: 31 }
+    ];
+    let colOffset = 4;
+    intervals.forEach(int => {
+      for (let i = int.start; i <= int.end; i++) {
+        const c = worksheet.getCell(5, colOffset++);
+        c.value = i;
+        c.alignment = { vertical: 'middle', horizontal: 'center' };
+      }
+      const t = worksheet.getCell(5, colOffset++);
+      t.value = 'Total';
+      t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE36C09' } };
+      t.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      t.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Apply borders and fonts to headers
+    for (let r = 4; r <= 5; r++) {
+      for (let c = 1; c <= numCols; c++) {
+        const cell = worksheet.getCell(r, c);
+        if (!cell.font) cell.font = { name: 'Calibri', size: 11, bold: true };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      }
+    }
+    for (let c = 1; c <= numCols; c++) {
+        worksheet.getCell(1, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    }
+
+    // Data Rows
+    const dataList = isMed ? MEDICINE_INVENTORY_TEMPLATE : SUPPLIES_LIST;
+    dataList.forEach((item: any) => {
+      const row = worksheet.addRow([]);
+      
+      const cNo = row.getCell(1);
+      cNo.value = item.no;
+      cNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+      cNo.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      const cName = row.getCell(2);
+      cName.value = item.name;
+      cName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+      cName.alignment = { vertical: 'middle', horizontal: 'left' };
+
+      const cBeg = row.getCell(3);
+      cBeg.value = item.beg; 
+      cBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+      cBeg.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cBeg.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      let colIdx = 4;
+      const cArray = isMed ? item.c : item.consumed;
+      
+      intervals.forEach(int => {
+        let subTotal = 0;
+        for (let i = int.start - 1; i < int.end; i++) {
+          const val = cArray[i] || 0;
+          subTotal += val;
+          const cData = row.getCell(colIdx++);
+          cData.value = val > 0 ? val : '';
+          cData.alignment = { vertical: 'middle', horizontal: 'center' };
+        }
+        const cSub = row.getCell(colIdx++);
+        cSub.value = subTotal; 
+        cSub.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+
+      const cEnd = row.getCell(colIdx++);
+      cEnd.value = item.end; 
+      cEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+      cEnd.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cEnd.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      const cSum = row.getCell(colIdx++);
+      cSum.value = item.total; 
+      cSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF31859B' } };
+      cSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cSum.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      if (isMed) {
+        const cExp = row.getCell(colIdx++);
+        cExp.value = item.status || '';
+        cExp.alignment = { vertical: 'middle', horizontal: 'center' };
+      }
+
+      for (let c = 1; c <= numCols; c++) {
+        row.getCell(c).border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        if (!row.getCell(c).font) {
+          row.getCell(c).font = { name: 'Calibri', size: 11, bold: true };
+        }
+      }
+    });
+
+    // Column Widths
+    worksheet.getColumn(1).width = 5; 
+    worksheet.getColumn(2).width = 30; 
+    worksheet.getColumn(3).width = 7; 
+    for (let c = 4; c <= 40; c++) worksheet.getColumn(c).width = 5; 
+    worksheet.getColumn(41).width = 7; 
+    worksheet.getColumn(42).width = 12; 
+    if (isMed) worksheet.getColumn(43).width = 15; 
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `inventory_${tab}_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+  };
+
   const PrintBar = ({ title }: { title: string }) => (
     <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 print-bar-ui" style={{ background: '#f8fafd' }}>
       <div className="flex items-center gap-2">
@@ -631,6 +813,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         <button onClick={() => {
             if (activeReport === 'daily') exportDailyReportExcel();
             else if (activeReport === 'cases') exportCasesAttendedExcel();
+            else if (activeReport === 'inventory') exportInventoryExcel(inventoryTab);
             else handleExportExcel(title);
           }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
