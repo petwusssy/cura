@@ -515,7 +515,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             </div>
 
             {/* Signatures & Verification Grid (Exactly matching the 2-row x 4-col layout of PDF) */}
-            <div className="border-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x-2 divide-black">
+            <div className="border-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 print:grid-cols-4 divide-y md:divide-y-0 print:divide-y-0 md:divide-x-2 print:divide-x-2 divide-black">
               {/* Row 1 Box 1: Prepared by */}
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
@@ -649,7 +649,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             </div>
 
             {/* Bottom Row Signatures (4 columns) */}
-            <div className="border-x-2 border-b-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x-2 divide-black">
+            <div className="border-x-2 border-b-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 print:grid-cols-4 divide-y md:divide-y-0 print:divide-y-0 md:divide-x-2 print:divide-x-2 divide-black">
               {/* Row 2 Box 1: Budget / AFMS */}
               <div className="p-2 flex flex-col justify-between min-h-[140px]">
                 <div className="overflow-x-auto hide-scrollbar">
