@@ -421,7 +421,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             display: none !important;
           }
           input, textarea, select {
-            border: none !important;
             background: transparent !important;
             padding: 0 !important;
             margin: 0 !important;
@@ -429,6 +428,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             color: #000 !important;
             box-shadow: none !important;
             font-family: inherit !important;
+          }
+          input::placeholder, textarea::placeholder {
+            color: transparent !important;
           }
           .watermark-seal {
             opacity: 0.18 !important;
