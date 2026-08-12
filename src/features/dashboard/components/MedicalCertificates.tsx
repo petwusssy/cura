@@ -456,32 +456,32 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       )}
 
       {/* Header Bar */}
-      <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+      <div className="no-print flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: PRIMARY }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
             Medical Certificates
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Official University of the Assumption clinical document system. Features auto-saving to records and instant direct PDF file generation.
+            Official University of the Assumption clinical document system. Issue, save, and print.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-stretch sm:items-center gap-2 bg-gray-200/60 p-1.5 rounded-xl w-full sm:w-auto">
+        <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200/50 w-full md:w-auto self-start md:self-auto">
           <button
             onClick={() => setActiveTab('template')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all whitespace-nowrap ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'}`}
           >
-            <FileText size={16} /> Official PDF Template
+            <FileText size={15} /> Official Template
           </button>
           <button
             onClick={() => {
               syncToArchives();
               setActiveTab('archives');
             }}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all whitespace-nowrap ${activeTab === 'archives' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'archives' ? 'bg-white text-[#1E5AA8] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'}`}
           >
-            <BookmarkCheck size={16} /> Certificate Records
-            <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-white text-[#1E5AA8] font-black">
+            <BookmarkCheck size={15} /> Archives
+            <span className={`ml-1 px-1.5 py-0.5 text-[9px] rounded-full font-black ${activeTab === 'archives' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-500'}`}>
               {medicalCerts.length}
             </span>
           </button>
@@ -494,65 +494,69 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {activeTab === 'template' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Action & Configuration Toolbar */}
-          <div className="no-print flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <div className="flex items-start sm:items-center gap-2.5 w-full xl:w-auto flex-col sm:flex-row flex-wrap">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-blue-50/80 text-[#1E5AA8] px-3.5 py-2 rounded-xl text-xs font-black border border-blue-100 w-full sm:w-auto">
-                <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-                  <UserCheck size={16} />
-                  <span>Quick Load Patient:</span>
+          <div className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
+            
+            {/* Left side actions */}
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+              {/* Quick Load Patient Dropdown */}
+              <div className="relative w-full sm:w-auto">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <UserCheck size={14} />
                 </div>
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="bg-white text-gray-900 font-black px-2.5 py-1.5 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] text-xs cursor-pointer w-full sm:w-auto mt-2 sm:mt-0"
+                  className="w-full sm:w-56 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] focus:border-transparent transition-all cursor-pointer"
                 >
-                  <option value="">Select patient...</option>
+                  <option value="">Quick load patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
                 </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
               </div>
 
               <button
                 onClick={() => setShowIssueCertModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-black transition-all shadow-sm hover:opacity-95 active:scale-95"
-                style={{ background: PRIMARY }}
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold transition-all"
               >
-                <Plus size={14} /> Issue Certificate
+                <Edit2 size={14} /> Fill via Form
               </button>
 
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black transition-colors ${editMode ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
                 title="Toggle visual highlights on editable words"
               >
-                {editMode ? <Edit size={14} className="text-amber-600" /> : <Eye size={14} className="text-gray-500" />}
-                <span>{editMode ? 'Editing Mode On' : 'Preview Static Page'}</span>
+                {editMode ? <Edit size={14} /> : <Eye size={14} />}
+                <span>{editMode ? 'Editing Mode' : 'Preview Mode'}</span>
               </button>
-
             </div>
-            <div className="flex items-center gap-3 w-full xl:w-auto justify-end">
+
+            {/* Right side actions */}
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 border-gray-100 pt-3 lg:pt-0">
               <button
                 onClick={handleSaveCertificate}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0D9488] hover:opacity-95 text-white font-black text-xs shadow-sm transition-all active:scale-95"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold text-xs transition-all"
               >
                 <BookmarkCheck size={15} /> Save to Archives
               </button>
               
-              {/* AUTOMATIC DIRECT PDF DOWNLOAD BUTTON */}
               <button
                 onClick={handleDownloadPDF}
                 disabled={isDownloading}
-                className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-600 disabled:opacity-70 text-white font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-black disabled:opacity-70 font-bold text-xs transition-all"
               >
                 <Download size={15} className={isDownloading ? 'animate-bounce' : ''} />
-                <span>{isDownloading ? 'Downloading File...' : 'Download as PDF'}</span>
+                <span>{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
               </button>
               
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-black text-xs shadow-md hover:shadow-lg transition-all active:scale-95"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all"
                 style={{ background: PRIMARY }}
               >
-                <Printer size={15} /> Print Certificate
+                <Printer size={15} /> Print
               </button>
             </div>
           </div>
@@ -809,42 +813,53 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {activeTab === 'archives' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Filters Bar */}
-          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <h2 className="text-lg font-extrabold text-gray-800 flex items-center gap-2">
+              <BookmarkCheck size={20} className="text-[#1E5AA8]" />
+              Clinic Records
+            </h2>
 
-
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Patient:</label>
+            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+              {/* Patient Filter */}
+              <div className="relative w-full sm:w-auto">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <UserCheck size={14} />
+                </div>
                 <select
                   value={selectedPatientFilter}
                   onChange={e => setSelectedPatientFilter(e.target.value)}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]"
+                  className="w-full sm:w-48 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
                 >
                   <option value="">All Patients</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
                 </select>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5">
-                <Calendar size={14} className="text-gray-400" />
+              {/* Date Filter */}
+              <div className="relative w-full sm:w-auto">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <Calendar size={14} />
+                </div>
                 <input
                   type="text"
                   placeholder="Filter date..."
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="bg-transparent text-xs text-gray-700 font-bold focus:outline-none w-28"
+                  className="w-full sm:w-36 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
                 />
                 {dateFilter && (
-                  <button onClick={() => setDateFilter('')} className="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-1.5 py-0.5 rounded">Clear</button>
+                  <button onClick={() => setDateFilter('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                    <X size={12} />
+                  </button>
                 )}
               </div>
 
               <button
                 onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-extrabold shadow-md hover:opacity-90 transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-md hover:shadow-lg transition-all"
                 style={{ background: PRIMARY }}
               >
-                <Plus size={15} strokeWidth={2.5} /> Issue New Certificate
+                <Plus size={15} /> Issue New
               </button>
             </div>
           </div>
