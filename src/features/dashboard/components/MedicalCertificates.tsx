@@ -58,20 +58,22 @@ function BagongPilipinasLogo() {
 }
 
 // Auto-resizing input that perfectly hugs text without any fixed gaps
-const AutoResizeInput = ({ value, onChange, readOnly, placeholder = ' ', minWidth = '1ch' }: any) => (
-  <span className="inline-grid items-baseline" style={{ minWidth }}>
-    <span className="invisible col-start-1 row-start-1 whitespace-pre">{value || placeholder}</span>
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-      readOnly={readOnly}
-      placeholder={placeholder}
-      className="col-start-1 row-start-1 w-full bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
-      style={{ minWidth }}
-    />
-  </span>
-);
+const AutoResizeInput = ({ value, onChange, readOnly, placeholder = ' ' }: any) => {
+  const isFilled = value && value.length > 0;
+  return (
+    <span className="inline-grid items-baseline" style={{ minWidth: isFilled ? '0' : '4ch' }}>
+      <span className="invisible col-start-1 row-start-1 whitespace-pre">{value || placeholder}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        className="col-start-1 row-start-1 w-full bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
+      />
+    </span>
+  );
+};
 
 // PhilHealth YAKAP official orange badge banner
 function PhilHealthYakapBanner() {
@@ -649,25 +651,25 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
                   <span>This is to certify that </span>
-                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} minWidth="150px" />
+                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
                   <span>, </span>
-                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} minWidth="2ch" />
+                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />
                   <span> years old, </span>
-                  <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} minWidth="50px" />
+                  <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} />
                   <span>, a </span>
                   
                   {/* Superscript formatting for year level (e.g. 4th) */}
                   <span className="inline-flex items-baseline">
-                    <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} minWidth="2ch" />
+                    <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} />
                     <sup className="text-[12px] font-bold">
-                      <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} minWidth="2ch" />
+                      <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} />
                     </sup>
                   </span>
                   <span> </span>
                   
-                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} minWidth="200px" />
+                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />
                   <span> has been seen and examined due to </span>
-                  <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} minWidth="150px" />
+                  <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} />
                   <span>.</span>
                 </div>
 
@@ -675,7 +677,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <div className="flex items-baseline gap-2 pt-2">
                   <span className="font-official font-bold text-[16.5px] whitespace-nowrap">Diagnosis:</span>
                   <div className="flex-1">
-                    <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} minWidth="100%" />
+                    <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} />
                   </div>
                 </div>
 
