@@ -63,11 +63,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
   // Keep prfItems in sync whenever purchaseRequests changes (e.g. after a new Log Item is saved)
   useEffect(() => {
-    setPrfItems(
-      purchaseRequests
-        .filter(r => r.prfNo === prfNo)
-        .map(reqToPrfRow)
-    );
+    const matched = purchaseRequests.filter(r => r.prfNo === prfNo).map(reqToPrfRow);
+    if (matched.length > 0) {
+      setPrfItems(matched);
+    } else if (prfNo) {
+      setPrfItems([]);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseRequests, prfNo]);
   const [purpose, setPurpose] = useState('Medical-Dental Clinic Routine Requisition & Replenishment');
@@ -225,6 +226,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
+            min-width: 0 !important;
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;
@@ -297,12 +299,30 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               </button>
               <button
                 onClick={() => {
-                  // Reset: re-derive from purchaseRequests for current prfNo
-                  setPrfItems(
-                    purchaseRequests
-                      .filter(r => r.prfNo === prfNo)
-                      .map(reqToPrfRow)
-                  );
+                  setPrfNo('');
+                  setDepartment('');
+                  setPrfItems([
+                    { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
+                  ]);
+                  setPurpose('');
+                  setDateNeeded('');
+                  setPreparedBy('');
+                  setEvalRemarks('');
+                  setRecommendedBy('');
+                  setSupplier1('');
+                  setSupplier2('');
+                  setSupplier3('');
+                  setForCashAdvance(false);
+                  setForPurchaseOrder(false);
+                  setRevSupplier('');
+                  setRevTerms('');
+                  setBudgetAmount('');
+                  setCapexNo('');
+                  setVerifiedBy('');
+                  setSourceOfFunds('');
+                  setEndorsedBy('');
+                  setRecFinance('');
+                  setApprovedBy('');
                 }}
                 className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors w-full sm:w-auto"
                 title="Reset to saved tracker data"
