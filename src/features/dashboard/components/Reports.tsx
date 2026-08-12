@@ -421,6 +421,99 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     saveAs(new Blob([buffer]), `${cleanTitle}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const exportDailyReportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Daily Report');
+
+    // Row 1: Title
+    const titleRow = worksheet.addRow([`DAILY REPORT ${reportMonth} ${reportYear}`]);
+    worksheet.mergeCells('A1:L1');
+    const titleCell = titleRow.getCell(1);
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB8CCE4' } };
+    titleCell.font = { name: 'Calibri', size: 11, bold: true };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // Set borders for all merged cells in row 1
+    for (let i = 1; i <= 12; i++) {
+        worksheet.getCell(1, i).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    }
+    
+    // Row 2: Headers
+    const headers = ['DATE', 'COLLEGE', 'SHS', 'JHS', 'GS', 'EMPLOYEE', 'TOTAL', 'CONSULTATION', 'SENT HOME', 'SENT TO HOSPITAL', 'PRE- EMPLOYMENT', 'VISITOR'];
+    const headerRow = worksheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }; // Bright yellow
+      cell.font = { name: 'Calibri', size: 11, bold: true };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // Data Rows
+    dailyReportsData.forEach(data => {
+      const dateStr = `${data.day}-${reportMonth.slice(0, 3)}-${reportYear.slice(-2)}`;
+      const row = worksheet.addRow([
+        dateStr,
+        data.col || '',
+        data.shs || '',
+        data.jhs || '',
+        data.gs || '',
+        data.emp || '',
+        data.total, // always show 0
+        data.cons || '',
+        data.home || '',
+        data.hosp || '',
+        data.pre || '',
+        data.vis || ''
+      ]);
+      row.eachCell((cell) => {
+        cell.font = { name: 'Calibri', size: 11 };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+    });
+
+    // Footer Row
+    const footerRow = worksheet.addRow([
+      'TOTAL',
+      totals.col,
+      totals.shs,
+      totals.jhs,
+      totals.gs,
+      totals.emp,
+      totals.total,
+      totals.cons,
+      totals.home,
+      totals.hosp,
+      totals.pre,
+      totals.vis
+    ]);
+    footerRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE699' } }; // Pale orange/yellow
+      cell.font = { name: 'Calibri', size: 11, bold: true };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // Column Widths
+    worksheet.columns = [
+      { width: 13 }, // DATE
+      { width: 9 },  // COLLEGE
+      { width: 6 },  // SHS
+      { width: 6 },  // JHS
+      { width: 6 },  // GS
+      { width: 11 }, // EMPLOYEE
+      { width: 8 },  // TOTAL
+      { width: 16 }, // CONSULTATION
+      { width: 14 }, // SENT HOME
+      { width: 18 }, // SENT TO HOSPITAL
+      { width: 18 }, // PRE- EMPLOYMENT
+      { width: 10 }  // VISITOR
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `daily_report_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+  };
+
   const PrintBar = ({ title }: { title: string }) => (
     <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 print-bar-ui" style={{ background: '#f8fafd' }}>
       <div className="flex items-center gap-2">
@@ -440,7 +533,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           style={{ background: PRIMARY }}>
           <Download size={12} /> Export PDF
         </button>
-        <button onClick={() => handleExportExcel(title)}
+        <button onClick={() => activeReport === 'daily' ? exportDailyReportExcel() : handleExportExcel(title)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
           style={{ background: '#2E7D32' }}>
           <Download size={12} /> Export Excel
