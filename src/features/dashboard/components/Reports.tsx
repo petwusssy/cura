@@ -198,20 +198,23 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const getPatient = (id: string) => patients.find(p => p.id === id);
   const pat = (c: Consultation) => getPatient(c.patientId);
 
-  // Case count per category
-  const caseCount = (cat: string, category: 'Student' | 'Personnel') => {
-    return filteredCons.filter(c => {
-      const p = getPatient(c.patientId);
-      if (category === 'Student') return p?.category === 'Student' && c.categories.includes(cat);
-      return (p?.category === 'Employee' || p?.category === 'Outsider') && c.categories.includes(cat);
-    }).length;
-  };
-
   const monthMap: Record<string, string> = {
     'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
     'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
   };
   const monthNum = monthMap[reportMonth] || '06';
+
+  const casesConsForMonth = consultations.filter(c => c.date.startsWith(`${reportYear}-${monthNum}`));
+
+  // Case count per category
+  const caseCount = (cat: string, category: 'Student' | 'Personnel') => {
+    return casesConsForMonth.filter(c => {
+      const p = getPatient(c.patientId);
+      const hasCat = (c.categories || []).some(catName => catName.toLowerCase() === cat.toLowerCase());
+      if (category === 'Student') return p?.category === 'Student' && hasCat;
+      return (p?.category === 'Employee' || p?.category === 'Outsider') && hasCat;
+    }).length;
+  };
 
   const daysInMonth = new Date(parseInt(reportYear), parseInt(monthNum), 0).getDate();
   const dailyReportsData = activeReport === 'daily' ? Array.from({ length: daysInMonth }, (_, i) => {
@@ -568,12 +571,15 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         });
       }
+      const stu = caseCount(c, 'Student');
+      const emp = caseCount(c, 'Personnel');
+      const total = stu + emp;
       
       const row = worksheet.addRow([
         c,
-        '',
-        '',
-        ''
+        stu || '',
+        emp || '',
+        total // always show 0 in Excel for total? I'll just show the number if it's 0 or not, actually let's just do total
       ]);
       row.eachCell((cell, colNumber) => {
         cell.font = { name: 'Calibri', size: 11 };
@@ -583,7 +589,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     });
 
     // Footer Row
-    const footerRow = worksheet.addRow(['TOTAL CASES ATTENDED', '', '', '']);
+    const totalStu = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0);
+    const totalEmp = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0);
+    const totalSum = totalStu + totalEmp;
+    
+    const footerRow = worksheet.addRow(['TOTAL CASES ATTENDED', totalStu || '', totalEmp || '', totalSum]);
     footerRow.eachCell((cell, colNumber) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colNumber === 4 ? 'FFA9D18E' : 'FFC6E0B4' } }; 
       cell.font = { name: 'Calibri', size: 11, bold: true };
@@ -1032,20 +1042,23 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </thead>
                   <tbody>
                     {ALL_CASES.map((c, index) => {
+                      const stu = caseCount(c, 'Student');
+                      const emp = caseCount(c, 'Personnel');
+                      const total = stu + emp;
                       return (
                         <tr key={c} className={`border border-black font-bold text-xs ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'} hover:bg-green-50/30`}>
                           <td className="border border-black py-1 px-4 text-gray-900">{c}</td>
-                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800"></td>
-                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800"></td>
-                          <td className="border-2 border-black py-1 px-4 text-center font-extrabold text-black font-mono bg-amber-50/40"></td>
+                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800">{stu || ''}</td>
+                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800">{emp || ''}</td>
+                          <td className="border-2 border-black py-1 px-4 text-center font-extrabold text-black font-mono bg-amber-50/40">{total || ''}</td>
                         </tr>
                       );
                     })}
                     <tr className="bg-[#C6E0B4] text-black font-black text-center border-2 border-black text-sm">
                       <td className="border-2 border-black py-2 px-4 text-left font-extrabold">TOTAL CASES ATTENDED</td>
-                      <td className="border border-black py-2 px-4 font-mono"></td>
-                      <td className="border border-black py-2 px-4 font-mono"></td>
-                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base"></td>
+                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0) || ''}</td>
+                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0) || ''}</td>
+                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student') + caseCount(c, 'Personnel'), 0) || ''}</td>
                     </tr>
                   </tbody>
                 </table>
