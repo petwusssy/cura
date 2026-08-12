@@ -68,7 +68,7 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
   const [categories, setCategories] = useState<string[]>(initialData?.categories || []);
   const [newCategory, setNewCategory] = useState('');
 
-  const [doctorName, setDoctorName] = useState(initialData?.doctorName || 'Dr. Rosario Mendez');
+  const [doctorName, setDoctorName] = useState(initialData?.doctorName || '');
   const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'UA CLINIC ADMIN');
   
   const [vitals, setVitals] = useState(initialData?.vitals || { height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
@@ -132,6 +132,11 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
     }
 
     const isConsultation = status === 'Consultation';
+
+    if (isConsultation && !doctorName.trim()) {
+      alert("Please specify the Doctor's Name before saving.");
+      return;
+    }
 
     const sanitizedTreatments = treatments.map(t => {
       const { id, nextDose, ...rest } = t;
@@ -361,7 +366,7 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
         {status === 'Consultation' && sectionCard('Doctor Consultation', (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Doctor's Name</label>
+              <label className={labelCls}>Doctor's Name <span className="text-red-500">*</span></label>
               <input type="text" value={doctorName} onChange={e => setDoctorName(e.target.value)} className={inputCls} />
             </div>
             <div>
