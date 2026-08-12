@@ -465,7 +465,10 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         data.pre || '',
         data.vis || ''
       ]);
-      row.eachCell((cell) => {
+      row.eachCell((cell, colNumber) => {
+        if (colNumber === 7) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // slight yellow
+        }
         cell.font = { name: 'Calibri', size: 11 };
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
         cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
