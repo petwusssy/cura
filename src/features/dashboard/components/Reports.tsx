@@ -569,15 +569,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         });
       }
       
-      const stu = caseCount(c, 'Student');
-      const emp = caseCount(c, 'Personnel');
-      const total = stu + emp;
-      
       const row = worksheet.addRow([
         c,
-        stu || '',
-        emp || '',
-        total // always show 0 in Excel for total
+        '',
+        '',
+        ''
       ]);
       row.eachCell((cell, colNumber) => {
         cell.font = { name: 'Calibri', size: 11 };
@@ -587,11 +583,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     });
 
     // Footer Row
-    const totalStu = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0);
-    const totalEmp = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0);
-    const totalSum = totalStu + totalEmp;
-    
-    const footerRow = worksheet.addRow(['TOTAL', totalStu || '', totalEmp || '', totalSum]);
+    const footerRow = worksheet.addRow(['TOTAL CASES ATTENDED', '', '', '']);
     footerRow.eachCell((cell, colNumber) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colNumber === 4 ? 'FFA9D18E' : 'FFC6E0B4' } }; 
       cell.font = { name: 'Calibri', size: 11, bold: true };
@@ -1040,23 +1032,20 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </thead>
                   <tbody>
                     {ALL_CASES.map((c, index) => {
-                      const stu = caseCount(c, 'Student');
-                      const emp = caseCount(c, 'Personnel');
-                      const total = stu + emp;
                       return (
                         <tr key={c} className={`border border-black font-bold text-xs ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'} hover:bg-green-50/30`}>
                           <td className="border border-black py-1 px-4 text-gray-900">{c}</td>
-                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800">{stu || ''}</td>
-                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800">{emp || ''}</td>
-                          <td className="border-2 border-black py-1 px-4 text-center font-extrabold text-black font-mono bg-amber-50/40">{total || ''}</td>
+                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800"></td>
+                          <td className="border border-black py-1 px-4 text-center font-mono text-gray-800"></td>
+                          <td className="border-2 border-black py-1 px-4 text-center font-extrabold text-black font-mono bg-amber-50/40"></td>
                         </tr>
                       );
                     })}
                     <tr className="bg-[#C6E0B4] text-black font-black text-center border-2 border-black text-sm">
                       <td className="border-2 border-black py-2 px-4 text-left font-extrabold">TOTAL CASES ATTENDED</td>
-                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0) || ''}</td>
-                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0) || ''}</td>
-                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student') + caseCount(c, 'Personnel'), 0) || ''}</td>
+                      <td className="border border-black py-2 px-4 font-mono"></td>
+                      <td className="border border-black py-2 px-4 font-mono"></td>
+                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base"></td>
                     </tr>
                   </tbody>
                 </table>
