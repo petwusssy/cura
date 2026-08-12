@@ -598,7 +598,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   
                   <PhilHealthYakapBanner />
                   
-                  <div className="text-[13.5px] font-bold text-[#184898] font-sans pt-1 tracking-tight">
+                  <div className="text-[14px] font-bold text-[#002060] font-official pt-1 tracking-tight">
                     Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                   </div>
                 </div>
@@ -755,7 +755,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <div className="w-[360px] font-official font-bold text-black">
                   
                   {/* Solid signature dividing line */}
-                  <div className="border-b-[2px] border-black pb-1 mb-1 w-full">
+                  <div className="border-t-[1.5px] border-black pt-1 mb-1 w-full">
                     <input
                       type="text"
                       value={doctor}
