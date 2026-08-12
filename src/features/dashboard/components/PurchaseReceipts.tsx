@@ -406,7 +406,24 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 </tr>
               </thead>
               <tbody>
-                {prfItems.map(row => {
+                {Array.from({ length: Math.max(13, prfItems.length) }).map((_, index) => {
+                  const row = prfItems[index];
+                  
+                  if (!row) {
+                    // Empty padding row
+                    return (
+                      <tr key={`empty-${index}`} className="border border-black h-[28px]">
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="no-print border border-black p-1"></td>
+                      </tr>
+                    );
+                  }
+
                   const numQty = typeof row.qty === 'string' ? parseFloat(row.qty) || 0 : row.qty;
                   const numPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
                   const amt = (numQty * numPrice).toFixed(2);
