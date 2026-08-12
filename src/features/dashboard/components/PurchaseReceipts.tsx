@@ -242,7 +242,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             resize: none !important;
             color: #000 !important;
           }
-          input::placeholder, textarea::placeholder {
+          table input::placeholder, table textarea::placeholder {
             color: transparent !important;
           }
           .border-print-black {
