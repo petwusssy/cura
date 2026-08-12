@@ -615,12 +615,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     const isMed = tab === 'medicines';
     const numCols = isMed ? 43 : 42;
 
-    // Row 1
+    // Row 1 (Pale blue background #DCE6F1)
     worksheet.mergeCells(1, 1, 1, numCols);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = 'UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC';
-    titleCell.font = { name: 'Calibri', size: 18, bold: true };
+    titleCell.font = { name: 'Calibri', size: 14, bold: true };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } };
 
     // Row 2
     worksheet.mergeCells(2, 1, 2, 8);
@@ -630,7 +631,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     
     worksheet.mergeCells(2, 9, 2, 16);
     const dateCell = worksheet.getCell(2, 9);
-    dateCell.value = `${reportMonth} ${reportYear}`;
+    dateCell.value = `${reportMonth} ${reportYear}`; // or "May-26"
     dateCell.font = { name: 'Calibri', size: 11, bold: true, underline: true };
     dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -640,38 +641,39 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     worksheet.mergeCells(4, 1, 5, 1);
     const hNo = worksheet.getCell(4, 1);
     hNo.value = 'No.';
-    hNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    hNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } }; // Light purple
 
     worksheet.mergeCells(4, 2, 5, 2);
     const hName = worksheet.getCell(4, 2);
     hName.value = isMed ? 'Medicine' : 'Supplies';
-    hName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    hName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
 
     worksheet.mergeCells(4, 3, 5, 3);
     const hBeg = worksheet.getCell(4, 3);
-    hBeg.value = 'Beg.\nInv.';
-    hBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
-    hBeg.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hBeg.value = 'Beginning\nInventory';
+    hBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF92D050' } }; // Light green
+    hBeg.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
     hBeg.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
     worksheet.mergeCells(4, 4, 4, 40);
     const hCons = worksheet.getCell(4, 4);
-    hCons.value = 'Consumption/s (Days 1 - 31)';
+    hCons.value = 'Consumption/s';
+    hCons.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
     hCons.font = { name: 'Calibri', size: 11, bold: true };
     hCons.alignment = { vertical: 'middle', horizontal: 'center' };
 
     worksheet.mergeCells(4, 41, 5, 41);
     const hEnd = worksheet.getCell(4, 41);
-    hEnd.value = 'End.\nInv.';
-    hEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
-    hEnd.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hEnd.value = 'Ending\nInventory';
+    hEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF92D050' } };
+    hEnd.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
     hEnd.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
     worksheet.mergeCells(4, 42, 5, 42);
     const hSum = worksheet.getCell(4, 42);
     hSum.value = 'Sum Total\nConsumption';
     hSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF31859B' } };
-    hSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    hSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
     hSum.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
     if (isMed) {
@@ -679,7 +681,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       const hExp = worksheet.getCell(4, 43);
       hExp.value = 'EXPIRATION';
       hExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF938953' } };
-      hExp.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      hExp.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
       hExp.alignment = { vertical: 'middle', horizontal: 'center' };
     }
 
@@ -693,12 +695,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       for (let i = int.start; i <= int.end; i++) {
         const c = worksheet.getCell(5, colOffset++);
         c.value = i;
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
         c.alignment = { vertical: 'middle', horizontal: 'center' };
       }
       const t = worksheet.getCell(5, colOffset++);
       t.value = 'Total';
-      t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE36C09' } };
-      t.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE26B0A' } };
+      t.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
       t.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
@@ -706,10 +709,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     for (let r = 4; r <= 5; r++) {
       for (let c = 1; c <= numCols; c++) {
         const cell = worksheet.getCell(r, c);
-        if (!cell.font) cell.font = { name: 'Calibri', size: 11, bold: true };
+        if (!cell.font) cell.font = { name: 'Calibri', size: 10, bold: true };
         cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       }
     }
+    // Also border for title block outer
     for (let c = 1; c <= numCols; c++) {
         worksheet.getCell(1, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     }
@@ -718,21 +722,23 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     const dataList = isMed ? MEDICINE_INVENTORY_TEMPLATE : SUPPLIES_LIST;
     dataList.forEach((item: any) => {
       const row = worksheet.addRow([]);
-      
+      const isNoStock = isMed && item.status === 'NO STOCK';
+      const rowColor = isNoStock ? 'FFEA9999' : null; 
+
       const cNo = row.getCell(1);
       cNo.value = item.no;
-      cNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+      cNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFFFFF00' } };
       cNo.alignment = { vertical: 'middle', horizontal: 'center' };
 
       const cName = row.getCell(2);
       cName.value = item.name;
-      cName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+      cName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFFFFF00' } };
       cName.alignment = { vertical: 'middle', horizontal: 'left' };
 
       const cBeg = row.getCell(3);
       cBeg.value = item.beg; 
-      cBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
-      cBeg.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF92D050' } };
+      cBeg.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
       cBeg.alignment = { vertical: 'middle', horizontal: 'center' };
 
       let colIdx = 4;
@@ -745,35 +751,39 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           subTotal += val;
           const cData = row.getCell(colIdx++);
           cData.value = val > 0 ? val : '';
+          if (rowColor) cData.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor } };
           cData.alignment = { vertical: 'middle', horizontal: 'center' };
         }
         const cSub = row.getCell(colIdx++);
         cSub.value = subTotal; 
+        cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFE26B0A' } };
+        cSub.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
         cSub.alignment = { vertical: 'middle', horizontal: 'center' };
       });
 
       const cEnd = row.getCell(colIdx++);
       cEnd.value = item.end; 
-      cEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
-      cEnd.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF92D050' } };
+      cEnd.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
       cEnd.alignment = { vertical: 'middle', horizontal: 'center' };
 
       const cSum = row.getCell(colIdx++);
       cSum.value = item.total; 
-      cSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF31859B' } };
-      cSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF31859B' } };
+      cSum.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
       cSum.alignment = { vertical: 'middle', horizontal: 'center' };
 
       if (isMed) {
         const cExp = row.getCell(colIdx++);
         cExp.value = item.status || '';
+        if (rowColor) cExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor } };
         cExp.alignment = { vertical: 'middle', horizontal: 'center' };
       }
 
       for (let c = 1; c <= numCols; c++) {
         row.getCell(c).border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         if (!row.getCell(c).font) {
-          row.getCell(c).font = { name: 'Calibri', size: 11, bold: true };
+          row.getCell(c).font = { name: 'Calibri', size: 10 };
         }
       }
     });
@@ -781,9 +791,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     // Column Widths
     worksheet.getColumn(1).width = 5; 
     worksheet.getColumn(2).width = 30; 
-    worksheet.getColumn(3).width = 7; 
-    for (let c = 4; c <= 40; c++) worksheet.getColumn(c).width = 5; 
-    worksheet.getColumn(41).width = 7; 
+    worksheet.getColumn(3).width = 9; 
+    for (let c = 4; c <= 40; c++) worksheet.getColumn(c).width = 3.5; 
+    worksheet.getColumn(41).width = 9; 
     worksheet.getColumn(42).width = 12; 
     if (isMed) worksheet.getColumn(43).width = 15; 
 
