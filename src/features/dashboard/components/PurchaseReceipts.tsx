@@ -518,42 +518,37 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             <div className="border-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x-2 divide-black">
               {/* Row 1 Box 1: Prepared by */}
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
-                <div>
-                  <div className="font-bold mb-6">Prepared by/Date:</div>
+                <div className="font-bold mb-4">Prepared by/Date:</div>
+                <div className="flex flex-col items-center mt-auto">
                   <input
                     type="text"
                     value={preparedBy}
                     onChange={e => setPreparedBy(e.target.value)}
-                    className="w-full font-extrabold text-center border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 pb-1"
+                    className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1"
                   />
-                </div>
-                <div className="text-center font-bold uppercase mt-2">
-                  REQUESTING PARTY
+                  <div className="font-bold uppercase text-center text-[10px]">REQUESTING PARTY</div>
                 </div>
               </div>
 
               {/* Row 1 Box 2: Evaluation / Director */}
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-1">Evaluation Remarks:</div>
-                  <textarea
-                    value={evalRemarks}
-                    onChange={e => setEvalRemarks(e.target.value)}
-                    rows={2}
-                    placeholder="________________________&#10;________________________"
-                    className="w-full text-xs bg-transparent focus:outline-none focus:bg-yellow-50 resize-none border-b border-black mb-3"
-                  />
-                  <div className="font-bold mb-3">Recommended by/Date:</div>
+                  <div className="font-bold mb-2">Evaluation Remarks:</div>
+                  <div className="space-y-4 mb-4">
+                    <input type="text" className="w-11/12 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 block" />
+                    <input type="text" className="w-11/12 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 block" />
+                  </div>
+                  <div className="font-bold mb-6">Recommended by/Date:</div>
+                </div>
+                <div className="flex flex-col items-center mt-auto">
                   <input
                     type="text"
                     value={recommendedBy}
                     onChange={e => setRecommendedBy(e.target.value)}
-                    className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50"
+                    className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1"
                   />
-                </div>
-                <div className="text-center mt-2">
-                  <div className="font-bold">DIRECTOR</div>
-                  <div className="text-[9px] text-gray-600 leading-tight mt-0.5">
+                  <div className="font-bold uppercase text-center text-[10px]">DIRECTOR</div>
+                  <div className="text-[8px] text-gray-600 leading-tight text-center mt-0.5">
                     OMISS or Dean for Computer, Peripherals & Labs; Physical Plant if Physical Facilities; Library for Books; EAMO for Marketing
                   </div>
                 </div>
@@ -563,87 +558,63 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
                   <div className="font-bold mb-1">Processed by/Date:</div>
-                  <div className="text-[10px] font-bold mb-1">Supplier – Price Quoted</div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <span>1</span>
-                      <input
-                        type="text"
-                        value={supplier1}
-                        onChange={e => setSupplier1(e.target.value)}
-                        className="flex-1 border-b border-black text-[10px] bg-transparent focus:outline-none focus:bg-yellow-50"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>2</span>
-                      <input
-                        type="text"
-                        value={supplier2}
-                        onChange={e => setSupplier2(e.target.value)}
-                        className="flex-1 border-b border-black text-[10px] bg-transparent focus:outline-none focus:bg-yellow-50"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>3</span>
-                      <input
-                        type="text"
-                        value={supplier3}
-                        onChange={e => setSupplier3(e.target.value)}
-                        className="flex-1 border-b border-black text-[10px] bg-transparent focus:outline-none focus:bg-yellow-50"
-                      />
-                    </div>
+                  <div className="text-[10px] mb-2">Supplier – Price Quoted</div>
+                  <div className="space-y-2 mb-4">
+                    {[1, 2, 3].map(num => (
+                      <div key={num} className="flex items-center gap-2">
+                        <span>{num}</span>
+                        <input
+                          type="text"
+                          value={num === 1 ? supplier1 : num === 2 ? supplier2 : supplier3}
+                          onChange={e => {
+                            if (num === 1) setSupplier1(e.target.value);
+                            if (num === 2) setSupplier2(e.target.value);
+                            if (num === 3) setSupplier3(e.target.value);
+                          }}
+                          className="flex-1 border-b border-black text-[10px] bg-transparent focus:outline-none focus:bg-yellow-50"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-black text-center font-bold">
-                  CANVASSER
+                <div className="flex flex-col items-center mt-auto">
+                  <div className="w-10/12 border-b border-black mb-1"></div>
+                  <div className="font-bold uppercase text-center text-[10px]">CANVASSER</div>
                 </div>
               </div>
 
               {/* Row 1 Box 4: Reviewed by / RMS */}
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-2">Reviewed by/Date:</div>
-                  <div className="space-y-1 text-xs mb-2">
+                  <div className="font-bold mb-3">Reviewed by/Date:</div>
+                  <div className="space-y-1 text-xs mb-3">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={forCashAdvance}
-                        onChange={e => setForCashAdvance(e.target.checked)}
-                        className="w-4 h-4 rounded border-black text-[#1E5AA8] focus:ring-0"
-                      />
+                      <div className={`w-3.5 h-3.5 border border-black flex items-center justify-center ${forCashAdvance ? 'bg-black' : 'bg-transparent'}`}>
+                        {forCashAdvance && <CheckCircle size={10} color="white" />}
+                      </div>
+                      <input type="checkbox" checked={forCashAdvance} onChange={e => setForCashAdvance(e.target.checked)} className="hidden" />
                       <span>For Cash Advance</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={forPurchaseOrder}
-                        onChange={e => setForPurchaseOrder(e.target.checked)}
-                        className="w-4 h-4 rounded border-black text-[#1E5AA8] focus:ring-0"
-                      />
+                      <div className={`w-3.5 h-3.5 border border-black flex items-center justify-center ${forPurchaseOrder ? 'bg-black' : 'bg-transparent'}`}>
+                        {forPurchaseOrder && <CheckCircle size={10} color="white" />}
+                      </div>
+                      <input type="checkbox" checked={forPurchaseOrder} onChange={e => setForPurchaseOrder(e.target.checked)} className="hidden" />
                       <span>For Purchase Order</span>
                     </label>
                   </div>
-                  <div className="flex items-center text-[11px] mb-1">
-                    <span className="font-bold">Supplier:</span>
-                    <input
-                      type="text"
-                      value={revSupplier}
-                      onChange={e => setRevSupplier(e.target.value)}
-                      className="flex-1 ml-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1"
-                    />
+                  <div className="flex items-center text-[11px] mb-2">
+                    <span>Supplier:</span>
+                    <input type="text" value={revSupplier} onChange={e => setRevSupplier(e.target.value)} className="flex-1 ml-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" />
                   </div>
-                  <div className="flex items-center text-[11px]">
-                    <span className="font-bold">Terms:</span>
-                    <input
-                      type="text"
-                      value={revTerms}
-                      onChange={e => setRevTerms(e.target.value)}
-                      className="flex-1 ml-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1"
-                    />
+                  <div className="flex items-center text-[11px] mb-4">
+                    <span>Terms:</span>
+                    <input type="text" value={revTerms} onChange={e => setRevTerms(e.target.value)} className="flex-1 ml-1 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" />
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-black text-center font-bold">
-                  HEAD, RMS
+                <div className="flex flex-col items-center mt-auto">
+                  <div className="w-10/12 border-b border-black mb-1"></div>
+                  <div className="font-bold uppercase text-center text-[10px]">HEAD, RMS</div>
                 </div>
               </div>
             </div>
@@ -651,63 +622,61 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             {/* Bottom Row Signatures (4 columns) */}
             <div className="border-x-2 border-b-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x-2 divide-black">
               {/* Row 2 Box 1: Budget / AFMS */}
-              <div className="p-2 flex flex-col justify-between min-h-[140px]">
-                <div className="overflow-x-auto hide-scrollbar">
-                  <table className="w-full min-w-[200px] text-sm mb-2">
-                    <tbody>
-                      <tr>
-                        <td className="font-bold whitespace-nowrap">Budget Amount:</td>
-                        <td><input type="text" value={budgetAmount} onChange={e => setBudgetAmount(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" /></td>
-                      </tr>
-                      <tr>
-                        <td className="font-bold whitespace-nowrap">If CAPEX, Authority No.</td>
-                        <td><input type="text" value={capexNo} onChange={e => setCapexNo(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" /></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className="pt-1 font-bold">Verified by/Date:</div>
-                  <input type="text" value={verifiedBy} onChange={e => setVerifiedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
+              <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                <div>
+                  <div className="flex items-center text-[11px] mb-2">
+                    <span>Budget Amount:</span>
+                    <input type="text" value={budgetAmount} onChange={e => setBudgetAmount(e.target.value)} className="flex-1 ml-2 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" />
+                  </div>
+                  <div className="flex items-center text-[11px] mb-4">
+                    <span>If CAPEX, Authority No.</span>
+                    <input type="text" value={capexNo} onChange={e => setCapexNo(e.target.value)} className="flex-1 ml-2 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" />
+                  </div>
+                  <div className="font-bold mb-6">Verified by/Date:</div>
                 </div>
-                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
-                  HEAD, AFMS
+                <div className="flex flex-col items-center mt-auto">
+                  <input type="text" value={verifiedBy} onChange={e => setVerifiedBy(e.target.value)} className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1" />
+                  <div className="font-bold uppercase text-center text-[10px]">HEAD, AFMS</div>
                 </div>
               </div>
 
               {/* Row 2 Box 2: Source of Funds / Cluster Head */}
-              <div className="p-2 flex flex-col justify-between min-h-[140px]">
-                <div className="space-y-1">
-                  <div className="font-bold">Source of Funds if without budget:</div>
-                  <input type="text" value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
-                  <div className="font-bold pt-1">Endorsed by/Date:</div>
-                  <input type="text" value={endorsedBy} onChange={e => setEndorsedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
+              <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                <div>
+                  <div className="flex items-center text-[11px] mb-4">
+                    <span className="whitespace-nowrap">Source of Funds if without budget:</span>
+                    <input type="text" value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} className="flex-1 ml-2 border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 px-1" />
+                  </div>
+                  <div className="font-bold mb-6">Endorsed by/Date:</div>
                 </div>
-                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
-                  <div>CLUSTER HEAD</div>
-                  <div className="text-[9px] font-normal">(VPAA, VPA,VPF, PRESIDENT)</div>
+                <div className="flex flex-col items-center mt-auto">
+                  <input type="text" value={endorsedBy} onChange={e => setEndorsedBy(e.target.value)} className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1" />
+                  <div className="font-bold uppercase text-center text-[10px]">CLUSTER HEAD</div>
+                  <div className="text-[9px]">(VPAA, VPA,VPF, PRESIDENT)</div>
                 </div>
               </div>
 
               {/* Row 2 Box 3: VP Finance (>500K) */}
-              <div className="p-2 flex flex-col justify-between min-h-[140px]">
+              <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-2">Recommended by/Date:</div>
-                  <input type="text" value={recFinance} onChange={e => setRecFinance(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
+                  <div className="font-bold mb-6">Recommended by/Date:</div>
                 </div>
-                <div className="text-center mt-2 pt-2 border-t border-black">
-                  <div className="font-bold">VP FOR FINANCE</div>
-                  <div className="text-[10px]">(more than 500K)</div>
+                <div className="flex flex-col items-center mt-auto">
+                  <input type="text" value={recFinance} onChange={e => setRecFinance(e.target.value)} className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1" />
+                  <div className="font-bold uppercase text-center text-[10px]">VP FOR FINANCE</div>
+                  <div className="text-[9px]">(more than 500K)</div>
                 </div>
               </div>
 
               {/* Row 2 Box 4: Approved by */}
-              <div className="p-2 flex flex-col justify-between min-h-[140px]">
+              <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-2">Approved by/Date:</div>
-                  <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
+                  <div className="font-bold mb-6">Approved by/Date:</div>
                 </div>
-                <div className="text-center mt-2 pt-2 border-t border-black">
-                  <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
-                  <div className="font-bold mt-0.5">PRESIDENT (more than 500K to 1M)</div>
+                <div className="flex flex-col items-center mt-auto">
+                  <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} className="w-10/12 text-center font-bold bg-transparent focus:outline-none focus:bg-yellow-50 border-b border-black mb-1 px-1" />
+                  <div className="font-bold uppercase text-center text-[10px]">VP FOR FINANCE (up to 500K)</div>
+                  <div className="text-[9px] font-bold">PRESIDENT (more than 500K to 1M)</div>
                 </div>
               </div>
             </div>
