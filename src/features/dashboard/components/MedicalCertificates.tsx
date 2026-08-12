@@ -345,7 +345,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
             scale: 2,
-            useCORS: false,
+            useCORS: true,
             allowTaint: true,
             logging: false,
             scrollY: 0,
@@ -431,9 +431,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           }
           input::placeholder, textarea::placeholder {
             color: transparent !important;
-          }
-          .watermark-seal {
-            opacity: 0.18 !important;
           }
           @page {
             size: letter portrait;
@@ -618,7 +615,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     value={date}
                     readOnly={!editMode}
                     onChange={e => setDate(e.target.value)}
-                    className={`font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 border-b-[1.5px] border-gray-400`}
                   />
                 </div>
               </div>
@@ -642,7 +639,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     readOnly={!editMode}
                     onChange={e => setPatientName(e.target.value)}
                     style={{ width: `${Math.max(220, patientName.length * 9.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-0.5 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-0.5 border-b-[1.5px] border-gray-400`}
                   />
                   <span>, </span>
                   <input
@@ -650,7 +647,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     value={age}
                     readOnly={!editMode}
                     onChange={e => setAge(e.target.value)}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-8 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-8 border-b-[1.5px] border-gray-400`}
                   />
                   <span> years old, </span>
                   <input
@@ -659,7 +656,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     readOnly={!editMode}
                     onChange={e => setSex(e.target.value.toUpperCase())}
                     style={{ width: `${Math.max(70, sex.length * 10)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center border-b-[1.5px] border-gray-400`}
                   />
                   <span>, a </span>
                   
@@ -670,7 +667,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                       value={yearLevel}
                       readOnly={!editMode}
                       onChange={e => setYearLevel(e.target.value)}
-                      className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                      className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 border-b-[1.5px] border-gray-400`}
                     />
                     <sup className="text-[12px] font-bold">
                       <input
@@ -678,7 +675,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                         value={yearSuffix}
                         readOnly={!editMode}
                         onChange={e => setYearSuffix(e.target.value)}
-                        className={`font-official font-bold text-[12px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                        className={`font-official font-bold text-[12px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 text-center w-4 border-b-[1.5px] border-gray-400`}
                       />
                     </sup>
                   </span>
@@ -690,7 +687,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     readOnly={!editMode}
                     onChange={e => setCourseAndSchool(e.target.value)}
                     style={{ width: `${Math.max(380, courseAndSchool.length * 8.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 border-b-[1.5px] border-gray-400`}
                   />
                   <span> has been seen and examined due to </span>
                   <input
@@ -699,7 +696,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     readOnly={!editMode}
                     onChange={e => setExaminedDueTo(e.target.value)}
                     style={{ width: `${Math.max(320, examinedDueTo.length * 8.5)}px` }}
-                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 border-b-[1.5px] border-gray-400`}
                   />
                 </div>
 
@@ -711,7 +708,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     value={diagnosis}
                     readOnly={!editMode}
                     onChange={e => setDiagnosis(e.target.value)}
-                    className={`flex-1 font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-1 ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                    className={`flex-1 font-official font-bold text-[16.5px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 px-1 border-b-[1.5px] border-gray-400`}
                   />
                 </div>
 
@@ -785,7 +782,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                         value={licenseNo}
                         readOnly={!editMode}
                         onChange={e => setLicenseNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-b-[1.5px] border-gray-400`}
                       />
                     </div>
                     <div className="flex items-center justify-end">
@@ -795,7 +792,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                         value={ptrNo}
                         readOnly={!editMode}
                         onChange={e => setPtrNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold ${editMode ? 'border-b border-gray-300 hover:border-gray-500' : 'border-none'}`}
+                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-b-[1.5px] border-gray-400`}
                       />
                     </div>
                   </div>
