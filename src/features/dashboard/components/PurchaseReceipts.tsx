@@ -237,11 +237,13 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             display: none !important;
           }
           input, textarea, select {
-            border: none !important;
             background: transparent !important;
             padding: 0 !important;
             resize: none !important;
             color: #000 !important;
+          }
+          input::placeholder, textarea::placeholder {
+            color: transparent !important;
           }
           .border-print-black {
             border-color: #000 !important;
