@@ -74,15 +74,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
         </div>
       </div>
 
-      {/* Info Banner */}
-      <div className="rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ background: `${YELLOW}15`, border: `1px solid ${YELLOW}50` }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: YELLOW, color: '#000' }}>
-          <ArrowRight size={16} />
-        </div>
-        <div className="text-sm text-gray-700 leading-relaxed">
-          Use <strong>Convert to Consultation</strong> to move a record to the Consultations tab when the patient sees a doctor. This action cannot be undone.
-        </div>
-      </div>
+
 
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 flex gap-4 items-center flex-wrap"
