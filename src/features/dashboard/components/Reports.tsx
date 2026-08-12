@@ -884,70 +884,70 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         }
       `}</style>
       {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-3 print:hidden">
+      <div className="flex items-center justify-between flex-wrap gap-4 print:hidden bg-white p-5 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-gray-900">Reports</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Generate, edit, and export clinic reports</p>
+          <h1 className="text-gray-900 text-2xl font-extrabold tracking-tight">Reports Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1 font-medium">Generate, edit, and export clinic reports</p>
         </div>
 
-        {/* Date filter / Month selector */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-3 sm:mt-0">
+        {/* Filters and Controls */}
+        <div className="flex items-center gap-4 flex-wrap w-full lg:w-auto mt-4 lg:mt-0">
+          
+          <div className="flex flex-col">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Type</label>
+            <select value={activeReport} onChange={e => setActiveReport(e.target.value)}
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] min-w-[220px] cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm">
+              {reportTypes.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+            </select>
+          </div>
+
+          <div className="w-px h-10 bg-gray-200 hidden sm:block mx-1"></div>
+
           {['daily', 'cases', 'inventory'].includes(activeReport) ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-[#1B3A6B] uppercase tracking-wider mb-0.5 ml-1">Report Month</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Month</label>
                 <select value={reportMonth} onChange={e => setReportMonth(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] w-32 cursor-pointer bg-white">
+                  className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-36 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm">
                   {Object.keys(monthMap).map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-[#1B3A6B] uppercase tracking-wider mb-0.5 ml-1">Report Year</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Year</label>
                 <input type="number" value={reportYear} onChange={e => setReportYear(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] w-24 bg-white text-center" />
+                  className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-28 bg-gray-50 hover:bg-gray-100 transition-colors text-center shadow-sm" />
               </div>
             </div>
           ) : (
-            <>
-              <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
-                {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
-                  <button key={f} onClick={() => setFilter(f)}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
-                    style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                    {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                ))}
-              </div>
-              {filter === 'custom' && (
-                <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto mt-2 sm:mt-0">
-                  <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                    className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
-                  <span className="text-gray-400 text-xs">to</span>
-                  <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                    className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1B3A6B]" />
-                </div>
-              )}
-            </>
+            <div className="flex flex-col">
+               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Date Range Filter</label>
+               <div className="flex flex-wrap gap-1.5 bg-gray-100/80 border border-gray-200 rounded-lg p-1.5 w-full sm:w-auto shadow-sm">
+                 {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
+                   <button key={f} onClick={() => setFilter(f)}
+                     className="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
+                     style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                     {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
+                   </button>
+                 ))}
+               </div>
+            </div>
+          )}
+          
+          {filter === 'custom' && !['daily', 'cases', 'inventory'].includes(activeReport) && (
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto self-end mb-1">
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-sm" />
+              <span className="text-gray-400 text-xs font-bold px-1">to</span>
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-sm" />
+            </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* Report type selector sidebar (Kept 100% untouched) */}
-        <div className="bg-white rounded-xl p-3 space-y-0.5 h-fit print:hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 pb-2">Report Type</div>
-          {reportTypes.map(r => (
-            <button key={r.id} onClick={() => setActiveReport(r.id)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
-              style={{ background: activeReport === r.id ? `${PRIMARY}10` : 'transparent', color: activeReport === r.id ? PRIMARY : '#6b7280' }}>
-              {r.icon}
-              <span className="text-xs font-bold">{r.label}</span>
-            </button>
-          ))}
-        </div>
-
+      <div className="w-full">
         {/* Report content workspace */}
-        <div id="report-export-area" className="lg:col-span-4 bg-white rounded-xl overflow-hidden print-report-container" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div id="report-export-area" className="w-full bg-white rounded-xl overflow-hidden print-report-container" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
 
           {/* ── 1. DAILY REPORT (Updated ONLY to exact attached PDF template layout) ── */}
           {activeReport === 'daily' && (
