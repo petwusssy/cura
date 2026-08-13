@@ -187,7 +187,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   const handleSelectCert = (cert: MedicalCertificate) => {
     setSelectedCertId(cert.id);
-    setDate(cert.date || 'June 17, 2026');
+    setDate(cert.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' }));
     setPatientName(cert.patientName || patients.find(p => p.id === cert.patientId)?.name || 'Patient Name');
     setAge(cert.age || patients.find(p => p.id === cert.patientId)?.age || 23);
     setSex(cert.sex || patients.find(p => p.id === cert.patientId)?.sex || 'FEMALE');

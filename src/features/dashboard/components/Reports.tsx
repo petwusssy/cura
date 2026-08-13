@@ -164,10 +164,28 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
 }
 
 const filterLabel = (f: ReportFilter) => {
-  if (f === 'today') return 'Today, June 27 2026';
-  if (f === 'yesterday') return 'Yesterday, June 26 2026';
-  if (f === 'week') return 'June 21–27, 2026';
-  if (f === 'month') return 'June 2026';
+  const now = new Date();
+  
+  if (f === 'today') {
+    return `Today, ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+  }
+  
+  if (f === 'yesterday') {
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    return `Yesterday, ${yest.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+  }
+  
+  if (f === 'week') {
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 6);
+    return `${lastWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' })} - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+  }
+  
+  if (f === 'month') {
+    return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'Asia/Manila' });
+  }
+  
   return 'Custom Range';
 };
 
@@ -188,8 +206,10 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
-  const [reportMonth, setReportMonth] = useState('JUNE');
-  const [reportYear, setReportYear] = useState('2026');
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Manila' }).toUpperCase();
+  const currentYear = new Date().toLocaleString('en-US', { year: 'numeric', timeZone: 'Asia/Manila' });
+  const [reportMonth, setReportMonth] = useState(currentMonth);
+  const [reportYear, setReportYear] = useState(currentYear);
 
   const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
   const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
