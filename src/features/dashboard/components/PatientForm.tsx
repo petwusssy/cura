@@ -122,7 +122,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
       <input
         type={type}
         value={(form[key] as string) ?? ''}
-        onChange={e => set(key, e.target.value)}
+        onChange={e => set(key, key === 'name' ? e.target.value.toUpperCase() : e.target.value)}
         placeholder={placeholder || label}
         className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-white
           ${errors[key] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
