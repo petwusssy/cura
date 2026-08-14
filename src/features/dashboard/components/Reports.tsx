@@ -1147,20 +1147,20 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCons.filter(c => c.type === 'Over-the-counter' || c.type === 'Non-Consultation' || c.disposition?.includes('OTC')).map((c, idx) => {
+                    {filteredCons.filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]')).map((c, idx) => {
                       const p = pat(c);
                       return (
                         <tr key={c.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                          <td className="border border-gray-200 px-3 py-2 font-medium text-gray-700">{c.date} {c.time}</td>
+                          <td className="border border-gray-200 px-3 py-2 font-medium text-gray-700">{c.date} {c.timeIn}</td>
                           <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-900">{p?.name || c.patientId}</td>
-                          <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.chiefComplaint}</td>
-                          <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.medicinesPrescribed && c.medicinesPrescribed.length > 0 ? c.medicinesPrescribed.map(m => m.name).join(', ') : 'BP measurement / Rest'}</td>
-                          <td className="border border-gray-200 px-3 py-2 text-center font-medium">{c.medicinesPrescribed && c.medicinesPrescribed.length > 0 ? c.medicinesPrescribed.reduce((s, m) => s + m.quantity, 0) : '-'}</td>
-                          <td className="border border-gray-200 px-3 py-2 text-gray-600">{c.attendingProvider || 'Nurse'}</td>
+                          <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.complaint}</td>
+                          <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.treatments && c.treatments.length > 0 ? c.treatments.map(m => m.medicineName).join(', ') : 'BP measurement / Rest'}</td>
+                          <td className="border border-gray-200 px-3 py-2 text-center font-medium">{c.treatments && c.treatments.length > 0 ? c.treatments.reduce((s, m) => s + m.quantity, 0) : '-'}</td>
+                          <td className="border border-gray-200 px-3 py-2 text-gray-600">{c.assistingNurse || c.doctorName || 'Nurse'}</td>
                         </tr>
                       );
                     })}
-                    {filteredCons.filter(c => c.type === 'Over-the-counter' || c.type === 'Non-Consultation' || c.disposition?.includes('OTC')).length === 0 && (
+                    {filteredCons.filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]')).length === 0 && (
                       <tr><td colSpan={6} className="text-center py-8 text-gray-400">No over-the-counter transactions recorded for this date range.</td></tr>
                     )}
                   </tbody>
