@@ -1329,16 +1329,29 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black text-[11px]">
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                      <tr><td className="border border-black text-center py-1.5 font-mono"></td><td className="border border-black text-center"></td><td className="border border-black px-2.5"></td><td className="border border-black px-2.5"></td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                      {purchaseRequests.map((req, idx) => {
+                        const amt = ((req.requestedQty || 0) * (req.unitPrice || 0)).toFixed(2);
+                        return (
+                          <tr key={req.id || idx}>
+                            <td className="border border-black text-center py-1.5 font-mono">{req.requestedQty}</td>
+                            <td className="border border-black text-center">{req.unit || 'Tablet'}</td>
+                            <td className="border border-black px-2.5 text-left">{req.medicine}</td>
+                            <td className="border border-black px-2.5 text-left">{req.description || ''}</td>
+                            <td className="border border-black text-center">{(req.unitPrice || 0) > 0 ? Number(req.unitPrice).toFixed(2) : ''}</td>
+                            <td className="border border-black text-right font-bold pr-2">{(req.unitPrice || 0) > 0 ? amt : ''}</td>
+                          </tr>
+                        );
+                      })}
+                      {Array.from({ length: Math.max(0, 10 - purchaseRequests.length) }).map((_, idx) => (
+                        <tr key={`empty-${idx}`}>
+                          <td className="border border-black text-center py-1.5 font-mono"></td>
+                          <td className="border border-black text-center"></td>
+                          <td className="border border-black px-2.5"></td>
+                          <td className="border border-black px-2.5"></td>
+                          <td className="border border-black"></td>
+                          <td className="border border-black"></td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
 
