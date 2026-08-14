@@ -44,7 +44,8 @@ interface ConsultationTabProps {
 export function ConsultationTab({
   patients, consultations, transfers, onUpdateConsultation, onAddTransfer, onNavigate, onSelectPatient, searchQuery
 }: ConsultationTabProps) {
-  const [dateFilter, setDateFilter] = useState('');
+  const [datePreset, setDatePreset] = useState<'all' | 'today' | 'yesterday' | 'week' | 'custom'>('all');
+  const [customDate, setCustomDate] = useState('');
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
   const [transferModal, setTransferModal] = useState<Consultation | null>(null);
   const [activeTab, setActiveTab] = useState<'consultations' | 'transfers'>('consultations');
@@ -74,11 +75,42 @@ export function ConsultationTab({
       }, {} as Record<string, Consultation>)
   );
 
+  const isDateMatch = (dateStr: string) => {
+    if (datePreset === 'all') return true;
+    
+    const today = new Date();
+    const getLocal = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const todayStr = getLocal(today);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocal(yesterday);
+
+    if (datePreset === 'today') return dateStr === todayStr;
+    if (datePreset === 'yesterday') return dateStr === yesterdayStr;
+    if (datePreset === 'week') {
+      const target = new Date(dateStr);
+      const diffTime = today.getTime() - target.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    }
+    if (datePreset === 'custom') {
+      return !customDate || dateStr === customDate;
+    }
+    return true;
+  };
+
   const filtered = doctorConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || patient?.name.toLowerCase().includes(q) || c.complaint.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
-    const matchDate = !dateFilter || c.date === dateFilter;
+    const matchDate = isDateMatch(c.date);
     return matchSearch && matchDate;
   }).sort((a, b) => b.date.localeCompare(a.date) || b.timeIn.localeCompare(a.timeIn));
 
@@ -86,7 +118,7 @@ export function ConsultationTab({
     const patient = patients.find(p => p.id === t.patientId);
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || patient?.name.toLowerCase().includes(q) || t.receivingHospital.toLowerCase().includes(q);
-    const matchDate = !dateFilter || t.date === dateFilter;
+    const matchDate = isDateMatch(t.date);
     return matchSearch && matchDate;
   }).sort((a, b) => b.date.localeCompare(a.date));
 
@@ -185,14 +217,31 @@ export function ConsultationTab({
       <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-wrap"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Calendar size={15} className="text-gray-400" />
-          <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
-            className="flex-1 sm:flex-none border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-gray-50 w-full sm:w-auto" />
-          {dateFilter && (
-            <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100 flex-shrink-0">Clear</button>
-          )}
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
+          {(['all', 'today', 'yesterday', 'week', 'custom'] as const).map(p => {
+            const labels = { all: 'All', today: 'Today', yesterday: 'Yesterday', week: 'This Week', custom: 'Custom' };
+            return (
+              <button
+                key={p}
+                onClick={() => { setDatePreset(p); if(p !== 'custom') setCustomDate(''); }}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${datePreset === p ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-[#1B3A6B] hover:bg-blue-50'}`}
+              >
+                {labels[p]}
+              </button>
+            );
+          })}
         </div>
+
+        {datePreset === 'custom' && (
+          <div className="flex items-center gap-2 w-full sm:w-auto animate-in fade-in zoom-in-95 duration-200">
+            <Calendar size={15} className="text-gray-400 hidden sm:block" />
+            <input type="date" value={customDate} onChange={e => setCustomDate(e.target.value)}
+              className="flex-1 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white w-full sm:w-auto shadow-sm" />
+            {customDate && (
+              <button onClick={() => setCustomDate('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100 flex-shrink-0">Clear</button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Consultations Table ── */}
