@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
+import uaLogo from '@/assets/images/ua-logo.png';
 import html2pdf from 'html2pdf.js';
 
 const PRIMARY = '#1E5AA8';
@@ -65,11 +66,12 @@ const AutoResizeInput = ({ value, onChange, readOnly, placeholder = ' ' }: any) 
       <span className="invisible col-start-1 row-start-1 whitespace-pre">{value || placeholder}</span>
       <input
         type="text"
+        size={1}
         value={value}
         onChange={onChange}
         readOnly={readOnly}
         placeholder={placeholder}
-        className="col-start-1 row-start-1 w-full bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
+        className="col-start-1 row-start-1 w-full min-w-0 bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
       />
     </span>
   );
@@ -589,7 +591,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-16">
               <img
-                src={uaSeal}
+                src={uaLogo}
                 alt="University Seal Watermark"
                 className="watermark-seal w-[750px] h-[750px] object-contain opacity-40 grayscale"
               />
