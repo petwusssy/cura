@@ -92,25 +92,25 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'gap-3 px-5'}`}
+          className={`flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'px-5 gap-1.5'}`}
           style={{ borderColor: 'rgba(255,255,255,0.08)', height: '88px' }}
         >
           {/* Main icon */}
           <img
             src={curaLogoMain}
             alt="CURA"
-            className="object-contain flex-shrink-0 transition-transform duration-500 hover:scale-105"
+            className="object-contain flex-shrink-0 transition-transform duration-500 hover:scale-[1.15]"
             style={{ 
-              height: collapsed ? '40px' : '56px',
-              width: collapsed ? '40px' : 'auto',
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' 
+              height: collapsed ? '56px' : '82px', /* Dramatically larger to counter built-in padding */
+              width: 'auto',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.25))' 
             }}
           />
           {!collapsed && (
-            <div className="overflow-hidden min-w-0 flex flex-col justify-center">
-              <span className="text-[34px] font-black tracking-normal leading-none"
+            <div className="overflow-hidden min-w-0 flex flex-col justify-center translate-y-[2px]">
+              <span className="text-[32px] font-black tracking-tighter leading-none"
                     style={{
-                      background: 'linear-gradient(135deg, #ffffff 0%, #bde0fe 100%)',
+                      background: 'linear-gradient(180deg, #ffffff 0%, #dbeafe 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
