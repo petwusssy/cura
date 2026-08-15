@@ -155,7 +155,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
           className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition-all w-full sm:w-auto"
           style={{ background: PRIMARY }}
         >
-          <Plus size={18} /> Add Medicine
+          <Plus size={18} /> Add Stock
         </button>
       </div>
 
