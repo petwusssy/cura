@@ -91,18 +91,25 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className="flex items-center gap-3 px-4 py-4 flex-shrink-0 border-b"
+          className="flex items-center gap-3.5 px-5 py-5 flex-shrink-0 border-b"
           style={{ borderColor: 'rgba(255,255,255,0.08)' }}
         >
           {/* Mascot icon */}
           <img
             src={curaMascot}
             alt="CURA"
-            className="w-9 h-9 object-contain flex-shrink-0"
+            className="w-12 h-12 object-contain flex-shrink-0 transition-transform duration-500 hover:scale-105"
+            style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}
           />
           {!collapsed && (
-            <div className="overflow-hidden min-w-0">
-              <span className="text-2xl font-black tracking-widest text-white leading-none">
+            <div className="overflow-hidden min-w-0 flex flex-col justify-center">
+              <span className="text-3xl font-black tracking-[0.15em] leading-none"
+                    style={{
+                      background: 'linear-gradient(135deg, #ffffff 0%, #bde0fe 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif"
+                    }}>
                 CURA
               </span>
             </div>
