@@ -102,7 +102,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               alt="CURA"
               className="absolute object-contain transition-transform duration-500"
               style={{ 
-                height: collapsed ? '90px' : '130px', /* Balanced visual size */
+                height: collapsed ? '80px' : '115px', /* Slightly smaller balanced size */
                 width: 'auto',
                 maxWidth: 'none',
                 filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
