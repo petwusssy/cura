@@ -179,23 +179,36 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
         ))}
       </div>
 
-      {/* Grid date filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
-            {(['All', 'Low Stock', 'Out of Stock', 'Healthy'] as const).map(s => (
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Status</span>
+          <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
+          <div className="flex gap-1 overflow-x-auto hide-scrollbar">
+            {(['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const).map(s => (
               <button key={s} onClick={() => setStatusFilter(s)}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-                style={{ background: statusFilter === s ? 'white' : 'transparent', color: statusFilter === s ? PRIMARY : '#6b7280', boxShadow: statusFilter === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
+                style={{
+                  background: statusFilter === s ? PRIMARY : 'transparent',
+                  color: statusFilter === s ? 'white' : '#6b7280',
+                }}>
                 {s}
               </button>
             ))}
           </div>
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full sm:w-auto">
+        </div>
+
+        <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Type</span>
+          <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
+          <div className="flex gap-1 overflow-x-auto hide-scrollbar">
             {(['All', 'Medicine', 'Supply'] as const).map(t => (
               <button key={t} onClick={() => setTypeFilter(t)}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-                style={{ background: typeFilter === t ? 'white' : 'transparent', color: typeFilter === t ? PRIMARY : '#6b7280', boxShadow: typeFilter === t ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
+                style={{
+                  background: typeFilter === t ? PRIMARY : 'transparent',
+                  color: typeFilter === t ? 'white' : '#6b7280',
+                }}>
                 {t}
               </button>
             ))}
