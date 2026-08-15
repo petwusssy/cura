@@ -8,6 +8,7 @@ import { Page, AppNotification } from '@/types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import curaLogo from '@/assets/images/cura-logo-clean.png';
 import curaMascot from '@/assets/images/cura-mascot.png';
+import curaLogoMain from '@/assets/images/cura-logo.png';
 import { authService } from '@/services/authService';
 
 interface NavItem {
@@ -91,19 +92,23 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className="flex items-center gap-3.5 px-5 py-5 flex-shrink-0 border-b"
-          style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+          className={`flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'gap-3 px-5'}`}
+          style={{ borderColor: 'rgba(255,255,255,0.08)', height: '88px' }}
         >
-          {/* Mascot icon */}
+          {/* Main icon */}
           <img
-            src={curaMascot}
+            src={curaLogoMain}
             alt="CURA"
-            className="w-12 h-12 object-contain flex-shrink-0 transition-transform duration-500 hover:scale-105"
-            style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}
+            className="object-contain flex-shrink-0 transition-transform duration-500 hover:scale-105"
+            style={{ 
+              height: collapsed ? '40px' : '56px',
+              width: collapsed ? '40px' : 'auto',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' 
+            }}
           />
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
-              <span className="text-3xl font-black tracking-[0.15em] leading-none"
+              <span className="text-[34px] font-black tracking-normal leading-none"
                     style={{
                       background: 'linear-gradient(135deg, #ffffff 0%, #bde0fe 100%)',
                       WebkitBackgroundClip: 'text',
