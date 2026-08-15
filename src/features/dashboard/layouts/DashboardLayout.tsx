@@ -198,8 +198,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden bg-card text-card-foreground border-b border-border transition-colors duration-300"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden text-card-foreground transition-colors duration-300"
           style={{ 
+            background: 'var(--header-bg)',
+            borderBottom: '1px solid var(--header-border)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >

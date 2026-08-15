@@ -176,10 +176,10 @@ export function Settings() {
                 <label className={labelCls}>Theme</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'light', label: 'Light', icon: <Sun size={18} /> },
+                    { id: 'light', label: 'Default (Light)', icon: <Sun size={18} /> },
                     { id: 'dark', label: 'Dark', icon: <Moon size={18} /> },
                     { id: 'ocean', label: 'Ocean', icon: <Droplets size={18} /> },
-                    { id: 'system', label: 'System', icon: <Laptop size={18} /> },
+                    { id: 'system', label: 'OS Sync', icon: <Laptop size={18} /> },
                   ].map(t => (
                     <button 
                       key={t.id} 

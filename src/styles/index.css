@@ -48,6 +48,9 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: rgba(255, 255, 255, 0.5);
+  
+  --header-bg: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  --header-border: rgba(147, 197, 253, 0.5);
 }
 
 .dark {
@@ -85,6 +88,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  --header-bg: oklch(0.145 0 0);
+  --header-border: oklch(0.269 0 0);
 }
 
 .ocean {
@@ -116,6 +122,9 @@
   --sidebar-accent-foreground: oklch(0.98 0.02 250);
   --sidebar-border: oklch(0.35 0.08 250);
   --sidebar-ring: oklch(0.50 0.10 250);
+
+  --header-bg: oklch(0.25 0.06 250);
+  --header-border: oklch(0.35 0.08 250);
 }
 
 /* ═══════════════════════════════════════════════
