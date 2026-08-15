@@ -102,16 +102,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           />
           {!collapsed && (
             <div className="overflow-hidden min-w-0">
-              {/* CURA wordmark */}
-              <img
-                src={curaLogo}
-                alt="CURA"
-                className="h-5 object-contain brightness-0 invert"
-                style={{ maxWidth: 72 }}
-              />
-              <div className="text-[9px] font-medium mt-0.5 truncate" style={{ color: '#7BA4D4', letterSpacing: '0.02em' }}>
-                University of the Assumption
-              </div>
+              <span className="text-2xl font-black tracking-widest text-white leading-none">
+                CURA
+              </span>
             </div>
           )}
         </div>
