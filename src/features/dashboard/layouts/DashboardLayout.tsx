@@ -218,7 +218,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="relative p-2 rounded-lg text-blue-400 hover:text-blue-700 hover:bg-blue-100/60 transition-colors z-10"
+            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors z-10"
           >
             <Menu size={20} />
           </button>
@@ -231,7 +231,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {/* Notification bell */}
           <button
             onClick={() => onNavigate('notifications')}
-            className="relative p-2 rounded-xl text-blue-400 hover:bg-blue-100/60 hover:text-[#1B3A6B] transition-colors z-10"
+            className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors z-10"
           >
             <Bell size={20} />
             {unread > 0 && (
@@ -245,7 +245,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-3 pl-3 border-l border-blue-200/60 z-10">
+          <div className="flex items-center gap-3 pl-3 border-l border-border z-10">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #2563eb 100%)', boxShadow: '0 2px 8px rgba(27,58,107,0.3)' }}
@@ -253,8 +253,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               UA
             </div>
             <div className="hidden md:block">
-              <div className="text-sm font-semibold text-gray-800">UA CLINIC ADMIN</div>
-              <div className="text-xs text-blue-500 font-medium">Administrator</div>
+              <div className="text-sm font-semibold text-foreground">UA CLINIC ADMIN</div>
+              <div className="text-xs text-primary font-medium">Administrator</div>
             </div>
           </div>
         </motion.header>

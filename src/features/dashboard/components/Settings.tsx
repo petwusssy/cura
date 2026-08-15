@@ -39,15 +39,15 @@ export function Settings() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all';
-  const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5';
+  const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all';
+  const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5';
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-foreground">Settings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage system preferences and account settings</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage system preferences and account settings</p>
         </div>
       </div>
 
@@ -68,13 +68,13 @@ export function Settings() {
         <div className="lg:col-span-3">
           {activeSection === 'profile' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">Profile Information</h3>
-              <div className="flex items-center gap-5 pb-4 border-b border-gray-100">
+              <h3 className="text-foreground pb-4 border-b border-border">Profile Information</h3>
+              <div className="flex items-center gap-5 pb-4 border-b border-border">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0" style={{ background: PRIMARY }}>GA</div>
                 <div>
                   <div className="font-semibold text-foreground">{profile.name}</div>
-                  <div className="text-sm text-gray-500">{profile.designation} • {profile.department}</div>
-                  <button className="text-xs mt-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">Change Photo</button>
+                  <div className="text-sm text-muted-foreground">{profile.designation} • {profile.department}</div>
+                  <button className="text-xs mt-1.5 px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">Change Photo</button>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -103,7 +103,7 @@ export function Settings() {
 
           {activeSection === 'notifications' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">Notification Preferences</h3>
+              <h3 className="text-foreground pb-4 border-b border-border">Notification Preferences</h3>
               <div className="space-y-4">
                 {[
                   { key: 'medicationReminders', label: 'Medication Reminders', desc: 'Alert when a patient\'s next dose is approaching' },
@@ -112,10 +112,10 @@ export function Settings() {
                   { key: 'emailNotifs', label: 'Email Notifications', desc: 'Send notification summary via email' },
                   { key: 'soundAlerts', label: 'Sound Alerts', desc: 'Play sound for urgent notifications' },
                 ].map(s => (
-                  <div key={s.key} className="flex items-center justify-between py-3 border-b border-gray-50">
+                  <div key={s.key} className="flex items-center justify-between py-3 border-b border-border">
                     <div>
                       <div className="text-sm font-medium text-foreground">{s.label}</div>
-                      <div className="text-xs text-gray-400">{s.desc}</div>
+                      <div className="text-xs text-muted-foreground">{s.desc}</div>
                     </div>
                     <button
                       onClick={() => setNotifSettings(n => ({ ...n, [s.key]: !(n as any)[s.key] }))}
@@ -146,7 +146,7 @@ export function Settings() {
 
           {activeSection === 'security' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">Security Settings</h3>
+              <h3 className="text-foreground pb-4 border-b border-border">Security Settings</h3>
               <div className="space-y-4">
                 <div>
                   <label className={labelCls}>Current Password</label>
@@ -171,7 +171,7 @@ export function Settings() {
 
           {activeSection === 'appearance' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">Appearance</h3>
+              <h3 className="text-foreground pb-4 border-b border-border">Appearance</h3>
               <div>
                 <label className={labelCls}>Theme</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -210,7 +210,7 @@ export function Settings() {
 
           {activeSection === 'system' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">System Information</h3>
+              <h3 className="text-foreground pb-4 border-b border-border">System Information</h3>
               <div className="space-y-3">
                 {[
                   ['System Name', 'CURA — University of the Assumption Clinic'],
@@ -220,8 +220,8 @@ export function Settings() {
                   ['Department', 'Medical-Dental Clinic'],
                   ['Data Storage', 'Local (Session)'],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-sm text-gray-500">{label}</span>
+                  <div key={label} className="flex justify-between py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">{label}</span>
                     <span className="text-sm font-medium text-foreground">{value}</span>
                   </div>
                 ))}
@@ -231,15 +231,15 @@ export function Settings() {
 
           {activeSection === 'help' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-gray-100">Help & About</h3>
+              <h3 className="text-foreground pb-4 border-b border-border">Help & About</h3>
               <div className="space-y-4">
                 <div className="p-4 rounded-xl" style={{ background: `${PRIMARY}08` }}>
                   <div className="font-bold text-lg" style={{ color: PRIMARY }}>CURA</div>
-                  <div className="text-sm text-gray-600 mt-1">University of the Assumption Clinic Information System</div>
-                  <div className="text-xs text-gray-400 mt-0.5">Version 1.0.0 • June 2026</div>
+                  <div className="text-sm text-muted-foreground mt-1">University of the Assumption Clinic Information System</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Version 1.0.0 • June 2026</div>
                 </div>
                 <div className="space-y-3">
-                  <div className="font-medium text-gray-700 text-sm">Quick Reference</div>
+                  <div className="font-medium text-muted-foreground text-sm">Quick Reference</div>
                   {[
                     ['Dashboard', 'Overview of daily clinic activity and statistics'],
                     ['Patients', 'Search, add, and manage patient records'],
@@ -251,11 +251,11 @@ export function Settings() {
                     ['Beds Management', 'Monitor bed occupancy with auto-duration tracking'],
                     ['Reports', 'Generate daily, monthly, and custom reports'],
                   ].map(([title, desc]) => (
-                    <div key={title} className="flex gap-3 py-2 border-b border-gray-50">
+                    <div key={title} className="flex gap-3 py-2 border-b border-border">
                       <div className="w-1 h-1 rounded-full bg-gray-400 mt-2 flex-shrink-0" />
                       <div>
-                        <div className="text-sm font-medium text-gray-700">{title}</div>
-                        <div className="text-xs text-gray-400">{desc}</div>
+                        <div className="text-sm font-medium text-muted-foreground">{title}</div>
+                        <div className="text-xs text-muted-foreground">{desc}</div>
                       </div>
                     </div>
                   ))}
