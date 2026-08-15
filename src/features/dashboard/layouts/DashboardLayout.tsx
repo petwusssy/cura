@@ -102,18 +102,18 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               alt="CURA"
               className="absolute object-contain transition-transform duration-500"
               style={{ 
-                height: collapsed ? '70px' : '100px', /* Massive visual size to overcome transparent padding */
+                height: collapsed ? '110px' : '170px', /* Extreme visual size to match text height perfectly */
                 width: 'auto',
                 maxWidth: 'none',
                 filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
-                transform: 'translateY(-4px)' /* Optical alignment: push logo up */
+                transform: 'translateY(1px)' /* Natural centering with a tiny optical nudge */
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-4px) scale(1)'}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(1px) scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(1px) scale(1)'}
             />
           </div>
           {!collapsed && (
-            <div className="overflow-hidden min-w-0 flex flex-col justify-center translate-y-[3px]">
+            <div className="overflow-hidden min-w-0 flex flex-col justify-center">
               <span className="text-[34px] font-black tracking-tighter leading-none"
                     style={{
                       background: 'linear-gradient(180deg, #ffffff 0%, #dbeafe 100%)',
