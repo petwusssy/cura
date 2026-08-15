@@ -106,10 +106,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
                 width: 'auto',
                 maxWidth: 'none',
                 filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
-                transform: 'translateY(1px)' /* Natural centering with a tiny optical nudge */
+                transform: 'translateY(4px)' /* Perfect optical center alignment */
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(1px) scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(1px) scale(1)'}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1)'}
             />
           </div>
           {!collapsed && (
