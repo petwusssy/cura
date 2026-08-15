@@ -107,7 +107,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     };
 
     try {
-      await onUpdateMedicine(updated);
+      onUpdateMedicine(updated);
       setAdjustModal(null);
       setAdjustQty('');
       setAdjustNote('');
@@ -134,9 +134,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     };
 
     try {
-      await onAddMedicine(med);
+      onAddMedicine(med);
       setShowAddForm(false);
-      setNewMed({ name: '', batchNumber: '', stock: '', dateAdded: new Date().toISOString().split('T')[0], unit: 'Tablet', threshold: '15' });
+      setNewMed({ name: '', stock: '', dateAdded: new Date().toISOString().split('T')[0], unit: 'Tablet', threshold: '15', category: 'Medicine' });
     } catch (e) {
       console.error(e);
     }
