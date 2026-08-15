@@ -48,8 +48,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
   const isAdmin = roles.includes('Admin');
 
   const filteredNavItems = navItems.filter(item => {
-    if (item.id === 'settings' && !isAdmin) return false;
-    // Add more role checks here based on requirements
+    // Add role checks here based on requirements if needed in the future
+    // Currently, all items are visible
     return true;
   });
 
