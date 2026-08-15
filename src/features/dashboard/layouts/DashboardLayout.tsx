@@ -198,12 +198,27 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="bg-white border-b border-gray-100 flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0"
-          style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden"
+          style={{ 
+            background: 'linear-gradient(135deg, #e8f4fd 0%, #dbeafe 50%, #eff6ff 100%)',
+            borderBottom: '1px solid rgba(147, 197, 253, 0.4)',
+            boxShadow: '0 2px 12px rgba(59, 130, 246, 0.08)'
+          }}
         >
+          {/* Animated blobs */}
+          <style>{`
+            @keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(20px,-10px) scale(1.1)} 66%{transform:translate(-10px,15px) scale(0.95)} }
+            @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
+          `}</style>
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div style={{ position:'absolute', top:'-30px', left:'15%', width:'180px', height:'180px', borderRadius:'50%', background:'rgba(96,165,250,0.18)', filter:'blur(40px)', animation:'blob1 7s ease-in-out infinite' }} />
+            <div style={{ position:'absolute', top:'-20px', right:'20%', width:'150px', height:'150px', borderRadius:'50%', background:'rgba(147,197,253,0.22)', filter:'blur(35px)', animation:'blob2 9s ease-in-out infinite' }} />
+            <div style={{ position:'absolute', top:'-10px', left:'60%', width:'120px', height:'120px', borderRadius:'50%', background:'rgba(186,230,253,0.2)', filter:'blur(30px)', animation:'blob1 11s ease-in-out infinite reverse' }} />
+          </div>
+
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="relative p-2 rounded-lg text-blue-400 hover:text-blue-700 hover:bg-blue-100/60 transition-colors z-10"
           >
             <Menu size={20} />
           </button>
@@ -216,7 +231,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {/* Notification bell */}
           <button
             onClick={() => onNavigate('notifications')}
-            className="relative p-2 rounded-xl text-gray-400 hover:bg-blue-50 hover:text-[#1B3A6B] transition-colors"
+            className="relative p-2 rounded-xl text-blue-400 hover:bg-blue-100/60 hover:text-[#1B3A6B] transition-colors z-10"
           >
             <Bell size={20} />
             {unread > 0 && (
@@ -230,16 +245,16 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-3 pl-3 border-l border-gray-100">
+          <div className="flex items-center gap-3 pl-3 border-l border-blue-200/60 z-10">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-              style={{ background: '#1B3A6B' }}
+              style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #2563eb 100%)', boxShadow: '0 2px 8px rgba(27,58,107,0.3)' }}
             >
               UA
             </div>
             <div className="hidden md:block">
               <div className="text-sm font-semibold text-gray-800">UA CLINIC ADMIN</div>
-              <div className="text-xs text-gray-500 font-medium">Administrator</div>
+              <div className="text-xs text-blue-500 font-medium">Administrator</div>
             </div>
           </div>
         </motion.header>
