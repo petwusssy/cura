@@ -211,9 +211,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
           `}</style>
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div style={{ position:'absolute', top:'-30px', left:'15%', width:'180px', height:'180px', borderRadius:'50%', background:'rgba(96,165,250,0.18)', filter:'blur(40px)', animation:'blob1 7s ease-in-out infinite' }} />
-            <div style={{ position:'absolute', top:'-20px', right:'20%', width:'150px', height:'150px', borderRadius:'50%', background:'rgba(147,197,253,0.22)', filter:'blur(35px)', animation:'blob2 9s ease-in-out infinite' }} />
-            <div style={{ position:'absolute', top:'-10px', left:'60%', width:'120px', height:'120px', borderRadius:'50%', background:'rgba(186,230,253,0.2)', filter:'blur(30px)', animation:'blob1 11s ease-in-out infinite reverse' }} />
+            <div style={{ position:'absolute', top:'-30px', left:'15%', width:'160px', height:'160px', borderRadius:'40% 60% 70% 30% / 40% 50% 60% 50%', background:'rgba(96,165,250,0.25)', animation:'blob1 7s ease-in-out infinite' }} />
+            <div style={{ position:'absolute', top:'-20px', right:'20%', width:'130px', height:'130px', borderRadius:'60% 40% 30% 70% / 60% 30% 70% 40%', background:'rgba(59,130,246,0.2)', animation:'blob2 9s ease-in-out infinite' }} />
+            <div style={{ position:'absolute', top:'-10px', left:'60%', width:'100px', height:'100px', borderRadius:'30% 70% 70% 30% / 30% 30% 70% 70%', background:'rgba(147,197,253,0.35)', animation:'blob1 11s ease-in-out infinite reverse' }} />
           </div>
 
           <button
