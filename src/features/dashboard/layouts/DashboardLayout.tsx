@@ -65,7 +65,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
   return (
     <motion.div 
-      className="flex h-[100dvh] overflow-hidden bg-gray-50"
+      className="flex h-[100dvh] overflow-hidden bg-background text-foreground transition-colors duration-300"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -86,8 +86,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
         style={{
           width: collapsed ? 64 : 248,
-          background: '#1B3A6B',
-          boxShadow: '4px 0 24px rgba(27,58,107,0.18)',
+          background: 'var(--color-sidebar)',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
         }}
       >
         {/* Brand */}
@@ -198,11 +198,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden bg-card text-card-foreground border-b border-border transition-colors duration-300"
           style={{ 
-            background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-            borderBottom: '1px solid rgba(147, 197, 253, 0.5)',
-            boxShadow: '0 2px 12px rgba(59, 130, 246, 0.08)'
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >
           {/* Animated blobs */}

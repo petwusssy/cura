@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Save, User, Bell, Shield, Palette, Database, HelpCircle } from 'lucide-react';
+import { Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop, Droplets } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const PRIMARY = '#1E5AA8';
 
@@ -21,6 +22,7 @@ const sections: SettingsSection[] = [
 export function Settings() {
   const [activeSection, setActiveSection] = useState('profile');
   const [saved, setSaved] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const [profile, setProfile] = useState({
     name: 'UA CLINIC ADMIN', designation: 'Administrator', email: 'admin@ua.edu.ph',
@@ -44,14 +46,14 @@ export function Settings() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-gray-900">Settings</h1>
+          <h1 className="text-foreground">Settings</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage system preferences and account settings</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Sidebar nav */}
-        <div className="bg-white rounded-xl p-3 space-y-1 h-fit" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+        <div className="bg-card text-card-foreground rounded-xl p-3 space-y-1 h-fit" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
           {sections.map(s => (
             <button key={s.id} onClick={() => setActiveSection(s.id)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
@@ -65,12 +67,12 @@ export function Settings() {
         {/* Content */}
         <div className="lg:col-span-3">
           {activeSection === 'profile' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">Profile Information</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">Profile Information</h3>
               <div className="flex items-center gap-5 pb-4 border-b border-gray-100">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0" style={{ background: PRIMARY }}>GA</div>
                 <div>
-                  <div className="font-semibold text-gray-800">{profile.name}</div>
+                  <div className="font-semibold text-foreground">{profile.name}</div>
                   <div className="text-sm text-gray-500">{profile.designation} • {profile.department}</div>
                   <button className="text-xs mt-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">Change Photo</button>
                 </div>
@@ -100,8 +102,8 @@ export function Settings() {
           )}
 
           {activeSection === 'notifications' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">Notification Preferences</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">Notification Preferences</h3>
               <div className="space-y-4">
                 {[
                   { key: 'medicationReminders', label: 'Medication Reminders', desc: 'Alert when a patient\'s next dose is approaching' },
@@ -112,7 +114,7 @@ export function Settings() {
                 ].map(s => (
                   <div key={s.key} className="flex items-center justify-between py-3 border-b border-gray-50">
                     <div>
-                      <div className="text-sm font-medium text-gray-800">{s.label}</div>
+                      <div className="text-sm font-medium text-foreground">{s.label}</div>
                       <div className="text-xs text-gray-400">{s.desc}</div>
                     </div>
                     <button
@@ -120,7 +122,7 @@ export function Settings() {
                       className="relative w-11 h-6 rounded-full transition-all flex-shrink-0"
                       style={{ background: (notifSettings as any)[s.key] ? PRIMARY : '#d1d5db' }}
                     >
-                      <span className="absolute top-0.5 transition-all w-5 h-5 rounded-full bg-white shadow"
+                      <span className="absolute top-0.5 transition-all w-5 h-5 rounded-full bg-card text-card-foreground shadow"
                         style={{ left: (notifSettings as any)[s.key] ? '22px' : '2px' }} />
                     </button>
                   </div>
@@ -143,8 +145,8 @@ export function Settings() {
           )}
 
           {activeSection === 'security' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">Security Settings</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">Security Settings</h3>
               <div className="space-y-4">
                 <div>
                   <label className={labelCls}>Current Password</label>
@@ -168,17 +170,29 @@ export function Settings() {
           )}
 
           {activeSection === 'appearance' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">Appearance</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">Appearance</h3>
               <div>
                 <label className={labelCls}>Theme</label>
-                <div className="grid grid-cols-3 gap-3 max-w-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { label: 'Light', color: '#ffffff' },
-                    { label: 'System', color: '#e5e7eb' },
+                    { id: 'light', label: 'Light', icon: <Sun size={18} /> },
+                    { id: 'dark', label: 'Dark', icon: <Moon size={18} /> },
+                    { id: 'ocean', label: 'Ocean', icon: <Droplets size={18} /> },
+                    { id: 'system', label: 'System', icon: <Laptop size={18} /> },
                   ].map(t => (
-                    <button key={t.label} className="p-3 rounded-xl border-2 border-[#1E5AA8] text-sm font-medium">
-                      {t.label}
+                    <button 
+                      key={t.id} 
+                      onClick={() => setTheme(t.id)}
+                      className="p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all"
+                      style={{ 
+                        borderColor: theme === t.id ? PRIMARY : '#e5e7eb',
+                        background: theme === t.id ? `${PRIMARY}08` : 'transparent',
+                        color: theme === t.id ? PRIMARY : '#6b7280'
+                      }}
+                    >
+                      {t.icon}
+                      <span className="text-sm font-medium">{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -195,8 +209,8 @@ export function Settings() {
           )}
 
           {activeSection === 'system' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">System Information</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">System Information</h3>
               <div className="space-y-3">
                 {[
                   ['System Name', 'CURA — University of the Assumption Clinic'],
@@ -208,7 +222,7 @@ export function Settings() {
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between py-2 border-b border-gray-50">
                     <span className="text-sm text-gray-500">{label}</span>
-                    <span className="text-sm font-medium text-gray-800">{value}</span>
+                    <span className="text-sm font-medium text-foreground">{value}</span>
                   </div>
                 ))}
               </div>
@@ -216,8 +230,8 @@ export function Settings() {
           )}
 
           {activeSection === 'help' && (
-            <div className="bg-white rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 pb-4 border-b border-gray-100">Help & About</h3>
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-gray-100">Help & About</h3>
               <div className="space-y-4">
                 <div className="p-4 rounded-xl" style={{ background: `${PRIMARY}08` }}>
                   <div className="font-bold text-lg" style={{ color: PRIMARY }}>CURA</div>
