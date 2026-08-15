@@ -160,11 +160,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 className="mt-16 lg:mt-24"
               >
                 <h1
-                  className="leading-none mb-2 font-extrabold"
+                  className="leading-none mb-2 font-black"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "clamp(4rem, 12vw, 8.5rem)",
-                    fontWeight: 800,
+                    fontWeight: 900,
                     letterSpacing: "-0.01em",
                   }}
                 >
