@@ -92,8 +92,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderColor: 'rgba(0,0,0,0.06)', height: '88px' }}
+          className={`flex items-center flex-shrink-0 border-b border-black/5 dark:border-white/10 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          style={{ height: '88px' }}
         >
           {/* Main icon */}
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
@@ -114,11 +114,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </div>
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
-              <span className="text-[34px] font-black tracking-tighter leading-none"
+              <span className="text-[34px] font-black tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-b from-[#1E5AA8] to-[#153e75] dark:from-white dark:to-blue-100"
                     style={{
-                      background: 'linear-gradient(180deg, #1E5AA8 0%, #153e75 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
                 CURA
@@ -139,16 +136,15 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
                   if (window.innerWidth < 768) setCollapsed(true);
                 }}
                 title={collapsed ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group ${active ? 'font-bold' : 'font-medium'}`}
-                style={{ color: active ? '#1E5AA8' : 'rgba(0,0,0,0.6)' }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group ${
+                  active 
+                    ? 'font-bold text-[#1E5AA8] dark:text-white' 
+                    : 'font-medium text-gray-600 dark:text-gray-400 hover:text-[#1E5AA8] dark:hover:text-white'
+                }`}
               >
                 {active && (
                   <span
-                    className="absolute inset-0"
-                    style={{
-                      background: 'rgba(30, 90, 168, 0.08)',
-                      borderRight: '3px solid #1E5AA8',
-                    }}
+                    className="absolute inset-0 bg-[#1E5AA8]/10 dark:bg-white/10 border-r-[3px] border-[#1E5AA8] dark:border-white"
                   />
                 )}
                 <span className="relative flex-shrink-0">{item.icon}</span>
@@ -169,21 +165,18 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </nav>
 
         {/* UA Seal + Sign Out */}
-        <div className="border-t flex-shrink-0 p-3 space-y-3" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+        <div className="border-t border-black/5 dark:border-white/10 flex-shrink-0 p-3 space-y-3">
           {!collapsed && (
             <div className="flex items-center gap-2 px-2 pb-1">
-              <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-90" />
-              <span className="text-[9px] leading-tight opacity-80 text-[#1E5AA8] font-bold uppercase">
+              <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-90 dark:opacity-80" />
+              <span className="text-[9px] leading-tight font-bold uppercase text-[#1E5AA8] dark:text-gray-300 opacity-90">
                 UNIVERSITY OF THE ASSUMPTION<br />CLINIC
               </span>
             </div>
           )}
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
-            style={{ color: 'rgba(0,0,0,0.6)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#1E5AA8'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.05)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.6)'; (e.currentTarget as HTMLElement).style.background = ''; }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-[#1E5AA8] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
           >
             <LogOut size={18} className="flex-shrink-0" />
             {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
