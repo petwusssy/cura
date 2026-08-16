@@ -163,7 +163,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   className="leading-none mb-2 font-black"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "clamp(4rem, 12vw, 8.5rem)",
+                    fontSize: "clamp(5rem, 14vw, 10rem)",
                     fontWeight: 900,
                     letterSpacing: "-0.02em",
                     WebkitTextStroke: "2px currentColor",
