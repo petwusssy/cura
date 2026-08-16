@@ -483,9 +483,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                 placeholder={`Search in ${currentPage.replace('-', ' ')}...`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-white/10 dark:bg-[#1E5AA8]/5 border border-white/20 dark:border-[#1E5AA8]/20 rounded-xl text-sm text-white dark:text-[#1B3A6B] placeholder-white/60 dark:placeholder-[#1B3A6B]/60 focus:outline-none focus:border-white/40 dark:focus:border-[#1B3A6B] focus:bg-white/20 dark:focus:bg-[#1E5AA8]/10 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-[#1E5AA8]/5 border border-[#1E5AA8]/20 rounded-xl text-sm text-[#1B3A6B] placeholder-[#1B3A6B]/60 focus:outline-none focus:border-[#1B3A6B] focus:bg-[#1E5AA8]/10 transition-all"
               />
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 dark:text-[#1B3A6B]/70">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B3A6B]/70">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>

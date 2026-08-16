@@ -204,8 +204,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 bg-[#4A8BCC] dark:bg-[var(--header-bg)]"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground"
           style={{ 
+            background: 'var(--header-bg)',
             borderBottom: '1px solid rgba(147, 197, 253, 0.4)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
@@ -216,14 +217,14 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
           `}</style>
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[-30px] left-[15%] w-[160px] h-[160px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-[#dbeafe]/20 dark:bg-white/10 animate-[blob1_7s_ease-in-out_infinite]" />
-            <div className="absolute top-[-20px] right-[20%] w-[130px] h-[130px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-[#bfdbfe]/20 dark:bg-white/5 animate-[blob2_9s_ease-in-out_infinite]" />
-            <div className="absolute top-[-10px] left-[60%] w-[100px] h-[100px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[#dbeafe]/20 dark:bg-white/10 animate-[blob1_11s_ease-in-out_infinite_reverse]" />
+            <div className="absolute top-[-30px] left-[15%] w-[160px] h-[160px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-white/50 dark:bg-white/10 animate-[blob1_7s_ease-in-out_infinite]" />
+            <div className="absolute top-[-20px] right-[20%] w-[130px] h-[130px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-white/40 dark:bg-white/5 animate-[blob2_9s_ease-in-out_infinite]" />
+            <div className="absolute top-[-10px] left-[60%] w-[100px] h-[100px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-white/60 dark:bg-white/10 animate-[blob1_11s_ease-in-out_infinite_reverse]" />
           </div>
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="relative p-2 rounded-lg text-white/70 hover:text-white dark:text-muted-foreground dark:hover:text-foreground hover:bg-white/10 dark:hover:bg-accent transition-colors z-10"
+            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors z-10"
           >
             <Menu size={20} />
           </button>
@@ -236,7 +237,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {/* Notification bell */}
           <button
             onClick={() => onNavigate('notifications')}
-            className="relative p-2 rounded-xl text-white/70 hover:text-white dark:text-muted-foreground dark:hover:text-foreground hover:bg-white/10 dark:hover:bg-accent transition-colors z-10"
+            className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors z-10"
           >
             <Bell size={20} />
             {unread > 0 && (
@@ -258,8 +259,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               UA
             </div>
             <div className="hidden md:block">
-              <div className="text-sm font-semibold text-white dark:text-foreground">UA CLINIC ADMIN</div>
-              <div className="text-xs text-blue-200 dark:text-primary font-medium">Administrator</div>
+              <div className="text-sm font-semibold text-foreground">UA CLINIC ADMIN</div>
+              <div className="text-xs text-primary font-medium">Administrator</div>
             </div>
           </div>
         </motion.header>

@@ -92,7 +92,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
 
   return (
     <div className="flex-1 max-w-md relative" ref={containerRef}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 dark:text-[#1B3A6B]/70" size={18} />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B3A6B]/70" size={18} />
       <input
         type="text"
         placeholder="Search patients, records, medicines..."
@@ -104,7 +104,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
         onFocus={() => {
           if (query) setIsOpen(true);
         }}
-        className="w-full pl-9 pr-4 py-2 bg-white/10 dark:bg-[#1E5AA8]/5 border border-white/20 dark:border-[#1E5AA8]/20 rounded-xl text-sm text-white dark:text-[#1B3A6B] placeholder-white/60 dark:placeholder-[#1B3A6B]/60 focus:outline-none focus:border-white/40 dark:focus:border-[#1B3A6B] focus:bg-white/20 dark:focus:bg-[#1E5AA8]/10 transition-all shadow-inner"
+        className="w-full pl-9 pr-4 py-2 bg-[#1E5AA8]/5 border border-[#1E5AA8]/20 rounded-xl text-sm text-[#1B3A6B] placeholder-[#1B3A6B]/60 focus:outline-none focus:border-[#1B3A6B] focus:bg-[#1E5AA8]/10 transition-all shadow-inner"
       />
 
       {isOpen && query && (
