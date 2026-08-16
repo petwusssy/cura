@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
-import uaSeal from '@/assets/images/ua-seal.png';
+import uaLogo from '@/assets/images/ua-logo.png';
 import curaLogo from '@/assets/images/cura-logo-clean.png';
 import curaMascot from '@/assets/images/cura-mascot.png';
 import curaLogoMain from '@/assets/images/cura-logo.png';
@@ -172,9 +172,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         <div className="border-t flex-shrink-0 p-3 space-y-3" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           {!collapsed && (
             <div className="flex items-center gap-2 px-2 pb-1">
-              <img src={uaSeal} alt="UA Seal" className="w-7 h-7 object-contain opacity-60" />
-              <span className="text-[9px] leading-tight opacity-50 text-white">
-                University of the Assumption<br />Medical Clinic
+              <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-70" />
+              <span className="text-[9px] leading-tight opacity-60 text-white font-medium uppercase">
+                UNIVERSITY OF THE ASSUMPTION<br />CLINIC
               </span>
             </div>
           )}
