@@ -118,14 +118,14 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
   const field = (label: string, key: keyof Patient, type = 'text', placeholder = '') => (
     <div key={key}>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{label}</label>
       <input
         type={type}
         value={(form[key] as string) ?? ''}
         onChange={e => set(key, key === 'name' ? e.target.value.toUpperCase() : e.target.value)}
         placeholder={placeholder || label}
-        className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-white
-          ${errors[key] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+        className={`w-full border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm
+          ${errors[key] ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : ''}`}
       />
       {errors[key] && <p className="text-xs text-red-500 mt-1">{errors[key]}</p>}
     </div>
@@ -153,8 +153,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Category Selection */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <h3 className="text-gray-800 mb-4">Patient Category</h3>
+        <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Patient Category</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATEGORIES.map(cat => (
               <button
@@ -170,19 +170,19 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-        {/* Common Fields */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <h3 className="text-gray-800 mb-4">Personal Information</h3>
+        {/* Basic Information */}
+        <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Basic Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Full Name', 'name', 'text', 'Last, First Middle')}
             {field('Contact Number', 'contact', 'tel', '09XX-XXX-XXXX')}
             {field('Birthday', 'birthday', 'date')}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Sex</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Sex</label>
               <select
                 value={form.sex ?? ''}
                 onChange={e => set('sex', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-white"
+                className="w-full border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
               >
                 <option value="Female">Female</option>
                 <option value="Male">Male</option>
@@ -197,18 +197,18 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
         {/* Category-specific fields */}
         {form.category === 'Student' && (
-          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <h3 className="text-gray-800 mb-4">Student Information</h3>
+          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Student Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Student ID', 'id', 'text', 'e.g., 202012345')}
 
               {/* Student Category Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Student Category</label>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Student Category</label>
                 <select
                   value={form.studentCategory ?? 'College'}
                   onChange={e => set('studentCategory', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white"
+                  className="w-full border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
                 >
                   {STUDENT_CATEGORIES.map(sc => (
                     <option key={sc} value={sc}>{sc}</option>
@@ -229,11 +229,11 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
               {/* Year Level — shown for College */}
               {form.studentCategory === 'College' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Year Level</label>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Year Level</label>
                   <select
                     value={form.yearLevel ?? ''}
                     onChange={e => set('yearLevel', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white"
+                    className="w-full border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
                   >
                     <option value="">Select Year</option>
                     {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate'].map(y => (
@@ -252,8 +252,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         )}
 
         {form.category === 'Employee' && (
-          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <h3 className="text-gray-800 mb-4">Employee Information</h3>
+          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Employee Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Employee ID', 'id', 'text', 'e.g., EMP-1234')}
               {field('Position / Designation', 'position', 'text', 'e.g., Professor')}
@@ -263,8 +263,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         )}
 
         {form.category === 'Outsider' && (
-          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <h3 className="text-gray-800 mb-4">Address</h3>
+          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Address</h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Home Address</label>
               <textarea
