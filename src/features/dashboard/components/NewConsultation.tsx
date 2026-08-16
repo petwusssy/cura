@@ -194,13 +194,13 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   };
 
   const sectionCard = (title: string, children: React.ReactNode) => (
-    <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-shadow hover:shadow-md">
+    <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
       <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">{title}</h3>
       {children}
     </div>
   );
 
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm';
+  const inputCls = 'w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm';
   const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2';
 
   return (
