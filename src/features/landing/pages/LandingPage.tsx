@@ -133,7 +133,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute lg:translate-y-0 w-[220vw] h-[220vw] lg:w-[max(1100px,135vh)] lg:h-[max(1100px,135vh)] rounded-full"
+            className="absolute lg:translate-y-0 w-[200vw] h-[200vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
             style={{
               opacity: 1,
               top: isDesktop ? "-15%" : "auto",
@@ -163,10 +163,9 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   className="leading-none mb-2 font-black"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "clamp(5rem, 14vw, 10rem)",
+                    fontSize: "clamp(4rem, 12vw, 8.5rem)",
                     fontWeight: 900,
-                    letterSpacing: "-0.02em",
-                    WebkitTextStroke: "2px currentColor",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>C</span>
