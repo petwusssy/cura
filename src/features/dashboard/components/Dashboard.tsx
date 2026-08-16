@@ -107,11 +107,11 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   ];
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-[#f8f9fa] min-h-full">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-transparent min-h-full">
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900" style={{ color: '#1a1a2e' }}>Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
