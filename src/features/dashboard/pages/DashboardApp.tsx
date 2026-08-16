@@ -72,6 +72,67 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
   }, []);
 
+  // Check for upcoming medication doses
+  useEffect(() => {
+    const checkUpcomingDoses = () => {
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+      setNotifications(prev => {
+        const newNotifs: AppNotification[] = [];
+        
+        consultations.forEach(c => {
+          if (c.date !== today || !c.treatments) return;
+          
+          c.treatments.forEach(t => {
+            if (t.nextDose) {
+              const [doseHourStr, doseMinuteStr] = t.nextDose.split(':');
+              const doseHour = parseInt(doseHourStr, 10);
+              const doseMinute = parseInt(doseMinuteStr, 10);
+              
+              if (isNaN(doseHour) || isNaN(doseMinute)) return;
+              
+              const doseTimeInMins = doseHour * 60 + doseMinute;
+              const currentTimeInMins = currentHours * 60 + currentMinutes;
+              const diff = doseTimeInMins - currentTimeInMins;
+              
+              // If dose is within 30 minutes (0 to 30 mins)
+              if (diff >= 0 && diff <= 30) {
+                const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+                // Check if we already have this notification
+                if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
+                  const patientName = patients.find(p => p.id === c.patientId)?.name || 'Unknown Patient';
+                  newNotifs.push({
+                    id: notifId,
+                    type: 'medication',
+                    message: `Medication (${t.medicineName}) due for ${patientName} in ${diff === 0 ? 'less than a minute' : `${diff} mins`}`,
+                    time: now.toISOString(),
+                    read: false,
+                    patientName,
+                    nextDose: t.nextDose,
+                    minutesLeft: diff,
+                  });
+                }
+              }
+            }
+          });
+        });
+
+        if (newNotifs.length > 0) {
+          return [...newNotifs, ...prev];
+        }
+        return prev;
+      });
+    };
+
+    // Run immediately, then every minute
+    checkUpcomingDoses();
+    const interval = setInterval(checkUpcomingDoses, 60000);
+    return () => clearInterval(interval);
+  }, [consultations, patients]);
+
   const handleSavePatient = async (patient: Patient) => {
     if (editingPatientId) {
       setPatients(prev => prev.map(p => p.id === editingPatientId ? patient : p));
@@ -131,18 +192,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       setConsultations(prev => [...prev, created]);
       
       await processMedicineDeductions(consultation.date, consultation.patientId, consultation.treatments);
-      consultation.treatments.forEach(t => {
-        if (t.nextDose) {
-          const notif: AppNotification = {
-            id: `N${Date.now()}${Math.random()}`, type: 'medication',
-            message: `Medication due for ${patients.find(p => p.id === consultation.patientId)?.name}`,
-            time: new Date().toISOString(), read: false,
-            patientName: patients.find(p => p.id === consultation.patientId)?.name,
-            nextDose: t.nextDose, minutesLeft: 30,
-          };
-          setNotifications(prev => [notif, ...prev]);
-        }
-      });
+      // Removed instant hardcoded notification; now handled by interval inside useEffect
     } catch (e) {
       console.error('Failed to save consultation', e);
       throw e;
