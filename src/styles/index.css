@@ -96,29 +96,29 @@
 /* ═══════════════════════════════════════════════
    Dark Mode Corrections for Hardcoded Colors
    ═══════════════════════════════════════════════ */
-.dark .bg-white:not([class*="dark:bg-"]) {
+:is(.dark, .ocean) .bg-white:not([class*="dark:bg-"]) {
   background-color: var(--card) !important;
 }
-.dark .bg-gray-50:not([class*="dark:bg-"]),
-.dark .bg-gray-100:not([class*="dark:bg-"]) {
+:is(.dark, .ocean) .bg-gray-50:not([class*="dark:bg-"]),
+:is(.dark, .ocean) .bg-gray-100:not([class*="dark:bg-"]) {
   background-color: var(--background) !important;
 }
-.dark .text-black:not([class*="dark:text-"]),
-.dark .text-gray-900:not([class*="dark:text-"]),
-.dark .text-gray-800:not([class*="dark:text-"]) {
+:is(.dark, .ocean) .text-black:not([class*="dark:text-"]),
+:is(.dark, .ocean) .text-gray-900:not([class*="dark:text-"]),
+:is(.dark, .ocean) .text-gray-800:not([class*="dark:text-"]) {
   color: var(--foreground) !important;
 }
-.dark .text-gray-700:not([class*="dark:text-"]),
-.dark .text-gray-600:not([class*="dark:text-"]),
-.dark .text-gray-500:not([class*="dark:text-"]) {
+:is(.dark, .ocean) .text-gray-700:not([class*="dark:text-"]),
+:is(.dark, .ocean) .text-gray-600:not([class*="dark:text-"]),
+:is(.dark, .ocean) .text-gray-500:not([class*="dark:text-"]) {
   color: var(--muted-foreground) !important;
 }
-.dark .border-gray-100:not([class*="dark:border-"]),
-.dark .border-gray-200:not([class*="dark:border-"]),
-.dark .border-gray-300:not([class*="dark:border-"]) {
+:is(.dark, .ocean) .border-gray-100:not([class*="dark:border-"]),
+:is(.dark, .ocean) .border-gray-200:not([class*="dark:border-"]),
+:is(.dark, .ocean) .border-gray-300:not([class*="dark:border-"]) {
   border-color: var(--border) !important;
 }
-.dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg {
+:is(.dark, .ocean) .shadow-sm, :is(.dark, .ocean) .shadow-md, :is(.dark, .ocean) .shadow-lg {
   box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
 }
 
@@ -260,12 +260,12 @@ body {
 /* ═══════════════════════════════════════════════
    Preserve Original Light Colors for Printable Documents
    ═══════════════════════════════════════════════ */
-.dark .dashboard-scope .print-report-container,
-.dark .dashboard-scope .prf-printable-area,
-.dark .dashboard-scope #official-med-cert-page,
-.dark .print-report-container.bg-white,
-.dark .prf-printable-area.bg-white,
-.dark #official-med-cert-page.bg-white {
+:is(.dark, .ocean) .dashboard-scope .print-report-container,
+:is(.dark, .ocean) .dashboard-scope .prf-printable-area,
+:is(.dark, .ocean) .dashboard-scope #official-med-cert-page,
+:is(.dark, .ocean) .print-report-container.bg-white,
+:is(.dark, .ocean) .prf-printable-area.bg-white,
+:is(.dark, .ocean) #official-med-cert-page.bg-white {
   --background: #ffffff;
   --card: #ffffff;
   --foreground: #000000;
@@ -276,33 +276,33 @@ body {
 }
 
 /* Force inner text colors to stay black/gray for printing */
-.dark .prf-printable-area *,
-.dark #official-med-cert-page * {
+:is(.dark, .ocean) .prf-printable-area *,
+:is(.dark, .ocean) #official-med-cert-page * {
   color: revert;
 }
-.dark .prf-printable-area .text-black,
-.dark #official-med-cert-page .text-black,
-.dark .prf-printable-area .text-gray-900,
-.dark #official-med-cert-page .text-gray-900 {
+:is(.dark, .ocean) .prf-printable-area .text-black,
+:is(.dark, .ocean) #official-med-cert-page .text-black,
+:is(.dark, .ocean) .prf-printable-area .text-gray-900,
+:is(.dark, .ocean) #official-med-cert-page .text-gray-900 {
   color: #000000 !important;
 }
-.dark .prf-printable-area .text-gray-800,
-.dark #official-med-cert-page .text-gray-800,
-.dark .prf-printable-area .text-gray-600,
-.dark #official-med-cert-page .text-gray-600,
-.dark .prf-printable-area .text-gray-500,
-.dark #official-med-cert-page .text-gray-500 {
+:is(.dark, .ocean) .prf-printable-area .text-gray-800,
+:is(.dark, .ocean) #official-med-cert-page .text-gray-800,
+:is(.dark, .ocean) .prf-printable-area .text-gray-600,
+:is(.dark, .ocean) #official-med-cert-page .text-gray-600,
+:is(.dark, .ocean) .prf-printable-area .text-gray-500,
+:is(.dark, .ocean) #official-med-cert-page .text-gray-500 {
   color: #4b5563 !important;
 }
 
 /* Force inner background colors to stay light for printing */
-.dark .prf-printable-area .bg-white,
-.dark #official-med-cert-page .bg-white {
+:is(.dark, .ocean) .prf-printable-area .bg-white,
+:is(.dark, .ocean) #official-med-cert-page .bg-white {
   background-color: #ffffff !important;
 }
-.dark .prf-printable-area .bg-gray-50,
-.dark #official-med-cert-page .bg-gray-50,
-.dark .prf-printable-area .bg-gray-100,
-.dark #official-med-cert-page .bg-gray-100 {
+:is(.dark, .ocean) .prf-printable-area .bg-gray-50,
+:is(.dark, .ocean) #official-med-cert-page .bg-gray-50,
+:is(.dark, .ocean) .prf-printable-area .bg-gray-100,
+:is(.dark, .ocean) #official-med-cert-page .bg-gray-100 {
   background-color: #f3f4f6 !important;
 }
