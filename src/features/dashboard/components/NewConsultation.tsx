@@ -216,7 +216,14 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Select Patient */}
-        {!patient && sectionCard('Select Patient', (
+        {patient ? sectionCard('Patient Information', (
+          <div>
+            <label className={labelCls}>Patient</label>
+            <div className={inputCls + ' bg-gray-50 dark:bg-[#13141f] cursor-not-allowed opacity-80'}>
+              {patient.name}
+            </div>
+          </div>
+        )) : sectionCard('Select Patient', (
           <div className="relative" ref={dropdownRef}>
             <label className={labelCls}>Patient *</label>
             <div 
