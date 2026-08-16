@@ -74,29 +74,53 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
 
+  const processMedicineDeductions = async (consultationDate: string, patientId: string, treatments: Treatment[]) => {
+    if (!treatments || treatments.length === 0) return;
+    const patientName = patients.find(p => p.id === patientId)?.name || 'patient';
+    
+    const updates = treatments.map(async (t) => {
+      const med = medicines.find(m => m.name === t.medicineName);
+      if (med) {
+        const newStock = Math.max(0, med.stock - t.quantity);
+        const updatedMed = {
+          ...med,
+          stock: newStock,
+          status: newStock <= 10 ? 'Low Stock' : 'Normal' as any,
+          stockHistory: [...(med.stockHistory || []), {
+            date: consultationDate,
+            qty: t.quantity,
+            type: 'dispense' as const,
+            note: `Dispensed to ${patientName}`,
+          }],
+        };
+        try {
+          await medicineService.updateMedicine(updatedMed.id, updatedMed);
+          return updatedMed;
+        } catch (e) {
+          console.error(`Failed to update stock for ${med.name}`, e);
+        }
+      }
+      return null;
+    });
+
+    const results = await Promise.all(updates);
+    const successfulUpdates = results.filter(Boolean) as MedicineItem[];
+
+    if (successfulUpdates.length > 0) {
+      setMedicines(prev => prev.map(m => {
+        const updated = successfulUpdates.find(u => u.id === m.id);
+        return updated ? updated : m;
+      }));
+    }
+  };
+
   const handleSaveConsultation = async (consultation: Consultation) => {
     try {
       const { id, ...rest } = consultation;
       const created = await consultationService.createConsultation(rest);
       setConsultations(prev => [...prev, created]);
       
-      // Keep medicine stock logic local for now (will be updated when Medicine API is integrated)
-      consultation.treatments.forEach(t => {
-        setMedicines(prev => prev.map(m => {
-          if (m.name.toLowerCase().startsWith(t.medicineName.toLowerCase().split(' ')[0].toLowerCase())) {
-            const newStock = Math.max(0, m.stock - t.quantity);
-            return {
-              ...m, stock: newStock,
-              status: newStock <= 10 ? 'Low Stock' : 'Normal',
-              stockHistory: [...m.stockHistory, {
-                date: consultation.date, qty: t.quantity, type: 'dispense' as const,
-                note: `Dispensed to ${patients.find(p => p.id === consultation.patientId)?.name || 'patient'}`,
-              }],
-            };
-          }
-          return m;
-        }));
-      });
+      await processMedicineDeductions(consultation.date, consultation.patientId, consultation.treatments);
       consultation.treatments.forEach(t => {
         if (t.nextDose) {
           const notif: AppNotification = {
@@ -139,6 +163,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const updatedOld = await consultationService.updateConsultation(convertingId, { 
         complaint: `${existing.complaint} [CONVERTED]` 
       });
+
+      await processMedicineDeductions(newConsultation.date, newConsultation.patientId, newConsultation.treatments);
 
       setConsultations(prev => {
         const mapped = prev.map(c => c.id === convertingId ? updatedOld : c);
