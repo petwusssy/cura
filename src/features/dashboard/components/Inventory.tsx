@@ -282,6 +282,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             </tbody>
           </table>
         </div>
+      </div>
 
       {/* Mobile Cards */}
       <div className="flex flex-col gap-3 md:hidden">
@@ -337,7 +338,6 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             </div>
           );
         })}
-      </div>
       </div>
 
       {/* Adjust Modal */}
