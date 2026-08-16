@@ -7,7 +7,7 @@
 /* ═══════════════════════════════════════════════
    Dashboard (shadcn) Theme Variables
    ═══════════════════════════════════════════════ */
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .ocean *));
 
 :root {
   --font-size: 16px;
