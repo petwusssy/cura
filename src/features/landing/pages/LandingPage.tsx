@@ -133,7 +133,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             layout
             animate={blobControls}
             initial={{ backgroundColor: stage === "idle" ? "#ffffff" : "#082f6e" }}
-            className="absolute lg:translate-y-0 w-[200vw] h-[200vw] lg:w-[max(990px,120vh)] lg:h-[max(990px,120vh)] rounded-full"
+            className="absolute lg:translate-y-0 w-[220vw] h-[220vw] lg:w-[max(1100px,135vh)] lg:h-[max(1100px,135vh)] rounded-full"
             style={{
               opacity: 1,
               top: isDesktop ? "-15%" : "auto",
