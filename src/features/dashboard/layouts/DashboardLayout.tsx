@@ -83,17 +83,18 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         initial={{ x: -250 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.25, ease: "easeOut", delay: 0.05 }}
-        className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
+        className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto border-r ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
         style={{
           width: collapsed ? 64 : 248,
           background: 'var(--color-sidebar)',
+          borderColor: 'rgba(147, 197, 253, 0.4)',
           boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
         }}
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderColor: 'rgba(219,234,254,0.3)', height: '88px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
         >
           {/* Main icon */}
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
@@ -174,7 +175,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </nav>
 
         {/* UA Seal + Sign Out */}
-        <div className="relative z-10 border-t flex-shrink-0 p-3 space-y-3" style={{ borderColor: 'rgba(219,234,254,0.3)' }}>
+        <div className="relative z-10 flex-shrink-0 p-3 space-y-3" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.4)' }}>
           {!collapsed && (
             <div className="flex items-center gap-2 px-2 pb-1">
               <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-70" />
@@ -205,7 +206,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
           className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 bg-[#1B3A6B] dark:bg-[var(--header-bg)]"
           style={{ 
-            borderBottom: '1px solid rgba(219, 234, 254, 0.3)',
+            borderBottom: '1px solid rgba(147, 197, 253, 0.4)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >
@@ -249,7 +250,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-3 pl-3 border-l border-[#dbeafe]/30 dark:border-border z-10">
+          <div className="flex items-center gap-3 pl-3 border-l z-10" style={{ borderColor: 'rgba(147, 197, 253, 0.4)' }}>
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
