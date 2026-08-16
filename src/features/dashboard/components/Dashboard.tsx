@@ -89,18 +89,37 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Dashboard</h1>
         </div>
         {/* Date filter */}
-        <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setDateFilter(f)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
-                ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-              style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
-            >
-              {f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <input 
+                type="date" 
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="border-none bg-transparent rounded-lg px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E5AA8]"
+              />
+              <span className="text-gray-400 text-sm font-medium">-</span>
+              <input 
+                type="date" 
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="border-none bg-transparent rounded-lg px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E5AA8]"
+              />
+            </div>
+          )}
+          <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
+              <button
+                key={f}
+                onClick={() => setDateFilter(f)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
+                  ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
+              >
+                {f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
