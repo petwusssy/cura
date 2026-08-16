@@ -254,7 +254,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       {/* Header Banner & Navigation Tabs */}
       <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#1E5AA8] dark:text-blue-400">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Purchase Receipts & Requisition
           </h1>
           <p className="text-sm text-gray-500 mt-1">

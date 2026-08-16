@@ -475,7 +475,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* Header Bar */}
       <div className="no-print flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-foreground">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
           <p className="text-sm text-gray-500 mt-1">
