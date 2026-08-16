@@ -83,8 +83,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-gray-900">Patient Profile</h1>
-          <p className="text-sm text-gray-400">Detailed patient record</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Patient Profile</h1>
         </div>
       </div>
 

@@ -112,7 +112,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">University of the Assumption Clinic — CURA</p>
         </div>
         {/* Date filter */}
         <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>

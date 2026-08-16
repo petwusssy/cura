@@ -176,7 +176,7 @@ export function ConsultationTab({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900" style={{ color: '#1a1a2e' }}>Consultations</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Consultations</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>

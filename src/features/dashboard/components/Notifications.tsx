@@ -78,8 +78,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
     <div className="p-6 space-y-5 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Notifications</h1>
         </div>
         {unreadCount > 0 && (
           <button onClick={onMarkAllRead}

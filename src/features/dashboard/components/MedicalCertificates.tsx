@@ -478,9 +478,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Official University of the Assumption clinical document system. Issue, save, and print.
-          </p>
         </div>
 
         <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200/50 w-full md:w-auto self-start md:self-auto">

@@ -146,8 +146,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
             <User size={20} />
           </div>
           <div>
-            <h1 className="text-gray-900">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
-            <p className="text-sm text-gray-400">{isEditing ? `Editing record: ${editingPatientId}` : 'Fill in patient information'}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
           </div>
         </div>
       </div>

@@ -213,12 +213,7 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-gray-900">New Consultation</h1>
-          <p className="text-sm text-gray-400">
-            {patient ? (
-              <>Patient: <strong>{patient.name}</strong> ({patient.id})</>
-            ) : 'Create a new consultation or non-consultation record'}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">New Consultation</h1>
         </div>
       </div>
 

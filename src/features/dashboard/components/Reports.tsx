@@ -908,8 +908,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       {/* Page header */}
       <div className="flex items-center justify-between flex-wrap gap-4 print:hidden bg-white p-5 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-gray-900 text-2xl font-extrabold tracking-tight">Reports Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1 font-medium">Generate, edit, and export clinic reports</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Reports Dashboard</h1>
         </div>
 
         {/* Filters and Controls */}

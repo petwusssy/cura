@@ -219,8 +219,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900">Beds Management</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Monitor bed occupancy and patient assignments</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Beds Management</h1>
         </div>
         {/* Grid date filter */}
         <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">

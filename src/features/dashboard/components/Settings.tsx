@@ -46,8 +46,7 @@ export function Settings() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-foreground">Settings</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage system preferences and account settings</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Settings</h1>
         </div>
       </div>
 

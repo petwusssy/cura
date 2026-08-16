@@ -147,8 +147,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900 text-2xl font-bold">Pharmacy Inventory</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track medicine batches, low stock alerts, and refill schedules</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Pharmacy Inventory</h1>
         </div>
         <button
           onClick={() => setShowAddForm(true)}

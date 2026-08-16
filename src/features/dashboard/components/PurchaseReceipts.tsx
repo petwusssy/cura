@@ -257,9 +257,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Purchase Receipts & Requisition
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Create, fill up, and print official clinic PRF supply requisitions and track delivery shipments.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 bg-gray-200/60 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
