@@ -170,8 +170,6 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-          </div>
-
           {/* Basic Information */}
           <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
             <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Basic Information</h3>
