@@ -200,12 +200,9 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-            </div>
-          </div>
-          
-          {/* RIGHT COLUMN */}
-          <div className="space-y-10">
-            {/* Category-specific fields */}
+        {/* RIGHT COLUMN */}
+        <div className="space-y-10">
+          {/* Category-specific fields */}
             {form.category === 'Student' && (
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Student Information</h3>
