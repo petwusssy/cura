@@ -297,7 +297,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     { id: 'bed'      as ReportType, label: 'Bed Management',            icon: <BedDouble size={15} /> },
   ];
 
-  const renderConsumptionCells = (cArray: number[]) => {
+  const renderConsumptionCells = (cArray: number[], isNoStock: boolean = false) => {
     const blocks: JSX.Element[] = [];
     const intervals = [
       { start: 0, end: 5 }, { start: 5, end: 10 }, { start: 10, end: 15 }, 
@@ -310,13 +310,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         const val = cArray[i] || 0;
         subTotal += val;
         blocks.push(
-          <td key={`cell-${i}`} className="border border-black px-1 py-1 text-center font-bold text-[11px] bg-white text-gray-900 min-w-[20px]">
+          <td key={`cell-${i}`} style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#FFFFFF' }} className="border border-black px-1 py-1 text-center font-bold text-[11px] text-gray-900 min-w-[20px]">
             {val > 0 ? val : ''}
           </td>
         );
       }
       blocks.push(
-        <td key={`subtot-${idx}`} className="border border-black px-1.5 py-1 text-center font-extrabold text-[11px] bg-[#E36C09] text-white font-mono min-w-[28px]">
+        <td key={`subtot-${idx}`} style={{ backgroundColor: isNoStock ? '#EA9999' : '#E36C09' }} className={`border border-black px-1.5 py-1 text-center font-extrabold text-[11px] ${isNoStock ? 'text-black' : 'text-white'} font-mono min-w-[28px]`}>
           {subTotal > 0 ? subTotal : 0}
         </td>
       );
@@ -1222,17 +1222,21 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         </tr>
                       </thead>
                       <tbody>
-                        {MEDICINE_INVENTORY_TEMPLATE.map(med => (
-                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${med.status === 'NO STOCK' ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/10'}`}>
-                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{med.no}</td>
-                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{med.name}</td>
-                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'}`}>{med.beg}</td>
-                            {renderConsumptionCells(med.c)}
-                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'}`}>{med.end}</td>
-                            <td style={{ backgroundColor: med.status === 'NO STOCK' ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.status === 'NO STOCK' ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
-                            <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${med.status === 'NO STOCK' ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{med.status || ''}</td>
+                        {MEDICINE_INVENTORY_TEMPLATE.map(med => {
+                          const actualMed = medicines.find(m => m.name.toLowerCase().includes(med.name.split(' ')[0].toLowerCase()));
+                          const isNoStock = actualMed ? actualMed.stock <= 0 : med.status === 'NO STOCK';
+                          const statusText = isNoStock ? 'NO STOCK' : '';
+                          return (
+                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/10'}`}>
+                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{med.no}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{med.name}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{med.beg}</td>
+                            {renderConsumptionCells(med.c, isNoStock)}
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{med.end}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
+                            <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${isNoStock ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{statusText}</td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>
@@ -1276,16 +1280,19 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         </tr>
                       </thead>
                       <tbody>
-                        {SUPPLIES_LIST.map(sup => (
-                          <tr key={sup.no} className="border border-black text-[11px] hover:bg-amber-50/10 font-semibold">
-                            <td style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{sup.no}</td>
-                            <td style={{ backgroundColor: '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{sup.name}</td>
-                            <td style={{ backgroundColor: '#76923C' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white">{sup.beg}</td>
-                            {renderConsumptionCells(sup.consumed)}
-                            <td style={{ backgroundColor: '#76923C' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white">{sup.end}</td>
-                            <td style={{ backgroundColor: '#31859B' }} className="border-2 border-black py-1 px-1.5 text-center font-black font-mono text-white text-xs">{sup.total}</td>
+                        {SUPPLIES_LIST.map(sup => {
+                          const actualSup = medicines.find(m => m.name.toLowerCase().includes(sup.name.split(' ')[0].toLowerCase()));
+                          const isNoStock = actualSup ? actualSup.stock <= 0 : false;
+                          return (
+                          <tr key={sup.no} className={`border border-black text-[11px] font-semibold ${isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-amber-50/10'}`}>
+                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{sup.no}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{sup.name}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{sup.beg}</td>
+                            {renderConsumptionCells(sup.consumed, isNoStock)}
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{sup.end}</td>
+                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'} text-xs`}>{sup.total}</td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>
