@@ -177,9 +177,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         {/* UA Seal + Sign Out */}
         <div className="relative z-10 flex-shrink-0 p-3 space-y-3" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.4)' }}>
           {!collapsed && (
-            <div className="flex items-center gap-2 px-2 pb-1">
-              <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-70" />
-              <span className="text-[9px] leading-tight opacity-60 text-white font-medium uppercase">
+            <div className="flex items-center gap-3 px-2 pb-1">
+              <img src={uaLogo} alt="UA Logo" className="w-10 h-10 object-contain opacity-80" />
+              <span className="text-[11px] leading-tight opacity-70 text-white font-semibold uppercase tracking-wide">
                 UNIVERSITY OF THE ASSUMPTION<br />CLINIC
               </span>
             </div>
