@@ -210,7 +210,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#FAFBFD]">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-transparent">
       {/* Print CSS specific to PRF Template */}
       <style>{`
         @media print {
@@ -254,7 +254,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       {/* Header Banner & Navigation Tabs */}
       <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: PRIMARY }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#1E5AA8] dark:text-blue-400">
             Purchase Receipts & Requisition
           </h1>
           <p className="text-sm text-gray-500 mt-1">

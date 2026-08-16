@@ -411,7 +411,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   });
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-[#F8FAFC]">
+    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-transparent">
       {/* Custom Print & Font Styling ensuring 100% fidelity to Letter PDF template */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -475,7 +475,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* Header Bar */}
       <div className="no-print flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-gray-200 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
           <p className="text-sm text-gray-500 mt-1">
