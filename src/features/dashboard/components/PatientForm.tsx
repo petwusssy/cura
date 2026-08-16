@@ -151,13 +151,12 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 md:p-8 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
-          {/* LEFT COLUMN */}
-          <div className="space-y-10">
-            {/* Category Selection */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Patient Category</h3>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* LEFT COLUMN */}
+        <div className="space-y-6">
+          {/* Category Selection */}
+          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Patient Category</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATEGORIES.map(cat => (
               <button
@@ -173,11 +172,11 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-            </div>
+          </div>
 
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Basic Information</h3>
+          {/* Basic Information */}
+          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Basic Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Full Name', 'name', 'text', 'Last, First Middle')}
             {field('Contact Number', 'contact', 'tel', '09XX-XXX-XXXX')}
@@ -201,11 +200,11 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className="space-y-10">
+        <div className="space-y-6">
           {/* Category-specific fields */}
-            {form.category === 'Student' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Student Information</h3>
+          {form.category === 'Student' && (
+            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Student Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Student ID', 'id', 'text', 'e.g., 202012345')}
 
@@ -258,9 +257,9 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         )}
 
-            {form.category === 'Employee' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Employee Information</h3>
+          {form.category === 'Employee' && (
+            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Employee Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Employee ID', 'id', 'text', 'e.g., EMP-1234')}
               {field('Position / Designation', 'position', 'text', 'e.g., Professor')}
@@ -269,9 +268,9 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         )}
 
-            {form.category === 'Outsider' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">Address</h3>
+          {form.category === 'Outsider' && (
+            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Address</h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Home Address</label>
               <textarea
@@ -282,13 +281,12 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white resize-none"
               />
             </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-6 mt-10 border-t border-gray-200 dark:border-gray-800">
+        <div className="lg:col-span-2 flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             type="button"
             onClick={() => onNavigate('patients')}
