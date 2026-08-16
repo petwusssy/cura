@@ -207,7 +207,6 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground"
           style={{ 
             background: 'var(--header-bg)',
-            borderBottom: '1px solid rgba(147, 197, 253, 0.4)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >
