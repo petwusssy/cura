@@ -153,8 +153,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
       <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category Selection */}
-          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Patient Category</h3>
+          <div className="bg-blue-50 dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-200 dark:border-gray-800/50">Patient Category</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATEGORIES.map(cat => (
               <button
@@ -171,8 +171,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         </div>
 
           {/* Basic Information */}
-          <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Basic Information</h3>
+          <div className="bg-blue-50 dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-200 dark:border-gray-800/50">Basic Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Full Name', 'name', 'text', 'Last, First Middle')}
             {field('Contact Number', 'contact', 'tel', '09XX-XXX-XXXX')}
