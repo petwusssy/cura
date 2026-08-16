@@ -308,6 +308,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <NewConsultation
             patient={selectedPatient}
             patients={patients}
+            medicines={medicines}
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
         );
@@ -316,6 +317,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <NewConsultation
             patient={selectedPatient}
             patients={patients}
+            medicines={medicines}
             forcedStatus="Consultation"
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
@@ -325,6 +327,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <NewConsultation
             patient={selectedPatient}
             patients={patients}
+            medicines={medicines}
             forcedStatus="Non-Consultation"
             onSave={handleSaveConsultation} onNavigate={navigate}
           />
@@ -336,6 +339,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <NewConsultation
             patient={p}
             patients={patients}
+            medicines={medicines}
             forcedStatus="Consultation"
             initialData={initialData}
             onSave={async (c) => {

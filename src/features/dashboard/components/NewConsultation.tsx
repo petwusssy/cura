@@ -27,17 +27,14 @@ const DEFAULT_CASE_CATEGORIES = [
   'Lethargic', 'Fracture', 'Sinusitis'
 ];
 
-const MEDICINES = [
-  'Biogesic 500mg', 'Paracetamol 500mg', 'Ibuprofen 400mg', 'Mefenamic 500mg',
-  'Buscopan', 'Dimetapp', 'Cetirizine 10mg', 'Benadryl 25mg', 'Omeprazole 20mg',
-  'Metronidazole 500mg', 'Strepsils', 'Gaviscon', 'Hydrite', 'Kremil-S',
-];
+
 
 const UNITS = ['tablet', 'capsule', 'sachet', 'lozenge', 'piece', 'bottle', 'mL', 'application'];
 
 interface NewConsultationProps {
   patient?: Patient;
   patients?: Patient[];
+  medicines?: MedicineItem[];
   forcedStatus?: 'Consultation' | 'Non-Consultation';
   onSave: (consultation: Consultation) => void | Promise<void>;
   onNavigate: (page: Page) => void;
@@ -53,7 +50,7 @@ const today = () => {
   return d.toISOString().split('T')[0];
 };
 
-export function NewConsultation({ patient, patients = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {
+export function NewConsultation({ patient, patients = [], medicines = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {
   const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || initialData?.patientId || '');
   const [patientSearch, setPatientSearch] = useState('');
   const [isPatientDropdownOpen, setIsPatientDropdownOpen] = useState(false);
@@ -434,17 +431,22 @@ export function NewConsultation({ patient, patients = [], forcedStatus, initialD
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className={labelCls}>Medicine Name</label>
-                    <input
-                      type="text"
-                      list={`med-list-${t.id}`}
+                    <select
                       value={t.medicineName}
                       onChange={e => updateTreatment(t.id, 'medicineName', e.target.value)}
-                      placeholder="Select or type medicine..."
                       className={inputCls}
-                    />
-                    <datalist id={`med-list-${t.id}`}>
-                      {MEDICINES.map(m => <option key={m} value={m} />)}
-                    </datalist>
+                    >
+                      <option value="" disabled>Select medicine...</option>
+                      {medicines.map(m => (
+                        <option 
+                          key={m.id} 
+                          value={m.name} 
+                          disabled={m.stock <= 0}
+                        >
+                          {m.name} {m.stock <= 0 ? '(Out of Stock)' : `(${m.stock} available)`}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className={labelCls}>Quantity</label>
