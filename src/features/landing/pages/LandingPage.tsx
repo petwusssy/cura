@@ -137,7 +137,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             style={{
               opacity: 1,
               top: isDesktop ? "-15%" : "auto",
-              bottom: isDesktop ? "auto" : "calc(-200vw + 50vh)",
+              bottom: isDesktop ? "auto" : "calc(-200vw + 45vh)",
               left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "-50vw",
               right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto"
             }}
@@ -190,7 +190,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   className="font-bold mb-12 text-[#001e50]/90"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: "1.15rem",
+                    fontSize: !isDesktop ? "0.95rem" : "1.15rem",
                     letterSpacing: "0.01em",
                   }}
                 >
