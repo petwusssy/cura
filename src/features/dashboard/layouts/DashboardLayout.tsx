@@ -93,7 +93,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          className={`relative z-10 flex items-center justify-center flex-shrink-0 ${collapsed ? '' : 'gap-3'}`}
           style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
         >
           {/* Main icon */}
