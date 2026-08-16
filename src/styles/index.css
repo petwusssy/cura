@@ -260,9 +260,12 @@ body {
 /* ═══════════════════════════════════════════════
    Preserve Original Light Colors for Printable Documents
    ═══════════════════════════════════════════════ */
-.dark .print-report-container,
-.dark .prf-template,
-.dark .med-cert-template {
+.dark .dashboard-scope .print-report-container,
+.dark .dashboard-scope .prf-printable-area,
+.dark .dashboard-scope #official-med-cert-page,
+.dark .print-report-container.bg-white,
+.dark .prf-printable-area.bg-white,
+.dark #official-med-cert-page.bg-white {
   --background: #ffffff;
   --card: #ffffff;
   --foreground: #000000;
@@ -270,4 +273,36 @@ body {
   --border: #e5e7eb;
   background-color: #ffffff !important;
   color: #000000 !important;
+}
+
+/* Force inner text colors to stay black/gray for printing */
+.dark .prf-printable-area *,
+.dark #official-med-cert-page * {
+  color: revert;
+}
+.dark .prf-printable-area .text-black,
+.dark #official-med-cert-page .text-black,
+.dark .prf-printable-area .text-gray-900,
+.dark #official-med-cert-page .text-gray-900 {
+  color: #000000 !important;
+}
+.dark .prf-printable-area .text-gray-800,
+.dark #official-med-cert-page .text-gray-800,
+.dark .prf-printable-area .text-gray-600,
+.dark #official-med-cert-page .text-gray-600,
+.dark .prf-printable-area .text-gray-500,
+.dark #official-med-cert-page .text-gray-500 {
+  color: #4b5563 !important;
+}
+
+/* Force inner background colors to stay light for printing */
+.dark .prf-printable-area .bg-white,
+.dark #official-med-cert-page .bg-white {
+  background-color: #ffffff !important;
+}
+.dark .prf-printable-area .bg-gray-50,
+.dark #official-med-cert-page .bg-gray-50,
+.dark .prf-printable-area .bg-gray-100,
+.dark #official-med-cert-page .bg-gray-100 {
+  background-color: #f3f4f6 !important;
 }
