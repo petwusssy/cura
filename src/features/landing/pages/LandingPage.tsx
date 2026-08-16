@@ -137,7 +137,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
             style={{
               opacity: 1,
               top: isDesktop ? "-15%" : "auto",
-              bottom: isDesktop ? "auto" : "calc(-200vw + 25vh)",
+              bottom: isDesktop ? "auto" : "calc(-200vw + 50vh)",
               left: isDesktop ? (stage !== "form" ? "-35%" : "auto") : "-50vw",
               right: isDesktop ? (stage === "form" ? "-35%" : "auto") : "auto"
             }}
@@ -157,7 +157,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-                className="mt-16 lg:mt-24 mb-[15vh] lg:mb-0"
+                className="mt-16 lg:mt-24"
               >
                 <h1
                   className="leading-none mb-2 font-black"
@@ -175,7 +175,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 </h1>
 
                 <p
-                  className="text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-8"
+                  className="text-[10px] md:text-[11px] font-semibold tracking-widest uppercase mb-32 lg:mb-8"
                   style={{ 
                     fontFamily: "'Inter', sans-serif", 
                     letterSpacing: "0.1em",
@@ -187,13 +187,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 </p>
 
                 <p
-                  className="font-bold mb-12"
+                  className="font-bold mb-12 text-[#001e50]/90"
                   style={{
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "1.15rem",
                     letterSpacing: "0.01em",
-                    color: !isDesktop ? "#ffffff" : "rgba(0, 30, 80, 0.9)",
-                    transition: "color 0.5s"
                   }}
                 >
                   Compassion. Care. Connected.
