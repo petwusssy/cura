@@ -43,15 +43,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   const [customTo, setCustomTo] = useState('');
 
 
-  const getStatusColors = (status: string) => {
-    switch (status) {
-      case 'Closed': return { bg: '#FFF0F0', iconBg: '#FF3B5C', badgeBorder: '#FF3B5C40', badgeText: '#FF3B5C' };
-      case 'Open': return { bg: '#F0FFF4', iconBg: '#4CAF50', badgeBorder: '#4CAF5040', badgeText: '#4CAF50' };
-      case 'Half Day': return { bg: '#FFFDF0', iconBg: '#FF9800', badgeBorder: '#FF980040', badgeText: '#FF9800' };
-      default: return { bg: '#FFF0F0', iconBg: '#FF3B5C', badgeBorder: '#FF3B5C40', badgeText: '#FF3B5C' };
-    }
-  };
-  const colors = getStatusColors(broadcastStatus);
+
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   const yesterday = '2026-06-26';
