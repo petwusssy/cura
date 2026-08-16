@@ -194,8 +194,8 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   };
 
   const sectionCard = (title: string, children: React.ReactNode) => (
-    <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">{title}</h3>
+    <div className="space-y-4">
+      <h3 className="text-lg font-bold text-[#1E5AA8] dark:text-blue-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800">{title}</h3>
       {children}
     </div>
   );
@@ -214,7 +214,10 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 sm:p-8 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+          {/* LEFT COLUMN */}
+          <div className="space-y-10">
         {/* Select Patient */}
         {!patient && sectionCard('Select Patient', (
           <div className="relative" ref={dropdownRef}>
@@ -382,8 +385,12 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
           </div>
         ))}
 
-        {/* Assessment / Vitals */}
-        {sectionCard('Assessment / Vital Signs', (
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="space-y-10">
+            {/* Assessment / Vitals */}
+            {sectionCard('Assessment / Vital Signs', (
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -573,8 +580,11 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
           </div>
         ))}
 
+          </div>
+        </div>
+
         {/* Actions */}
-        <div className="flex justify-end gap-3 pb-4">
+        <div className="flex justify-end gap-3 pt-6 mt-10 border-t border-gray-200 dark:border-gray-800">
           <button type="button" onClick={() => onNavigate('patients')} className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
