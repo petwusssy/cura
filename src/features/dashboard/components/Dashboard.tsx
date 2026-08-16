@@ -21,20 +21,6 @@ interface DashboardProps {
   onSelectPatient: (id: string) => void;
 }
 
-const timelineData = [
-  { time: '08:00', consultations: 2 }, { time: '09:00', consultations: 5 },
-  { time: '10:00', consultations: 4 }, { time: '11:00', consultations: 7 },
-  { time: '12:00', consultations: 3 }, { time: '13:00', consultations: 6 },
-  { time: '14:00', consultations: 8 }, { time: '15:00', consultations: 5 },
-  { time: '16:00', consultations: 2 },
-];
-
-const monthlyData = [
-  { month: 'Jan', consultations: 145 }, { month: 'Feb', consultations: 132 },
-  { month: 'Mar', consultations: 168 }, { month: 'Apr', consultations: 155 },
-  { month: 'May', consultations: 189 }, { month: 'Jun', consultations: 142 },
-];
-
 type DateFilter = 'today' | 'yesterday' | 'week' | 'custom';
 
 export function Dashboard({ patients, consultations, medicines, notifications, onNavigate, onSelectPatient }: DashboardProps) {
@@ -45,13 +31,41 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
 
 
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  const yesterday = '2026-06-26';
+  const todayDate = new Date();
+  const today = todayDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const yesterdayDate = new Date(todayDate);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const weekAgoDate = new Date(todayDate);
+  weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+  const weekAgo = weekAgoDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
 
   const filteredConsultations = consultations.filter(c => {
     if (dateFilter === 'today') return c.date === today;
     if (dateFilter === 'yesterday') return c.date === yesterday;
+    if (dateFilter === 'week') return c.date >= weekAgo && c.date <= today;
+    if (dateFilter === 'custom') {
+      if (!customFrom && !customTo) return true;
+      if (customFrom && !customTo) return c.date >= customFrom;
+      if (!customFrom && customTo) return c.date <= customTo;
+      return c.date >= customFrom && c.date <= customTo;
+    }
     return true;
+  });
+
+  const currentYear = todayDate.getFullYear();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyData = months.map((month, index) => {
+    const monthStr = String(index + 1).padStart(2, '0');
+    const count = consultations.filter(c => c.date.startsWith(`${currentYear}-${monthStr}`)).length;
+    return { month, consultations: count };
+  });
+
+  const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+  const timelineData = hours.map(hour => {
+    const hourPrefix = hour.substring(0, 2);
+    const count = filteredConsultations.filter(c => c.timeIn && c.timeIn.startsWith(hourPrefix)).length;
+    return { time: hour, consultations: count };
   });
 
   const todayConsultations = filteredConsultations.filter(c => c.status === 'Consultation');
