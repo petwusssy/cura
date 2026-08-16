@@ -165,7 +165,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: "clamp(4rem, 12vw, 8.5rem)",
                     fontWeight: 900,
-                    letterSpacing: "-0.01em",
+                    letterSpacing: "-0.02em",
+                    WebkitTextStroke: "2px currentColor",
                   }}
                 >
                   <span style={{ color: !isDesktop ? "#ffffff" : "#001e50", transition: "color 0.5s" }}>C</span>
