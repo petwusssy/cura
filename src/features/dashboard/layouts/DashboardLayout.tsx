@@ -197,10 +197,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden text-card-foreground transition-colors duration-300"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 bg-[#1B3A6B] dark:bg-[var(--header-bg)]"
           style={{ 
-            background: 'var(--header-bg)',
-            borderBottom: '1px solid var(--header-border)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >
@@ -210,14 +209,14 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
           `}</style>
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div style={{ position:'absolute', top:'-30px', left:'15%', width:'160px', height:'160px', borderRadius:'40% 60% 70% 30% / 40% 50% 60% 50%', background:'rgba(255,255,255,0.5)', animation:'blob1 7s ease-in-out infinite' }} />
-            <div style={{ position:'absolute', top:'-20px', right:'20%', width:'130px', height:'130px', borderRadius:'60% 40% 30% 70% / 60% 30% 70% 40%', background:'rgba(255,255,255,0.4)', animation:'blob2 9s ease-in-out infinite' }} />
-            <div style={{ position:'absolute', top:'-10px', left:'60%', width:'100px', height:'100px', borderRadius:'30% 70% 70% 30% / 30% 30% 70% 70%', background:'rgba(255,255,255,0.6)', animation:'blob1 11s ease-in-out infinite reverse' }} />
+            <div className="absolute top-[-30px] left-[15%] w-[160px] h-[160px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-[#dbeafe]/20 dark:bg-white/10 animate-[blob1_7s_ease-in-out_infinite]" />
+            <div className="absolute top-[-20px] right-[20%] w-[130px] h-[130px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-[#bfdbfe]/20 dark:bg-white/5 animate-[blob2_9s_ease-in-out_infinite]" />
+            <div className="absolute top-[-10px] left-[60%] w-[100px] h-[100px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[#dbeafe]/20 dark:bg-white/10 animate-[blob1_11s_ease-in-out_infinite_reverse]" />
           </div>
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors z-10"
+            className="relative p-2 rounded-lg text-white/70 hover:text-white dark:text-muted-foreground dark:hover:text-foreground hover:bg-white/10 dark:hover:bg-accent transition-colors z-10"
           >
             <Menu size={20} />
           </button>
@@ -230,7 +229,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {/* Notification bell */}
           <button
             onClick={() => onNavigate('notifications')}
-            className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors z-10"
+            className="relative p-2 rounded-xl text-white/70 hover:text-white dark:text-muted-foreground dark:hover:text-foreground hover:bg-white/10 dark:hover:bg-accent transition-colors z-10"
           >
             <Bell size={20} />
             {unread > 0 && (
@@ -244,16 +243,16 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-3 pl-3 border-l border-border z-10">
+          <div className="flex items-center gap-3 pl-3 border-l border-white/10 dark:border-border z-10">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #2563eb 100%)', boxShadow: '0 2px 8px rgba(27,58,107,0.3)' }}
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
             >
               UA
             </div>
             <div className="hidden md:block">
-              <div className="text-sm font-semibold text-foreground">UA CLINIC ADMIN</div>
-              <div className="text-xs text-primary font-medium">Administrator</div>
+              <div className="text-sm font-semibold text-white dark:text-foreground">UA CLINIC ADMIN</div>
+              <div className="text-xs text-blue-200 dark:text-primary font-medium">Administrator</div>
             </div>
           </div>
         </motion.header>
