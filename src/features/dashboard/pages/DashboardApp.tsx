@@ -41,7 +41,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [patients, setPatients]                 = useState<Patient[]>([]);
   const [consultations, setConsultations]       = useState<Consultation[]>([]);
   const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
-  const [medicines, setMedicines]               = useState<MedicineItem[]>([]);
+  const [medicines, setMedicines]               = useState<MedicineItem[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_medicines_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
   const [beds, setBeds]                         = useState<Bed[]>([]);
@@ -55,7 +60,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   useEffect(() => {
     patientService.getPatients().then(d => d !== undefined && setPatients(d)).catch(console.error);
     consultationService.getConsultations().then(d => d !== undefined && setConsultations(d)).catch(console.error);
-    medicineService.getMedicines().then(d => d !== undefined && setMedicines(d)).catch(console.error);
+    medicineService.getMedicines().then(d => {
+      if (d !== undefined) {
+        setMedicines(d);
+        localStorage.setItem('cura_medicines_cache', JSON.stringify(d));
+      }
+    }).catch(console.error);
     medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
     bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
     certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
