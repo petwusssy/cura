@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import {
   Users, Stethoscope, Package, AlertTriangle, Activity, ChevronRight,
-  Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill,
-  Megaphone
+  Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
@@ -43,22 +42,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
 
-  // Broadcaster State
-  const [broadcastStatus, setBroadcastStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
-  const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
-  const [lastUpdated, setLastUpdated] = useState('Aug 11, 2026 09:35 PM');
-
-  const [draftStatus, setDraftStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
-  const [draftMessage, setDraftMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
-
-  const handlePushUpdate = () => {
-    setBroadcastStatus(draftStatus);
-    setBroadcastMessage(draftMessage);
-    const now = new Date();
-    const formatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + 
-                     now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setLastUpdated(formatted);
-  };
 
   const getStatusColors = (status: string) => {
     switch (status) {
@@ -154,80 +137,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
         ))}
       </div>
 
-      {/* 3. Live Status & Broadcaster */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 flex flex-col gap-4">
-          <div className="rounded-xl p-5 flex flex-col gap-4 h-full" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.badgeBorder}` }}>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm" style={{ backgroundColor: colors.iconBg }}>
-                <Megaphone size={24} />
-              </div>
-              <div>
-                <div className="text-sm font-bold" style={{ color: colors.iconBg }}>Live Clinic Status</div>
-                <span className="inline-block text-[11px] font-black px-2.5 py-0.5 mt-1 rounded-md uppercase tracking-wider" style={{ color: colors.badgeText, background: `${colors.iconBg}15`, border: `1px solid ${colors.badgeBorder}` }}>
-                  {broadcastStatus}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-800 font-semibold leading-relaxed flex-1">{broadcastMessage}</p>
-            <div className="text-[11px] text-gray-500 font-medium pt-3 border-t" style={{ borderColor: `${colors.badgeBorder}50` }}>
-              Last updated: {lastUpdated}
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-gray-900 font-bold">Status Broadcaster</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Update the clinic's public advisory message</p>
-            </div>
-            <span className="text-[11px] px-3 py-1 rounded-full font-bold uppercase tracking-wider" style={{ background: `${PRIMARY}10`, color: PRIMARY }}>
-              Admin Only
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setDraftStatus('Open')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Open' ? 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#2E7D32]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#4CAF50]"></span> Open
-              </button>
-              <button
-                onClick={() => setDraftStatus('Closed')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Closed' ? 'border-[#F44336] bg-[#F44336]/10 text-[#C62828]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#F44336]"></span> Closed
-              </button>
-              <button
-                onClick={() => setDraftStatus('Half Day')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${draftStatus === 'Half Day' ? 'border-[#FF9800] bg-[#FF9800]/10 text-[#EF6C00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#FF9800]"></span> Half Day
-              </button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={draftMessage}
-                onChange={(e) => setDraftMessage(e.target.value)}
-                className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-[#1E5AA8] focus:ring-2 focus:ring-[#1E5AA8]/20 transition-all bg-gray-50 focus:bg-white"
-                placeholder="Enter announcement message..."
-              />
-              <button
-                onClick={handlePushUpdate}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-bold transition-all hover:opacity-90 hover:shadow-md"
-                style={{ background: PRIMARY }}
-              >
-                <Megaphone size={16} /> Push
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timeline Chart */}

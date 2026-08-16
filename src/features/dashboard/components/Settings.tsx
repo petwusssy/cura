@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop, Droplets } from 'lucide-react';
+import { Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop, Droplets, Megaphone } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const PRIMARY = '#1E5AA8';
@@ -16,6 +16,7 @@ const sections: SettingsSection[] = [
   { id: 'security', label: 'Security', icon: <Shield size={16} /> },
   { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
   { id: 'system', label: 'System', icon: <Database size={16} /> },
+  { id: 'advisory', label: 'Clinic Advisory', icon: <Megaphone size={16} /> },
   { id: 'help', label: 'Help & About', icon: <HelpCircle size={16} /> },
 ];
 
@@ -39,7 +40,10 @@ export function Settings() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all';
+  const [broadcastStatus, setBroadcastStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
+  const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
+
+  const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-background text-foreground';
   const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5';
 
   return (
@@ -224,6 +228,50 @@ export function Settings() {
                     <span className="text-sm font-medium text-foreground">{value}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'advisory' && (
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              <h3 className="text-foreground pb-4 border-b border-border">Clinic Status Broadcast</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className={labelCls}>Status</label>
+                  <div className="flex gap-2">
+                    {['Open', 'Closed', 'Half Day'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setBroadcastStatus(status as any)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${
+                          broadcastStatus === status 
+                            ? 'border-[#1E5AA8] bg-[#1E5AA8]/10 text-[#1E5AA8]' 
+                            : 'border-border text-muted-foreground hover:bg-accent'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Message</label>
+                  <input
+                    type="text"
+                    value={broadcastMessage}
+                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                    className={inputCls}
+                    placeholder="Enter message..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
+                  <Megaphone size={15} /> {saved ? 'Pushed!' : 'Push Update'}
+                </button>
               </div>
             </div>
           )}
