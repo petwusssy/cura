@@ -92,8 +92,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderColor: 'rgba(255,255,255,0.08)', height: '88px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 border-b ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          style={{ borderColor: 'rgba(219,234,254,0.3)', height: '88px' }}
         >
           {/* Main icon */}
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
@@ -126,8 +126,14 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           )}
         </div>
 
+        {/* Animated Blobs for Sidebar */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-[10%] left-[-20%] w-[120px] h-[120px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-[#dbeafe]/10 dark:bg-white/5 animate-[blob1_8s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[20%] right-[-10%] w-[150px] h-[150px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-[#bfdbfe]/10 dark:bg-white/5 animate-[blob2_10s_ease-in-out_infinite]" />
+        </div>
+
         {/* Nav */}
-        <nav className="flex-1 py-3 overflow-y-auto">
+        <nav className="relative z-10 flex-1 py-3 overflow-y-auto">
           {filteredNavItems.map(item => {
             const active = isActive(item.id);
             return (
@@ -168,7 +174,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </nav>
 
         {/* UA Seal + Sign Out */}
-        <div className="border-t flex-shrink-0 p-3 space-y-3" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative z-10 border-t flex-shrink-0 p-3 space-y-3" style={{ borderColor: 'rgba(219,234,254,0.3)' }}>
           {!collapsed && (
             <div className="flex items-center gap-2 px-2 pb-1">
               <img src={uaLogo} alt="UA Logo" className="w-8 h-8 object-contain opacity-70" />
@@ -199,7 +205,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
           className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 bg-[#1B3A6B] dark:bg-[var(--header-bg)]"
           style={{ 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: '1px solid rgba(219, 234, 254, 0.3)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
           }}
         >
@@ -243,7 +249,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-3 pl-3 border-l border-white/10 dark:border-border z-10">
+          <div className="flex items-center gap-3 pl-3 border-l border-[#dbeafe]/30 dark:border-border z-10">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
