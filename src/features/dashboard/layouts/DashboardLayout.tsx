@@ -105,7 +105,6 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
                 height: collapsed ? '80px' : '115px', /* Slightly smaller balanced size */
                 width: 'auto',
                 maxWidth: 'none',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
                 transform: 'translateY(4px)' /* Perfect optical center alignment */
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1.05)'}
