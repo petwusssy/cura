@@ -116,7 +116,9 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
               <span className="text-[34px] font-black tracking-tighter leading-none"
                     style={{
-                      background: 'linear-gradient(180deg, #ffffff 0%, #dbeafe 100%)',
+                      background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
+                      backgroundSize: '100% 300%',
+                      animation: 'liquidText 5s ease-in-out infinite',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
@@ -214,6 +216,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           <style>{`
             @keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(20px,-10px) scale(1.1)} 66%{transform:translate(-10px,15px) scale(0.95)} }
             @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
+            @keyframes liquidText { 0%,100%{background-position: 0% 0%} 50%{background-position: 0% 100%} }
           `}</style>
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-[-30px] left-[15%] w-[160px] h-[160px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-white/50 dark:bg-white/10 animate-[blob1_7s_ease-in-out_infinite]" />
