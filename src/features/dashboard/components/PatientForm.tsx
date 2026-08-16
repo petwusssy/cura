@@ -151,9 +151,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* LEFT COLUMN */}
-        <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category Selection */}
           <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
             <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Patient Category</h3>
@@ -199,9 +197,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div className="space-y-6">
-          {/* Category-specific fields */}
+        {/* Category-specific fields */}
           {form.category === 'Student' && (
             <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
               <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Student Information</h3>
@@ -283,10 +279,9 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
             </div>
             </div>
           )}
-        </div>
 
         {/* Actions */}
-        <div className="lg:col-span-2 flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             type="button"
             onClick={() => onNavigate('patients')}
