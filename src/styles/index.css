@@ -54,8 +54,8 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.145 0 0); /* very dark grey/black */
+  --foreground: oklch(0.985 0 0); /* almost white */
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
@@ -69,7 +69,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
@@ -91,6 +91,35 @@
 
   --header-bg: oklch(0.145 0 0);
   --header-border: oklch(0.269 0 0);
+}
+
+/* ═══════════════════════════════════════════════
+   Dark Mode Corrections for Hardcoded Colors
+   ═══════════════════════════════════════════════ */
+.dark .bg-white:not([class*="dark:bg-"]) {
+  background-color: var(--card) !important;
+}
+.dark .bg-gray-50:not([class*="dark:bg-"]),
+.dark .bg-gray-100:not([class*="dark:bg-"]) {
+  background-color: var(--background) !important;
+}
+.dark .text-black:not([class*="dark:text-"]),
+.dark .text-gray-900:not([class*="dark:text-"]),
+.dark .text-gray-800:not([class*="dark:text-"]) {
+  color: var(--foreground) !important;
+}
+.dark .text-gray-700:not([class*="dark:text-"]),
+.dark .text-gray-600:not([class*="dark:text-"]),
+.dark .text-gray-500:not([class*="dark:text-"]) {
+  color: var(--muted-foreground) !important;
+}
+.dark .border-gray-100:not([class*="dark:border-"]),
+.dark .border-gray-200:not([class*="dark:border-"]),
+.dark .border-gray-300:not([class*="dark:border-"]) {
+  border-color: var(--border) !important;
+}
+.dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
 }
 
 .ocean {
