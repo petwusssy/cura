@@ -327,7 +327,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     triggerToast('✅ Certificate populated in template! Click "Save to Archives" to record it.');
   };
 
-  // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
+  // AUTOMATIC DIRECT PDF DOWNLOAD
   const handleDownloadPDF = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
@@ -346,50 +346,94 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
 
-      // Helper: fetch an image src and convert it to a base64 data URL
-      const toDataURL = (src: string): Promise<string> =>
+      // Helper: convert any URL to base64 via fetch (avoids canvas CORS taint entirely)
+      const urlToBase64 = async (url: string): Promise<string> => {
+        try {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(url);
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return url;
+        }
+      };
+
+      // Helper: serialize an SVG element to a base64 PNG (prevents html2canvas freezing on SVG gradients)
+      const svgToBase64 = (svgEl: SVGSVGElement, w: number, h: number): Promise<string> =>
         new Promise(resolve => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.naturalWidth;
-              canvas.height = img.naturalHeight;
-              canvas.getContext('2d')!.drawImage(img, 0, 0);
-              resolve(canvas.toDataURL('image/png'));
-            } catch {
-              resolve(src); // fallback: keep original src
-            }
-          };
-          img.onerror = () => resolve(src); // fallback on load error
-          img.src = src;
+          try {
+            const serialized = new XMLSerializer().serializeToString(svgEl);
+            const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image(w, h);
+            img.onload = () => {
+              const c = document.createElement('canvas');
+              c.width = w; c.height = h;
+              c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+              URL.revokeObjectURL(url);
+              resolve(c.toDataURL('image/png'));
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+            img.src = url;
+          } catch { resolve(''); }
         });
 
-      // Clone the element so we never mutate the live DOM
+      // 1. Convert all SVGs in the LIVE element to base64 PNGs BEFORE cloning
+      //    (we need getBoundingClientRect which only works on mounted elements)
+      const liveSvgs = Array.from(element.querySelectorAll('svg')) as SVGSVGElement[];
+      const svgDataUrls: string[] = await Promise.all(
+        liveSvgs.map(svg => {
+          const rect = svg.getBoundingClientRect();
+          const w = Math.round(rect.width) || 100;
+          const h = Math.round(rect.height) || 100;
+          return svgToBase64(svg, w, h);
+        })
+      );
+
+      // 2. Clone the element so we never mutate the live DOM
       const clone = element.cloneNode(true) as HTMLElement;
 
-      // Remove edit-mode interactive styling from clone
-      clone.querySelectorAll('input, textarea').forEach(el => {
-        const input = el as HTMLInputElement | HTMLTextAreaElement;
-        (input as HTMLElement).style.background = 'transparent';
-        (input as HTMLElement).style.border = 'none';
-        (input as HTMLElement).style.outline = 'none';
+      // 3. Replace SVG elements in the clone with <img> using the pre-rendered base64 PNGs
+      const cloneSvgs = Array.from(clone.querySelectorAll('svg')) as SVGSVGElement[];
+      cloneSvgs.forEach((svgEl, i) => {
+        const dataUrl = svgDataUrls[i];
+        if (!dataUrl) return;
+        const rect = liveSvgs[i].getBoundingClientRect();
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.width = Math.round(rect.width) || 100;
+        img.height = Math.round(rect.height) || 100;
+        img.style.display = 'block';
+        svgEl.parentNode?.replaceChild(img, svgEl);
       });
 
-      // Convert all images in clone to base64 to prevent html2canvas CORS issues
-      const imgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
-      await Promise.all(imgs.map(async (img) => {
-        if (img.src) {
-          img.src = await toDataURL(img.src);
+      // 4. Convert all <img> elements in clone to base64 via fetch (no canvas taint)
+      const cloneImgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
+      await Promise.all(cloneImgs.map(async img => {
+        if (img.src && !img.src.startsWith('data:')) {
+          img.src = await urlToBase64(img.src);
         }
       }));
 
-      // Mount the clone off-screen so html2canvas can measure it
+      // 5. Clean up input/textarea styling in clone for clean PDF output
+      clone.querySelectorAll('input, textarea').forEach(el => {
+        const e = el as HTMLElement;
+        e.style.background = 'transparent';
+        e.style.border = 'none';
+        e.style.outline = 'none';
+        e.style.boxShadow = 'none';
+      });
+
+      // 6. Mount clone off-screen so html2canvas can measure it
       clone.style.position = 'fixed';
       clone.style.top = '-9999px';
       clone.style.left = '-9999px';
       clone.style.zIndex = '-1';
+      clone.style.width = '8.5in';
       document.body.appendChild(clone);
 
       const opt = {
@@ -400,6 +444,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           scale: 2,
           useCORS: true,
           allowTaint: false,
+          foreignObjectRendering: false,
           logging: false,
           scrollY: 0,
           backgroundColor: '#ffffff',
@@ -411,13 +456,17 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       document.body.removeChild(clone);
       setIsDownloading(false);
-      triggerToast(`✅ Successfully downloaded ${filename} to your computer!`);
+      triggerToast(`✅ Successfully downloaded ${filename}!`);
     } catch (err: any) {
       console.error('PDF Generation Error:', err);
+      // Clean up clone if it was appended
+      const leftover = document.getElementById('official-med-cert-page-clone');
+      if (leftover) document.body.removeChild(leftover);
       setIsDownloading(false);
-      triggerToast('Failed to generate PDF. Please use the Print button instead.');
+      triggerToast('Failed to generate PDF. Please try again.');
     }
   };
+
 
   const handlePrint = async () => {
     await syncToArchives();
