@@ -55,11 +55,19 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   const [patientSearch, setPatientSearch] = useState('');
   const [isPatientDropdownOpen, setIsPatientDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Medicine combobox state: keyed by treatment id
+  const [medicineSearch, setMedicineSearch] = useState<Record<string, string>>({});
+  const [openMedicineDropdown, setOpenMedicineDropdown] = useState<string | null>(null);
+  const medicineDropdownRef = useRef<HTMLDivElement | null>(null);
   
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsPatientDropdownOpen(false);
+      }
+      if (medicineDropdownRef.current && !medicineDropdownRef.current.contains(e.target as Node)) {
+        setOpenMedicineDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -436,24 +444,66 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                   </button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2" ref={openMedicineDropdown === t.id ? medicineDropdownRef : undefined}>
                     <label className={labelCls}>Medicine Name</label>
-                    <select
-                      value={t.medicineName}
-                      onChange={e => updateTreatment(t.id, 'medicineName', e.target.value)}
-                      className={inputCls}
-                    >
-                      <option value="" disabled>Select medicine...</option>
-                      {medicines.map(m => (
-                        <option 
-                          key={m.id} 
-                          value={m.name} 
-                          disabled={m.stock <= 0}
-                        >
-                          {m.name} {m.stock <= 0 ? '(Out of Stock)' : `(${m.stock} available)`}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        className={inputCls}
+                        placeholder="Search or type medicine..."
+                        value={openMedicineDropdown === t.id
+                          ? (medicineSearch[t.id] ?? '')
+                          : t.medicineName}
+                        onFocus={() => {
+                          setOpenMedicineDropdown(t.id);
+                          setMedicineSearch(prev => ({ ...prev, [t.id]: t.medicineName }));
+                        }}
+                        onChange={e => {
+                          setMedicineSearch(prev => ({ ...prev, [t.id]: e.target.value }));
+                          setOpenMedicineDropdown(t.id);
+                        }}
+                      />
+                      {openMedicineDropdown === t.id && (() => {
+                        const query = (medicineSearch[t.id] ?? '').toLowerCase().trim();
+                        const filtered = medicines.filter(m =>
+                          m.name.toLowerCase().includes(query)
+                        );
+                        return (
+                          <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#13141f] border border-blue-200 dark:border-blue-900 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                            {filtered.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-gray-400 text-center">No medicine found</div>
+                            ) : filtered.map(m => (
+                              <div
+                                key={m.id}
+                                onMouseDown={e => {
+                                  e.preventDefault();
+                                  updateTreatment(t.id, 'medicineName', m.name);
+                                  setOpenMedicineDropdown(null);
+                                  setMedicineSearch(prev => ({ ...prev, [t.id]: '' }));
+                                }}
+                                className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                                  t.medicineName === m.name
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-[#1E5AA8] font-semibold'
+                                    : 'hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-800 dark:text-gray-200'
+                                } ${m.stock <= 0 ? 'opacity-50' : ''}`}
+                              >
+                                <span>{m.name}</span>
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                  m.stock <= 0
+                                    ? 'bg-red-100 text-red-600'
+                                    : m.stock <= (m.threshold ?? 10)
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-green-100 text-green-700'
+                                }`}>
+                                  {m.stock <= 0 ? 'Out of Stock' : `${m.stock} avail.`}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                   <div>
                     <label className={labelCls}>Quantity</label>
