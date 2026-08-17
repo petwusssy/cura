@@ -362,25 +362,26 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         }
       };
 
-      // Helper: serialize an SVG element to a base64 PNG (prevents html2canvas freezing on SVG gradients)
+      // Helper: serialize an SVG element to a base64 PNG using a data: URI
+      // (blob URLs taint the canvas in most browsers; data: URIs are same-origin safe)
       const svgToBase64 = (svgEl: SVGSVGElement, w: number, h: number): Promise<string> =>
         new Promise(resolve => {
           try {
             const serialized = new XMLSerializer().serializeToString(svgEl);
-            const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
+            // Use data URI instead of blob URL — avoids canvas cross-origin taint
+            const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serialized);
             const img = new Image(w, h);
             img.onload = () => {
               const c = document.createElement('canvas');
               c.width = w; c.height = h;
               c.getContext('2d')!.drawImage(img, 0, 0, w, h);
-              URL.revokeObjectURL(url);
               resolve(c.toDataURL('image/png'));
             };
-            img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
-            img.src = url;
+            img.onerror = () => resolve('');
+            img.src = dataUri;
           } catch { resolve(''); }
         });
+
 
       // 1. Convert all SVGs in the LIVE element to base64 PNGs BEFORE cloning
       //    (we need getBoundingClientRect which only works on mounted elements)
@@ -459,13 +460,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       triggerToast(`✅ Successfully downloaded ${filename}!`);
     } catch (err: any) {
       console.error('PDF Generation Error:', err);
-      // Clean up clone if it was appended
-      const leftover = document.getElementById('official-med-cert-page-clone');
-      if (leftover) document.body.removeChild(leftover);
       setIsDownloading(false);
       triggerToast('Failed to generate PDF. Please try again.');
     }
   };
+
 
 
   const handlePrint = async () => {
