@@ -429,13 +429,41 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         e.style.boxShadow = 'none';
       });
 
-      // 6. Mount clone off-screen so html2canvas can measure it
+      // 6. Inject CSS custom-property overrides into the clone to replace oklch() values.
+      //    html2canvas uses an old color parser that throws on oklch().
+      //    The certificate's own colors are all explicit hex/rgb — only the inherited
+      //    :root custom properties from index.css use oklch. We neutralize them here.
+      const oklchOverride = document.createElement('style');
+      oklchOverride.textContent = `
+        *, *::before, *::after {
+          --background: #ffffff; --foreground: #000000;
+          --card: #ffffff; --card-foreground: #000000;
+          --popover: #ffffff; --popover-foreground: #000000;
+          --primary: #1e5aa8; --primary-foreground: #ffffff;
+          --secondary: #f1f5f9; --secondary-foreground: #1e293b;
+          --muted: #f1f5f9; --muted-foreground: #64748b;
+          --accent: #f1f5f9; --accent-foreground: #1e293b;
+          --destructive: #dc2626; --destructive-foreground: #ffffff;
+          --border: #e2e8f0; --input: #e2e8f0; --ring: #94a3b8;
+          --chart-1: #e67e22; --chart-2: #2ecc71; --chart-3: #2c3e50;
+          --chart-4: #f1c40f; --chart-5: #e74c3c;
+          --sidebar: #1e293b; --sidebar-foreground: #f8fafc;
+          --sidebar-primary: #3b82f6; --sidebar-primary-foreground: #ffffff;
+          --sidebar-accent: #334155; --sidebar-accent-foreground: #f8fafc;
+          --sidebar-border: #334155; --sidebar-ring: #64748b;
+          --header-bg: #1e293b; --header-border: #334155;
+        }
+      `;
+      clone.prepend(oklchOverride);
+
+      // 7. Mount clone off-screen so html2canvas can measure it
       clone.style.position = 'fixed';
       clone.style.top = '-9999px';
       clone.style.left = '-9999px';
       clone.style.zIndex = '-1';
       clone.style.width = '8.5in';
       document.body.appendChild(clone);
+
 
       const opt = {
         margin: 0,
