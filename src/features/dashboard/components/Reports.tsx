@@ -4,7 +4,6 @@ import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseR
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import html2pdf from 'html2pdf.js';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -206,6 +205,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
   const currentMonth = new Date().toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Manila' }).toUpperCase();
   const currentYear = new Date().toLocaleString('en-US', { year: 'numeric', timeZone: 'Asia/Manila' });
   const [reportMonth, setReportMonth] = useState(currentMonth);
@@ -324,26 +324,14 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     return blocks;
   };
 
-  const handleExportPDF = (title: string) => {
-    const element = document.getElementById("report-export-area");
-    if (!element) return;
-
-    const opt = {
-      margin: [10, 10],
-      filename: `${title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-
-    // Temporarily hide elements with .no-export class
-    const noExportElements = element.querySelectorAll('.no-export, .print-bar-ui');
-    noExportElements.forEach(el => (el as HTMLElement).style.display = 'none');
-
-    html2pdf().set(opt).from(element).save().then(() => {
-      // Restore elements
-      noExportElements.forEach(el => (el as HTMLElement).style.display = '');
-    });
+  const handleExportPDF = () => {
+    // Use the browser's built-in print-to-PDF — html2canvas freezes on large tables.
+    // The print CSS already hides everything except the report container.
+    setIsPdfExporting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPdfExporting(false);
+    }, 150);
   };
 
   const handleExportExcel = async (title: string) => {
@@ -837,10 +825,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
           <Printer size={12} /> Print
         </button>
-        <button onClick={() => handleExportPDF(title)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
+        <button onClick={() => handleExportPDF()}
+          disabled={isPdfExporting}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer disabled:opacity-60"
           style={{ background: PRIMARY }}>
-          <Download size={12} /> Export PDF
+          <Download size={12} /> {isPdfExporting ? 'Opening...' : 'Export PDF'}
         </button>
         <button onClick={() => {
             if (activeReport === 'daily') exportDailyReportExcel();

@@ -329,64 +329,94 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   // AUTOMATIC DIRECT PDF DOWNLOAD (Bypasses print window, converts directly to standalone .pdf file!)
   const handleDownloadPDF = async () => {
-    // 1. Lock UI immediately so user gets feedback right away
+    if (isDownloading) return;
     setIsDownloading(true);
-    triggerToast("Generating PDF file... Please wait!");
+    triggerToast('Generating PDF file... Please wait!');
 
-    // 2. Auto-save to archives in the background (non-blocking — don't let API hang block PDF)
+    // Auto-save to archives in the background (non-blocking)
     syncToArchives().catch(e => console.error('Background archive sync error:', e));
 
-    // 3. Switch to static clean preview mode (remove editing underlines)
-    setEditMode(false);
-
-    // 4. Set up a safety timeout — if html2pdf hangs for more than 15s, restore UI
-    const safetyTimeout = setTimeout(() => {
-      setIsDownloading(false);
-      setEditMode(true);
-      triggerToast("PDF generation timed out. Please try again.");
-    }, 15000);
-
-    setTimeout(async () => {
+    try {
       const element = document.getElementById('official-med-cert-page');
       if (!element) {
-        clearTimeout(safetyTimeout);
+        triggerToast('Error: Document element not found.');
         setIsDownloading(false);
-        setEditMode(true);
-        triggerToast("Error: Document element not found.");
         return;
       }
 
       const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
 
-      try {
-        const opt = {
-          margin: 0,
-          filename: filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            scrollY: 0,
-          },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
+      // Helper: fetch an image src and convert it to a base64 data URL
+      const toDataURL = (src: string): Promise<string> =>
+        new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              canvas.getContext('2d')!.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } catch {
+              resolve(src); // fallback: keep original src
+            }
+          };
+          img.onerror = () => resolve(src); // fallback on load error
+          img.src = src;
+        });
 
-        await html2pdf().from(element).set(opt).save();
+      // Clone the element so we never mutate the live DOM
+      const clone = element.cloneNode(true) as HTMLElement;
 
-        clearTimeout(safetyTimeout);
-        setIsDownloading(false);
-        setEditMode(true);
-        triggerToast(`✅ Successfully downloaded ${filename} to your computer!`);
-      } catch (err: any) {
-        clearTimeout(safetyTimeout);
-        console.error('PDF Generation Error:', err);
-        setIsDownloading(false);
-        setEditMode(true);
-        triggerToast("Failed to generate PDF. Please try again or check your browser settings.");
-      }
-    }, 300);
+      // Remove edit-mode interactive styling from clone
+      clone.querySelectorAll('input, textarea').forEach(el => {
+        const input = el as HTMLInputElement | HTMLTextAreaElement;
+        (input as HTMLElement).style.background = 'transparent';
+        (input as HTMLElement).style.border = 'none';
+        (input as HTMLElement).style.outline = 'none';
+      });
+
+      // Convert all images in clone to base64 to prevent html2canvas CORS issues
+      const imgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
+      await Promise.all(imgs.map(async (img) => {
+        if (img.src) {
+          img.src = await toDataURL(img.src);
+        }
+      }));
+
+      // Mount the clone off-screen so html2canvas can measure it
+      clone.style.position = 'fixed';
+      clone.style.top = '-9999px';
+      clone.style.left = '-9999px';
+      clone.style.zIndex = '-1';
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin: 0,
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          scrollY: 0,
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+      };
+
+      await html2pdf().from(clone).set(opt).save();
+
+      document.body.removeChild(clone);
+      setIsDownloading(false);
+      triggerToast(`✅ Successfully downloaded ${filename} to your computer!`);
+    } catch (err: any) {
+      console.error('PDF Generation Error:', err);
+      setIsDownloading(false);
+      triggerToast('Failed to generate PDF. Please use the Print button instead.');
+    }
   };
 
   const handlePrint = async () => {
