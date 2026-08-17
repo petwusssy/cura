@@ -12,6 +12,7 @@ const toBackendPayload = (data: Partial<MedicalCertificate> & { patient?: string
   recommendation: data.recommendation,
   doctor:         data.doctor,
   issuedBy:       data.issuedBy,
+  notes:          data.notes,
 });
 
 export const certificateService = {

@@ -456,12 +456,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       `;
       clone.prepend(oklchOverride);
 
-      // 7. Mount clone off-screen so html2canvas can measure it
-      clone.style.position = 'fixed';
-      clone.style.top = '-9999px';
-      clone.style.left = '-9999px';
-      clone.style.zIndex = '-1';
+      // 7. Mount clone off-screen but at valid coordinates so html2canvas can measure it.
+      // Negative coordinates (left: -9999px) cause html2canvas to render a blank/cropped PDF!
+      // Using absolute top: 0, left: 0, zIndex: -9999 hides it behind the main app background safely.
+      clone.style.position = 'absolute';
+      clone.style.top = '0';
+      clone.style.left = '0';
+      clone.style.zIndex = '-9999';
       clone.style.width = '8.5in';
+      
+      // CRITICAL: Explicitly set base colors on the clone to prevent it from inheriting 
+      // resolved oklch() colors from document.body (which causes html2canvas to crash).
+      clone.style.color = '#000000';
+      clone.style.backgroundColor = '#ffffff';
+      
       document.body.appendChild(clone);
 
 
