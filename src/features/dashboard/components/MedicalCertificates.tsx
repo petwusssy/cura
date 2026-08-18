@@ -3,7 +3,8 @@ import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCh
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import uaLogo from '@/assets/images/ua-logo.png';
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const PRIMARY = '#1E5AA8';
 
@@ -336,6 +337,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     // Auto-save to archives in the background (non-blocking)
     syncToArchives().catch(e => console.error('Background archive sync error:', e));
 
+    let clone: HTMLElement | null = null;
+
     try {
       const element = document.getElementById('official-med-cert-page');
       if (!element) {
@@ -346,12 +349,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
 
-      // Helper: convert any URL to base64 via fetch (avoids canvas CORS taint entirely)
+      // Helper: convert any URL to base64 via fetch (avoids canvas CORS taint)
       const urlToBase64 = async (url: string): Promise<string> => {
         try {
           const res = await fetch(url);
           const blob = await res.blob();
-          return await new Promise<string>((resolve, reject) => {
+          return await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.onerror = () => resolve(url);
@@ -362,13 +365,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         }
       };
 
-      // Helper: serialize an SVG element to a base64 PNG using a data: URI
-      // (blob URLs taint the canvas in most browsers; data: URIs are same-origin safe)
+      // Helper: convert SVG element to a base64 PNG data URI
       const svgToBase64 = (svgEl: SVGSVGElement, w: number, h: number): Promise<string> =>
         new Promise(resolve => {
           try {
             const serialized = new XMLSerializer().serializeToString(svgEl);
-            // Use data URI instead of blob URL — avoids canvas cross-origin taint
             const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serialized);
             const img = new Image(w, h);
             img.onload = () => {
@@ -382,9 +383,30 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           } catch { resolve(''); }
         });
 
+      // Helper: convert oklch() color value to a safe hex/rgb fallback.
+      // html2canvas (even standalone) can crash on oklch() computed colors.
+      const oklchToSafe = (val: string): string => {
+        if (!val || !val.includes('oklch')) return val;
+        const m = val.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+[\d.]+/);
+        if (!m) return '#000000';
+        const L = parseFloat(m[1]);
+        const C = parseFloat(m[2]);
+        if (C < 0.02) {
+          // Achromatic — just use lightness as gray
+          const g = Math.round(Math.min(1, Math.max(0, L)) * 255);
+          return `rgb(${g},${g},${g})`;
+        }
+        return '#1e293b'; // Safe chromatic fallback
+      };
 
-      // 1. Convert all SVGs in the LIVE element to base64 PNGs BEFORE cloning
-      //    (we need getBoundingClientRect which only works on mounted elements)
+      // COLOR_PROPS that html2canvas reads — we must sanitise these in the onclone doc.
+      const COLOR_PROPS = [
+        'color', 'backgroundColor', 'borderColor', 'borderTopColor',
+        'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+        'outlineColor', 'textDecorationColor', 'caretColor',
+      ] as const;
+
+      // 1. Pre-render all SVGs from the LIVE element to base64 PNGs (needs live layout)
       const liveSvgs = Array.from(element.querySelectorAll('svg')) as SVGSVGElement[];
       const svgDataUrls: string[] = await Promise.all(
         liveSvgs.map(svg => {
@@ -395,10 +417,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         })
       );
 
-      // 2. Clone the element so we never mutate the live DOM
-      const clone = element.cloneNode(true) as HTMLElement;
+      // 2. Clone element (never mutate the live DOM)
+      clone = element.cloneNode(true) as HTMLElement;
 
-      // 3. Replace SVG elements in the clone with <img> using the pre-rendered base64 PNGs
+      // 3. Replace SVGs in clone with pre-rendered <img> tags
       const cloneSvgs = Array.from(clone.querySelectorAll('svg')) as SVGSVGElement[];
       cloneSvgs.forEach((svgEl, i) => {
         const dataUrl = svgDataUrls[i];
@@ -412,7 +434,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         svgEl.parentNode?.replaceChild(img, svgEl);
       });
 
-      // 4. Convert all <img> elements in clone to base64 via fetch (no canvas taint)
+      // 4. Convert all <img> src to base64 (prevent canvas CORS taint)
       const cloneImgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
       await Promise.all(cloneImgs.map(async img => {
         if (img.src && !img.src.startsWith('data:')) {
@@ -420,82 +442,139 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         }
       }));
 
-      // 5. Clean up input/textarea styling in clone for clean PDF output
+      // 5. Strip input/textarea styling for clean PDF render
       clone.querySelectorAll('input, textarea').forEach(el => {
         const e = el as HTMLElement;
         e.style.background = 'transparent';
         e.style.border = 'none';
         e.style.outline = 'none';
         e.style.boxShadow = 'none';
+        e.style.color = '#000000';
       });
 
-      // 6. Inject CSS custom-property overrides into the clone to replace oklch() values.
-      //    html2canvas uses an old color parser that throws on oklch().
-      //    The certificate's own colors are all explicit hex/rgb — only the inherited
-      //    :root custom properties from index.css use oklch. We neutralize them here.
-      const oklchOverride = document.createElement('style');
-      oklchOverride.textContent = `
-        *, *::before, *::after {
-          --background: #ffffff; --foreground: #000000;
-          --card: #ffffff; --card-foreground: #000000;
-          --popover: #ffffff; --popover-foreground: #000000;
-          --primary: #1e5aa8; --primary-foreground: #ffffff;
-          --secondary: #f1f5f9; --secondary-foreground: #1e293b;
-          --muted: #f1f5f9; --muted-foreground: #64748b;
-          --accent: #f1f5f9; --accent-foreground: #1e293b;
-          --destructive: #dc2626; --destructive-foreground: #ffffff;
-          --border: #e2e8f0; --input: #e2e8f0; --ring: #94a3b8;
-          --chart-1: #e67e22; --chart-2: #2ecc71; --chart-3: #2c3e50;
-          --chart-4: #f1c40f; --chart-5: #e74c3c;
-          --sidebar: #1e293b; --sidebar-foreground: #f8fafc;
-          --sidebar-primary: #3b82f6; --sidebar-primary-foreground: #ffffff;
-          --sidebar-accent: #334155; --sidebar-accent-foreground: #f8fafc;
-          --sidebar-border: #334155; --sidebar-ring: #64748b;
-          --header-bg: #1e293b; --header-border: #334155;
-        }
-      `;
-      clone.prepend(oklchOverride);
+      // 6. Mount the clone off-screen with position:fixed + visibility:hidden.
+      //    - position:fixed → does NOT affect document layout (no page tilt/shift)
+      //    - visibility:hidden → invisible to user but still measurable by html2canvas
+      //    - pointer-events:none → UI remains fully interactive (no freeze)
+      clone.style.cssText = [
+        'position: fixed',
+        'top: 0',
+        'left: 0',
+        'width: 8.5in',
+        'min-height: 11in',
+        'visibility: hidden',
+        'pointer-events: none',
+        'z-index: -99999',
+        'color: #000000',
+        'background-color: #ffffff',
+        'overflow: visible',
+      ].join('; ');
 
-      // 7. Mount clone off-screen but at valid coordinates so html2canvas can measure it.
-      // Negative coordinates (left: -9999px) cause html2canvas to render a blank/cropped PDF!
-      // Using absolute top: 0, left: 0, zIndex: -9999 hides it behind the main app background safely.
-      clone.style.position = 'absolute';
-      clone.style.top = '0';
-      clone.style.left = '0';
-      clone.style.zIndex = '-9999';
-      clone.style.width = '8.5in';
-      
-      // CRITICAL: Explicitly set base colors on the clone to prevent it from inheriting 
-      // resolved oklch() colors from document.body (which causes html2canvas to crash).
-      clone.style.color = '#000000';
-      clone.style.backgroundColor = '#ffffff';
-      
       document.body.appendChild(clone);
 
+      // 7. Render to canvas using standalone html2canvas.
+      //    The onclone callback fires on the cloned document that html2canvas creates
+      //    internally — this is where we strip any remaining oklch() computed values
+      //    BEFORE html2canvas's color parser reads them.
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        foreignObjectRendering: false,
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (_clonedDoc: Document, clonedEl: HTMLElement) => {
+          // Inject safe CSS variable overrides so var(--xxx) resolves to hex, not oklch
+          const safeStyle = _clonedDoc.createElement('style');
+          safeStyle.textContent = `
+            :root, *, *::before, *::after {
+              --background: #ffffff !important; --foreground: #000000 !important;
+              --card: #ffffff !important; --card-foreground: #000000 !important;
+              --popover: #ffffff !important; --popover-foreground: #000000 !important;
+              --primary: #1e5aa8 !important; --primary-foreground: #ffffff !important;
+              --secondary: #f1f5f9 !important; --secondary-foreground: #1e293b !important;
+              --muted: #f1f5f9 !important; --muted-foreground: #64748b !important;
+              --accent: #f1f5f9 !important; --accent-foreground: #1e293b !important;
+              --destructive: #dc2626 !important; --destructive-foreground: #ffffff !important;
+              --border: #e2e8f0 !important; --input: #e2e8f0 !important; --ring: #94a3b8 !important;
+              --chart-1: #e67e22 !important; --chart-2: #2ecc71 !important;
+              --chart-3: #2c3e50 !important; --chart-4: #f1c40f !important;
+              --chart-5: #e74c3c !important;
+              --sidebar: #1e293b !important; --sidebar-foreground: #f8fafc !important;
+              --sidebar-primary: #3b82f6 !important;
+              --sidebar-primary-foreground: #ffffff !important;
+              --sidebar-accent: #334155 !important;
+              --sidebar-accent-foreground: #f8fafc !important;
+              --sidebar-border: #334155 !important; --sidebar-ring: #64748b !important;
+              --header-bg: #1e293b !important; --header-border: #334155 !important;
+            }
+          `;
+          if (_clonedDoc.head) _clonedDoc.head.appendChild(safeStyle);
 
-      const opt = {
-        margin: 0,
-        filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          foreignObjectRendering: false,
-          logging: false,
-          scrollY: 0,
-          backgroundColor: '#ffffff',
+          // Walk every element and inline-override any remaining oklch computed colors
+          const allEls = _clonedDoc.querySelectorAll('*');
+          allEls.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            try {
+              // Use the ORIGINAL (live) window's getComputedStyle since the cloned doc
+              // may not have a complete style cascade. We read from the htmlEl's style.
+              COLOR_PROPS.forEach(prop => {
+                const inlineVal = htmlEl.style[prop as any];
+                if (inlineVal && inlineVal.includes('oklch')) {
+                  htmlEl.style[prop as any] = oklchToSafe(inlineVal);
+                }
+              });
+            } catch { /* skip */ }
+          });
+
+          // Guarantee the root cert element is white on black
+          clonedEl.style.backgroundColor = '#ffffff';
+          clonedEl.style.color = '#000000';
         },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      };
+      });
 
-      await html2pdf().from(clone).set(opt).save();
-
+      // 8. Remove the hidden clone immediately after capture
       document.body.removeChild(clone);
+      clone = null;
+
+      // 9. Build PDF from canvas using jsPDF
+      const pdf = new jsPDF({ unit: 'in', format: 'letter', orientation: 'portrait' });
+      const pageW = pdf.internal.pageSize.getWidth();   // 8.5 in
+      const pageH = pdf.internal.pageSize.getHeight();  // 11 in
+      const imgData = canvas.toDataURL('image/jpeg', 0.97);
+      const canvasAspect = canvas.height / canvas.width;
+      const imgH = pageW * canvasAspect;
+
+      if (imgH <= pageH) {
+        // Fits on one page
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, imgH);
+      } else {
+        // Multi-page: slice the canvas into letter-height strips
+        const pxPerPage = Math.floor(canvas.width * (pageH / pageW));
+        let yOffset = 0;
+        while (yOffset < canvas.height) {
+          const sliceH = Math.min(pxPerPage, canvas.height - yOffset);
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceH;
+          pageCanvas.getContext('2d')!.drawImage(canvas, 0, -yOffset, canvas.width, canvas.height);
+          const sliceData = pageCanvas.toDataURL('image/jpeg', 0.97);
+          if (yOffset > 0) pdf.addPage();
+          pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, pageH * (sliceH / pxPerPage));
+          yOffset += pxPerPage;
+        }
+      }
+
+      pdf.save(filename);
+
       setIsDownloading(false);
       triggerToast(`✅ Successfully downloaded ${filename}!`);
     } catch (err: any) {
       console.error('PDF Generation Error:', err);
+      // Always clean up the clone even if something went wrong
+      if (clone && document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
       setIsDownloading(false);
       triggerToast('Failed to generate PDF. Please try again.');
     }
