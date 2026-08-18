@@ -846,7 +846,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   );
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
       <style>{`
         /* Professional Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {

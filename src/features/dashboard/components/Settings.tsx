@@ -47,8 +47,8 @@ export function Settings() {
   const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5';
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Settings</h1>
         </div>

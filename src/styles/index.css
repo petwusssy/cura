@@ -306,3 +306,49 @@ body {
 :is(.dark, .ocean) #official-med-cert-page .bg-gray-100 {
   background-color: #f3f4f6 !important;
 }
+
+/* ═══════════════════════════════════════════════
+   Responsive Utility Classes
+   ═══════════════════════════════════════════════ */
+
+/* Hide scrollbar while keeping scroll functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE / Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome / Safari / Opera */
+}
+
+/* Smooth momentum scrolling on iOS */
+.scroll-smooth-ios {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area insets for devices with notches/home bars */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent layout overflow on very small screens */
+.min-w-0-safe {
+  min-width: 0;
+}
+
+/* Touch target sizing for accessibility */
+button, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Responsive scrollable horizontal table wrapper */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+

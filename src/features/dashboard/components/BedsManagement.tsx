@@ -215,7 +215,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -234,26 +234,26 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           { label: 'Available', value: available, color: '#2E7D32', bg: '#E8F5E9', icon: <BedDouble size={20} /> },
           { label: 'Occupied', value: occupied, color: RED, bg: `${RED}15`, icon: <BedDouble size={20} /> },
           { label: 'Total Beds', value: beds.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <BedDouble size={20} /> },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl p-4 flex items-center gap-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
+          <div key={s.label} className="bg-white rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
               {s.icon}
             </div>
             <div>
-              <div className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs text-gray-400">{s.label}</div>
+              <div className="text-xl sm:text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-[10px] sm:text-xs text-gray-400">{s.label}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Bed Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[...beds].sort((a, b) => a.bedNumber - b.bedNumber).map(bed => {
           const isOccupied = bed.status === 'Occupied';
           const dur = durations[bed.id];

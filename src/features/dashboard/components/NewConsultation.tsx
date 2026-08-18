@@ -212,7 +212,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2';
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => onNavigate(patient ? 'patient-profile' : 'consultations')} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
           <ChevronLeft size={20} />

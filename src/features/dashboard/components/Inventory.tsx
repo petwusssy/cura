@@ -400,13 +400,13 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       {/* Add Medicine Modal */}
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-gray-900 font-bold text-lg">Register New Medicine</h3>
               <button onClick={() => setShowAddForm(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Medicine Name</label>
                 <input type="text" value={newMed.name} onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}

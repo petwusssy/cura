@@ -200,7 +200,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       </motion.aside>
 
       {/* ── Main ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
         <motion.header
           initial={{ y: -30, opacity: 0 }}

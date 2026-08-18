@@ -75,7 +75,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   };
 
   return (
-    <div className="p-6 space-y-5 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Notifications</h1>
