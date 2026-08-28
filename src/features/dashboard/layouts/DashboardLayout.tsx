@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList, Package, ShoppingCart,
-  FileText, BedDouble, BarChart2, Bell, Settings, Search, LogOut, Menu, Calendar
+  FileText, BedDouble, BarChart2, Bell, Settings, Search, LogOut, Menu, Calendar, Video
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { id: 'dashboard',           label: 'Dashboard',            icon: <LayoutDashboard size={18} /> },
   { id: 'patients',            label: 'Patients',             icon: <Users size={18} /> },
   { id: 'appointments',        label: 'Appointments',         icon: <Calendar size={18} /> },
+  { id: 'telemedicine',        label: 'Telemedicine',         icon: <Video size={18} /> },
   { id: 'consultations',       label: 'Consultations',        icon: <Stethoscope size={18} /> },
   { id: 'non-consultations',   label: 'Non-Consultation',     icon: <ClipboardList size={18} /> },
   { id: 'inventory',           label: 'Inventory',            icon: <Package size={18} /> },

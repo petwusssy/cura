@@ -17,6 +17,7 @@ export type Page =
   | 'medical-certificates'
   | 'beds'
   | 'appointments'
+  | 'telemedicine'
   | 'reports'
   | 'notifications'
   | 'settings';

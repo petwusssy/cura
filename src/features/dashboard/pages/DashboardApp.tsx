@@ -5,7 +5,7 @@ import {
   Dashboard, PatientManagement, PatientForm, PatientProfile, NewConsultation,
   ConsultationTab, NonConsultationTab, Inventory, PurchaseReceipts,
   MedicalCertificates, BedsManagement, Reports, Notifications, Settings,
-  GlobalSearch, Appointments
+  GlobalSearch, Appointments, Telemedicine
 } from '../components';
 import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
@@ -376,6 +376,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       case 'appointments':
         return (
           <Appointments patients={patients} onNavigate={navigate} />
+        );
+      case 'telemedicine':
+        return (
+          <Telemedicine patients={patients} onNavigate={navigate} />
         );
       case 'patient-form':
         return (

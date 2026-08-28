@@ -14,3 +14,4 @@ export { Reports } from "./Reports";
 export { Settings } from "./Settings";
 export { GlobalSearch } from "./GlobalSearch";
 export { Appointments } from "./Appointments";
+export { Telemedicine } from "./Telemedicine";
