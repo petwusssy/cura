@@ -16,6 +16,7 @@ export type Page =
   | 'purchase-receipts'
   | 'medical-certificates'
   | 'beds'
+  | 'appointments'
   | 'reports'
   | 'notifications'
   | 'settings';
