@@ -96,7 +96,12 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
               style={{ background: PRIMARY }}>
               {patient.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
-            <h2 className="text-gray-900 text-lg">{patient.name}</h2>
+            <div className="flex items-center gap-2 justify-center">
+              <h2 className="text-gray-900 text-lg">{patient.name}</h2>
+              {patient.isClaimed && (
+                <span title="App Account Claimed" className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider mt-0.5">APP</span>
+              )}
+            </div>
             <span className="text-xs px-3 py-1 rounded-full font-semibold mt-1"
               style={{ background: catColor.bg, color: catColor.text }}>
               {patient.category}

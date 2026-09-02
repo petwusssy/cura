@@ -149,7 +149,12 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                           {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-gray-800">{p.name}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-semibold text-gray-800">{p.name}</span>
+                            {p.isClaimed && (
+                              <span title="App Account Claimed" className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-wider">APP</span>
+                            )}
+                          </div>
                           <div className="text-xs text-gray-400">{p.email}</div>
                         </div>
                       </div>
@@ -224,7 +229,12 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                       {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-bold text-gray-900 leading-tight">{p.name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-gray-900 leading-tight">{p.name}</span>
+                        {p.isClaimed && (
+                          <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-wider">APP</span>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-500 font-mono mt-0.5">{p.id}</span>
                     </div>
                   </div>

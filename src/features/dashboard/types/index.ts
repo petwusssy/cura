@@ -43,6 +43,7 @@ export interface Patient {
   studentCategory?: StudentCategory;
   guardianName?: string;
   gradeLevel?: string;
+  isClaimed?: boolean;
 }
 
 export interface Treatment {
