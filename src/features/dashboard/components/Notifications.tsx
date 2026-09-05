@@ -12,9 +12,10 @@ interface NotificationsProps {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onDismiss: (id: string) => void;
+  onNavigate?: (page: any) => void;
 }
 
-export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss }: NotificationsProps) {
+export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss, onNavigate }: NotificationsProps) {
   const [filter, setFilter] = useState<'all' | 'unread' | 'medication' | 'bed' | 'request'>('all');
   const [localCountdowns, setLocalCountdowns] = useState<Record<string, number>>({});
 
@@ -39,6 +40,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   }, [notifications]);
 
   const filtered = notifications.filter(n => {
+    if (n.read) return false;
     if (filter === 'unread') return !n.read;
     if (filter === 'medication') return n.type === 'medication';
     if (filter === 'bed') return n.type === 'bed';
@@ -77,6 +79,14 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
     } catch {
       return 'recently';
     }
+  };
+
+  const handleNotificationClick = (n: AppNotification) => {
+    if (!onNavigate) return;
+    if (n.type === 'medication') onNavigate('patients');
+    else if (n.type === 'bed') onNavigate('beds');
+    else if (n.type.includes('telemedicine')) onNavigate('telemedicine');
+    else if (n.type.includes('appointment')) onNavigate('appointments');
   };
 
   return (
@@ -126,7 +136,8 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
           return (
             <div
               key={n.id}
-              className={`bg-white rounded-xl p-4 transition-all ${!n.read ? 'border-l-4' : 'border border-gray-100'}`}
+              onClick={() => handleNotificationClick(n)}
+              className={`bg-white rounded-xl p-4 transition-all cursor-pointer ${!n.read ? 'border-l-4' : 'border border-gray-100'}`}
               style={{
                 boxShadow: !n.read ? '0 4px 16px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.04)',
                 borderLeftColor: !n.read ? color : undefined,
@@ -153,7 +164,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       {!n.read && (
                         <button onClick={() => onMarkRead(n.id)}
                           className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors" title="Mark as read">
