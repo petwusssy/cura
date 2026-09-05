@@ -50,8 +50,10 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     if (!selectedReq || !actionType) return;
     setIsSubmitting(true);
     
+    const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
+    
     const res = await telemedicineService.approveRequest(selectedReq.id, {
-      status: actionType,
+      status: finalStatus as any, // backend expects Approved or Rejected
       scheduled_date: scheduledDate,
       scheduled_time: scheduledTime,
       meeting_link: meetingLink

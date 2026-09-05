@@ -49,8 +49,10 @@ export function Appointments({ patients }: AppointmentsProps) {
     if (!selectedReq || !actionType) return;
     setIsSubmitting(true);
     
+    const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
+    
     const res = await appointmentService.approveRequest(selectedReq.id, {
-      status: actionType,
+      status: finalStatus as any, // backend expects Approved or Rejected
       scheduled_date: scheduledDate,
       scheduled_time: scheduledTime
     });
