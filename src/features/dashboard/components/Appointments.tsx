@@ -26,6 +26,12 @@ export function Appointments({ patients }: AppointmentsProps) {
 
   useEffect(() => {
     fetchRequests();
+    const interval = setInterval(() => {
+      appointmentService.getRequests().then(data => {
+        setRequests(data);
+      }).catch(console.error);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {

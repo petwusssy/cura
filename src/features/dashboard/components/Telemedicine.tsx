@@ -27,6 +27,12 @@ export function Telemedicine({ patients }: TelemedicineProps) {
 
   useEffect(() => {
     fetchRequests();
+    const interval = setInterval(() => {
+      telemedicineService.getRequests().then(data => {
+        setRequests(data);
+      }).catch(console.error);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {

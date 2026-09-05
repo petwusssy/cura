@@ -70,6 +70,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
     certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
     notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
+
+    // Polling for new notifications
+    const interval = setInterval(() => {
+      notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Check for upcoming medication doses
