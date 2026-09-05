@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Bell, Clock, BedDouble, AlertTriangle, CheckCheck, X } from 'lucide-react';
+import { Bell, Clock, BedDouble, AlertTriangle, CheckCheck, X, Calendar, Video } from 'lucide-react';
 import { AppNotification } from '../types';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
 const YELLOW = '#F4C542';
+const GREEN = '#4CAF50';
 
 interface NotificationsProps {
   notifications: AppNotification[];
@@ -14,7 +15,7 @@ interface NotificationsProps {
 }
 
 export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss }: NotificationsProps) {
-  const [filter, setFilter] = useState<'all' | 'unread' | 'medication' | 'bed'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'medication' | 'bed' | 'request'>('all');
   const [localCountdowns, setLocalCountdowns] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
     if (filter === 'unread') return !n.read;
     if (filter === 'medication') return n.type === 'medication';
     if (filter === 'bed') return n.type === 'bed';
+    if (filter === 'request') return n.type === 'telemedicine_request' || n.type === 'appointment_request' || n.type === 'telemedicine_update' || n.type === 'appointment_update';
     return true;
   });
 
@@ -49,6 +51,8 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   const getIcon = (type: AppNotification['type']) => {
     if (type === 'medication') return <Clock size={18} />;
     if (type === 'bed') return <BedDouble size={18} />;
+    if (type === 'telemedicine_request' || type === 'telemedicine_update') return <Video size={18} />;
+    if (type === 'appointment_request' || type === 'appointment_update') return <Calendar size={18} />;
     return <Bell size={18} />;
   };
 
@@ -58,6 +62,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
       return mins <= 10 ? RED : YELLOW;
     }
     if (n.type === 'bed') return '#FF9800';
+    if (n.type.includes('request') || n.type.includes('update')) return GREEN;
     return PRIMARY;
   };
 
@@ -95,6 +100,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
           { id: 'unread', label: `Unread (${unreadCount})` },
           { id: 'medication', label: 'Medication' },
           { id: 'bed', label: 'Beds' },
+          { id: 'request', label: 'Requests' },
         ] as { id: typeof filter; label: string }[]).map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"

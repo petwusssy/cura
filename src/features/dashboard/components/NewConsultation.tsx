@@ -47,7 +47,7 @@ const now = () => {
 
 const today = () => {
   const d = new Date();
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('en-CA');
 };
 
 export function NewConsultation({ patient, patients = [], medicines = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {

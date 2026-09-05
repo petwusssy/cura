@@ -35,7 +35,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   }>({
     name: '',
     stock: '',
-    dateAdded: new Date().toISOString().split('T')[0],
+    dateAdded: new Date().toLocaleDateString('en-CA'),
     unit: 'Tablet',
     threshold: '15',
     category: 'Medicine'
@@ -99,7 +99,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       dispensed: newDispensed,
       status: newStatus as any,
       stockHistory: [...(adjustModal.stockHistory || []), {
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toLocaleDateString('en-CA'),
         qty,
         type: adjustType,
         note: adjustNote || (adjustType === 'add' ? 'Manual stock intake' : 'Stock adjustment decrement'),
@@ -125,18 +125,18 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       name: newMed.name,
       stock: qty,
       unit: newMed.unit,
-      dateAdded: newMed.dateAdded || new Date().toISOString().split('T')[0],
+      dateAdded: newMed.dateAdded || new Date().toLocaleDateString('en-CA'),
       status: qty === 0 ? 'Out of Stock' : qty <= thresh ? 'Low Stock' : 'Normal',
       beginningQty: qty,
       dispensed: 0,
       threshold: thresh,
-      stockHistory: [{ date: newMed.dateAdded || new Date().toISOString().split('T')[0], qty, type: 'add', note: 'Initial inventory' }],
+      stockHistory: [{ date: newMed.dateAdded || new Date().toLocaleDateString('en-CA'), qty, type: 'add', note: 'Initial inventory' }],
     };
 
     try {
       onAddMedicine(med);
       setShowAddForm(false);
-      setNewMed({ name: '', stock: '', dateAdded: new Date().toISOString().split('T')[0], unit: 'Tablet', threshold: '15', category: 'Medicine' });
+      setNewMed({ name: '', stock: '', dateAdded: new Date().toLocaleDateString('en-CA'), unit: 'Tablet', threshold: '15', category: 'Medicine' });
     } catch (e) {
       console.error(e);
     }

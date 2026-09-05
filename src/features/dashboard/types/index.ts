@@ -193,11 +193,12 @@ export interface Bed {
 
 export interface AppNotification {
   id: string;
-  type: 'medication' | 'bed' | 'general';
+  type: 'medication' | 'bed' | 'general' | 'telemedicine_request' | 'appointment_request' | 'telemedicine_update' | 'appointment_update';
   message: string;
   time: string;
   read: boolean;
   patientName?: string;
+  patient_id?: string;
   nextDose?: string;
   minutesLeft?: number;
 }

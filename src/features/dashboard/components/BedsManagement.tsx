@@ -144,7 +144,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     const entry: BedHistory = {
       patientName: releaseModal.patientName || 'Unknown Patient',
       patientId: releaseModal.patientId || 'N/A',
-      date: now.toISOString().slice(0, 10),
+      date: now.toLocaleDateString('en-CA'),
       timeIn: start.toTimeString().slice(0, 5),
       timeOut: now.toTimeString().slice(0, 5),
       duration: `${h}h ${m}m`,

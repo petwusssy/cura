@@ -101,7 +101,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       ...receiveModal,
       receivedQty: newReceived,
       status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
-      history: [...receiveModal.history, { date: new Date().toISOString().split('T')[0], qty, note: receiveNote || `Received delivery (+${qty} units)` }],
+      history: [...receiveModal.history, { date: new Date().toLocaleDateString('en-CA'), qty, note: receiveNote || `Received delivery (+${qty} units)` }],
     };
     try {
       await onUpdateRequest(updated);
@@ -123,9 +123,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       unitPrice: parseFloat(newReq.unitPrice) || 0,
       requestedQty: parseInt(newReq.requestedQty) || 1,
       receivedQty: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA'),
       status: 'Pending',
-      history: [{ date: new Date().toISOString().split('T')[0], qty: 0, note: `Requisition initiated under ${newReq.prfNo || prfNo}` }],
+      history: [{ date: new Date().toLocaleDateString('en-CA'), qty: 0, note: `Requisition initiated under ${newReq.prfNo || prfNo}` }],
     };
     try {
       await onAddRequest(req);
@@ -164,9 +164,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
             requestedQty: qty,
             receivedQty: 0,
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toLocaleDateString('en-CA'),
             status: 'Pending',
-            history: [{ date: new Date().toISOString().split('T')[0], qty: 0, note: `Requisition registered via ${prfNo}` }],
+            history: [{ date: new Date().toLocaleDateString('en-CA'), qty: 0, note: `Requisition registered via ${prfNo}` }],
           };
           await onAddRequest(req);
           addedCount++;

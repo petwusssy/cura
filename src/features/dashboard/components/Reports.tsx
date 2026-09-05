@@ -140,7 +140,7 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
   if (filter === 'week') {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(TODAY); d.setDate(d.getDate() - i);
-      days.push(d.toISOString().slice(0, 10));
+      days.push(d.toLocaleDateString('en-CA'));
     }
     return days;
   }
@@ -154,8 +154,8 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
   }
   if (filter === 'custom' && customFrom && customTo) {
     let cur = new Date(customFrom);
-    while (cur.toISOString().slice(0, 10) <= customTo) {
-      days.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1);
+    while (cur.toLocaleDateString('en-CA') <= customTo) {
+      days.push(cur.toLocaleDateString('en-CA')); cur.setDate(cur.getDate() + 1);
     }
     return days;
   }
@@ -429,7 +429,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
     const buffer = await workbook.xlsx.writeBuffer();
     const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    saveAs(new Blob([buffer]), `${cleanTitle}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    saveAs(new Blob([buffer]), `${cleanTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`);
   };
 
   const exportDailyReportExcel = async () => {
