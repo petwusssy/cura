@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Search, Check, X, Clock, CalendarDays } from 'lucide-react';
+import { Calendar as CalendarIcon, Search, Check, X, Clock, CalendarDays, Trash2 } from 'lucide-react';
 import { Patient } from '../types';
 import { appointmentService, AppointmentRequest } from '../../../services/appointmentService';
 
@@ -64,6 +64,14 @@ export function Appointments({ patients }: AppointmentsProps) {
     }
     
     setIsSubmitting(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const success = await appointmentService.deleteRequest(id);
+    if (success) {
+      setRequests(prev => prev.filter(r => r.id !== id));
+    }
   };
 
   const openApproveModal = (req: AppointmentRequest) => {
@@ -144,8 +152,17 @@ export function Appointments({ patients }: AppointmentsProps) {
                     </span>
                   </div>
                 </div>
-                <div className="bg-blue-50 text-blue-600 p-2 rounded-lg">
-                  <CalendarIcon size={20} />
+                <div className="flex gap-2">
+                  <div className="bg-blue-50 text-blue-600 p-2 rounded-lg">
+                    <CalendarIcon size={20} />
+                  </div>
+                  <button 
+                    onClick={() => handleDelete(req.id)}
+                    className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                    title="Delete Request"
+                  >
+                    <Trash2 size={20} />
+                  </button>
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon } from 'lucide-react';
+import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2 } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 
@@ -66,6 +66,14 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     }
     
     setIsSubmitting(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const success = await telemedicineService.deleteRequest(id);
+    if (success) {
+      setRequests(prev => prev.filter(r => r.id !== id));
+    }
   };
 
   const openApproveModal = (req: TelemedicineRequest) => {
@@ -141,8 +149,17 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                     {req.status}
                   </span>
                 </div>
-                <div className="bg-blue-50 text-blue-600 p-2 rounded-lg">
-                  <Video size={20} />
+                <div className="flex gap-2">
+                  <div className="bg-blue-50 text-blue-600 p-2 rounded-lg">
+                    <Video size={20} />
+                  </div>
+                  <button 
+                    onClick={() => handleDelete(req.id)}
+                    className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                    title="Delete Request"
+                  >
+                    <Trash2 size={20} />
+                  </button>
                 </div>
               </div>
 

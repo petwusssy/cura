@@ -36,5 +36,15 @@ export const appointmentService = {
       console.error(`Failed to approve request ${id}:`, error);
       return null;
     }
+  },
+
+  deleteRequest: async (id: string): Promise<boolean> => {
+    try {
+      await api.delete(`/appointments/${id}/`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete request ${id}:`, error);
+      return false;
+    }
   }
 };
