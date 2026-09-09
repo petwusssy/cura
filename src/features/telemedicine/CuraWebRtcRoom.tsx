@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Peer, { MediaConnection } from 'peerjs';
 import { 
   Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, 
-  ShieldCheck, RefreshCw, Volume2, User, Clock, Check, Copy, ExternalLink 
+  ShieldCheck, RefreshCw, User, Clock, Check, Copy, ExternalLink 
 } from 'lucide-react';
 
 interface CuraWebRtcRoomProps {
@@ -38,12 +38,14 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
-  // Normalize room ID
-  const cleanId = roomId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32) || 'default-room';
-  const myPeerId = role === 'doctor' ? `cura-doc-${cleanId}` : `cura-pat-${cleanId}`;
-  const targetPeerId = role === 'doctor' ? `cura-pat-${cleanId}` : `cura-doc-${cleanId}`;
+  // Normalize room ID: lowercase and alphanumeric
+  const cleanId = roomId.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32) || 'default-room';
+  const doctorPeerId = `cura-doc-${cleanId}`;
+  const patientPeerId = `cura-pat-${cleanId}`;
 
-  // Direct shareable link
+  const myPeerId = role === 'doctor' ? doctorPeerId : patientPeerId;
+  const targetPeerId = role === 'doctor' ? patientPeerId : doctorPeerId;
+
   const directLink = `https://cura-bice.vercel.app/call/${cleanId}`;
 
   // Call timer
@@ -71,14 +73,15 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   useEffect(() => {
     let currentStream: MediaStream | null = null;
     let currentPeer: Peer | null = null;
-    let retryInterval: any = null;
+    let checkTimer: any = null;
     let isCancelled = false;
+    let isCalling = false;
 
     async function setupMediaAndPeer() {
       try {
         setConnectionStatus('initializing');
 
-        // Request media
+        // Request local media
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'user',
@@ -100,102 +103,156 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           localVideoRef.current.srcObject = stream;
         }
 
-        // Initialize PeerJS with public STUN configuration
-        const newPeer = new Peer(myPeerId, {
-          config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' }
-            ]
+        // STUN + Metered.ca OpenRelay TURN servers for cross-network connectivity
+        const iceServers = [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:openrelay.metered.ca:80' },
+          {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
           }
+        ];
+
+        const newPeer = new Peer(myPeerId, {
+          config: { iceServers }
         });
 
         currentPeer = newPeer;
         setPeer(newPeer);
 
-        newPeer.on('open', (id) => {
-          console.log('[CURA WebRTC] Peer open with ID:', id);
-          if (!isCancelled) {
-            setConnectionStatus('waiting');
-          }
-        });
-
-        // Answer incoming calls
-        newPeer.on('call', (call) => {
-          console.log('[CURA WebRTC] Incoming call from:', call.peer);
-          call.answer(stream);
+        // Helper to bind call events
+        const bindCallEvents = (call: MediaConnection) => {
           setActiveCall(call);
 
           call.on('stream', (incomingRemoteStream) => {
-            console.log('[CURA WebRTC] Received remote stream from answer');
+            console.log('[CURA WebRTC] Remote stream received:', incomingRemoteStream);
             if (isCancelled) return;
             setRemoteStream(incomingRemoteStream);
             setConnectionStatus('connected');
             if (remoteVideoRef.current) {
               remoteVideoRef.current.srcObject = incomingRemoteStream;
+              remoteVideoRef.current.play().catch(() => {});
             }
           });
 
           call.on('close', () => {
-            console.log('[CURA WebRTC] Call closed by remote peer');
+            console.log('[CURA WebRTC] Call closed');
             setRemoteStream(null);
             setConnectionStatus('waiting');
+            isCalling = false;
           });
 
           call.on('error', (err) => {
             console.warn('[CURA WebRTC] Call error:', err);
+            isCalling = false;
+          });
+        };
+
+        newPeer.on('open', (id) => {
+          console.log('[CURA WebRTC] Peer opened with ID:', id);
+          if (isCancelled) return;
+          setConnectionStatus('waiting');
+
+          // If Patient, initiate call to Doctor
+          if (role === 'patient') {
+            attemptCallToDoctor();
+          } else {
+            // Doctor broadcasts ping to patient
+            pingPatient();
+          }
+        });
+
+        // Answer incoming calls
+        newPeer.on('call', (incomingCall) => {
+          console.log('[CURA WebRTC] Answering incoming call from:', incomingCall.peer);
+          incomingCall.answer(stream);
+          bindCallEvents(incomingCall);
+        });
+
+        // Listen for data pings
+        newPeer.on('connection', (conn) => {
+          conn.on('data', (data) => {
+            if (data === 'ping-from-doctor' && role === 'patient') {
+              console.log('[CURA WebRTC] Doctor is ready, calling doctor...');
+              attemptCallToDoctor();
+            }
           });
         });
 
         newPeer.on('error', (err: any) => {
           console.warn('[CURA WebRTC] Peer error:', err);
           if (err.type === 'unavailable-id') {
-            // Already connected or temporary conflict, try joining as client
-            console.log('[CURA WebRTC] Peer ID busy, trying fallback peer connection');
+            // ID already registered (e.g. fast page refresh)
+            console.log('[CURA WebRTC] Peer ID busy, retrying in 2s...');
+            setTimeout(() => {
+              if (!isCancelled && !currentPeer?.destroyed) {
+                newPeer.reconnect();
+              }
+            }, 2000);
           } else if (err.type === 'peer-unavailable') {
-            // Target not online yet, keep waiting
-          } else {
-            setErrorMessage(err.message || 'Connection error');
+            isCalling = false;
           }
         });
 
-        // If Patient, poll/try calling the Doctor every 2.5s until connected
-        // If Doctor, also poll/try calling Patient in case Patient arrived first
-        retryInterval = setInterval(() => {
+        function attemptCallToDoctor() {
+          if (isCalling || isCancelled || !currentPeer || currentPeer.destroyed) return;
+          isCalling = true;
+          console.log('[CURA WebRTC] Attempting call to doctor:', doctorPeerId);
+          try {
+            const call = currentPeer.call(doctorPeerId, stream);
+            if (call) {
+              bindCallEvents(call);
+            } else {
+              isCalling = false;
+            }
+          } catch {
+            isCalling = false;
+          }
+        }
+
+        function pingPatient() {
+          if (isCancelled || !currentPeer || currentPeer.destroyed) return;
+          try {
+            const conn = currentPeer.connect(patientPeerId);
+            conn.on('open', () => {
+              conn.send('ping-from-doctor');
+            });
+          } catch {
+            // ignore
+          }
+        }
+
+        // Retry handshake periodically while waiting
+        checkTimer = setInterval(() => {
           if (isCancelled || !currentPeer || currentPeer.destroyed) return;
           if (connectionStatus === 'connected') return;
 
-          try {
-            console.log(`[CURA WebRTC] Probing connection to ${targetPeerId}...`);
-            const outgoingCall = currentPeer.call(targetPeerId, stream);
-            if (outgoingCall) {
-              outgoingCall.on('stream', (incomingRemoteStream) => {
-                console.log('[CURA WebRTC] Received remote stream from probe call');
-                if (isCancelled) return;
-                setRemoteStream(incomingRemoteStream);
-                setConnectionStatus('connected');
-                setActiveCall(outgoingCall);
-                if (remoteVideoRef.current) {
-                  remoteVideoRef.current.srcObject = incomingRemoteStream;
-                }
-              });
-
-              outgoingCall.on('close', () => {
-                setRemoteStream(null);
-                setConnectionStatus('waiting');
-              });
+          if (role === 'patient') {
+            if (!isCalling) {
+              attemptCallToDoctor();
             }
-          } catch {
-            // ignore retry errors
+          } else {
+            pingPatient();
           }
-        }, 2500);
+        }, 3500);
 
       } catch (err: any) {
-        console.error('[CURA WebRTC] Setup failed:', err);
+        console.error('[CURA WebRTC] Media/Peer setup failed:', err);
         setConnectionStatus('error');
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setErrorMessage('Camera or Microphone access was denied. Please allow camera and mic permissions in your browser settings.');
+          setErrorMessage('Camera or Microphone permission was denied. Please allow access in your browser settings.');
         } else {
           setErrorMessage(err.message || 'Could not access camera/microphone.');
         }
@@ -206,7 +263,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
     return () => {
       isCancelled = true;
-      if (retryInterval) clearInterval(retryInterval);
+      if (checkTimer) clearInterval(checkTimer);
       if (currentStream) {
         currentStream.getTracks().forEach((t) => t.stop());
       }
@@ -214,7 +271,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         currentPeer.destroy();
       }
     };
-  }, [cleanId, myPeerId, targetPeerId]);
+  }, [cleanId, myPeerId, targetPeerId, role]);
 
   // Sync video elements when streams change
   useEffect(() => {
@@ -226,6 +283,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(() => {});
     }
   }, [remoteStream]);
 
@@ -380,8 +438,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             
             <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
               {role === 'doctor' 
-                ? 'Your secure video room is active. Once the patient taps Join Call in their app, their video will appear here automatically.' 
-                : 'Please stay on this screen. No login required. Your doctor will connect with you momentarily.'}
+                ? 'Your consultation room is ready. Once the patient opens Join Call, their video will appear here automatically.' 
+                : 'Connecting to the clinic doctor. Please stay on this screen. No login required.'}
             </p>
 
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col items-center gap-2 max-w-sm">
