@@ -11,6 +11,7 @@ export interface TelemedicineRequest {
   scheduled_date?: string;
   scheduled_time?: string;
   meeting_link?: string;
+  secondary_link?: string;
   created_at: string;
 }
 
@@ -27,7 +28,7 @@ export const telemedicineService = {
 
   approveRequest: async (
     id: string, 
-    data: { scheduled_date: string; scheduled_time: string; meeting_link: string; status: 'Approved' | 'Rejected' }
+    data: { scheduled_date: string; scheduled_time: string; meeting_link: string; secondary_link?: string; status: 'Approved' | 'Rejected' }
   ): Promise<TelemedicineRequest | null> => {
     try {
       const response = await api.patch(`/telemedicine/${id}/approve/`, data);
