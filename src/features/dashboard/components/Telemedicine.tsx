@@ -26,9 +26,6 @@ export function Telemedicine({ patients }: TelemedicineProps) {
   // Form State
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [meetingMode, setMeetingMode] = useState<'jitsi' | 'custom'>('jitsi');
-  const [meetingLink, setMeetingLink] = useState('');
-  const [secondaryLink, setSecondaryLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -63,18 +60,13 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     setIsSubmitting(true);
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
-    
-    // Determine effective meeting link
-    const effectiveMeetingLink = meetingMode === 'jitsi'
-      ? (meetingLink || `https://meet.jit.si/CURA-Telemed-${selectedReq.id.slice(0, 8)}`)
-      : meetingLink;
+    const effectiveMeetingLink = `https://meet.jit.si/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
 
     const res = await telemedicineService.approveRequest(selectedReq.id, {
       status: finalStatus as any,
       scheduled_date: scheduledDate,
       scheduled_time: scheduledTime,
       meeting_link: effectiveMeetingLink,
-      secondary_link: secondaryLink.trim() || undefined,
     });
     
     if (res) {
@@ -99,9 +91,6 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     setActionType('Approve');
     setScheduledDate(req.preferred_date);
     setScheduledTime(req.preferred_time);
-    setMeetingMode('jitsi');
-    setMeetingLink(`https://meet.jit.si/CURA-Telemed-${req.id.slice(0, 8)}`);
-    setSecondaryLink('');
   };
 
   const openRejectModal = (req: TelemedicineRequest) => {
@@ -373,101 +362,19 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                     </div>
                   </div>
 
-                  {/* Video Platform Selection */}
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Primary Video Room
-                    </label>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMeetingMode('jitsi');
-                          setMeetingLink(`https://meet.jit.si/CURA-Telemed-${selectedReq.id.slice(0, 8)}`);
-                        }}
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          meetingMode === 'jitsi'
-                            ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm ring-1 ring-blue-500'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold flex items-center gap-1.5">
-                            <Sparkles size={13} className="text-blue-600" />
-                            In-App Jitsi Room
-                          </span>
-                          {meetingMode === 'jitsi' && <Check size={14} className="text-blue-600" />}
-                        </div>
-                        <p className="text-[11px] text-gray-500 leading-tight">
-                          Embedded video inside CURA. Zero login, free & instant.
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMeetingMode('custom');
-                          setMeetingLink('');
-                        }}
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          meetingMode === 'custom'
-                            ? 'border-emerald-600 bg-emerald-50/70 text-emerald-900 shadow-sm ring-1 ring-emerald-500'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold flex items-center gap-1.5">
-                            <ExternalLink size={13} className="text-emerald-600" />
-                            Custom Link
-                          </span>
-                          {meetingMode === 'custom' && <Check size={14} className="text-emerald-600" />}
-                        </div>
-                        <p className="text-[11px] text-gray-500 leading-tight">
-                          Paste your external Google Meet or Zoom URL.
-                        </p>
-                      </button>
+                  {/* Auto-Generated Video Room Notice */}
+                  <div className="p-3.5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border border-blue-100 flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-white text-blue-600 shadow-sm border border-blue-100 flex-shrink-0">
+                      <Sparkles size={18} className="text-blue-600" />
                     </div>
-                  </div>
-
-                  {/* Primary Link Input */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-semibold text-gray-700">
-                        {meetingMode === 'jitsi' ? 'Auto-generated Jitsi Room URL' : 'Primary Meeting URL (GMeet / Zoom)'}
-                      </label>
-                      {meetingMode === 'jitsi' && (
-                        <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Auto Ready
-                        </span>
-                      )}
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+                        Automated In-App Video Room
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+                        A secure, encrypted video consultation room will be automatically created. Both you and the patient can join directly with one click — zero link setup needed.
+                      </p>
                     </div>
-                    <input 
-                      type="url" 
-                      value={meetingLink}
-                      onChange={e => setMeetingLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                      placeholder={meetingMode === 'jitsi' ? 'https://meet.jit.si/CURA-Telemed-...' : 'https://meet.google.com/...'}
-                    />
-                  </div>
-
-                  {/* Secondary Google Meet Link (Always Available as Backup) */}
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-semibold text-gray-700 flex items-center gap-1">
-                        <span>Secondary Link: Google Meet</span>
-                        <span className="text-[10px] text-gray-400 font-normal">(Optional Backup)</span>
-                      </label>
-                    </div>
-                    <p className="text-[11px] text-gray-500 mb-1.5">
-                      Enter a Google Meet link so both doctor and patient have an alternative if connection issues arise.
-                    </p>
-                    <input 
-                      type="url" 
-                      value={secondaryLink}
-                      onChange={e => setSecondaryLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                      placeholder="https://meet.google.com/abc-defg-hij"
-                    />
                   </div>
                 </div>
               ) : (
@@ -487,7 +394,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
               </button>
               <button 
                 onClick={handleAction}
-                disabled={isSubmitting || (actionType === 'Approve' && (!meetingLink || !scheduledDate || !scheduledTime))}
+                disabled={isSubmitting || (actionType === 'Approve' && (!scheduledDate || !scheduledTime))}
                 className={`px-5 py-2 font-bold text-xs rounded-xl text-white transition-all shadow-sm flex items-center gap-1.5 ${
                   actionType === 'Approve' 
                     ? 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300' 
