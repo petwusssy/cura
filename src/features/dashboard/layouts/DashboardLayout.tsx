@@ -173,6 +173,12 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
                     {unread}
                   </span>
                 )}
+                {collapsed && item.id === 'notifications' && unread > 0 && (
+                  <span
+                    className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full"
+                    style={{ background: '#D64545' }}
+                  />
+                )}
               </button>
             );
           })}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
 import {
@@ -51,6 +51,19 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
   const [beds, setBeds]                         = useState<Bed[]>([]);
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
+  const readNotifIdsRef = useRef<Set<string>>(new Set());
+  const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const readStored = JSON.parse(localStorage.getItem('cura_read_notifs') || '[]');
+      readNotifIdsRef.current = new Set(readStored);
+      const dismissedStored = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+      dismissedNotifIdsRef.current = new Set(dismissedStored);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const navigate = (page: Page) => {
     routerNavigate(`/dashboard/${page === 'dashboard' ? '' : page}`);
@@ -73,12 +86,25 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
     bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
     certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
-    notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
+
+    const fetchAndMergeNotifications = () => {
+      notificationService.getNotifications().then(d => {
+        if (d !== undefined) {
+          setNotifications(prev => {
+            const localMeds = prev.filter(p => p.id.startsWith('med-') && !dismissedNotifIdsRef.current.has(p.id));
+            const backendNotifs = d
+              .filter(n => !dismissedNotifIdsRef.current.has(n.id))
+              .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
+            return [...localMeds, ...backendNotifs];
+          });
+        }
+      }).catch(console.error);
+    };
+
+    fetchAndMergeNotifications();
 
     // Polling for new notifications
-    const interval = setInterval(() => {
-      notificationService.getNotifications().then(d => d !== undefined && setNotifications(d)).catch(console.error);
-    }, 3000);
+    const interval = setInterval(fetchAndMergeNotifications, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -111,15 +137,17 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               // If dose is within 30 minutes (0 to 30 mins)
               if (diff >= 0 && diff <= 30) {
                 const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+                if (dismissedNotifIdsRef.current.has(notifId)) return;
                 // Check if we already have this notification
                 if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
                   const patientName = patients.find(p => p.id === c.patientId)?.name || 'Unknown Patient';
+                  const isRead = readNotifIdsRef.current.has(notifId);
                   newNotifs.push({
                     id: notifId,
                     type: 'medication',
                     message: `Medication (${t.medicineName}) due for ${patientName} in ${diff === 0 ? 'less than a minute' : `${diff} mins`}`,
                     time: now.toISOString(),
-                    read: false,
+                    read: isRead,
                     patientName,
                     nextDose: t.nextDose,
                     minutesLeft: diff,
@@ -367,6 +395,67 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
 
+  const handleMarkNotificationRead = async (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    readNotifIdsRef.current.add(id);
+    try {
+      const stored = JSON.parse(localStorage.getItem('cura_read_notifs') || '[]');
+      if (!stored.includes(id)) {
+        localStorage.setItem('cura_read_notifs', JSON.stringify([...stored, id]));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    if (!id.startsWith('med-')) {
+      try {
+        await notificationService.updateNotification(id, { read: true });
+      } catch (error) {
+        console.error('Failed to update notification read status on server:', error);
+      }
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    setNotifications(prev => {
+      const allIds = prev.map(n => n.id);
+      allIds.forEach(id => readNotifIdsRef.current.add(id));
+      try {
+        localStorage.setItem('cura_read_notifs', JSON.stringify(Array.from(readNotifIdsRef.current)));
+      } catch (e) {
+        console.error(e);
+      }
+      return prev.map(n => ({ ...n, read: true }));
+    });
+
+    try {
+      await notificationService.markAllRead();
+      const backendUnread = notifications.filter(n => !n.read && !n.id.startsWith('med-'));
+      await Promise.allSettled(backendUnread.map(n => notificationService.updateNotification(n.id, { read: true })));
+    } catch (error) {
+      console.error('Failed to mark all notifications read on server:', error);
+    }
+  };
+
+  const handleDismissNotification = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    dismissedNotifIdsRef.current.add(id);
+    try {
+      const stored = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+      if (!stored.includes(id)) {
+        localStorage.setItem('cura_dismissed_notifs', JSON.stringify([...stored, id]));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    if (!id.startsWith('med-')) {
+      try {
+        await notificationService.deleteNotification(id);
+      } catch (error) {
+        console.error('Failed to delete notification on server:', error);
+      }
+    }
+  };
+
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const renderPage = () => {
@@ -521,9 +610,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <Notifications
             notifications={notifications}
-            onMarkRead={id => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
-            onMarkAllRead={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
-            onDismiss={id => setNotifications(prev => prev.filter(n => n.id !== id))}
+            onMarkRead={handleMarkNotificationRead}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            onDismiss={handleDismissNotification}
+            onNavigate={navigate}
           />
         );
       case 'settings':

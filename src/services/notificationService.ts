@@ -8,8 +8,12 @@ export const notificationService = {
   },
 
   updateNotification: async (id: string, data: Partial<AppNotification>): Promise<AppNotification> => {
-    const response = await api.put<AppNotification>(`/notifications/${id}/`, data);
+    const response = await api.patch<AppNotification>(`/notifications/${id}/`, data);
     return response.data;
+  },
+
+  markAllRead: async (): Promise<void> => {
+    await api.post('/notifications/mark_all_read/');
   },
 
   deleteNotification: async (id: string): Promise<void> => {

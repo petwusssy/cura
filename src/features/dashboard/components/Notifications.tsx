@@ -40,7 +40,6 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   }, [notifications]);
 
   const filtered = notifications.filter(n => {
-    if (n.read) return false;
     if (filter === 'unread') return !n.read;
     if (filter === 'medication') return n.type === 'medication';
     if (filter === 'bed') return n.type === 'bed';
@@ -137,16 +136,26 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
             <div
               key={n.id}
               onClick={() => handleNotificationClick(n)}
-              className={`bg-white rounded-xl p-4 transition-all cursor-pointer ${!n.read ? 'border-l-4' : 'border border-gray-100'}`}
+              className={`rounded-xl p-4 transition-all cursor-pointer ${
+                !n.read
+                  ? 'bg-white dark:bg-card border-l-4 shadow-sm'
+                  : 'bg-gray-50/70 dark:bg-card/60 border border-gray-100 dark:border-gray-800 opacity-80 hover:opacity-100'
+              }`}
               style={{
-                boxShadow: !n.read ? '0 4px 16px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.04)',
+                boxShadow: !n.read ? '0 4px 16px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
                 borderLeftColor: !n.read ? color : undefined,
                 borderLeft: n.read ? undefined : `4px solid ${color}`,
               }}
             >
               <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15`, color }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-opacity"
+                  style={{
+                    background: !n.read ? `${color}15` : '#f3f4f6',
+                    color: !n.read ? color : '#9ca3af'
+                  }}
+                >
                   {getIcon(n.type)}
                 </div>
 
@@ -154,7 +163,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <p className={`text-sm ${!n.read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                      <p className={`text-sm ${!n.read ? 'font-semibold text-gray-900 dark:text-foreground' : 'font-normal text-gray-600 dark:text-gray-400'}`}>
                         {n.message}
                       </p>
                       {n.patientName && n.type === 'medication' && (
@@ -164,16 +173,16 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       {!n.read && (
                         <button onClick={() => onMarkRead(n.id)}
-                          className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors" title="Mark as read">
-                          <CheckCheck size={14} />
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Mark as read">
+                          <CheckCheck size={16} />
                         </button>
                       )}
                       <button onClick={() => onDismiss(n.id)}
-                        className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors" title="Dismiss">
-                        <X size={14} />
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Delete notification">
+                        <X size={16} />
                       </button>
                     </div>
                   </div>
@@ -202,9 +211,12 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
 
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs text-gray-400">{getTimeAgo(n.time)}</span>
-                    {!n.read && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />}
+                    {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: color }} />}
                     <span className="text-xs px-2 py-0.5 rounded-full capitalize font-medium"
-                      style={{ background: `${color}15`, color }}>
+                      style={{
+                        background: !n.read ? `${color}15` : '#f3f4f6',
+                        color: !n.read ? color : '#9ca3af'
+                      }}>
                       {n.type}
                     </span>
                   </div>
