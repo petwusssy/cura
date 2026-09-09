@@ -173,7 +173,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                           {patient?.name.charAt(0)}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
+                          <div className="text-sm font-semibold text-gray-800 uppercase">{patient?.name}</div>
                           <div className="text-xs text-gray-400">{patient?.category}</div>
                         </div>
                       </div>
@@ -252,7 +252,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                     {patient?.name.charAt(0)}
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-gray-900 leading-tight">{patient?.name}</span>
+                    <span className="font-bold text-gray-900 leading-tight uppercase">{patient?.name}</span>
                     <span className="text-xs text-gray-500">{patient?.category}</span>
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Non-Consultation Record: {patient?.name}
+                    Non-Consultation Record: <span className="uppercase">{patient?.name}</span>
                   </h3>
                   <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn}</p>
                 </div>

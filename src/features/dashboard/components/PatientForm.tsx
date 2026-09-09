@@ -73,7 +73,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     const bday = new Date(form.birthday);
     const age = new Date().getFullYear() - bday.getFullYear();
     try {
-      await onSave({ ...form, id: finalId, age });
+      await onSave({ ...form, name: form.name.trim().toUpperCase(), id: finalId, age });
       onNavigate('patients');
     } catch (error: any) {
       console.error('Save failed', error);
@@ -124,6 +124,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         value={(form[key] as string) ?? ''}
         onChange={e => set(key, key === 'name' ? e.target.value.toUpperCase() : e.target.value)}
         placeholder={placeholder || label}
+        style={key === 'name' ? { textTransform: 'uppercase' } : undefined}
         className={`w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm
           ${errors[key] ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : ''}`}
       />

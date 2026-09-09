@@ -289,7 +289,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               {isOccupied ? (
                 <div className="mt-4 flex flex-col items-center">
                   <div className="text-[11px] text-gray-400 mb-0.5">Occupied By</div>
-                  <div className="text-sm font-bold text-gray-900 truncate w-full text-center">{bed.patientName}</div>
+                  <div className="text-sm font-bold text-gray-900 truncate w-full text-center uppercase">{bed.patientName}</div>
                   {bed.reason && (
                     <div className="text-[11px] text-gray-500 mt-1 w-full text-center truncate px-2" title={bed.reason}>
                       Reason: {bed.reason}
@@ -405,7 +405,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                               {h.patientName.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-800">{h.patientName}</div>
+                              <div className="text-sm font-semibold text-gray-800 uppercase">{h.patientName}</div>
                               {h.patientId && <div className="text-xs text-gray-400">{h.patientId}</div>}
                             </div>
                           </div>
@@ -446,7 +446,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                           {h.patientName.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900 text-sm leading-tight">{h.patientName}</div>
+                          <div className="font-bold text-gray-900 text-sm leading-tight uppercase">{h.patientName}</div>
                           {h.patientId && <div className="text-[10px] text-gray-400 font-mono mt-0.5">{h.patientId}</div>}
                         </div>
                       </div>
@@ -507,7 +507,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               ) : allUsageHistory.map((h, i) => (
                 <tr key={`${h._bedNumber}-hist-${i}`} className={h.timeOut === '(current)' ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                   <td className="px-5 py-3 text-sm font-medium text-gray-700">Bed {h._bedNumber}</td>
-                  <td className="px-5 py-3 text-sm text-gray-700">{h.patientName}</td>
+                  <td className="px-5 py-3 text-sm text-gray-700 uppercase">{h.patientName}</td>
                   <td className="px-5 py-3 text-sm text-gray-500">{h.date}</td>
                   <td className="px-5 py-3 text-sm text-gray-500">{h.timeIn}</td>
                   <td className="px-5 py-3">
@@ -542,7 +542,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 <span className="text-xs font-bold px-2 py-1 rounded-md text-white" style={{ background: PRIMARY }}>
                   Bed {h._bedNumber}
                 </span>
-                <span className="font-bold text-gray-900 text-sm">{h.patientName}</span>
+                <span className="font-bold text-gray-900 text-sm uppercase">{h.patientName}</span>
               </div>
             </div>
             
@@ -577,16 +577,16 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       {/* Assign Modal */}
       {assignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-900">Assign Patient — Bed {assignModal.bedNumber}</h3>
+              <h3 className="text-gray-900">Assign Patient to Bed {assignModal.bedNumber}</h3>
               <button onClick={() => setAssignModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Select Patient</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Select Patient *</label>
               <select value={selectedPatient} onChange={e => setSelectedPatient(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]">
-                <option value="">Select a patient...</option>
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white">
+                <option value="">-- Choose Patient --</option>
                 {patients.map(p => {
                   const isAlreadyOccupied = occupiedPatientIds.includes(p.id) || (p.name && occupiedPatientNames.includes(p.name.trim().toLowerCase()));
                   const assignedBed = beds.find(b => b.status === 'Occupied' && (b.patientId === p.id || (b.patientName && p.name && b.patientName.trim().toLowerCase() === p.name.trim().toLowerCase())));
@@ -597,7 +597,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                       disabled={isAlreadyOccupied}
                       style={isAlreadyOccupied ? { color: '#9ca3af', backgroundColor: '#f3f4f6' } : undefined}
                     >
-                      {p.name} ({p.category}){isAlreadyOccupied ? ` — Already Occupied in Bed ${assignedBed?.bedNumber}` : ''}
+                      {p.name ? p.name.toUpperCase() : p.name} ({p.category}){isAlreadyOccupied ? ` — Already Occupied in Bed ${assignedBed?.bedNumber}` : ''}
                     </option>
                   );
                 })}
@@ -636,7 +636,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               <button onClick={() => setReleaseModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
             <p className="text-sm text-gray-600 mb-2">
-              Releasing bed occupied by <strong>{releaseModal.patientName}</strong>.
+              Releasing bed occupied by <strong className="uppercase">{releaseModal.patientName}</strong>.
             </p>
             <p className="text-sm text-gray-400">Duration will be auto-calculated and saved to history.</p>
             <div className="flex gap-3 mt-5">

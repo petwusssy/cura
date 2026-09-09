@@ -210,7 +210,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
               {medicationReminders.map(n => (
                 <div key={n.id} className="rounded-lg p-3" style={{ background: n.minutesLeft && n.minutesLeft <= 10 ? `${RED}08` : `${YELLOW}10`, border: `1px solid ${n.minutesLeft && n.minutesLeft <= 10 ? RED : YELLOW}30` }}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-gray-800">{n.patientName}</span>
+                    <span className="text-sm font-semibold text-gray-800 uppercase">{n.patientName}</span>
                     {n.minutesLeft && n.minutesLeft <= 10 && (
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: RED, color: 'white' }}>
                         {n.minutesLeft}m
@@ -293,7 +293,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                             style={{ background: PRIMARY }}>
                             {patient?.name.charAt(0)}
                           </div>
-                          <span className="text-sm font-medium text-gray-800 truncate max-w-[120px]">{patient?.name}</span>
+                          <span className="text-sm font-medium text-gray-800 truncate max-w-[120px] uppercase">{patient?.name}</span>
                         </div>
                       </td>
                       <td className="py-2.5 pr-4 hidden md:table-cell">
@@ -332,7 +332,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
                           {patient?.name.charAt(0)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-gray-900 text-sm">{patient?.name}</span>
+                          <span className="font-bold text-gray-900 text-sm uppercase">{patient?.name}</span>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                                 style={{

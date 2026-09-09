@@ -227,7 +227,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
         {patient ? sectionCard('Patient Information', (
           <div>
             <label className={labelCls}>Patient</label>
-            <div className={inputCls + ' bg-gray-50 dark:bg-[#13141f] cursor-not-allowed opacity-80'}>
+            <div className={inputCls + ' bg-gray-50 dark:bg-[#13141f] cursor-not-allowed opacity-80 uppercase font-bold'}>
               {patient.name}
             </div>
           </div>
@@ -238,8 +238,8 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
               className={inputCls + ' flex items-center justify-between cursor-pointer'}
               onClick={() => setIsPatientDropdownOpen(!isPatientDropdownOpen)}
             >
-              <span className={selectedPatientId ? 'text-gray-900' : 'text-gray-400'}>
-                {selectedPatientId ? patients.find(p => p.id === selectedPatientId)?.name : '-- Select Patient --'}
+              <span className={selectedPatientId ? 'text-gray-900 uppercase font-medium' : 'text-gray-400'}>
+                {selectedPatientId ? patients.find(p => p.id === selectedPatientId)?.name?.toUpperCase() : '-- Select Patient --'}
               </span>
             </div>
             
@@ -271,7 +271,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                         setPatientSearch('');
                       }}
                     >
-                      <div className="font-medium text-gray-800">{p.name}</div>
+                      <div className="font-medium text-gray-800 uppercase">{p.name}</div>
                       <div className="text-xs text-gray-500">{p.id} • {p.category}</div>
                     </div>
                   ))}

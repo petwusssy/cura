@@ -227,7 +227,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const p = patients.find(pt => pt.id === patientId);
     if (!p) return;
     setCurrentPatientId(p.id);
-    setPatientName(p.name);
+    setPatientName(p.name ? p.name.toUpperCase() : p.name);
     setAge(p.age);
     setSex((p.sex || 'FEMALE').toUpperCase());
     if (p.category === 'Student') {
@@ -716,7 +716,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   className="w-full sm:w-56 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] focus:border-transparent transition-all cursor-pointer"
                 >
                   <option value="">Quick load patient...</option>
-                  {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
+                  {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -843,7 +843,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
                   <span>This is to certify that </span>
-                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
+                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value.toUpperCase())} readOnly={!editMode} />
                   <span>, </span>
                   <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />
                   <span> years old, </span>
@@ -989,7 +989,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   className="w-full sm:w-48 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
                 >
                   <option value="">All Patients</option>
-                  {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
+                  {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
                 </select>
               </div>
 
@@ -1046,7 +1046,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             <FileText size={18} />
                           </div>
                           <div>
-                            <div className="text-base font-black text-gray-900 leading-tight">
+                            <div className="text-base font-black text-gray-900 leading-tight uppercase">
                               {cert.patientName || pt?.name || 'Clinic Patient'}
                             </div>
                             <div className="text-xs font-semibold text-gray-400 mt-0.5">
@@ -1137,7 +1137,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     setIssueCertForm(f => ({
                       ...f,
                       patientId: e.target.value,
-                      name: p ? p.name : f.name,
+                      name: p ? (p.name ? p.name.toUpperCase() : p.name) : f.name,
                       age: p ? String(p.age) : f.age,
                       gender: p?.sex ? p.sex.toUpperCase() : f.gender,
                       yearLevel: p?.yearLevel?.replace(/\D/g, '') || f.yearLevel,
@@ -1147,7 +1147,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
                 >
                   <option value="">Select patient...</option>
-                  {patients.map(p => <option key={p.id} value={p.id}>{p.name} ({p.category})</option>)}
+                  {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
                 </select>
               </div>
 

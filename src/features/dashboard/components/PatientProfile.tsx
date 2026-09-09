@@ -96,10 +96,10 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
           <div className="flex flex-col items-center text-center pb-5 border-b border-gray-100 mb-4">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold mb-3"
               style={{ background: PRIMARY }}>
-              {patient.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {patient.name.toUpperCase().split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div className="flex items-center gap-2 justify-center">
-              <h2 className="text-gray-900 text-lg">{patient.name}</h2>
+              <h2 className="text-gray-900 text-lg font-bold uppercase">{patient.name}</h2>
               {patient.isClaimed && (
                 <span title="App Account Claimed" className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider mt-0.5">APP</span>
               )}

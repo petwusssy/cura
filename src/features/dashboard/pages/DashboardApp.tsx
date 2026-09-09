@@ -58,7 +58,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   useEffect(() => {
-    patientService.getPatients().then(d => d !== undefined && setPatients(d)).catch(console.error);
+    patientService.getPatients().then(d => {
+      if (d !== undefined) {
+        setPatients(d.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name })));
+      }
+    }).catch(console.error);
     consultationService.getConsultations().then(d => d !== undefined && setConsultations(d)).catch(console.error);
     medicineService.getMedicines().then(d => {
       if (d !== undefined) {
@@ -140,13 +144,17 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   }, [consultations, patients]);
 
   const handleSavePatient = async (patient: Patient) => {
+    const formattedPatient = {
+      ...patient,
+      name: patient.name ? patient.name.trim().toUpperCase() : patient.name,
+    };
     if (editingPatientId) {
-      setPatients(prev => prev.map(p => p.id === editingPatientId ? patient : p));
-      try { await patientService.updatePatient(editingPatientId, patient); } 
+      setPatients(prev => prev.map(p => p.id === editingPatientId ? formattedPatient : p));
+      try { await patientService.updatePatient(editingPatientId, formattedPatient); } 
       catch (error) { console.error('API failed, but state updated locally:', error); }
     } else {
-      setPatients(prev => [patient, ...prev]);
-      try { await patientService.createPatient(patient); } 
+      setPatients(prev => [formattedPatient, ...prev]);
+      try { await patientService.createPatient(formattedPatient); } 
       catch (error) { console.error('API failed, but state updated locally:', error); }
     }
   };

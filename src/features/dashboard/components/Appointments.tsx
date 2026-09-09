@@ -42,7 +42,8 @@ export function Appointments({ patients }: AppointmentsProps) {
   };
 
   const getPatientName = (id: string) => {
-    return patients.find(p => p.id === id)?.name || id;
+    const p = patients.find(p => p.id === id);
+    return (p?.name || id).toUpperCase();
   };
 
   const handleAction = async () => {
@@ -137,7 +138,7 @@ export function Appointments({ patients }: AppointmentsProps) {
             <div key={req.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{getPatientName(req.patient)}</h3>
+                  <h3 className="font-bold text-gray-900 text-lg uppercase">{getPatientName(req.patient)}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                       req.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
@@ -222,7 +223,7 @@ export function Appointments({ patients }: AppointmentsProps) {
             
             <div className="p-6 space-y-4">
               <p className="text-sm text-gray-600">
-                You are about to {actionType.toLowerCase()} the <span className="font-bold">{selectedReq.visit_type}</span> appointment from <span className="font-bold">{getPatientName(selectedReq.patient)}</span>.
+                You are about to {actionType.toLowerCase()} the <span className="font-bold">{selectedReq.visit_type}</span> appointment from <span className="font-bold uppercase">{getPatientName(selectedReq.patient)}</span>.
               </p>
               
               {actionType === 'Approve' && (

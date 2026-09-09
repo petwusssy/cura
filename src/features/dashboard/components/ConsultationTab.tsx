@@ -275,7 +275,7 @@ export function ConsultationTab({
                               {patient?.name.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
+                              <div className="text-sm font-semibold text-gray-800 uppercase">{patient?.name}</div>
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: bc.bg, color: bc.text }}>{patient?.category}</span>
                             </div>
                           </div>
@@ -348,7 +348,7 @@ export function ConsultationTab({
               return (
                 <div key={c.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                   <div>
-                    <div className="font-semibold text-gray-800">{patient?.name}</div>
+                    <div className="font-semibold text-gray-800 uppercase">{patient?.name}</div>
                     <div className="text-xs text-gray-500">{c.date} • {c.complaint}</div>
                   </div>
                   <button onClick={() => setViewDetail(c)} className="p-2 bg-gray-50 rounded-lg text-gray-600"><Eye size={16} /></button>
@@ -388,7 +388,7 @@ export function ConsultationTab({
                               {patient?.name.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-800">{patient?.name}</div>
+                              <div className="text-sm font-semibold text-gray-800 uppercase">{patient?.name}</div>
                               <div className="text-xs text-gray-400">{patient?.id}</div>
                             </div>
                           </div>
@@ -422,7 +422,7 @@ export function ConsultationTab({
                 <div key={t.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-bold text-gray-900">{patient?.name}</div>
+                      <div className="font-bold text-gray-900 uppercase">{patient?.name}</div>
                       <div className="text-xs text-gray-500">{t.date} • {t.time}</div>
                     </div>
                     <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide bg-orange-50 text-orange-700">
@@ -464,7 +464,7 @@ export function ConsultationTab({
                     </div>
                     <h3 className="text-gray-900">Transfer to Other Hospital</h3>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 ml-10">Patient: <strong>{patient?.name}</strong> — {transferModal.complaint}</p>
+                  <p className="text-xs text-gray-400 mt-1 ml-10">Patient: <strong className="uppercase">{patient?.name}</strong> — {transferModal.complaint}</p>
                 </div>
                 <button onClick={() => setTransferModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
               </div>
@@ -560,7 +560,7 @@ export function ConsultationTab({
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Consultation Record: {patient?.name}
+                    Consultation Record: <span className="uppercase">{patient?.name}</span>
                   </h3>
                   <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn} - {viewDetail.timeOut || 'Present'}</p>
                 </div>

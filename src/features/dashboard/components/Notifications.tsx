@@ -159,7 +159,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                       </p>
                       {n.patientName && n.type === 'medication' && (
                         <div className="mt-1">
-                          <span className="text-xs font-medium text-gray-500">Patient: {n.patientName}</span>
+                          <span className="text-xs font-medium text-gray-500">Patient: <span className="uppercase font-semibold">{n.patientName}</span></span>
                           {n.nextDose && <span className="text-xs text-gray-400 ml-2">• Next dose: {n.nextDose}</span>}
                         </div>
                       )}

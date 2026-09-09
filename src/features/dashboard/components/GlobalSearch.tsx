@@ -37,7 +37,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
       results.push({
         id: p.id,
         type: 'Patient',
-        title: p.name,
+        title: p.name ? p.name.toUpperCase() : p.name,
         subtitle: `ID: ${p.id} - ${p.category}`,
         icon: <User size={16} className="text-[#1B3A6B]" />,
         action: () => {
@@ -57,7 +57,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
         id: c.id,
         type: 'Consultation',
         title: c.complaint,
-        subtitle: `Patient: ${patient?.name || c.patientId} - Date: ${c.date}`,
+        subtitle: `Patient: ${patient?.name ? patient.name.toUpperCase() : c.patientId} - Date: ${c.date}`,
         icon: <Stethoscope size={16} className="text-green-600" />,
         action: () => {
           onSelectPatient(c.patientId);

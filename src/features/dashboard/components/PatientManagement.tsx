@@ -150,7 +150,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-semibold text-gray-800">{p.name}</span>
+                            <span className="text-sm font-semibold text-gray-800 uppercase tracking-wide">{p.name}</span>
                             {p.isClaimed && (
                               <span title="App Account Claimed" className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-wider">APP</span>
                             )}
@@ -230,7 +230,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-gray-900 leading-tight">{p.name}</span>
+                        <span className="font-bold text-gray-900 leading-tight uppercase tracking-wide">{p.name}</span>
                         {p.isClaimed && (
                           <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-wider">APP</span>
                         )}
