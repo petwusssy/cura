@@ -23,13 +23,15 @@ export function EmbeddedJitsiCall({ request, patient, onClose }: EmbeddedJitsiCa
   const extractRoomName = (url?: string) => {
     if (!url) return `CURA-Telemed-${request.id.slice(0, 8)}`;
     try {
+      const match = url.match(/CURA-Telemed-[a-zA-Z0-9_-]+/i);
+      if (match) return match[0];
       if (url.includes('/call/')) {
         const parts = url.split('/call/');
-        return parts[1] || `CURA-Telemed-${request.id.slice(0, 8)}`;
+        return parts[1]?.split('?')[0]?.replace('/', '') || `CURA-Telemed-${request.id.slice(0, 8)}`;
       }
       if (url.includes('meet.jit.si/')) {
         const parts = url.split('meet.jit.si/');
-        return parts[1] || `CURA-Telemed-${request.id.slice(0, 8)}`;
+        return parts[1]?.split('?')[0]?.replace('/', '') || `CURA-Telemed-${request.id.slice(0, 8)}`;
       }
     } catch {
       // fallback
