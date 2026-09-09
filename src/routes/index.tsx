@@ -2,6 +2,7 @@ import { Routes, Route, useNavigate } from "react-router"
 import LandingPage from "@/features/landing/pages/LandingPage"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardApp from "@/features/dashboard/pages/DashboardApp"
+import { CallPage } from "@/features/telemedicine/CallPage"
 import { authService } from "@/services/authService"
 
 export function AppRouter() {
@@ -36,6 +37,14 @@ export function AppRouter() {
             onBack={() => navigate("/")}
           />
         }
+      />
+      <Route
+        path="/call/:roomId"
+        element={<CallPage />}
+      />
+      <Route
+        path="/telemedicine/call/:roomId"
+        element={<CallPage />}
       />
       <Route
         path="/dashboard/*"
