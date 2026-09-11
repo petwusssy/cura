@@ -571,7 +571,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       peer.destroy();
     }
     setConnectionStatus('ended');
-    if (onEndCall) {
+    if (isEmbedded && onEndCall) {
       onEndCall();
     }
   };
@@ -821,7 +821,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             </p>
             {onEndCall && (
               <button
-                onClick={handleEndCall}
+                onClick={onEndCall}
                 className="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
               >
                 <span>{role === 'patient' ? 'Return to CURA Mobile App' : 'Return to Dashboard'}</span>
