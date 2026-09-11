@@ -48,6 +48,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
   const directLink = `https://cura-bice.vercel.app/call/${cleanId}`;
 
+  const [cameraError, setCameraError] = useState<string>('');
+
   // Call timer
   useEffect(() => {
     let interval: any = null;
@@ -75,212 +77,247 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     let currentPeer: Peer | null = null;
     let checkTimer: any = null;
     let isCancelled = false;
-    let isCalling = false;
+    let isInitiatingCall = false;
+    let activeMediaCall: MediaConnection | null = null;
 
-        // Ultra-fast Google and Twilio public STUN servers (sub-30ms candidate gathering)
-        const iceServers = [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
-        ];
+    let resolveMediaPromise: (stream: MediaStream | null) => void;
+    const mediaReadyPromise = new Promise<MediaStream | null>((resolve) => {
+      resolveMediaPromise = resolve;
+    });
 
-        let activeMediaCall: MediaConnection | null = null;
-        let isInitiatingCall = false;
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ];
 
-        // Helper to bind call events with immediate track listening
-        const bindCallEvents = (call: MediaConnection) => {
-          if (activeMediaCall && activeMediaCall !== call) {
-            try { activeMediaCall.close(); } catch {}
+    const attachRemoteStream = (incomingStream: MediaStream) => {
+      console.log('[CURA WebRTC] Attaching remote stream with tracks:', incomingStream.getTracks().map(t => `${t.kind}:${t.enabled}`));
+      setRemoteStream(incomingStream);
+      setConnectionStatus('connected');
+      isInitiatingCall = false;
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = incomingStream;
+        remoteVideoRef.current.play().catch(async (err) => {
+          console.warn('[CURA WebRTC] Autoplay blocked, attempting muted fallback:', err);
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.muted = true;
+            try {
+              await remoteVideoRef.current.play();
+            } catch (e2) {
+              console.error('[CURA WebRTC] Could not play remote video:', e2);
+            }
           }
-          activeMediaCall = call;
-          setActiveCall(call);
+        });
+      }
+    };
 
-          // Listen directly to WebRTC peerConnection for instant track rendering
-          if (call.peerConnection) {
-            call.peerConnection.ontrack = (event) => {
-              if (isCancelled) return;
-              console.log('[CURA WebRTC] Direct track received:', event.track.kind);
-              const incomingStream = event.streams[0] || new MediaStream([event.track]);
-              setRemoteStream(incomingStream);
-              setConnectionStatus('connected');
-              isInitiatingCall = false;
-              if (remoteVideoRef.current) {
-                remoteVideoRef.current.srcObject = incomingStream;
-                remoteVideoRef.current.play().catch(() => {});
-              }
-            };
+    // Helper to bind call events with immediate track listening
+    const bindCallEvents = (call: MediaConnection) => {
+      if (activeMediaCall && activeMediaCall !== call) {
+        try { activeMediaCall.close(); } catch {}
+      }
+      activeMediaCall = call;
+      setActiveCall(call);
 
-            call.peerConnection.onconnectionstatechange = () => {
-              const state = call.peerConnection?.connectionState;
-              console.log('[CURA WebRTC] ConnectionState:', state);
-              if (state === 'connected') {
-                setConnectionStatus('connected');
-                isInitiatingCall = false;
-              } else if (state === 'failed' || state === 'disconnected') {
-                if (!isCancelled) {
-                  setConnectionStatus('waiting');
-                  isInitiatingCall = false;
-                }
-              }
-            };
-          }
+      if (call.peerConnection) {
+        call.peerConnection.ontrack = (event) => {
+          if (isCancelled) return;
+          console.log('[CURA WebRTC] Direct track received:', event.track.kind);
+          const incomingStream = event.streams[0] || new MediaStream([event.track]);
+          attachRemoteStream(incomingStream);
+        };
 
-          call.on('stream', (incomingRemoteStream) => {
-            console.log('[CURA WebRTC] Stream received via PeerJS:', incomingRemoteStream);
-            if (isCancelled) return;
-            setRemoteStream(incomingRemoteStream);
+        call.peerConnection.onconnectionstatechange = () => {
+          const state = call.peerConnection?.connectionState;
+          console.log('[CURA WebRTC] ConnectionState:', state);
+          if (state === 'connected') {
             setConnectionStatus('connected');
             isInitiatingCall = false;
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = incomingRemoteStream;
-              remoteVideoRef.current.play().catch(() => {});
-            }
-          });
-
-          call.on('close', () => {
-            console.log('[CURA WebRTC] Call closed');
-            if (isCancelled) return;
-            setRemoteStream(null);
-            setConnectionStatus('waiting');
-            isInitiatingCall = false;
-            activeMediaCall = null;
-          });
-
-          call.on('error', (err) => {
-            console.warn('[CURA WebRTC] Call error:', err);
-            isInitiatingCall = false;
-          });
-        };
-
-        const attemptDirectCall = () => {
-          if (isCancelled || !currentPeer || currentPeer.destroyed) return;
-          if (connectionStatus === 'connected' || activeMediaCall?.open) return;
-          if (isInitiatingCall) return;
-
-          isInitiatingCall = true;
-          console.log(`[CURA WebRTC] ${role} calling ${targetPeerId}...`);
-          try {
-            const outgoingStream = currentStream || new MediaStream();
-            const call = currentPeer.call(targetPeerId, outgoingStream, {
-              metadata: { role, userName }
-            });
-            if (call) {
-              bindCallEvents(call);
-            }
-          } catch (err) {
-            console.warn('[CURA WebRTC] Call attempt error:', err);
-          } finally {
-            setTimeout(() => {
-              isInitiatingCall = false;
-            }, 2500);
-          }
-        };
-
-        const createPeerInstance = () => {
-          if (isCancelled) return;
-          if (currentPeer && !currentPeer.destroyed) {
-            try { currentPeer.destroy(); } catch {}
-          }
-
-          const newPeer = new Peer(myPeerId, {
-            config: { iceServers }
-          });
-
-          currentPeer = newPeer;
-          setPeer(newPeer);
-
-          newPeer.on('open', (id) => {
-            console.log('[CURA WebRTC] Peer opened with ID:', id);
-            if (isCancelled) return;
-            setConnectionStatus('waiting');
-            // Try calling target peer immediately
-            attemptDirectCall();
-          });
-
-          // Answer incoming calls immediately
-          newPeer.on('call', (incomingCall) => {
-            console.log('[CURA WebRTC] Answering incoming call from:', incomingCall.peer);
-            const outgoingStream = currentStream || new MediaStream();
-            incomingCall.answer(outgoingStream);
-            bindCallEvents(incomingCall);
-          });
-
-          newPeer.on('error', (err: any) => {
-            console.warn('[CURA WebRTC] Peer error:', err?.type, err);
-            if (err?.type === 'unavailable-id') {
-              console.log('[CURA WebRTC] Peer ID busy, retrying in 1.5s...');
-              setTimeout(() => {
-                if (!isCancelled) {
-                  createPeerInstance();
-                }
-              }, 1500);
-            } else if (err?.type === 'peer-unavailable') {
+          } else if (state === 'failed' || state === 'disconnected') {
+            if (!isCancelled) {
+              setConnectionStatus('waiting');
               isInitiatingCall = false;
             }
-          });
+          }
         };
+      }
 
-        async function requestMediaStream() {
+      call.on('stream', (incomingRemoteStream) => {
+        if (isCancelled) return;
+        console.log('[CURA WebRTC] Stream received via PeerJS:', incomingRemoteStream);
+        attachRemoteStream(incomingRemoteStream);
+      });
+
+      call.on('close', () => {
+        console.log('[CURA WebRTC] Call closed');
+        if (isCancelled) return;
+        setRemoteStream(null);
+        setConnectionStatus('waiting');
+        isInitiatingCall = false;
+        activeMediaCall = null;
+      });
+
+      call.on('error', (err) => {
+        console.warn('[CURA WebRTC] Call error:', err);
+        isInitiatingCall = false;
+      });
+    };
+
+    const attemptDirectCall = async () => {
+      if (isCancelled || !currentPeer || currentPeer.destroyed) return;
+      if (isInitiatingCall) return;
+
+      // Check if we already have an active call with valid remote tracks
+      if (activeMediaCall?.open && remoteVideoRef.current?.srcObject) {
+        const stream = remoteVideoRef.current.srcObject as MediaStream;
+        if (stream && stream.getVideoTracks().length > 0) return;
+      }
+
+      isInitiatingCall = true;
+      // Wait for media to be ready before calling so we don't send an empty 0-track SDP!
+      const stream = await mediaReadyPromise;
+      if (isCancelled || !currentPeer || currentPeer.destroyed) {
+        isInitiatingCall = false;
+        return;
+      }
+
+      console.log(`[CURA WebRTC] ${role} calling ${targetPeerId} with tracks:`, stream?.getTracks().map(t => t.kind));
+      try {
+        const outgoingStream = stream || new MediaStream();
+        const call = currentPeer.call(targetPeerId, outgoingStream, {
+          metadata: { role, userName }
+        });
+        if (call) {
+          bindCallEvents(call);
+        }
+      } catch (err) {
+        console.warn('[CURA WebRTC] Call attempt error:', err);
+      } finally {
+        setTimeout(() => {
+          isInitiatingCall = false;
+        }, 2000);
+      }
+    };
+
+    const createPeerInstance = () => {
+      if (isCancelled) return;
+      if (currentPeer && !currentPeer.destroyed) {
+        try { currentPeer.destroy(); } catch {}
+      }
+
+      const newPeer = new Peer(myPeerId, {
+        config: { iceServers }
+      });
+
+      currentPeer = newPeer;
+      setPeer(newPeer);
+
+      newPeer.on('open', (id) => {
+        console.log('[CURA WebRTC] Peer opened with ID:', id);
+        if (isCancelled) return;
+        setConnectionStatus('waiting');
+        attemptDirectCall();
+      });
+
+      // Answer incoming calls only after mediaReadyPromise resolves with tracks
+      newPeer.on('call', async (incomingCall) => {
+        console.log('[CURA WebRTC] Incoming call from:', incomingCall.peer);
+        const stream = await mediaReadyPromise;
+        if (isCancelled) return;
+        console.log('[CURA WebRTC] Answering incoming call with tracks:', stream?.getTracks().map(t => t.kind));
+        const outgoingStream = stream || new MediaStream();
+        incomingCall.answer(outgoingStream);
+        bindCallEvents(incomingCall);
+      });
+
+      newPeer.on('error', (err: any) => {
+        console.warn('[CURA WebRTC] Peer error:', err?.type, err);
+        if (err?.type === 'unavailable-id') {
+          console.log('[CURA WebRTC] Peer ID busy, retrying in 1.5s...');
+          setTimeout(() => {
+            if (!isCancelled) {
+              createPeerInstance();
+            }
+          }, 1500);
+        } else if (err?.type === 'peer-unavailable') {
+          isInitiatingCall = false;
+        }
+      });
+    };
+
+    async function requestMediaStream() {
+      try {
+        let stream: MediaStream | null = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: true
+          });
+        } catch (e) {
+          console.warn('[CURA WebRTC] Primary constraints failed, trying fallback:', e);
           try {
-            let stream: MediaStream | null = null;
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          } catch (e2) {
+            console.warn('[CURA WebRTC] Audio-only fallback:', e2);
             try {
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user' },
-                audio: true
-              });
-            } catch (e) {
-              console.warn('[CURA WebRTC] Mobile constraint fallback:', e);
-              try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-              } catch (e2) {
-                console.warn('[CURA WebRTC] Audio-only fallback:', e2);
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-              }
+              stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e3) {
+              console.warn('[CURA WebRTC] No media access:', e3);
             }
-
-            if (isCancelled) {
-              stream?.getTracks().forEach((t) => t.stop());
-              return;
-            }
-
-            if (stream) {
-              currentStream = stream;
-              setLocalStream(stream);
-
-              if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-              }
-
-              if (activeMediaCall?.peerConnection) {
-                stream.getTracks().forEach((track) => {
-                  try {
-                    activeMediaCall?.peerConnection.addTrack(track, stream!);
-                  } catch {}
-                });
-              }
-
-              attemptDirectCall();
-            }
-          } catch (err: any) {
-            console.error('[CURA WebRTC] Camera access failed:', err);
           }
         }
 
-        setConnectionStatus('initializing');
-        // Register Peer IMMEDIATELY so other side never gets peer-unavailable!
-        createPeerInstance();
-        // Request Camera & Microphone in parallel
-        requestMediaStream();
+        if (isCancelled) {
+          stream?.getTracks().forEach((t) => t.stop());
+          return;
+        }
 
-        // Reconnection & handshake retry loop every 2 seconds until connected
-        checkTimer = setInterval(() => {
-          if (isCancelled || !currentPeer || currentPeer.destroyed) return;
-          if (connectionStatus === 'connected' || activeMediaCall?.open) return;
+        if (stream) {
+          currentStream = stream;
+          setLocalStream(stream);
+
+          if (localVideoRef.current) {
+            localVideoRef.current.muted = true;
+            localVideoRef.current.srcObject = stream;
+            localVideoRef.current.play().catch(() => {});
+          }
+
+          // If active call had 0 tracks, restart call with real stream
+          if (activeMediaCall && activeMediaCall.localStream?.getTracks().length === 0) {
+            try { activeMediaCall.close(); } catch {}
+            activeMediaCall = null;
+          }
+        } else {
+          setCameraError('Camera/Microphone access not available in this browser.');
+        }
+      } catch (err: any) {
+        console.error('[CURA WebRTC] Camera access failed:', err);
+        setCameraError(err?.message || 'Camera permission denied');
+      } finally {
+        resolveMediaPromise(currentStream);
+        if (currentStream) {
           attemptDirectCall();
-        }, 2000);
+        }
+      }
+    }
+
+    setConnectionStatus('initializing');
+    createPeerInstance();
+    requestMediaStream();
+
+    // Reconnection retry loop every 2.5s if not receiving video
+    checkTimer = setInterval(() => {
+      if (isCancelled || !currentPeer || currentPeer.destroyed) return;
+      if (activeMediaCall?.open && remoteVideoRef.current?.srcObject) {
+        const stream = remoteVideoRef.current.srcObject as MediaStream;
+        if (stream && stream.getVideoTracks().length > 0) return;
+      }
+      attemptDirectCall();
+    }, 2500);
 
     const cleanupWindow = () => {
       try { currentPeer?.destroy(); } catch {}
@@ -306,14 +343,24 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   // Sync video elements when streams change
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      localVideoRef.current.muted = true;
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch(() => {});
     }
   }, [localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(() => {});
+      remoteVideoRef.current.play().catch(async (err) => {
+        console.warn('[CURA WebRTC] Remote autoplay fallback:', err);
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.muted = true;
+          try {
+            await remoteVideoRef.current.play();
+          } catch {}
+        }
+      });
     }
   }, [remoteStream]);
 
@@ -440,6 +487,21 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         </div>
       </div>
 
+      {/* Camera / Mic Warning Banner (if blocked in WebView/browser) */}
+      {cameraError && (
+        <div className="absolute top-14 left-4 right-4 z-40 bg-amber-500/95 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between shadow-lg backdrop-blur-sm border border-amber-400">
+          <span className="truncate pr-2">⚠️ Camera blocked. If testing in Expo Go, switch to Chrome.</span>
+          <a
+            href={directLink}
+            target="_blank"
+            rel="noreferrer"
+            className="bg-slate-950 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shrink-0"
+          >
+            Open Chrome
+          </a>
+        </div>
+      )}
+
       {/* Main Video Stage */}
       <div className="relative flex-1 w-full h-full flex items-center justify-center bg-slate-950">
         {/* Remote Video Stream (Main Fullscreen) */}
@@ -447,6 +509,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           ref={remoteVideoRef}
           autoPlay
           playsInline
+          muted={false}
           className={`w-full h-full object-cover transition-opacity duration-500 ${connectionStatus === 'connected' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         />
 
