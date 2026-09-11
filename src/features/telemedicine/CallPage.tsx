@@ -13,12 +13,29 @@ export const CallPage: React.FC = () => {
   const secondaryLink = searchParams.get('secondary') || undefined;
 
   const handleEndCall = () => {
-    // If opened in browser tab or mobile webview
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate('/');
+    // 1. If embedded in React Native WebView (Messenger-style in-app)
+    if ((window as any).ReactNativeWebView) {
+      try {
+        (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'END_CALL' }));
+      } catch (e) {
+        (window as any).ReactNativeWebView.postMessage('END_CALL');
+      }
+      return;
     }
+
+    // 2. If opened in external mobile browser / Chrome Custom Tab, redirect back to mobile app
+    try {
+      window.location.href = 'curamobile://telemedicine';
+    } catch (e) {}
+
+    // 3. Fallback for desktop / standard browser
+    setTimeout(() => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        navigate('/');
+      }
+    }, 400);
   };
 
   if (!roomId) {

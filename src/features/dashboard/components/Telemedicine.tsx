@@ -60,7 +60,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     setIsSubmitting(true);
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
-    const effectiveMeetingLink = `https://meet.jit.si/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
+    const effectiveMeetingLink = `https://cura-bice.vercel.app/call/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
 
     const res = await telemedicineService.approveRequest(selectedReq.id, {
       status: finalStatus as any,
@@ -99,7 +99,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
   };
 
   const handleCopyLink = (req: TelemedicineRequest) => {
-    const link = req.meeting_link || `https://meet.jit.si/CURA-Telemed-${req.id.slice(0, 8)}`;
+    const link = `https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}`;
     navigator.clipboard.writeText(link);
     setCopiedId(req.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -282,7 +282,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                         </a>
                       ) : (
                         <a 
-                          href={req.meeting_link || `https://meet.jit.si/CURA-Telemed-${req.id.slice(0, 8)}`} 
+                          href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
