@@ -59,7 +59,7 @@ export const CallPage: React.FC = () => {
   }
 
   return (
-    <div className="w-screen h-screen bg-slate-950 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 w-full h-[100dvh] bg-slate-950 overflow-hidden flex flex-col">
       <CuraWebRtcRoom
         roomId={roomId}
         role={role}

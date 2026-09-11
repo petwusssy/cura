@@ -444,7 +444,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   };
 
   return (
-    <div className={`relative flex flex-col w-full h-full bg-slate-950 text-white overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : 'min-h-screen'}`}>
+    <div className={`relative flex flex-col w-full h-full bg-slate-950 text-white overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
       {/* Top Header Bar */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-[2px]">
         <div className="flex items-center gap-3">
@@ -581,7 +581,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         )}
 
         {/* Local Video Stream (Picture-in-Picture) */}
-        <div className="absolute bottom-24 right-4 z-20 w-32 h-44 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-900 shadow-2xl transition-all">
+        <div 
+          className="absolute right-4 z-20 w-32 h-44 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-900 shadow-2xl transition-all"
+          style={{ bottom: 'max(5.75rem, calc(5rem + env(safe-area-inset-bottom, 20px)))' }}
+        >
           <video
             ref={localVideoRef}
             autoPlay
@@ -604,7 +607,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       </div>
 
       {/* Floating Control Bar (Bottom) */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-3 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+      <div 
+        className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-3 px-4 pt-4 bg-gradient-to-t from-black/95 via-black/80 to-transparent"
+        style={{ paddingBottom: 'max(1.5rem, calc(0.75rem + env(safe-area-inset-bottom, 20px)))' }}
+      >
         {/* Toggle Mic */}
         <button
           onClick={toggleMic}
