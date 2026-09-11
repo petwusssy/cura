@@ -13,6 +13,8 @@ export const CallPage: React.FC = () => {
   const remoteUserName = searchParams.get('patient') || (role === 'doctor' ? 'Patient' : 'Clinic Doctor');
   const secondaryLink = searchParams.get('secondary') || undefined;
 
+  const isEmbedded = searchParams.get('embedded') === 'true';
+
   const handleEndCall = () => {
     // 1. If embedded in React Native WebView (Messenger-style in-app)
     if ((window as any).ReactNativeWebView) {
@@ -50,17 +52,17 @@ export const CallPage: React.FC = () => {
 
   if (!roomId) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mb-4 text-rose-400">
+      <div className="min-h-screen bg-gradient-to-b from-[#0B1C33] via-[#071426] to-[#040C18] text-white font-['Plus_Jakarta_Sans',sans-serif] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mb-4 text-rose-400 shadow-xl">
           <Heart className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold mb-2">Invalid Consultation Link</h2>
-        <p className="text-sm text-slate-400 max-w-sm mb-6">
+        <h2 className="text-2xl font-extrabold mb-2 text-white">Invalid Consultation Link</h2>
+        <p className="text-sm text-slate-300 max-w-sm mb-6 leading-relaxed">
           No active consultation room specified. Please open the link provided in your CURA appointments.
         </p>
         <button
           onClick={() => navigate('/')}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all"
+          className="bg-[#1B3A6B] hover:bg-[#142D54] text-white text-xs font-bold py-3 px-7 rounded-xl shadow-lg transition-all active:scale-95 border border-white/10"
         >
           Return Home
         </button>
@@ -69,13 +71,14 @@ export const CallPage: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] bg-slate-950 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 w-full h-[100dvh] bg-gradient-to-b from-[#0B1C33] via-[#071426] to-[#040C18] text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden flex flex-col">
       <CuraWebRtcRoom
         roomId={roomId}
         role={role}
         userName={userName}
         remoteUserName={remoteUserName}
         onEndCall={handleEndCall}
+        isEmbedded={isEmbedded}
         secondaryLink={secondaryLink}
       />
     </div>

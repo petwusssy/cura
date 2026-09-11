@@ -589,22 +589,26 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     remoteStream.getVideoTracks().every((t) => t.muted || !t.enabled);
 
   return (
-    <div className={`relative flex flex-col w-full h-full bg-slate-950 text-white overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
+    <div className={`relative flex flex-col w-full h-full bg-gradient-to-b from-[#0B1C33] via-[#071426] to-[#040C18] text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-[#1B3A6B]/25 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none" />
+
       {/* Top Header Bar / Floating HUD */}
       {isEmbedded ? (
         <>
           {/* Subtle Embedded Floating Top HUD */}
           <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 flex items-center gap-2 pointer-events-auto">
-            <div className="flex items-center gap-1.5 bg-[#0B2136]/90 border border-emerald-500/30 px-3 py-1 rounded-full shadow-md backdrop-blur-md">
+            <div className="flex items-center gap-2 bg-[#0E2442]/90 border border-emerald-400/30 px-3.5 py-1.5 rounded-full shadow-xl backdrop-blur-md">
               <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              <span className="text-[10px] sm:text-xs font-bold tracking-wide text-emerald-200 uppercase">
-                {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting...'}
+              <span className="text-[10px] sm:text-xs font-bold tracking-wider text-emerald-200 uppercase">
+                {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting Room...'}
               </span>
             </div>
           </div>
 
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-2 pointer-events-auto">
-            <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-[#0B2136]/90 border border-slate-700/80 px-3 py-1 rounded-lg backdrop-blur-md shadow-md font-mono font-bold">
+            <div className="flex items-center gap-2 text-xs text-slate-100 bg-[#0E2442]/90 border border-white/15 px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-xl font-mono font-bold">
               <Clock className="w-3.5 h-3.5 text-emerald-400" />
               <span>{formatDuration(callDuration)}</span>
             </div>
@@ -612,34 +616,34 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         </>
       ) : (
         /* Standalone / Mobile Full Header (Consistent with CURA Web App Header) */
-        <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 py-3 bg-[#0B2136]/95 border-b border-slate-800/90 backdrop-blur-md shadow-lg">
+        <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-3.5 bg-[#0B2136]/95 border-b border-white/10 backdrop-blur-xl shadow-xl">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-inner shrink-0">
-              <VideoIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#1B3A6B] to-[#25508D] border border-blue-400/30 flex items-center justify-center text-white shadow-md shrink-0">
+              <VideoIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 animate-pulse" />
             </div>
             
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-800/40">
-                  CURA Telemed
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500/30">
+                  CURA Telemedicine
                 </span>
-                <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full shadow-sm">
+                <div className="flex items-center gap-1.5 bg-[#0E2442]/90 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
                   <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  <span className="text-[10px] sm:text-xs font-semibold tracking-wide text-emerald-200 uppercase">
+                  <span className="text-[10px] sm:text-xs font-semibold text-emerald-200 uppercase">
                     {connectionStatus === 'connected' ? 'Connected' : 'Connecting...'}
                   </span>
                 </div>
               </div>
               
-              <span className="text-xs sm:text-sm font-bold tracking-tight text-white uppercase truncate max-w-[150px] sm:max-w-xs mt-0.5">
+              <span className="text-xs sm:text-sm font-extrabold tracking-tight text-white uppercase truncate max-w-[150px] sm:max-w-xs mt-0.5">
                 {effectiveRemoteName}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Live Call Duration Timer */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-slate-900/90 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/80 shadow-sm font-mono font-bold">
+            <div className="flex items-center gap-1.5 text-xs text-slate-100 bg-[#0E2442]/90 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-white/10 shadow-sm font-mono font-bold">
               <Clock className="w-3.5 h-3.5 text-emerald-400" />
               <span>{formatDuration(callDuration)}</span>
             </div>
@@ -647,10 +651,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             {/* Direct Link Copier */}
             <button
               onClick={copyDirectLink}
-              className="flex items-center gap-1 text-xs bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all active:scale-95"
+              className="flex items-center gap-1.5 text-xs bg-[#1B3A6B] hover:bg-[#224A84] border border-white/15 text-white px-2.5 sm:px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm font-semibold"
               title="Copy patient join link"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
               <span className="hidden md:inline">{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
             </button>
 
@@ -660,10 +664,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
                 href={secondaryLink}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 text-xs bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/40 text-blue-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all"
+                className="flex items-center gap-1.5 text-xs bg-blue-600/80 hover:bg-blue-600 border border-blue-400/30 text-white px-2.5 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm font-semibold"
               >
-                <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                <span className="hidden md:inline">Google Meet Backup</span>
+                <ExternalLink className="w-3.5 h-3.5 text-white" />
+                <span className="hidden lg:inline">Google Meet Backup</span>
               </a>
             )}
 
@@ -671,10 +675,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             {onEndCall && (
               <button
                 onClick={handleEndCall}
-                className="bg-rose-600/90 hover:bg-rose-600 active:bg-rose-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1"
+                className="bg-rose-600 hover:bg-rose-700 active:bg-rose-800 px-3 sm:px-4 py-1.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 active:scale-95"
                 title="Exit Consultation"
               >
-                <PhoneOff className="w-3 h-3" />
+                <PhoneOff className="w-3.5 h-3.5" />
                 <span className="hidden xs:inline">Exit</span>
               </button>
             )}
@@ -684,13 +688,13 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
       {/* Camera / Mic Warning Banner (if blocked in WebView/browser) */}
       {cameraError && (
-        <div className="absolute top-14 left-4 right-4 z-40 bg-amber-500/95 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between shadow-lg backdrop-blur-sm border border-amber-400">
-          <span className="truncate pr-2">⚠️ Camera blocked. If testing in Expo Go, switch to Chrome.</span>
+        <div className="absolute top-16 left-4 right-4 z-40 bg-amber-500/95 text-slate-950 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between shadow-2xl backdrop-blur-md border border-amber-400">
+          <span className="truncate pr-2">⚠️ Camera blocked. If testing on mobile, switch to Chrome browser.</span>
           <a
             href={directLink}
             target="_blank"
             rel="noreferrer"
-            className="bg-slate-950 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shrink-0"
+            className="bg-[#0B2136] hover:bg-[#1B3A6B] text-white px-3 py-1 rounded-xl text-[11px] font-bold uppercase shrink-0 transition-colors"
           >
             Open Chrome
           </a>
@@ -698,7 +702,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       )}
 
       {/* Main Video Stage */}
-      <div className="relative flex-1 w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden">
+      <div className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden">
         {/* Remote Video Stream (Main Fullscreen) */}
         <video
           ref={remoteVideoRef}
@@ -712,127 +716,147 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
         {/* Remote Camera Off Indicator State */}
         {connectionStatus === 'connected' && isRemoteOffCam && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#0B132B] animate-in fade-in duration-300">
-            {/* Background ambient lighting */}
-            <div className="absolute w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute w-64 h-64 rounded-full bg-blue-600/10 blur-3xl pointer-events-none -bottom-10" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 animate-in fade-in duration-300">
+            {/* Elevated Frosted Card */}
+            <div className="relative max-w-md w-full bg-gradient-to-b from-[#0F284A]/90 to-[#0A1A31]/95 backdrop-blur-2xl border border-blue-400/25 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
+              {/* Centered Avatar */}
+              <div className="relative mb-5">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-[#1B3A6B] via-[#224A84] to-[#2B579A] border-4 border-emerald-400/50 flex items-center justify-center shadow-2xl text-white">
+                  <span className="text-3xl sm:text-4xl font-extrabold uppercase tracking-wider">
+                    {getInitials(effectiveRemoteName)}
+                  </span>
+                </div>
+                <div className="absolute bottom-0 right-0 bg-[#0B2136] border-2 border-white/20 rounded-full p-2 text-amber-400 shadow-md">
+                  <VideoOff className="w-5 h-5" />
+                </div>
+              </div>
 
-            {/* Centered Avatar */}
-            <div className="relative mb-4">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-[#142D54] to-[#1B3A6B] border-2 border-emerald-500/40 flex items-center justify-center shadow-2xl text-emerald-300">
-                <span className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white">
-                  {getInitials(effectiveRemoteName)}
+              {/* Participant Name & Category */}
+              <h3 className="text-2xl font-extrabold text-white uppercase tracking-tight mb-1.5">
+                {effectiveRemoteName}
+              </h3>
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/60 px-3.5 py-1 rounded-full border border-emerald-500/30 mb-4">
+                {role === 'doctor' ? 'Patient' : 'Attending Physician'}
+              </span>
+
+              {/* Camera Off Indicator Pill */}
+              <div className="flex items-center gap-2 bg-[#081729]/90 border border-white/10 px-4 py-2 rounded-full shadow-inner">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-xs font-semibold text-slate-200">
+                  Camera is turned off
                 </span>
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-slate-900 border-2 border-slate-800 rounded-full p-2 text-amber-400 shadow-md">
-                <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
+
+              {/* Muted Audio Pill if remote mic is muted */}
+              {isRemoteMicMuted && (
+                <div className="flex items-center gap-1.5 bg-rose-950/70 border border-rose-800/50 px-3 py-1 rounded-full text-rose-300 text-xs font-medium mt-3">
+                  <MicOff className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Microphone is muted</span>
+                </div>
+              )}
             </div>
-
-            {/* Participant Name & Category */}
-            <h3 className="text-lg sm:text-2xl font-bold text-white uppercase tracking-tight mb-1">
-              {effectiveRemoteName}
-            </h3>
-            <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider mb-3">
-              {role === 'doctor' ? 'Patient' : 'Attending Physician'}
-            </span>
-
-            {/* Camera Off Indicator Pill */}
-            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800/90 px-4 py-1.5 rounded-full shadow-lg">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-xs font-semibold text-slate-300 tracking-wide">
-                Camera is turned off
-              </span>
-            </div>
-
-            {/* Muted Audio Pill if remote mic is muted */}
-            {isRemoteMicMuted && (
-              <div className="flex items-center gap-1.5 bg-rose-950/70 border border-rose-800/50 px-3 py-1 rounded-full text-rose-300 text-xs font-medium mt-2">
-                <MicOff className="w-3 h-3 text-rose-400" />
-                <span>Microphone is muted</span>
-              </div>
-            )}
           </div>
         )}
 
         {/* Placeholder / Waiting State if Remote Not Yet Connected */}
         {connectionStatus !== 'connected' && connectionStatus !== 'error' && connectionStatus !== 'ended' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#0B132B]">
-            <div className="relative mb-6">
-              <div className="w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center animate-pulse">
-                <ShieldCheck className="w-12 h-12 text-emerald-400" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+            {/* Elevated Frosted Card */}
+            <div className="relative max-w-lg w-full bg-gradient-to-b from-[#0F284A]/90 to-[#0A1A31]/95 backdrop-blur-2xl border border-blue-400/25 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
+              <div className="relative mb-6">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-[#1B3A6B] to-[#2B579A] border-2 border-emerald-400/40 flex items-center justify-center shadow-2xl text-emerald-300">
+                  <ShieldCheck className="w-12 h-12 text-emerald-300 animate-pulse" />
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-[#0B2136] border-2 border-emerald-500/40 rounded-full p-2 text-emerald-400 shadow-md">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-slate-900 border border-slate-700 rounded-full p-1.5">
-                <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-2.5 tracking-tight">
+                {role === 'doctor' ? 'Waiting for Patient to Join' : 'Connecting to Clinic Physician'}
+              </h3>
+              
+              <p className="text-sm text-slate-300 max-w-md mb-6 leading-relaxed">
+                {role === 'doctor' 
+                  ? `Your consultation room is ready. Once ${effectiveRemoteName} opens Join Call, their video will appear here automatically.` 
+                  : 'Connecting you with the clinic doctor. Please stay on this screen. No login required.'}
+              </p>
+
+              <div className="w-full bg-[#081729]/90 border border-blue-400/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Room Code</span>
+                  <code className="text-sm font-mono font-bold text-emerald-400 tracking-wide">
+                    {cleanId}
+                  </code>
+                </div>
+                <button
+                  onClick={copyDirectLink}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#1B3A6B] hover:bg-[#142D54] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 border border-white/15"
+                >
+                  {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedLink ? 'Link Copied!' : 'Copy Patient Link'}</span>
+                </button>
               </div>
-            </div>
 
-            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
-              {role === 'doctor' ? 'Waiting for Patient to Join...' : 'Connecting to Clinic Doctor...'}
-            </h3>
-            
-            <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
-              {role === 'doctor' 
-                ? 'Your consultation room is ready. Once the patient opens Join Call, their video will appear here automatically.' 
-                : 'Connecting to the clinic doctor. Please stay on this screen. No login required.'}
-            </p>
-
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col items-center gap-2 max-w-sm">
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Consultation Room ID</span>
-              <code className="text-xs font-mono text-emerald-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-                {cleanId}
-              </code>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>End-to-End Encrypted WebRTC Session</span>
+              </div>
             </div>
           </div>
         )}
 
         {/* Error State */}
         {connectionStatus === 'error' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 bg-slate-950">
-            <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mb-4 text-rose-400">
-              <VideoOff className="w-8 h-8" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20">
+            <div className="max-w-md w-full bg-gradient-to-b from-[#0F284A]/90 to-[#0A1A31]/95 backdrop-blur-2xl border border-rose-500/30 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mb-4 text-rose-400 shadow-xl">
+                <VideoOff className="w-9 h-9" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-white mb-2">Camera / Mic Access Needed</h3>
+              <p className="text-sm text-slate-300 max-w-md mb-6 leading-relaxed">{errorMessage}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-[#1B3A6B] hover:bg-[#142D54] text-white font-bold text-xs uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 border border-white/10"
+              >
+                Retry Access
+              </button>
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Camera / Mic Access Needed</h3>
-            <p className="text-sm text-slate-400 max-w-md mb-6">{errorMessage}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2.5 px-6 rounded-xl shadow-lg transition-all"
-            >
-              Retry Access
-            </button>
           </div>
         )}
 
         {/* Ended State */}
         {connectionStatus === 'ended' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 bg-slate-950">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 text-emerald-400 shadow-xl">
-              <ShieldCheck className="w-8 h-8" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20">
+            <div className="max-w-md w-full bg-gradient-to-b from-[#0F284A]/90 to-[#0A1A31]/95 backdrop-blur-2xl border border-blue-400/25 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center mb-5 text-white shadow-xl shadow-emerald-950/50">
+                <ShieldCheck className="w-10 h-10" />
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight">Consultation Concluded</h3>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#081729]/90 border border-white/10 text-xs font-mono font-bold text-slate-200 mb-5">
+                <Clock className="w-4 h-4 text-emerald-400" />
+                <span>Session Duration: {formatDuration(callDuration)}</span>
+              </div>
+              <p className="text-sm text-slate-300 max-w-sm mb-7 leading-relaxed">
+                {role === 'patient' 
+                  ? 'Your virtual medical consultation has ended. You can now safely return to the CURA mobile application.' 
+                  : 'Virtual consultation session has concluded. The appointment record and consultation notes are saved.'}
+              </p>
+              {onEndCall && (
+                <button
+                  onClick={onEndCall}
+                  className="w-full bg-[#1B3A6B] hover:bg-[#142D54] active:bg-[#0F223F] text-white font-bold text-xs uppercase tracking-wider py-3.5 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border border-blue-400/30"
+                >
+                  <span>{role === 'patient' ? 'Return to CURA Mobile App' : 'Return to Dashboard'}</span>
+                </button>
+              )}
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Consultation Ended</h3>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 mb-4">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Duration: {formatDuration(callDuration)}</span>
-            </div>
-            <p className="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
-              {role === 'patient' 
-                ? 'Your virtual appointment has concluded. You may now return to the CURA mobile app.' 
-                : 'Consultation session concluded. Patient record will be updated in the clinic dashboard.'}
-            </p>
-            {onEndCall && (
-              <button
-                onClick={onEndCall}
-                className="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
-              >
-                <span>{role === 'patient' ? 'Return to CURA Mobile App' : 'Return to Dashboard'}</span>
-              </button>
-            )}
           </div>
         )}
 
         {/* Local Video Stream (Picture-in-Picture) */}
         <div 
-          className="absolute right-3 sm:right-5 z-20 w-28 h-38 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-slate-800/90 bg-[#0B132B] shadow-2xl transition-all"
+          className="absolute right-3 sm:right-5 z-20 w-32 h-44 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border-2 border-white/20 bg-[#081729] shadow-2xl transition-all"
           style={{ bottom: 'max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 20px)))' }}
         >
           <video
@@ -844,18 +868,18 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`}
           />
           {isVideoOff && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B132B] text-slate-400 p-2 text-center">
-              <div className="w-10 h-10 rounded-full bg-slate-800/90 border border-slate-700/60 flex items-center justify-center mb-1 text-slate-300">
-                <User className="w-5 h-5" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B2136] text-slate-300 p-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-[#1B3A6B] border border-white/20 flex items-center justify-center mb-1.5 text-white shadow-md">
+                <User className="w-6 h-6" />
               </div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Camera Off</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">Camera Off</span>
             </div>
           )}
-          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between bg-black/75 backdrop-blur-sm px-2 py-1 rounded-lg">
-            <span className="text-[10px] font-semibold text-white uppercase tracking-wider truncate">
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between bg-[#081729]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider truncate">
               You ({role})
             </span>
-            {isMicMuted && <MicOff className="w-3 h-3 text-rose-400 shrink-0" />}
+            {isMicMuted && <MicOff className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
           </div>
         </div>
       </div>
@@ -865,14 +889,14 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-30 flex items-center justify-center pointer-events-none px-4"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="flex items-center gap-2.5 sm:gap-3 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-2 sm:p-2.5 rounded-full shadow-2xl pointer-events-auto">
+        <div className="flex items-center gap-3 bg-[#0B2136]/95 backdrop-blur-xl border border-white/20 p-2.5 sm:p-3 rounded-full shadow-2xl pointer-events-auto">
           {/* Toggle Mic */}
           <button
             onClick={toggleMic}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
+            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
               isMicMuted 
                 ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40' 
-                : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70'
+                : 'bg-[#1B3A6B] hover:bg-[#224A84] text-white border border-white/15'
             }`}
             title={isMicMuted ? 'Unmute Microphone' : 'Mute Microphone'}
           >
@@ -882,10 +906,10 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           {/* Toggle Video */}
           <button
             onClick={toggleVideo}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
+            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
               isVideoOff 
                 ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40' 
-                : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70'
+                : 'bg-[#1B3A6B] hover:bg-[#224A84] text-white border border-white/15'
             }`}
             title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
           >
@@ -895,7 +919,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           {/* Flip Camera (Mobile Only) */}
           <button
             onClick={flipCamera}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70 flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 md:hidden"
+            className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-[#1B3A6B] hover:bg-[#224A84] text-white border border-white/15 flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 md:hidden"
             title="Switch Camera"
           >
             <RefreshCw className="w-5 h-5" />
@@ -904,7 +928,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           {/* End Call Button */}
           <button
             onClick={handleEndCall}
-            className="h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-900/40 transition-all active:scale-95 flex items-center gap-2"
+            className="h-12 px-6 sm:px-7 rounded-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-900/40 transition-all active:scale-95 flex items-center gap-2"
             title="End Consultation"
           >
             <PhoneOff className="w-4 h-4 sm:w-5 sm:h-5" />
