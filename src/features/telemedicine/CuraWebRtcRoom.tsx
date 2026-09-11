@@ -446,30 +446,56 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   return (
     <div className={`relative flex flex-col w-full h-full bg-slate-950 text-white overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
       {/* Top Header Bar */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-[2px]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-emerald-950/80 border border-emerald-500/30 px-3 py-1.5 rounded-full shadow-sm">
-            <span className={`w-2.5 h-2.5 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="text-xs font-semibold tracking-wide text-emerald-200 uppercase">
-              {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting Room...'}
-            </span>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-800">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono font-medium">{formatDuration(callDuration)}</span>
+      <header className={`absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-5 py-3 ${
+        isEmbedded 
+          ? 'bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-[2px]' 
+          : 'bg-[#0B2136]/95 border-b border-slate-800/80 backdrop-blur-md shadow-md'
+      }`}>
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {!isEmbedded && (
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 border border-emerald-500/25 shadow-inner shrink-0">
+              <VideoIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+            </div>
+          )}
+          
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {!isEmbedded && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                  CURA Telemed
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full shadow-sm">
+                <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span className="text-[10px] sm:text-xs font-semibold tracking-wide text-emerald-200 uppercase">
+                  {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting...'}
+                </span>
+              </div>
+            </div>
+            
+            {!isEmbedded && (
+              <span className="text-xs sm:text-sm font-bold tracking-tight text-white uppercase truncate max-w-[150px] sm:max-w-xs mt-0.5">
+                {role === 'patient' ? (userName || 'Clinic Doctor') : (userName || 'Patient Consultation')}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Live Call Duration Timer (Visible on all devices) */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-700/70 shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="font-mono font-bold tracking-wider">{formatDuration(callDuration)}</span>
+          </div>
+
           {/* Direct Link Copier */}
           <button
             onClick={copyDirectLink}
-            className="flex items-center gap-1.5 text-xs bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition-all"
+            className="flex items-center gap-1 text-xs bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all active:scale-95"
             title="Copy patient join link"
           >
             {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="hidden md:inline">{copiedLink ? 'Link Copied!' : 'Copy Room Link'}</span>
+            <span className="hidden md:inline">{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
           </button>
 
           {/* Secondary Google Meet fallback */}
@@ -478,14 +504,26 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
               href={secondaryLink}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 text-xs bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/40 text-blue-200 px-3 py-1.5 rounded-lg transition-all"
+              className="flex items-center gap-1.5 text-xs bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/40 text-blue-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all"
             >
               <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
               <span className="hidden md:inline">Google Meet Backup</span>
             </a>
           )}
+
+          {/* Quick End Call Button in header for non-embedded view */}
+          {!isEmbedded && onEndCall && (
+            <button
+              onClick={handleEndCall}
+              className="bg-rose-600/90 hover:bg-rose-600 active:bg-rose-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1"
+              title="Exit Consultation"
+            >
+              <PhoneOff className="w-3 h-3" />
+              <span className="hidden xs:inline">Exit</span>
+            </button>
+          )}
         </div>
-      </div>
+      </header>
 
       {/* Camera / Mic Warning Banner (if blocked in WebView/browser) */}
       {cameraError && (
