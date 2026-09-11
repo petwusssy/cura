@@ -587,6 +587,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             autoPlay
             muted
             playsInline
+            style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
             className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`}
           />
           {isVideoOff && (
