@@ -77,32 +77,6 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     let isCancelled = false;
     let isCalling = false;
 
-    async function setupMediaAndPeer() {
-      try {
-        setConnectionStatus('initializing');
-
-        // Request local media
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: true
-        });
-
-        if (isCancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-
-        currentStream = stream;
-        setLocalStream(stream);
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
         // Ultra-fast Google and Twilio public STUN servers (sub-30ms candidate gathering)
         const iceServers = [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -189,7 +163,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           isInitiatingCall = true;
           console.log(`[CURA WebRTC] ${role} calling ${targetPeerId}...`);
           try {
-            const call = currentPeer.call(targetPeerId, stream, {
+            const outgoingStream = currentStream || new MediaStream();
+            const call = currentPeer.call(targetPeerId, outgoingStream, {
               metadata: { role, userName }
             });
             if (call) {
@@ -228,7 +203,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           // Answer incoming calls immediately
           newPeer.on('call', (incomingCall) => {
             console.log('[CURA WebRTC] Answering incoming call from:', incomingCall.peer);
-            incomingCall.answer(stream);
+            const outgoingStream = currentStream || new MediaStream();
+            incomingCall.answer(outgoingStream);
             bindCallEvents(incomingCall);
           });
 
@@ -247,7 +223,57 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           });
         };
 
+        async function requestMediaStream() {
+          try {
+            let stream: MediaStream | null = null;
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: true
+              });
+            } catch (e) {
+              console.warn('[CURA WebRTC] Mobile constraint fallback:', e);
+              try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+              } catch (e2) {
+                console.warn('[CURA WebRTC] Audio-only fallback:', e2);
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              }
+            }
+
+            if (isCancelled) {
+              stream?.getTracks().forEach((t) => t.stop());
+              return;
+            }
+
+            if (stream) {
+              currentStream = stream;
+              setLocalStream(stream);
+
+              if (localVideoRef.current) {
+                localVideoRef.current.srcObject = stream;
+              }
+
+              if (activeMediaCall?.peerConnection) {
+                stream.getTracks().forEach((track) => {
+                  try {
+                    activeMediaCall?.peerConnection.addTrack(track, stream!);
+                  } catch {}
+                });
+              }
+
+              attemptDirectCall();
+            }
+          } catch (err: any) {
+            console.error('[CURA WebRTC] Camera access failed:', err);
+          }
+        }
+
+        setConnectionStatus('initializing');
+        // Register Peer IMMEDIATELY so other side never gets peer-unavailable!
         createPeerInstance();
+        // Request Camera & Microphone in parallel
+        requestMediaStream();
 
         // Reconnection & handshake retry loop every 2 seconds until connected
         checkTimer = setInterval(() => {
@@ -255,19 +281,6 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           if (connectionStatus === 'connected' || activeMediaCall?.open) return;
           attemptDirectCall();
         }, 2000);
-
-      } catch (err: any) {
-        console.error('[CURA WebRTC] Media/Peer setup failed:', err);
-        setConnectionStatus('error');
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setErrorMessage('Camera or Microphone permission was denied. Please allow access in your browser settings.');
-        } else {
-          setErrorMessage(err.message || 'Could not access camera/microphone.');
-        }
-      }
-    }
-
-    setupMediaAndPeer();
 
     const cleanupWindow = () => {
       try { currentPeer?.destroy(); } catch {}
