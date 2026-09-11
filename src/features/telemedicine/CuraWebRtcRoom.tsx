@@ -602,17 +602,25 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         {/* Ended State */}
         {connectionStatus === 'ended' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 bg-slate-950">
-            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-slate-300">
-              <PhoneOff className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 text-emerald-400 shadow-xl">
+              <ShieldCheck className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Consultation Ended</h3>
-            <p className="text-sm text-slate-400 max-w-md mb-6">Call duration: {formatDuration(callDuration)}</p>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Consultation Ended</h3>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 mb-4">
+              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Duration: {formatDuration(callDuration)}</span>
+            </div>
+            <p className="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
+              {role === 'patient' 
+                ? 'Your virtual appointment has concluded. You may now return to the CURA mobile app.' 
+                : 'Consultation session concluded. Patient record will be updated in the clinic dashboard.'}
+            </p>
             {onEndCall && (
               <button
                 onClick={onEndCall}
-                className="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs py-2.5 px-6 rounded-xl border border-slate-700 transition-all"
+                className="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
               >
-                Return to CURA
+                <span>{role === 'patient' ? 'Return to CURA Mobile App' : 'Return to Dashboard'}</span>
               </button>
             )}
           </div>

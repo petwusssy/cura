@@ -23,12 +23,21 @@ export const CallPage: React.FC = () => {
       return;
     }
 
-    // 2. If opened in external mobile browser / Chrome Custom Tab, redirect back to mobile app
+    // 2. If mobile patient: redirect back to mobile app via custom scheme / deep link
+    const redirectUrl = searchParams.get('redirect_url') || 'curamobile://telemedicine';
     try {
-      window.location.href = 'curamobile://telemedicine';
+      window.location.href = redirectUrl;
     } catch (e) {}
 
-    // 3. Fallback for desktop / standard browser
+    // For mobile patient: NEVER navigate to web app '/'!
+    if (role === 'patient') {
+      try {
+        window.close();
+      } catch (e) {}
+      return;
+    }
+
+    // 3. Desktop doctor fallback only
     setTimeout(() => {
       if (window.history.length > 1) {
         window.history.back();
