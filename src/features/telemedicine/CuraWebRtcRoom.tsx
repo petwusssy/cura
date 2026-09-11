@@ -9,6 +9,7 @@ interface CuraWebRtcRoomProps {
   roomId: string;
   role?: 'doctor' | 'patient';
   userName?: string;
+  remoteUserName?: string;
   onEndCall?: () => void;
   isEmbedded?: boolean;
   secondaryLink?: string;
@@ -18,6 +19,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   roomId,
   role = 'patient',
   userName,
+  remoteUserName,
   onEndCall,
   isEmbedded = false,
   secondaryLink
@@ -34,9 +36,40 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(false);
+  const [isRemoteMicMuted, setIsRemoteMicMuted] = useState(false);
+  const [remotePeerName, setRemotePeerName] = useState<string>('');
   const [callDuration, setCallDuration] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  const effectiveRemoteName = (remotePeerName || remoteUserName || (role === 'doctor' ? 'Patient' : 'Clinic Doctor')).toUpperCase();
+
+  const dataConnRef = useRef<any>(null);
+  const isVideoOffRef = useRef(isVideoOff);
+  const isMicMutedRef = useRef(isMicMuted);
+  const userNameRef = useRef(userName);
+
+  useEffect(() => {
+    isVideoOffRef.current = isVideoOff;
+  }, [isVideoOff]);
+
+  useEffect(() => {
+    isMicMutedRef.current = isMicMuted;
+  }, [isMicMuted]);
+
+  useEffect(() => {
+    userNameRef.current = userName;
+  }, [userName]);
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'CU';
+    const clean = name.replace(/^(dr\.|doctor|patient)\s*/i, '').trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'CU';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
   // Normalize room ID: lowercase and alphanumeric
   const cleanId = roomId.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32) || 'default-room';
@@ -99,6 +132,34 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       setRemoteStream(incomingStream);
       setConnectionStatus('connected');
       isInitiatingCall = false;
+
+      const vTracks = incomingStream.getVideoTracks();
+      if (vTracks.length === 0) {
+        setIsRemoteVideoOff(true);
+      } else {
+        const isLive = vTracks.some(t => t.enabled && !t.muted && t.readyState === 'live');
+        setIsRemoteVideoOff(!isLive);
+        vTracks.forEach((t) => {
+          t.onmute = () => {
+            console.log('[CURA WebRTC] Remote video track muted');
+            setIsRemoteVideoOff(true);
+          };
+          t.onunmute = () => {
+            console.log('[CURA WebRTC] Remote video track unmuted');
+            setIsRemoteVideoOff(false);
+          };
+          t.onended = () => {
+            setIsRemoteVideoOff(true);
+          };
+        });
+      }
+
+      const aTracks = incomingStream.getAudioTracks();
+      aTracks.forEach((t) => {
+        t.onmute = () => setIsRemoteMicMuted(true);
+        t.onunmute = () => setIsRemoteMicMuted(false);
+      });
+
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = incomingStream;
         remoteVideoRef.current.play().catch(async (err) => {
@@ -113,6 +174,49 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           }
         });
       }
+    };
+
+    let activeDataConn: any = null;
+
+    const setupDataConn = (conn: any) => {
+      activeDataConn = conn;
+      dataConnRef.current = conn;
+
+      conn.on('open', () => {
+        console.log('[CURA WebRTC] DataConnection open with:', conn.peer);
+        try {
+          conn.send({
+            type: 'MEDIA_STATE',
+            isVideoOff: isVideoOffRef.current,
+            isMicMuted: isMicMutedRef.current,
+            userName: userNameRef.current || (role === 'doctor' ? 'Clinic Doctor' : 'Patient')
+          });
+        } catch {}
+      });
+
+      conn.on('data', (data: any) => {
+        console.log('[CURA WebRTC] DataConnection received:', data);
+        if (data?.type === 'MEDIA_STATE') {
+          if (typeof data.isVideoOff === 'boolean') {
+            setIsRemoteVideoOff(data.isVideoOff);
+          }
+          if (typeof data.isMicMuted === 'boolean') {
+            setIsRemoteMicMuted(data.isMicMuted);
+          }
+          if (data.userName) {
+            setRemotePeerName(data.userName);
+          }
+        }
+      });
+
+      conn.on('close', () => {
+        if (activeDataConn === conn) activeDataConn = null;
+        if (dataConnRef.current === conn) dataConnRef.current = null;
+      });
+
+      conn.on('error', (err: any) => {
+        console.warn('[CURA WebRTC] DataConnection error:', err);
+      });
     };
 
     // Helper to bind call events with immediate track listening
@@ -171,6 +275,16 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       if (isCancelled || !currentPeer || currentPeer.destroyed) return;
       if (isInitiatingCall) return;
 
+      // Also ensure DataConnection is active
+      if ((!activeDataConn || !activeDataConn.open) && currentPeer && !currentPeer.destroyed) {
+        try {
+          const conn = currentPeer.connect(targetPeerId);
+          setupDataConn(conn);
+        } catch (err) {
+          console.warn('[CURA WebRTC] DataConnection connect error:', err);
+        }
+      }
+
       // Check if we already have an active call with valid remote tracks
       if (activeMediaCall?.open && remoteVideoRef.current?.srcObject) {
         const stream = remoteVideoRef.current.srcObject as MediaStream;
@@ -221,6 +335,12 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         if (isCancelled) return;
         setConnectionStatus('waiting');
         attemptDirectCall();
+      });
+
+      // Handle DataConnection for camera/mic state and name sync
+      newPeer.on('connection', (incomingConn) => {
+        console.log('[CURA WebRTC] Incoming DataConnection from:', incomingConn.peer);
+        setupDataConn(incomingConn);
       });
 
       // Answer incoming calls only after mediaReadyPromise resolves with tracks
@@ -364,14 +484,31 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     }
   }, [remoteStream]);
 
+  const broadcastState = (videoOff: boolean, micMuted: boolean) => {
+    if (dataConnRef.current?.open) {
+      try {
+        dataConnRef.current.send({
+          type: 'MEDIA_STATE',
+          isVideoOff: videoOff,
+          isMicMuted: micMuted,
+          userName: userName || (role === 'doctor' ? 'Clinic Doctor' : 'Patient')
+        });
+      } catch (err) {
+        console.warn('[CURA WebRTC] Broadcast state error:', err);
+      }
+    }
+  };
+
   // Toggle Mute
   const toggleMic = () => {
     if (localStream) {
       const audioTracks = localStream.getAudioTracks();
+      const willBeMuted = audioTracks[0]?.enabled ? true : false;
       audioTracks.forEach((track) => {
-        track.enabled = !track.enabled;
+        track.enabled = !willBeMuted;
       });
-      setIsMicMuted(!audioTracks[0]?.enabled);
+      setIsMicMuted(willBeMuted);
+      broadcastState(isVideoOff, willBeMuted);
     }
   };
 
@@ -379,10 +516,12 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const toggleVideo = () => {
     if (localStream) {
       const videoTracks = localStream.getVideoTracks();
+      const willBeOff = videoTracks[0]?.enabled ? true : false;
       videoTracks.forEach((track) => {
-        track.enabled = !track.enabled;
+        track.enabled = !willBeOff;
       });
-      setIsVideoOff(!videoTracks[0]?.enabled);
+      setIsVideoOff(willBeOff);
+      broadcastState(willBeOff, isMicMuted);
     }
   };
 
@@ -443,87 +582,105 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
+  const isRemoteOffCam = 
+    isRemoteVideoOff || 
+    !remoteStream || 
+    remoteStream.getVideoTracks().length === 0 || 
+    remoteStream.getVideoTracks().every((t) => t.muted || !t.enabled);
+
   return (
     <div className={`relative flex flex-col w-full h-full bg-slate-950 text-white overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
-      {/* Top Header Bar */}
-      <header className={`absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-5 py-3 ${
-        isEmbedded 
-          ? 'bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-[2px]' 
-          : 'bg-[#0B2136]/95 border-b border-slate-800/80 backdrop-blur-md shadow-md'
-      }`}>
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {!isEmbedded && (
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 border border-emerald-500/25 shadow-inner shrink-0">
+      {/* Top Header Bar / Floating HUD */}
+      {isEmbedded ? (
+        <>
+          {/* Subtle Embedded Floating Top HUD */}
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 flex items-center gap-2 pointer-events-auto">
+            <div className="flex items-center gap-1.5 bg-[#0B2136]/90 border border-emerald-500/30 px-3 py-1 rounded-full shadow-md backdrop-blur-md">
+              <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className="text-[10px] sm:text-xs font-bold tracking-wide text-emerald-200 uppercase">
+                {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting...'}
+              </span>
+            </div>
+          </div>
+
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-2 pointer-events-auto">
+            <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-[#0B2136]/90 border border-slate-700/80 px-3 py-1 rounded-lg backdrop-blur-md shadow-md font-mono font-bold">
+              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{formatDuration(callDuration)}</span>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Standalone / Mobile Full Header (Consistent with CURA Web App Header) */
+        <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 py-3 bg-[#0B2136]/95 border-b border-slate-800/90 backdrop-blur-md shadow-lg">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-inner shrink-0">
               <VideoIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
-          )}
-          
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {!isEmbedded && (
+            
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-800/40">
                   CURA Telemed
                 </span>
-              )}
-              <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full shadow-sm">
-                <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                <span className="text-[10px] sm:text-xs font-semibold tracking-wide text-emerald-200 uppercase">
-                  {connectionStatus === 'connected' ? 'Connected (Encrypted P2P)' : 'Connecting...'}
-                </span>
+                <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full shadow-sm">
+                  <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  <span className="text-[10px] sm:text-xs font-semibold tracking-wide text-emerald-200 uppercase">
+                    {connectionStatus === 'connected' ? 'Connected' : 'Connecting...'}
+                  </span>
+                </div>
               </div>
-            </div>
-            
-            {!isEmbedded && (
+              
               <span className="text-xs sm:text-sm font-bold tracking-tight text-white uppercase truncate max-w-[150px] sm:max-w-xs mt-0.5">
-                {role === 'patient' ? (userName || 'Clinic Doctor') : (userName || 'Patient Consultation')}
+                {effectiveRemoteName}
               </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Live Call Duration Timer */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-slate-900/90 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/80 shadow-sm font-mono font-bold">
+              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{formatDuration(callDuration)}</span>
+            </div>
+
+            {/* Direct Link Copier */}
+            <button
+              onClick={copyDirectLink}
+              className="flex items-center gap-1 text-xs bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all active:scale-95"
+              title="Copy patient join link"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span className="hidden md:inline">{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
+            </button>
+
+            {/* Secondary Google Meet fallback */}
+            {secondaryLink && (
+              <a
+                href={secondaryLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 text-xs bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/40 text-blue-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden md:inline">Google Meet Backup</span>
+              </a>
+            )}
+
+            {/* Quick End Call Button */}
+            {onEndCall && (
+              <button
+                onClick={handleEndCall}
+                className="bg-rose-600/90 hover:bg-rose-600 active:bg-rose-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1"
+                title="Exit Consultation"
+              >
+                <PhoneOff className="w-3 h-3" />
+                <span className="hidden xs:inline">Exit</span>
+              </button>
             )}
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Live Call Duration Timer (Visible on all devices) */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-200 bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-700/70 shadow-sm">
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-mono font-bold tracking-wider">{formatDuration(callDuration)}</span>
-          </div>
-
-          {/* Direct Link Copier */}
-          <button
-            onClick={copyDirectLink}
-            className="flex items-center gap-1 text-xs bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all active:scale-95"
-            title="Copy patient join link"
-          >
-            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="hidden md:inline">{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
-          </button>
-
-          {/* Secondary Google Meet fallback */}
-          {secondaryLink && (
-            <a
-              href={secondaryLink}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 text-xs bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/40 text-blue-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-              <span className="hidden md:inline">Google Meet Backup</span>
-            </a>
-          )}
-
-          {/* Quick End Call Button in header for non-embedded view */}
-          {!isEmbedded && onEndCall && (
-            <button
-              onClick={handleEndCall}
-              className="bg-rose-600/90 hover:bg-rose-600 active:bg-rose-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1"
-              title="Exit Consultation"
-            >
-              <PhoneOff className="w-3 h-3" />
-              <span className="hidden xs:inline">Exit</span>
-            </button>
-          )}
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Camera / Mic Warning Banner (if blocked in WebView/browser) */}
       {cameraError && (
@@ -541,19 +698,66 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       )}
 
       {/* Main Video Stage */}
-      <div className="relative flex-1 w-full h-full flex items-center justify-center bg-slate-950">
+      <div className="relative flex-1 w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden">
         {/* Remote Video Stream (Main Fullscreen) */}
         <video
           ref={remoteVideoRef}
           autoPlay
           playsInline
           muted={false}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${connectionStatus === 'connected' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            connectionStatus === 'connected' && !isRemoteOffCam ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         />
+
+        {/* Remote Camera Off Indicator State */}
+        {connectionStatus === 'connected' && isRemoteOffCam && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#0B132B] animate-in fade-in duration-300">
+            {/* Background ambient lighting */}
+            <div className="absolute w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute w-64 h-64 rounded-full bg-blue-600/10 blur-3xl pointer-events-none -bottom-10" />
+
+            {/* Centered Avatar */}
+            <div className="relative mb-4">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-[#142D54] to-[#1B3A6B] border-2 border-emerald-500/40 flex items-center justify-center shadow-2xl text-emerald-300">
+                <span className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white">
+                  {getInitials(effectiveRemoteName)}
+                </span>
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-slate-900 border-2 border-slate-800 rounded-full p-2 text-amber-400 shadow-md">
+                <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+            </div>
+
+            {/* Participant Name & Category */}
+            <h3 className="text-lg sm:text-2xl font-bold text-white uppercase tracking-tight mb-1">
+              {effectiveRemoteName}
+            </h3>
+            <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider mb-3">
+              {role === 'doctor' ? 'Patient' : 'Attending Physician'}
+            </span>
+
+            {/* Camera Off Indicator Pill */}
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800/90 px-4 py-1.5 rounded-full shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs font-semibold text-slate-300 tracking-wide">
+                Camera is turned off
+              </span>
+            </div>
+
+            {/* Muted Audio Pill if remote mic is muted */}
+            {isRemoteMicMuted && (
+              <div className="flex items-center gap-1.5 bg-rose-950/70 border border-rose-800/50 px-3 py-1 rounded-full text-rose-300 text-xs font-medium mt-2">
+                <MicOff className="w-3 h-3 text-rose-400" />
+                <span>Microphone is muted</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Placeholder / Waiting State if Remote Not Yet Connected */}
         {connectionStatus !== 'connected' && connectionStatus !== 'error' && connectionStatus !== 'ended' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#0B132B]">
             <div className="relative mb-6">
               <div className="w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center animate-pulse">
                 <ShieldCheck className="w-12 h-12 text-emerald-400" />
@@ -617,7 +821,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             </p>
             {onEndCall && (
               <button
-                onClick={onEndCall}
+                onClick={handleEndCall}
                 className="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
               >
                 <span>{role === 'patient' ? 'Return to CURA Mobile App' : 'Return to Dashboard'}</span>
@@ -628,8 +832,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
         {/* Local Video Stream (Picture-in-Picture) */}
         <div 
-          className="absolute right-4 z-20 w-32 h-44 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-900 shadow-2xl transition-all"
-          style={{ bottom: 'max(5.75rem, calc(5rem + env(safe-area-inset-bottom, 20px)))' }}
+          className="absolute right-3 sm:right-5 z-20 w-28 h-38 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-slate-800/90 bg-[#0B132B] shadow-2xl transition-all"
+          style={{ bottom: 'max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 20px)))' }}
         >
           <video
             ref={localVideoRef}
@@ -640,67 +844,73 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`}
           />
           {isVideoOff && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-500">
-              <User className="w-8 h-8 mb-1" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Camera Off</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B132B] text-slate-400 p-2 text-center">
+              <div className="w-10 h-10 rounded-full bg-slate-800/90 border border-slate-700/60 flex items-center justify-center mb-1 text-slate-300">
+                <User className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Camera Off</span>
             </div>
           )}
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
-            <span className="text-[10px] font-medium text-white truncate">You ({role})</span>
-            {isMicMuted && <MicOff className="w-3 h-3 text-rose-400" />}
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between bg-black/75 backdrop-blur-sm px-2 py-1 rounded-lg">
+            <span className="text-[10px] font-semibold text-white uppercase tracking-wider truncate">
+              You ({role})
+            </span>
+            {isMicMuted && <MicOff className="w-3 h-3 text-rose-400 shrink-0" />}
           </div>
         </div>
       </div>
 
-      {/* Floating Control Bar (Bottom) */}
+      {/* Floating Control Dock (Bottom) */}
       <div 
-        className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-3 px-4 pt-4 bg-gradient-to-t from-black/95 via-black/80 to-transparent"
-        style={{ paddingBottom: 'max(1.5rem, calc(0.75rem + env(safe-area-inset-bottom, 20px)))' }}
+        className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-30 flex items-center justify-center pointer-events-none px-4"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        {/* Toggle Mic */}
-        <button
-          onClick={toggleMic}
-          className={`p-3.5 rounded-full transition-all duration-200 shadow-lg ${
-            isMicMuted 
-              ? 'bg-rose-600 hover:bg-rose-500 text-white' 
-              : 'bg-slate-800/90 hover:bg-slate-700 text-white border border-slate-700'
-          }`}
-          title={isMicMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-        >
-          {isMicMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2.5 sm:gap-3 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-2 sm:p-2.5 rounded-full shadow-2xl pointer-events-auto">
+          {/* Toggle Mic */}
+          <button
+            onClick={toggleMic}
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
+              isMicMuted 
+                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40' 
+                : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70'
+            }`}
+            title={isMicMuted ? 'Unmute Microphone' : 'Mute Microphone'}
+          >
+            {isMicMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
 
-        {/* Toggle Video */}
-        <button
-          onClick={toggleVideo}
-          className={`p-3.5 rounded-full transition-all duration-200 shadow-lg ${
-            isVideoOff 
-              ? 'bg-rose-600 hover:bg-rose-500 text-white' 
-              : 'bg-slate-800/90 hover:bg-slate-700 text-white border border-slate-700'
-          }`}
-          title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
-        >
-          {isVideoOff ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
-        </button>
+          {/* Toggle Video */}
+          <button
+            onClick={toggleVideo}
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
+              isVideoOff 
+                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40' 
+                : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70'
+            }`}
+            title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
+          >
+            {isVideoOff ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
+          </button>
 
-        {/* Flip Camera (Mobile) */}
-        <button
-          onClick={flipCamera}
-          className="p-3.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-white border border-slate-700 transition-all duration-200 shadow-lg md:hidden"
-          title="Switch Camera"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
+          {/* Flip Camera (Mobile Only) */}
+          <button
+            onClick={flipCamera}
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/70 flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 md:hidden"
+            title="Switch Camera"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
 
-        {/* End Call Button */}
-        <button
-          onClick={handleEndCall}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-xl transition-all active:scale-95"
-          title="End Consultation"
-        >
-          <PhoneOff className="w-5 h-5" />
-          <span>End Call</span>
-        </button>
+          {/* End Call Button */}
+          <button
+            onClick={handleEndCall}
+            className="h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-900/40 transition-all active:scale-95 flex items-center gap-2"
+            title="End Consultation"
+          >
+            <PhoneOff className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>End Call</span>
+          </button>
+        </div>
       </div>
     </div>
   );

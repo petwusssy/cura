@@ -165,6 +165,7 @@ export function EmbeddedJitsiCall({ request, patient, onClose }: EmbeddedJitsiCa
             roomId={roomName}
             role="doctor"
             userName="Clinic Doctor"
+            remoteUserName={patientDisplayName}
             onEndCall={onClose}
             isEmbedded={true}
             secondaryLink={googleMeetLink}

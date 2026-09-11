@@ -10,6 +10,7 @@ export const CallPage: React.FC = () => {
 
   const role = (searchParams.get('role') === 'doctor' ? 'doctor' : 'patient') as 'doctor' | 'patient';
   const userName = searchParams.get('name') || (role === 'doctor' ? 'Clinic Doctor' : 'Patient');
+  const remoteUserName = searchParams.get('patient') || (role === 'doctor' ? 'Patient' : 'Clinic Doctor');
   const secondaryLink = searchParams.get('secondary') || undefined;
 
   const handleEndCall = () => {
@@ -73,6 +74,7 @@ export const CallPage: React.FC = () => {
         roomId={roomId}
         role={role}
         userName={userName}
+        remoteUserName={remoteUserName}
         onEndCall={handleEndCall}
         secondaryLink={secondaryLink}
       />
