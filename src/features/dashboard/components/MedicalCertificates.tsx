@@ -795,12 +795,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               }}
             >
             
-            {/* Center Background Watermark (Exact placement and opacity matching image) */}
+            {/* Center Background Watermark (Larger UA seal matching Image 2) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
               <img
                 src={uaLogo}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[520px] h-[520px] object-contain opacity-20 grayscale"
+                className="watermark-seal w-[680px] h-[680px] object-contain opacity-25 grayscale"
               />
             </div>
 
@@ -808,28 +808,31 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             <div className="relative z-10 space-y-6 font-official font-bold text-black">
               
               {/* TOP HEADER SECTION */}
-              <div className="flex items-center justify-between gap-4 pb-1">
-                {/* Far Left: University of the Assumption Seal */}
-                <div className="w-24 flex-shrink-0 flex items-center justify-start">
-                  <img src={uaSeal} alt="UA Seal" className="w-[85px] h-[85px] object-contain" />
+              <div className="space-y-1.5 pb-1">
+                <div className="flex items-center justify-between gap-3">
+                  {/* Far Left: University of the Assumption Seal */}
+                  <div className="w-28 flex-shrink-0 flex items-center justify-start">
+                    <img src={uaSeal} alt="UA Seal" className="w-[105px] h-[105px] object-contain" />
+                  </div>
+
+                  {/* Center: University typography and PhilHealth YAKAP Logo banner */}
+                  <div className="flex-1 text-center space-y-0.5 px-1">
+                    <div className="text-[26px] font-bold text-[#002060] font-official tracking-tight leading-none">
+                      UNIVERSITY of the ASSUMPTION
+                    </div>
+                    
+                    <PhilHealthYakapBanner />
+                  </div>
+
+                  {/* Far Right: Bagong Pilipinas Emblem */}
+                  <div className="w-28 flex-shrink-0 flex items-center justify-end">
+                    <BagongPilipinasLogo />
+                  </div>
                 </div>
 
-                {/* Center: University typography and PhilHealth YAKAP Logo banner */}
-                <div className="flex-1 text-center space-y-0.5">
-                  <div className="text-[24px] font-bold text-[#002060] font-official tracking-tight leading-none">
-                    UNIVERSITY of the ASSUMPTION
-                  </div>
-                  
-                  <PhilHealthYakapBanner />
-                  
-                  <div className="text-[13.5px] font-bold text-[#002060] font-official pt-0.5 tracking-tight">
-                    Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
-                  </div>
-                </div>
-
-                {/* Far Right: Bagong Pilipinas Emblem & Legend */}
-                <div className="w-24 flex-shrink-0 flex items-center justify-end">
-                  <BagongPilipinasLogo />
+                {/* Address line centered underneath top row */}
+                <div className="text-[14px] font-bold text-[#002060] font-official text-center pt-1 tracking-tight">
+                  Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                 </div>
               </div>
 
