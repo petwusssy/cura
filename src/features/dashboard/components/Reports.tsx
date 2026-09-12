@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Printer, Download, FileText, Package, BedDouble, BarChart2, ClipboardList, Award } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Printer, Download, FileText, Package, BedDouble, BarChart2, ClipboardList, Award, Calendar, Video } from 'lucide-react';
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
+import { appointmentService, AppointmentRequest } from '@/services/appointmentService';
+import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -113,7 +115,7 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 ];
 
 type ReportFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'purchase' | 'bed';
+type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'purchase' | 'bed' | 'appointments' | 'telemedicine';
 
 const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
 const yesterdayDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
@@ -195,10 +197,12 @@ interface ReportsProps {
   beds: Bed[];
   medicalCerts: MedicalCertificate[];
   purchaseRequests: PurchaseRequest[];
+  appointmentRequests?: AppointmentRequest[];
+  telemedicineRequests?: TelemedicineRequest[];
 }
 
 
-export function Reports({ patients, consultations, medicines, beds, medicalCerts, purchaseRequests }: ReportsProps) {
+export function Reports({ patients, consultations, medicines, beds, medicalCerts, purchaseRequests, appointmentRequests, telemedicineRequests }: ReportsProps) {
   const [filter, setFilter] = useState<ReportFilter>('month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -211,8 +215,38 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [reportMonth, setReportMonth] = useState(currentMonth);
   const [reportYear, setReportYear] = useState(currentYear);
 
+  const [appRequests, setAppRequests] = useState<AppointmentRequest[]>(appointmentRequests || []);
+  const [teleRequests, setTeleRequests] = useState<TelemedicineRequest[]>(telemedicineRequests || []);
+
+  useEffect(() => {
+    appointmentService.getRequests().then(d => { if (d) setAppRequests(d); }).catch(console.error);
+    telemedicineService.getRequests().then(d => { if (d) setTeleRequests(d); }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (appointmentRequests) setAppRequests(appointmentRequests);
+  }, [appointmentRequests]);
+
+  useEffect(() => {
+    if (telemedicineRequests) setTeleRequests(telemedicineRequests);
+  }, [telemedicineRequests]);
+
   const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
   const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
+
+  const acceptedAppointments = appRequests.filter(req => {
+    const isAccepted = req.status === 'Approved' || req.status === 'Completed';
+    if (!isAccepted) return false;
+    const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
+    return matchesFilter(dateStr, filter, customFrom, customTo);
+  });
+
+  const acceptedTelemedicine = teleRequests.filter(req => {
+    const isAccepted = req.status === 'Approved' || req.status === 'Completed';
+    if (!isAccepted) return false;
+    const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
+    return matchesFilter(dateStr, filter, customFrom, customTo);
+  });
   const days = getDaysInFilter(filter, customFrom, customTo);
 
   const getPatient = (id: string) => patients.find(p => p.id === id);
@@ -288,13 +322,15 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
 
   const reportTypes = [
-    { id: 'daily'    as ReportType, label: 'Daily Report',              icon: <FileText size={15} /> },
-    { id: 'cases'    as ReportType, label: 'Cases Attended',            icon: <BarChart2 size={15} /> },
-    { id: 'medcert'  as ReportType, label: 'Medical Certificate',       icon: <Award size={15} /> },
-    { id: 'nonconsult' as ReportType, label: 'Non-Consultation',        icon: <ClipboardList size={15} /> },
-    { id: 'inventory' as ReportType, label: 'Inventory / Medicine',     icon: <Package size={15} /> },
-    { id: 'purchase' as ReportType, label: 'Purchase Request',          icon: <Package size={15} /> },
-    { id: 'bed'      as ReportType, label: 'Bed Management',            icon: <BedDouble size={15} /> },
+    { id: 'daily'        as ReportType, label: 'Daily Report',              icon: <FileText size={15} /> },
+    { id: 'cases'        as ReportType, label: 'Cases Attended',            icon: <BarChart2 size={15} /> },
+    { id: 'medcert'      as ReportType, label: 'Medical Certificate',       icon: <Award size={15} /> },
+    { id: 'nonconsult'   as ReportType, label: 'Non-Consultation',        icon: <ClipboardList size={15} /> },
+    { id: 'inventory'   as ReportType, label: 'Inventory / Medicine',     icon: <Package size={15} /> },
+    { id: 'purchase'    as ReportType, label: 'Purchase Request',          icon: <Package size={15} /> },
+    { id: 'bed'         as ReportType, label: 'Bed Management',            icon: <BedDouble size={15} /> },
+    { id: 'appointments' as ReportType, label: 'Appointments Report',       icon: <Calendar size={15} /> },
+    { id: 'telemedicine'  as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
   ];
 
   const renderConsumptionCells = (cArray: number[], isNoStock: boolean = false) => {
@@ -1424,6 +1460,108 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 8. APPOINTMENTS REPORT ── */}
+          {activeReport === 'appointments' && (
+            <div>
+              <PrintBar title="APPOINTMENTS REPORT" />
+              <div className="overflow-x-auto custom-scrollbar p-4">
+                <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
+                  <thead>
+                    <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
+                      <th className="border border-blue-900 px-3 py-2 text-left">Appointment ID</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Patient Name</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Category</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Visit Type</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Reason / Purpose</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Scheduled Date & Time</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {acceptedAppointments.length === 0 ? (
+                      <tr><td colSpan={7} className="text-center py-8 text-gray-400">No accepted appointment records found for this period</td></tr>
+                    ) : (
+                      acceptedAppointments.map((req, idx) => {
+                        const p = getPatient(req.patient);
+                        return (
+                          <tr key={req.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
+                            <td className="border border-gray-200 px-3 py-2 font-mono text-[#1B3A6B] font-bold">{req.id.slice(0, 8)}</td>
+                            <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-900">{p?.name || req.patient_name || req.patient}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-center">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p?.category === 'Student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{p?.category || 'Student'}</span>
+                            </td>
+                            <td className="border border-gray-200 px-3 py-2 font-medium text-gray-800">{req.visit_type}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-gray-700">{req.reason}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-center font-medium text-gray-700">{req.scheduled_date || req.preferred_date} {req.scheduled_time || req.preferred_time}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-center">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${req.status === 'Completed' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                {req.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── 9. TELEMEDICINE REPORT ── */}
+          {activeReport === 'telemedicine' && (
+            <div>
+              <PrintBar title="TELEMEDICINE REPORT" />
+              <div className="overflow-x-auto custom-scrollbar p-4">
+                <table className="w-full border-collapse text-xs" style={{ minWidth: 850 }}>
+                  <thead>
+                    <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
+                      <th className="border border-blue-900 px-3 py-2 text-left">Telemed ID</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Patient Name</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Category</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Reason / Chief Complaint</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Scheduled Date & Time</th>
+                      <th className="border border-blue-900 px-3 py-2 text-left">Meeting Link</th>
+                      <th className="border border-blue-900 px-3 py-2 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {acceptedTelemedicine.length === 0 ? (
+                      <tr><td colSpan={7} className="text-center py-8 text-gray-400">No accepted telemedicine records found for this period</td></tr>
+                    ) : (
+                      acceptedTelemedicine.map((req, idx) => {
+                        const p = getPatient(req.patient);
+                        return (
+                          <tr key={req.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
+                            <td className="border border-gray-200 px-3 py-2 font-mono text-[#1B3A6B] font-bold">{req.id.slice(0, 8)}</td>
+                            <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-900">{p?.name || req.patient_name || req.patient}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-center">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p?.category === 'Student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{p?.category || 'Student'}</span>
+                            </td>
+                            <td className="border border-gray-200 px-3 py-2 text-gray-700">{req.reason}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-center font-medium text-gray-700">{req.scheduled_date || req.preferred_date} {req.scheduled_time || req.preferred_time}</td>
+                            <td className="border border-gray-200 px-3 py-2 text-blue-600 truncate max-w-[200px]">
+                              {req.meeting_link ? (
+                                <a href={req.meeting_link} target="_blank" rel="noreferrer" className="underline hover:text-blue-800">
+                                  {req.meeting_link}
+                                </a>
+                              ) : '-'}
+                            </td>
+                            <td className="border border-gray-200 px-3 py-2 text-center">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${req.status === 'Completed' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                {req.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
