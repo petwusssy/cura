@@ -59,20 +59,22 @@ function BagongPilipinasLogo() {
   );
 }
 
-// Auto-resizing input that perfectly hugs text without any fixed gaps
-const AutoResizeInput = ({ value, onChange, readOnly, placeholder = ' ' }: any) => {
+// Auto-resizing input that perfectly hugs text without any fixed gaps or wrapping breakage
+const AutoResizeInput = ({ value, onChange, readOnly, placeholder = '', className = '' }: any) => {
+  if (readOnly) {
+    return <span className={`font-official font-bold text-black ${className}`}>{value || ''}</span>;
+  }
   const isFilled = value && value.length > 0;
   return (
-    <span className="inline-grid items-baseline" style={{ minWidth: isFilled ? '0' : '4ch' }}>
-      <span className="invisible col-start-1 row-start-1 whitespace-pre">{value || placeholder}</span>
+    <span className="inline-grid items-baseline" style={{ minWidth: isFilled ? '0' : '2ch' }}>
+      <span className="invisible col-start-1 row-start-1 whitespace-pre font-official font-bold text-[15.5px] px-0.5">{value || placeholder || ' '}</span>
       <input
         type="text"
         size={1}
         value={value}
         onChange={onChange}
-        readOnly={readOnly}
         placeholder={placeholder}
-        className="col-start-1 row-start-1 w-full min-w-0 bg-transparent border-none outline-none p-0 m-0 font-inherit text-center focus:bg-amber-50/50 hover:bg-amber-50/50 transition-colors"
+        className={`col-start-1 row-start-1 w-full min-w-0 bg-amber-50/40 border-b border-dashed border-amber-400 focus:border-amber-600 outline-none p-0 m-0 font-official font-bold text-[15.5px] text-black focus:bg-amber-100/60 transition-colors ${className}`}
       />
     </span>
   );
@@ -123,23 +125,23 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     recommendations: '',
   });
 
-  // Active document fields (matching the official PDF template exactly)
-  const [date, setDate] = useState('');
-  const [patientName, setPatientName] = useState('');
-  const [age, setAge] = useState<number | string>('');
-  const [sex, setSex] = useState('');
-  const [yearLevel, setYearLevel] = useState('');
-  const [yearSuffix, setYearSuffix] = useState('');
-  const [courseAndSchool, setCourseAndSchool] = useState('');
-  const [examinedDueTo, setExaminedDueTo] = useState('');
-  const [diagnosis, setDiagnosis] = useState('');
-  const [treatment, setTreatment] = useState('');
-  const [recommendations, setRecommendations] = useState('');
+  // Active document fields initialized with reference document data matching user image
+  const [date, setDate] = useState('June 17, 2026');
+  const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
+  const [age, setAge] = useState<number | string>(23);
+  const [sex, setSex] = useState('FEMALE');
+  const [yearLevel, setYearLevel] = useState('4');
+  const [yearSuffix, setYearSuffix] = useState('th');
+  const [courseAndSchool, setCourseAndSchool] = useState('BS Arc student of University of the Assumption');
+  const [examinedDueTo, setExaminedDueTo] = useState('skin allergies and difficulty on breathing.');
+  const [diagnosis, setDiagnosis] = useState('Allergic reaction secondary to food intake with allergens.');
+  const [treatment, setTreatment] = useState('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
+  const [recommendations, setRecommendations] = useState('Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
   const [doctor, setDoctor] = useState('JOHNNY MICHAEL P. MANGULABNAN, MD');
   const [doctorTitle, setDoctorTitle] = useState('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
   const [licenseNo, setLicenseNo] = useState('0095055');
   const [ptrNo, setPtrNo] = useState('22483890');
-  const [purpose, setPurpose] = useState('');
+  const [purpose, setPurpose] = useState('Medical Certificate issuance');
   const [currentPatientId, setCurrentPatientId] = useState<string>('');
 
   const triggerToast = (msg: string) => {
@@ -461,13 +463,19 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         'top: 0',
         'left: 0',
         'width: 8.5in',
+        'height: 11in',
+        'min-width: 8.5in',
         'min-height: 11in',
+        'max-width: 8.5in',
+        'max-height: 11in',
+        'box-sizing: border-box',
+        'padding: 0.65in 0.75in',
         'visibility: hidden',
         'pointer-events: none',
         'z-index: -99999',
         'color: #000000',
         'background-color: #ffffff',
-        'overflow: visible',
+        'overflow: hidden',
       ].join('; ');
 
       document.body.appendChild(clone);
@@ -771,190 +779,210 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* ===================================================================================== */}
           {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
           {/* ===================================================================================== */}
-          <div className="overflow-x-auto w-full pb-8 hide-scrollbar">
+          <div className="overflow-x-auto w-full pb-8 flex justify-center hide-scrollbar">
             <div
               id="official-med-cert-page"
-              className="font-official relative bg-white border-2 border-gray-300 shadow-2xl mx-auto px-16 py-16 text-black text-[16px] font-bold leading-relaxed overflow-hidden"
-              style={{ width: '8.5in', minWidth: '8.5in', minHeight: '11in' }}
+              className="font-official relative bg-white border border-gray-300 shadow-2xl mx-auto text-black text-[15.5px] font-bold leading-relaxed overflow-hidden box-border"
+              style={{
+                width: '8.5in',
+                height: '11in',
+                minWidth: '8.5in',
+                minHeight: '11in',
+                maxWidth: '8.5in',
+                maxHeight: '11in',
+                padding: '0.65in 0.75in',
+                boxSizing: 'border-box'
+              }}
             >
             
-            {/* Center Background Watermark (Exact placement and opacity matching PDF) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none mt-16">
+            {/* Center Background Watermark (Exact placement and opacity matching image) */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
               <img
                 src={uaLogo}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[750px] h-[750px] object-contain opacity-40 grayscale"
+                className="watermark-seal w-[520px] h-[520px] object-contain opacity-20 grayscale"
               />
             </div>
 
             {/* Document Content Layer */}
-            <div className="relative z-10 space-y-10 font-official font-bold text-black">
+            <div className="relative z-10 space-y-6 font-official font-bold text-black">
               
               {/* TOP HEADER SECTION */}
-              <div className="flex items-center justify-between gap-4 pb-2">
+              <div className="flex items-center justify-between gap-4 pb-1">
                 {/* Far Left: University of the Assumption Seal */}
-                <div className="w-28 flex-shrink-0 flex items-center justify-start">
-                  <img src={uaSeal} alt="UA Seal" className="w-[90px] h-[90px] object-contain" />
+                <div className="w-24 flex-shrink-0 flex items-center justify-start">
+                  <img src={uaSeal} alt="UA Seal" className="w-[85px] h-[85px] object-contain" />
                 </div>
 
                 {/* Center: University typography and PhilHealth YAKAP Logo banner */}
                 <div className="flex-1 text-center space-y-0.5">
-                  <div className="text-[25px] font-bold text-[#002060] font-official tracking-tight leading-none">
+                  <div className="text-[24px] font-bold text-[#002060] font-official tracking-tight leading-none">
                     UNIVERSITY of the ASSUMPTION
                   </div>
                   
                   <PhilHealthYakapBanner />
                   
-                  <div className="text-[14px] font-bold text-[#002060] font-official pt-1 tracking-tight">
+                  <div className="text-[13.5px] font-bold text-[#002060] font-official pt-0.5 tracking-tight">
                     Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                   </div>
                 </div>
 
                 {/* Far Right: Bagong Pilipinas Emblem & Legend */}
-                <div className="w-28 flex-shrink-0 flex items-center justify-end">
+                <div className="w-24 flex-shrink-0 flex items-center justify-end">
                   <BagongPilipinasLogo />
                 </div>
               </div>
 
-              {/* DATE LINE (Right Aligned, exactly like PDF) */}
-              <div className="flex justify-end pt-6 pr-2 font-official font-bold text-[16px] text-black">
+              {/* DATE LINE (Right Aligned, exactly like PDF image) */}
+              <div className="flex justify-end pt-4 pr-1 font-official font-bold text-[15.5px] text-black">
                 <div className="flex items-center">
                   <span>DATE:&nbsp;&nbsp;</span>
-                  <input
-                    type="text"
-                    value={date}
-                    readOnly={!editMode}
-                    onChange={e => setDate(e.target.value)}
-                    className="font-official font-bold text-[16px] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 w-44 border-none"
-                  />
+                  <AutoResizeInput value={date} onChange={(e: any) => setDate(e.target.value)} readOnly={!editMode} className="w-40" />
                 </div>
               </div>
 
-              {/* DOCUMENT TITLE (Centered, bold, uppercase, no underline) */}
-              <div className="text-center pt-2 pb-4">
-                <h2 className="text-[23px] font-bold uppercase tracking-wide font-official text-black">
+              {/* DOCUMENT TITLE (Centered, bold, uppercase) */}
+              <div className="text-center pt-2 pb-2">
+                <h2 className="text-[22px] font-bold uppercase tracking-wide font-official text-black">
                   MEDICAL CERTIFICATE
                 </h2>
               </div>
 
-              {/* BODY PARAGRAPHS (All text is uniformly font-bold text-[16px] leading-[1.8] justified) */}
-              <div className="space-y-7 text-black text-[16.5px] leading-[1.9] text-justify font-official font-bold px-2">
+              {/* BODY PARAGRAPHS */}
+              <div className="space-y-6 text-black text-[15.5px] leading-[1.8] text-justify font-official font-bold px-1">
                 
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
                   <span>This is to certify that </span>
-                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value.toUpperCase())} readOnly={!editMode} />
+                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
                   <span>, </span>
                   <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />
                   <span> years old, </span>
                   <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} />
                   <span>, a </span>
                   
-                  {/* Superscript formatting for year level (e.g. 4th) */}
-                  <span className="inline-flex items-baseline">
-                    <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} />
-                    <sup className="text-[12px] font-bold">
-                      <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} />
-                    </sup>
-                  </span>
-                  <span> </span>
+                  {yearLevel && (
+                    <>
+                      <span className="inline-flex items-baseline">
+                        <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} />
+                        <sup className="text-[11px] font-bold">
+                          <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} />
+                        </sup>
+                      </span>
+                      <span> year level of </span>
+                    </>
+                  )}
                   
                   <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />
                   <span> has been seen and examined due to </span>
                   <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} />
-                  <span>.</span>
                 </div>
 
                 {/* Paragraph 2: Diagnosis */}
-                <div className="flex items-baseline gap-2 pt-2">
-                  <span className="font-official font-bold text-[16.5px] whitespace-nowrap">Diagnosis:</span>
-                  <div className="flex-1">
-                    <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} />
-                  </div>
+                <div className="font-official font-bold text-[15.5px] leading-[1.8] text-black">
+                  <span>Diagnosis:&nbsp;&nbsp;</span>
+                  <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} />
                 </div>
 
-                {/* Paragraph 3: Treatment (Indented block layout exactly as seen in PDF) */}
-                <div className="flex items-start gap-4 pt-1">
-                  <span className="font-official font-bold text-[16.5px] whitespace-nowrap w-28 flex-shrink-0 mt-1">Treatment:</span>
+                {/* Paragraph 3: Treatment (Indented block layout matching image) */}
+                <div className="flex items-start gap-2 font-official font-bold text-[15.5px] leading-[1.8] text-black">
+                  <span className="whitespace-nowrap flex-shrink-0">Treatment:&nbsp;&nbsp;</span>
                   <div className="flex-1">
-                    <textarea
-                      value={treatment}
-                      readOnly={!editMode}
-                      onChange={e => setTreatment(e.target.value)}
-                      rows={treatment.split('\n').length || 2}
-                      className={`w-full font-official font-bold text-[16.5px] leading-[1.8] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 resize-none p-1 overflow-hidden ${editMode ? 'border border-dashed border-gray-300 rounded hover:border-gray-400' : 'border-none'}`}
-                      placeholder="Enter prescribed dosage and treatment course..."
-                    />
+                    {!editMode ? (
+                      <div className="whitespace-pre-line">{treatment}</div>
+                    ) : (
+                      <textarea
+                        value={treatment}
+                        onChange={e => setTreatment(e.target.value)}
+                        rows={treatment.split('\n').length || 2}
+                        className="w-full font-official font-bold text-[15.5px] leading-[1.8] text-black bg-amber-50/40 border border-dashed border-amber-400 rounded p-1 focus:outline-none focus:bg-amber-100/60 resize-none overflow-hidden"
+                        placeholder="Enter prescribed dosage and treatment..."
+                      />
+                    )}
                   </div>
                 </div>
 
                 {/* Paragraph 4: Recommendations */}
-                <div className="pt-2 text-justify">
-                  <span className="font-official font-bold text-[16.5px]">Recommendations:&nbsp;</span>
-                  <span className="inline-block w-full">
+                <div className="text-justify font-official font-bold text-[15.5px] leading-[1.8] text-black">
+                  <span>Recommendations:&nbsp;&nbsp;</span>
+                  {!editMode ? (
+                    <span>{recommendations}</span>
+                  ) : (
                     <textarea
                       value={recommendations}
-                      readOnly={!editMode}
                       onChange={e => setRecommendations(e.target.value)}
                       rows={2}
-                      className={`w-full font-official font-bold text-[16.5px] leading-[1.8] text-black bg-transparent focus:outline-none focus:bg-amber-50/50 resize-none p-1 text-justify ${editMode ? 'border border-dashed border-gray-300 rounded hover:border-gray-400' : 'border-none'}`}
+                      className="w-full font-official font-bold text-[15.5px] leading-[1.8] text-black bg-amber-50/40 border border-dashed border-amber-400 rounded p-1 focus:outline-none focus:bg-amber-100/60 resize-none mt-1"
+                      placeholder="Enter recommendations..."
                     />
-                  </span>
+                  )}
                 </div>
 
                 {/* Paragraph 5: Standard Disclaimer */}
-                <div className="pt-8 text-black text-[16px] leading-[1.8] font-official font-bold text-justify">
+                <div className="pt-4 text-black text-[15px] leading-[1.8] font-official font-bold text-justify">
                   This certificate is being issued upon the request of the above patient for whatever purpose it may serve. This certificate is not intended for use in legal matters or proceedings or for issuance claim.
                 </div>
               </div>
 
               {/* SIGNATURE & PHYSICIAN CREDENTIALS BLOCK (Bottom Right Alignment) */}
-              <div className="flex justify-end pt-16 pr-4">
-                <div className="w-[360px] font-official font-bold text-black">
+              <div className="flex justify-end pt-8 pr-2">
+                <div className="w-[340px] font-official font-bold text-black text-center">
                   
                   {/* Solid signature dividing line */}
-                  <div className="border-t-[1.5px] border-black pt-1 mb-1 w-full">
-                    <input
-                      type="text"
-                      value={doctor}
-                      readOnly={!editMode}
-                      onChange={e => setDoctor(e.target.value)}
-                      className={`w-full text-center bg-transparent focus:outline-none font-official font-bold text-[16px] uppercase ${editMode ? 'hover:bg-amber-50/50' : 'border-none'}`}
-                    />
+                  <div className="border-t-[1.5px] border-black pt-1 mb-0.5 w-full">
+                    {!editMode ? (
+                      <div className="font-official font-bold text-[15.5px] uppercase">{doctor}</div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={doctor}
+                        onChange={e => setDoctor(e.target.value)}
+                        className="w-full text-center bg-amber-50/40 border-b border-dashed border-amber-400 focus:outline-none font-official font-bold text-[15.5px] uppercase"
+                      />
+                    )}
                   </div>
 
                   {/* Physician Title */}
-                  <div className="font-official font-bold text-[15px] tracking-tight uppercase text-center text-black">
-                    <input
-                      type="text"
-                      value={doctorTitle}
-                      readOnly={!editMode}
-                      onChange={e => setDoctorTitle(e.target.value)}
-                      className={`w-full text-center bg-transparent focus:outline-none font-official font-bold uppercase ${editMode ? 'hover:bg-amber-50/50' : 'border-none'}`}
-                    />
+                  <div className="font-official font-bold text-[14.5px] tracking-tight uppercase text-black">
+                    {!editMode ? (
+                      <div>{doctorTitle}</div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={doctorTitle}
+                        onChange={e => setDoctorTitle(e.target.value)}
+                        className="w-full text-center bg-amber-50/40 border-b border-dashed border-amber-400 focus:outline-none font-official font-bold text-[14.5px] uppercase"
+                      />
+                    )}
                   </div>
 
                   {/* License and PTR numbers (Right-aligned with exact styling) */}
-                  <div className="space-y-1.5 pt-3.5 text-right pr-4 font-official font-bold text-[15.5px] text-black">
+                  <div className="space-y-0.5 pt-2 text-right font-official font-bold text-[15px] text-black">
                     <div className="flex items-center justify-end">
                       <span className="mr-1">LIC:</span>
-                      <input
-                        type="text"
-                        value={licenseNo}
-                        readOnly={!editMode}
-                        onChange={e => setLicenseNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-none ${editMode ? 'hover:bg-amber-50/50 focus:bg-amber-50/50' : ''}`}
-                      />
+                      {!editMode ? (
+                        <span>{licenseNo}</span>
+                      ) : (
+                        <input
+                          type="text"
+                          value={licenseNo}
+                          onChange={e => setLicenseNo(e.target.value)}
+                          className="w-24 text-right bg-amber-50/40 border-b border-dashed border-amber-400 focus:outline-none font-official font-bold"
+                        />
+                      )}
                     </div>
                     <div className="flex items-center justify-end">
                       <span>PTR:</span>
-                      <input
-                        type="text"
-                        value={ptrNo}
-                        readOnly={!editMode}
-                        onChange={e => setPtrNo(e.target.value)}
-                        className={`w-28 text-right bg-transparent focus:outline-none font-official font-bold border-none ${editMode ? 'hover:bg-amber-50/50 focus:bg-amber-50/50' : ''}`}
-                      />
+                      {!editMode ? (
+                        <span>{ptrNo}</span>
+                      ) : (
+                        <input
+                          type="text"
+                          value={ptrNo}
+                          onChange={e => setPtrNo(e.target.value)}
+                          className="w-24 text-right bg-amber-50/40 border-b border-dashed border-amber-400 focus:outline-none font-official font-bold"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
