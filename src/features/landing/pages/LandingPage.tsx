@@ -12,6 +12,7 @@ import uaLogo from "@/assets/images/ua-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
 import AnimatedMascot from "@/features/landing/components/AnimatedMascot"
 import IdleMascot from "@/features/landing/components/IdleMascot"
+import { authService } from "@/services/authService"
 
 interface Props {
   onLoginClick: () => void
@@ -47,6 +48,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [focusedField, setFocusedField] = useState<'username' | 'password' | null>(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024)
 
@@ -56,13 +58,27 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!username.trim() || !password) {
+      setErrorMessage("Please enter both username and password.")
+      return
+    }
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setErrorMessage(null)
+    try {
+      await authService.login(username.trim(), password)
       setStage("splitting")
-    }, 700)
+    } catch (err: any) {
+      console.error("Login failed:", err)
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        "Invalid username or password. Access denied."
+      setErrorMessage(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
 
@@ -282,7 +298,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         <input
                           type="text"
                           value={username}
-                          onChange={(e) => setUsername(e.target.value)}
+                          onChange={(e) => {
+                            setUsername(e.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
                           placeholder="Enter your username"
                           className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
                           style={{
@@ -325,7 +344,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         <input
                           type={showPassword ? "text" : "password"}
                           value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          onChange={(e) => {
+                            setPassword(e.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
                           placeholder="Enter your password"
                           className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
                           style={{
@@ -355,6 +377,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         </button>
                       </div>
                     </div>
+
+                    {/* Error message */}
+                    {errorMessage && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-2.5 rounded-xl text-xs font-semibold text-red-600 bg-red-50 border border-red-200 text-center leading-snug"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        {errorMessage}
+                      </motion.div>
+                    )}
 
                     {/* Submit */}
                     <motion.button
@@ -389,7 +423,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
                 {/* Back link */}
                 <motion.button
-                  onClick={() => setStage("idle")}
+                  onClick={() => {
+                    setStage("idle")
+                    setErrorMessage(null)
+                  }}
                   className="flex items-center gap-1.5 text-white/30 hover:text-white/55 transition-colors text-xs mt-4"
                   style={{ fontFamily: "'Inter', sans-serif" }}
                   whileHover={{ x: -2 }}

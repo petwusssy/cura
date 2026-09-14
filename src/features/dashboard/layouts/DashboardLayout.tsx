@@ -48,6 +48,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
   const roles = authService.getRoles();
   const isAdmin = roles.includes('Admin');
+  const username = authService.getUsername() || 'Staff';
+  const displayRole = roles.length > 0 ? roles.join(', ') : 'Staff';
 
   const filteredNavItems = navItems.filter(item => {
     // Add role checks here based on requirements if needed in the future
@@ -266,11 +268,11 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
             >
-              UA
+              {username.slice(0, 2).toUpperCase()}
             </div>
             <div className="hidden md:block">
-              <div className="text-sm font-semibold text-foreground">UA CLINIC ADMIN</div>
-              <div className="text-xs text-primary font-medium">Administrator</div>
+              <div className="text-sm font-semibold text-foreground uppercase">{username}</div>
+              <div className="text-xs text-primary font-medium">{displayRole}</div>
             </div>
           </div>
         </motion.header>

@@ -1,9 +1,16 @@
-import { Routes, Route, useNavigate } from "react-router"
+import { Routes, Route, useNavigate, Navigate } from "react-router"
 import LandingPage from "@/features/landing/pages/LandingPage"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardApp from "@/features/dashboard/pages/DashboardApp"
 import { CallPage } from "@/features/telemedicine/CallPage"
 import { authService } from "@/services/authService"
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!authService.isAuthenticated()) {
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
 
 export function AppRouter() {
   const navigate = useNavigate()
@@ -49,7 +56,9 @@ export function AppRouter() {
       <Route
         path="/dashboard/*"
         element={
-          <DashboardApp onLogout={handleLogout} />
+          <ProtectedRoute>
+            <DashboardApp onLogout={handleLogout} />
+          </ProtectedRoute>
         }
       />
     </Routes>

@@ -25,17 +25,26 @@ export default function LoginPage({ onLogin, onBack }: Props) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!username.trim() || !password) {
+      setErrorMessage("Please enter both username and password.")
+      return
+    }
     setLoading(true)
+    setErrorMessage(null)
     try {
-      await authService.login(username, password)
+      await authService.login(username.trim(), password)
       onLogin()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error)
-      // Displaying alert for simplicity, a toast would be better in a real app
-      alert("Login failed. Please check your credentials.")
+      const msg =
+        error?.response?.data?.detail ||
+        error?.response?.data?.error ||
+        "Invalid username or password. Access denied."
+      setErrorMessage(msg)
     } finally {
       setLoading(false)
     }
@@ -131,7 +140,10 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value)
+                    if (errorMessage) setErrorMessage(null)
+                  }}
                   placeholder="Enter your username"
                   className="w-full pl-10 pr-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all"
                   style={{
@@ -166,7 +178,10 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (errorMessage) setErrorMessage(null)
+                  }}
                   placeholder="Enter your password"
                   className="w-full pl-10 pr-11 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all"
                   style={{
@@ -192,6 +207,13 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 </button>
               </div>
             </div>
+
+            {/* Error banner */}
+            {errorMessage && (
+              <div className="p-2.5 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 border border-red-500/20 text-center">
+                {errorMessage}
+              </div>
+            )}
 
             {/* Submit */}
             <motion.button

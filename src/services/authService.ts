@@ -14,18 +14,34 @@ export const authService = {
       if (response.data.roles) {
         localStorage.setItem('userRoles', JSON.stringify(response.data.roles));
       }
+      if (response.data.username) {
+        localStorage.setItem('username', response.data.username);
+      }
     }
     return response.data;
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout/');
+    try {
+      await api.post('/auth/logout/');
+    } catch {
+      // ignore network errors on logout
+    }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('userRoles');
+    localStorage.removeItem('username');
   },
 
   getAccessToken: (): string | null => {
     return localStorage.getItem('accessToken');
+  },
+
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('accessToken');
+  },
+
+  getUsername: (): string => {
+    return localStorage.getItem('username') || '';
   },
 
   getRoles: (): string[] => {
