@@ -202,3 +202,13 @@ export interface AppNotification {
   nextDose?: string;
   minutesLeft?: number;
 }
+
+export interface PatientQueue {
+  id: string;
+  patient: string;
+  patient_name: string;
+  queue_number: number;
+  status: 'waiting' | 'called' | 'done';
+  date: string;
+  time_added: string;
+}

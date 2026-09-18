@@ -6,7 +6,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts';
-import { Patient, Consultation, MedicineItem, AppNotification, Page } from '../types';
+import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -17,13 +17,16 @@ interface DashboardProps {
   consultations: Consultation[];
   medicines: MedicineItem[];
   notifications: AppNotification[];
+  queues?: PatientQueue[];
+  onNotifyQueue?: (id: string) => void;
+  onCompleteQueue?: (id: string) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
 
 type DateFilter = 'today' | 'yesterday' | 'week' | 'custom';
 
-export function Dashboard({ patients, consultations, medicines, notifications, onNavigate, onSelectPatient }: DashboardProps) {
+export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onNavigate, onSelectPatient }: DashboardProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -162,6 +165,32 @@ export function Dashboard({ patients, consultations, medicines, notifications, o
         ))}
       </div>
 
+      {/* Live Queue */}
+      <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-gray-900 font-bold">Live Patient Queue</h3>
+          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-full">{queues.filter(q => q.status === 'waiting' || q.status === 'called').length} Waiting</span>
+        </div>
+        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+          {queues.filter(q => q.status === 'waiting' || q.status === 'called').length === 0 ? (
+            <div className="text-gray-400 text-sm italic">No patients in queue.</div>
+          ) : (
+            queues.filter(q => q.status === 'waiting' || q.status === 'called').map(q => (
+              <div key={q.id} className="min-w-[200px] flex-shrink-0 bg-gray-50 border border-gray-100 rounded-lg p-3 flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-gray-500 uppercase">Queue #{q.queue_number}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${q.status === 'called' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{q.status}</span>
+                </div>
+                <div className="text-sm font-bold text-gray-800 uppercase truncate">{q.patient_name}</div>
+                <div className="flex gap-2 mt-1">
+                  <button onClick={() => onNotifyQueue?.(q.id)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-1.5 rounded transition-colors disabled:opacity-50" disabled={q.status === 'called'}>Notify</button>
+                  <button onClick={() => onCompleteQueue?.(q.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 rounded transition-colors">Check</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timeline Chart */}

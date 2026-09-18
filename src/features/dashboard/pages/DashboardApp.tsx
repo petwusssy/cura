@@ -9,7 +9,7 @@ import {
 } from '../components';
 import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
-  Bed, AppNotification, HospitalTransfer, Page,
+  Bed, AppNotification, HospitalTransfer, Page, PatientQueue
 } from '@/types';
 
 import { patientService } from '@/services/patientService';
@@ -18,6 +18,7 @@ import { medicineService } from '@/services/medicineService';
 import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
+import { queueService } from '@/services/queueService';
 
 
 interface DashboardAppProps {
@@ -51,6 +52,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
   const [beds, setBeds]                         = useState<Bed[]>([]);
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
+  const [queues, setQueues]                     = useState<PatientQueue[]>([]);
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
 
@@ -86,6 +88,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
     bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
     certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
+    queueService.getQueues().then(d => d !== undefined && setQueues(d)).catch(console.error);
 
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
@@ -101,10 +104,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }).catch(console.error);
     };
 
-    fetchAndMergeNotifications();
+    const fetchQueues = () => {
+      queueService.getQueues().then(d => d !== undefined && setQueues(d)).catch(console.error);
+    };
 
-    // Polling for new notifications
-    const interval = setInterval(fetchAndMergeNotifications, 3000);
+    fetchAndMergeNotifications();
+    fetchQueues();
+
+    // Polling for new notifications and queues
+    const interval = setInterval(() => {
+      fetchAndMergeNotifications();
+      fetchQueues();
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -465,6 +476,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <Dashboard
             patients={patients} consultations={consultations}
             medicines={medicines} notifications={notifications}
+            queues={queues}
+            onNotifyQueue={async (id) => {
+              await queueService.notifyQueue(id);
+              queueService.getQueues().then(d => d && setQueues(d));
+            }}
+            onCompleteQueue={async (id) => {
+              await queueService.completeQueue(id);
+              queueService.getQueues().then(d => d && setQueues(d));
+            }}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
         );
