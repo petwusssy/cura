@@ -184,7 +184,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                 <div className="text-sm font-bold text-gray-800 uppercase truncate">{q.patient_name}</div>
                 <div className="flex gap-2 mt-1">
                   <button onClick={() => onNotifyQueue?.(q.id)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-1.5 rounded transition-colors disabled:opacity-50" disabled={q.status === 'called'}>Notify</button>
-                  <button onClick={() => onCompleteQueue?.(q.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 rounded transition-colors">Check</button>
+                  <button onClick={() => onCompleteQueue?.(q.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 rounded transition-colors">Done</button>
                 </div>
               </div>
             ))
