@@ -111,11 +111,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications and queues
+    // Polling for new notifications and queues (1.5s for near-instant sync)
     const interval = setInterval(() => {
       fetchAndMergeNotifications();
       fetchQueues();
-    }, 3000);
+    }, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -478,12 +478,24 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             medicines={medicines} notifications={notifications}
             queues={queues}
             onNotifyQueue={async (id) => {
-              await queueService.notifyQueue(id);
-              queueService.getQueues().then(d => d && setQueues(d));
+              // Optimistic instant feedback (0ms delay)
+              setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'called' } : q));
+              try {
+                await queueService.notifyQueue(id);
+              } catch (err) {
+                console.error(err);
+                queueService.getQueues().then(d => d && setQueues(d));
+              }
             }}
             onCompleteQueue={async (id) => {
-              await queueService.completeQueue(id);
-              queueService.getQueues().then(d => d && setQueues(d));
+              // Optimistic instant removal (0ms delay)
+              setQueues(prev => prev.filter(q => q.id !== id));
+              try {
+                await queueService.completeQueue(id);
+              } catch (err) {
+                console.error(err);
+                queueService.getQueues().then(d => d && setQueues(d));
+              }
             }}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
