@@ -477,6 +477,17 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
 
+  const handleClearAllNotifications = async () => {
+    setNotifications([]);
+    notifications.forEach(n => dismissedNotifIdsRef.current.add(n.id));
+    try {
+      localStorage.setItem('cura_dismissed_notifs', JSON.stringify(Array.from(dismissedNotifIdsRef.current)));
+      await notificationService.clearAll();
+    } catch (error) {
+      console.error('Failed to clear notifications on server:', error);
+    }
+  };
+
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const renderPage = () => {
@@ -657,6 +668,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             onMarkRead={handleMarkNotificationRead}
             onMarkAllRead={handleMarkAllNotificationsRead}
             onDismiss={handleDismissNotification}
+            onClearAll={handleClearAllNotifications}
             onNavigate={navigate}
           />
         );

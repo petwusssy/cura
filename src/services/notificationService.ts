@@ -19,4 +19,8 @@ export const notificationService = {
   deleteNotification: async (id: string): Promise<void> => {
     await api.delete(`/notifications/${id}/`);
   },
+
+  clearAll: async (): Promise<void> => {
+    await api.post('/notifications/clear_all/');
+  },
 };

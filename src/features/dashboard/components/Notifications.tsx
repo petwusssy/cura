@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Bell, Clock, BedDouble, AlertTriangle, CheckCheck, X, Calendar, Video } from 'lucide-react';
+import { Bell, Clock, BedDouble, AlertTriangle, CheckCheck, X, Calendar, Video, Trash2 } from 'lucide-react';
 import { AppNotification } from '../types';
 
-const PRIMARY = '#1E5AA8';
+const PRIMARY = '#185a9d';
 const RED = '#D64545';
-const YELLOW = '#F4C542';
-const GREEN = '#4CAF50';
+const AMBER = '#D97706';
+const GREEN = '#16A34A';
 
 interface NotificationsProps {
   notifications: AppNotification[];
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onDismiss: (id: string) => void;
+  onClearAll?: () => void;
   onNavigate?: (page: any) => void;
 }
 
-export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss, onNavigate }: NotificationsProps) {
+export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss, onClearAll, onNavigate }: NotificationsProps) {
   const [filter, setFilter] = useState<'all' | 'unread' | 'medication' | 'bed' | 'request'>('all');
   const [localCountdowns, setLocalCountdowns] = useState<Record<string, number>>({});
 
@@ -94,12 +95,20 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Notifications</h1>
         </div>
-        {unreadCount > 0 && (
-          <button onClick={onMarkAllRead}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-            <CheckCheck size={15} /> Mark all read
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button onClick={onMarkAllRead}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              <CheckCheck size={15} /> Mark all read
+            </button>
+          )}
+          {notifications.length > 0 && onClearAll && (
+            <button onClick={onClearAll}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+              <Trash2 size={15} /> Clear all
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter tabs */}
