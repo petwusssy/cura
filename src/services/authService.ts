@@ -11,6 +11,7 @@ export const authService = {
     const response = await api.post<LoginResponse>('/auth/login/', { username, password });
     if (response.data.access) {
       localStorage.setItem('accessToken', response.data.access);
+      localStorage.setItem('cura_access_token', response.data.access);
       if (response.data.roles) {
         localStorage.setItem('userRoles', JSON.stringify(response.data.roles));
       }
@@ -28,6 +29,7 @@ export const authService = {
       // ignore network errors on logout
     }
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('cura_access_token');
     localStorage.removeItem('userRoles');
     localStorage.removeItem('username');
   },
