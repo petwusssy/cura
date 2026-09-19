@@ -55,6 +55,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [queues, setQueues]                     = useState<PatientQueue[]>([]);
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
+  const completedQueueIdsRef = useRef<Set<string>>(new Set());
+  const notifiedQueueIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -105,7 +107,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     };
 
     const fetchQueues = () => {
-      queueService.getQueues().then(d => d !== undefined && setQueues(d)).catch(console.error);
+      queueService.getQueues().then(d => {
+        if (d !== undefined) {
+          setQueues(() => {
+            return d
+              .filter(q => !completedQueueIdsRef.current.has(q.id))
+              .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
+          });
+        }
+      }).catch(console.error);
     };
 
     fetchAndMergeNotifications();
@@ -478,23 +488,25 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             medicines={medicines} notifications={notifications}
             queues={queues}
             onNotifyQueue={async (id) => {
-              // Optimistic instant feedback (0ms delay)
+              notifiedQueueIdsRef.current.add(id);
               setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'called' } : q));
               try {
                 await queueService.notifyQueue(id);
               } catch (err) {
                 console.error(err);
-                queueService.getQueues().then(d => d && setQueues(d));
+                notifiedQueueIdsRef.current.delete(id);
+                fetchQueues();
               }
             }}
             onCompleteQueue={async (id) => {
-              // Optimistic instant removal (0ms delay)
+              completedQueueIdsRef.current.add(id);
               setQueues(prev => prev.filter(q => q.id !== id));
               try {
                 await queueService.completeQueue(id);
               } catch (err) {
                 console.error(err);
-                queueService.getQueues().then(d => d && setQueues(d));
+                completedQueueIdsRef.current.delete(id);
+                fetchQueues();
               }
             }}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
