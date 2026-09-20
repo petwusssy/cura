@@ -115,7 +115,7 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 ];
 
 type ReportFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'purchase' | 'bed' | 'appointments' | 'telemedicine';
+type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'bed' | 'appointments' | 'telemedicine';
 
 const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
 const yesterdayDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
@@ -327,7 +327,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     { id: 'medcert'      as ReportType, label: 'Medical Certificate',       icon: <Award size={15} /> },
     { id: 'nonconsult'   as ReportType, label: 'Non-Consultation',        icon: <ClipboardList size={15} /> },
     { id: 'inventory'   as ReportType, label: 'Inventory / Medicine',     icon: <Package size={15} /> },
-    { id: 'purchase'    as ReportType, label: 'Purchase Request',          icon: <Package size={15} /> },
     { id: 'bed'         as ReportType, label: 'Bed Management',            icon: <BedDouble size={15} /> },
     { id: 'appointments' as ReportType, label: 'Appointments Report',       icon: <Calendar size={15} /> },
     { id: 'telemedicine'  as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
@@ -1376,80 +1375,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
             </div>
           )}
 
-          {/* ── 6. PURCHASE REQUEST (Updated ONLY to exact attached PRF document template) ── */}
-          {activeReport === 'purchase' && (
-            <div>
-              <PrintBar title="PURCHASE REQUISITION FORM (PRF)" />
-              <div className="p-6 overflow-x-auto custom-scrollbar bg-gray-100/50">
-                <div className="max-w-[850px] mx-auto bg-white border-2 border-gray-400 p-8 shadow-md font-sans text-black" style={{ minWidth: 850 }}>
-                  <div className="flex items-center justify-between border-b-2 border-black pb-4 mb-5">
-                    <div className="flex items-center gap-3">
-                      <img src={uaSeal} alt="UA Seal" className="w-16 h-16 object-contain" />
-                      <div>
-                        <h2 className="text-2xl font-extrabold text-[#002060] font-serif tracking-tight">UNIVERSITY <span className="font-normal italic text-lg">of the</span> ASSUMPTION</h2>
-                        <p className="text-xs font-bold text-gray-700">Unisite Subd., Del Pilar, City of San Fernando, Pampanga</p>
-                      </div>
-                    </div>
-                    <div className="text-right font-bold text-sm font-mono">PRF No. <span className="underline decoration-2 font-black">2026-008</span></div>
-                  </div>
 
-                  <div className="text-center pb-3">
-                    <h3 className="text-lg font-black uppercase tracking-wider underline decoration-2">PURCHASE REQUISITION FORM (PRF)</h3>
-                    <p className="text-[10px] italic text-gray-600 max-w-xl mx-auto mt-1 leading-normal">Note: To be used when requesting for the purchase of office and school supplies, computer and IT peripherals, laboratory equipment and supplies, library books and learning resources, construction materials, furniture and fixtures which are not available at the Central Supplies Room and Physical Plant Warehouse.</p>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs font-bold italic mb-2 text-gray-700">
-                    <span>(Please fill up in two copies. Copy distribution: original copy to RMS, duplicate copy to Requesting Party)</span>
-                    <span className="text-xs not-italic font-black text-black">DEPARTMENT: <strong className="underline decoration-black text-sm">Medical-Dental Clinic</strong></span>
-                  </div>
-
-                  <table className="w-full border-collapse border-2 border-black mb-5 text-xs font-bold">
-                    <thead>
-                      <tr className="bg-gray-100 border-2 border-black text-center uppercase text-[11px]">
-                        <th className="border border-black py-1.5 px-2 w-20">QUANTITY</th><th className="border border-black py-1.5 px-2 w-16">Unit</th><th className="border border-black py-1.5 px-3 text-left w-48">ITEM</th><th className="border border-black py-1.5 px-3 text-left">DESCRIPTION (Color/Size/Brand/Tech Specs)</th><th className="border border-black py-1.5 px-2 w-16">Unit Price</th><th className="border border-black py-1.5 px-2 w-24">AMOUNT</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-black text-[11px]">
-                      {purchaseRequests.map((req, idx) => {
-                        const amt = ((req.requestedQty || 0) * (req.unitPrice || 0)).toFixed(2);
-                        return (
-                          <tr key={req.id || idx}>
-                            <td className="border border-black text-center py-1.5 font-mono">{req.requestedQty}</td>
-                            <td className="border border-black text-center">{req.unit || 'Tablet'}</td>
-                            <td className="border border-black px-2.5 text-left">{req.medicine}</td>
-                            <td className="border border-black px-2.5 text-left">{req.description || ''}</td>
-                            <td className="border border-black text-center">{(req.unitPrice || 0) > 0 ? Number(req.unitPrice).toFixed(2) : ''}</td>
-                            <td className="border border-black text-right font-bold pr-2">{(req.unitPrice || 0) > 0 ? amt : ''}</td>
-                          </tr>
-                        );
-                      })}
-                      {Array.from({ length: Math.max(0, 10 - purchaseRequests.length) }).map((_, idx) => (
-                        <tr key={`empty-${idx}`}>
-                          <td className="border border-black text-center py-1.5 font-mono"></td>
-                          <td className="border border-black text-center"></td>
-                          <td className="border border-black px-2.5"></td>
-                          <td className="border border-black px-2.5"></td>
-                          <td className="border border-black"></td>
-                          <td className="border border-black"></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="grid grid-cols-4 border-2 border-black text-[11px] font-bold">
-                    <div className="border-r border-b border-black p-2.5 space-y-5"><div>Prepared by/Date:<br/><strong className="text-xs underline">Abigael C. Landingin</strong></div><div className="text-center pt-3 border-t border-dashed border-gray-400 font-black">REQUESTING PARTY</div></div>
-                    <div className="border-r border-b border-black p-2.5 space-y-2 col-span-1"><div>Evaluation Remarks:</div><div className="h-5 border-b border-gray-400"></div><div>Recommended by/Date:<br/><span className="inline-block w-full border-b border-gray-400 pt-2"></span></div><div className="text-[9px] text-center text-gray-600 uppercase font-black">DIRECTOR / OMISS / DEAN</div></div>
-                    <div className="border-r border-b border-black p-2.5 space-y-1.5"><div>Processed by/Date:<br/>Supplier – Price Quoted</div><div className="text-[10px] space-y-0.5"><div>1. __________________</div><div>2. __________________</div><div>3. __________________</div></div><div className="text-center pt-1.5 font-black uppercase text-[9px]">CANVASSER</div></div>
-                    <div className="border-b border-black p-2.5 space-y-2"><div>Reviewed by/Date:</div><div className="flex flex-col gap-0.5 text-[10px]"><label><input type="checkbox" readOnly className="mr-1"/> For Cash Advance</label><label><input type="checkbox" readOnly className="mr-1"/> For Purchase Order</label></div><div>Supplier: ______________<br/>Terms: ________________</div><div className="text-center pt-1.5 font-black uppercase text-[9px]">HEAD, RMS</div></div>
-                    <div className="border-r border-black p-2.5 space-y-5"><div>Budget Amount: ________<br/>If CAPEX, Authority No.<br/><span className="border-b border-gray-400 inline-block w-full pt-1.5"></span></div><div>Verified by/Date:<br/><span className="border-b border-gray-400 inline-block w-full pt-3"></span></div><div className="text-center font-black uppercase text-[9px]">HEAD, AFMS</div></div>
-                    <div className="border-r border-black p-2.5 space-y-3"><div>Source of Funds if without budget: ________________<br/><br/>Endorsed by/Date:<br/><span className="border-b border-gray-400 inline-block w-full pt-3"></span></div><div className="text-center font-black uppercase text-[9px]">CLUSTER HEAD (VPAA/VPF/PRES)</div></div>
-                    <div className="border-r border-black p-2.5 space-y-10"><div>Recommended by/Date:</div><div className="text-center pt-6 border-b border-gray-400"></div><div className="text-center font-black uppercase text-[9px]">VP FOR FINANCE (&gt;500K)</div></div>
-                    <div className="p-2.5 space-y-10"><div>Approved by/Date:</div><div className="text-center pt-6 border-b border-gray-400"></div><div className="text-center font-black uppercase text-[8px]">VP FOR FINANCE (&lt;500K) / PRESIDENT (&gt;500K-1M)</div></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ── 7. BED MANAGEMENT (Kept untouched as original layout) ── */}
           {activeReport === 'bed' && (
