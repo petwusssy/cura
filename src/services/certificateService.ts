@@ -31,6 +31,7 @@ export const certificateService = {
     return response.data.map(c => ({
       ...c,
       patientId: c.patient,
+      patientName: c.patient_name || c.patientName,
       recommendations: c.recommendation || (c as any).recommendations,
     }));
   },
@@ -40,6 +41,7 @@ export const certificateService = {
     return {
       ...response.data,
       patientId: response.data.patient,
+      patientName: response.data.patient_name || (data as any).patientName,
       recommendations: response.data.recommendation,
     };
   },
@@ -49,6 +51,7 @@ export const certificateService = {
     return {
       ...response.data,
       patientId: response.data.patient,
+      patientName: response.data.patient_name || (data as any).patientName,
       recommendations: response.data.recommendation,
     };
   },

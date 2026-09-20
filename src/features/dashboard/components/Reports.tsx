@@ -122,7 +122,18 @@ const yesterdayDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'A
 yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 const YESTERDAY = yesterdayDate.toLocaleDateString('en-CA');
 
-function matchesFilter(date: string, filter: ReportFilter, customFrom: string, customTo: string): boolean {
+function normalizeDateStr(d?: string): string {
+  if (!d) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const parsed = new Date(d);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  }
+  return d;
+}
+
+function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string): boolean {
+  const date = normalizeDateStr(rawDate);
   if (filter === 'today') return date === TODAY;
   if (filter === 'yesterday') return date === YESTERDAY;
   if (filter === 'week') {
@@ -1185,7 +1196,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         return (
                           <tr key={mc.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
                             <td className="border border-gray-200 px-3 py-2 font-mono text-[#1B3A6B] font-bold">{mc.id}</td>
-                            <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{p?.name || mc.patientId}</td>
+                            <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{p?.name || mc.patientName || mc.patientId}</td>
                             <td className="border border-gray-200 px-3 py-2 text-center">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p?.category === 'Student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{p?.category || 'Student'}</span>
                             </td>

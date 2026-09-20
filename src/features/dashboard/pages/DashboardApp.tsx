@@ -384,7 +384,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     try {
       const { id, ...rest } = cert;
       const created = await certificateService.createCertificate(rest);
-      const fullCreated = { ...cert, ...created, patientId: created.patientId || cert.patientId };
+      const fullCreated = {
+        ...cert,
+        ...created,
+        patientId: created.patientId || cert.patientId,
+        patientName: cert.patientName || created.patientName,
+        date: cert.date || created.date,
+      };
       setMedicalCerts(prev => [...prev.filter(c => c.id !== fullCreated.id), fullCreated]);
       return fullCreated;
     } catch (e) {
