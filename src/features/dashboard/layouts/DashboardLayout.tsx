@@ -6,8 +6,6 @@ import {
 import { motion } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
 import uaLogo from '@/assets/images/ua-logo.png';
-import curaLogo from '@/assets/images/cura-logo-clean.png';
-import curaMascot from '@/assets/images/cura-mascot.png';
 import curaLogoMain from '@/assets/images/cura-logo.png';
 import { authService } from '@/services/authService';
 
@@ -97,28 +95,20 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 transition-all duration-300 ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}`}
+          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '76px' }}
         >
           {/* Main icon */}
-          <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
+          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10">
             <img
               src={curaLogoMain}
-              alt="CURA"
-              className="absolute object-contain transition-transform duration-500"
-              style={{ 
-                height: collapsed ? '80px' : '115px', /* Slightly smaller balanced size */
-                width: 'auto',
-                maxWidth: 'none',
-                transform: 'translateY(4px)' /* Perfect optical center alignment */
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1)'}
+              alt="CLINIC Logo"
+              className="w-9 h-9 object-contain select-none transition-transform duration-300 hover:scale-105"
             />
           </div>
           {!collapsed && (
-            <div className="overflow-hidden min-w-0 flex flex-col justify-center">
-              <span className="text-[34px] font-black tracking-tighter leading-none"
+            <div className="overflow-hidden min-w-0 flex flex-col justify-center flex-1">
+              <span className="text-[26px] font-black tracking-wider leading-none select-none truncate"
                     style={{
                       background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
                       backgroundSize: '100% 300%',
@@ -127,7 +117,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
                       WebkitTextFillColor: 'transparent',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
-                CURA
+                CLINIC
               </span>
             </div>
           )}
