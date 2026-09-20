@@ -95,26 +95,22 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 transition-all duration-300 ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '76px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 transition-all duration-300 bg-white ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}`}
+          style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', height: '76px' }}
         >
           {/* Main icon */}
-          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10">
+          <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
             <img
               src={curaLogoMain}
               alt="CLINIC Logo"
-              className="w-9 h-9 object-contain select-none transition-transform duration-300 hover:scale-105"
+              className="w-11 h-11 object-contain select-none transition-transform duration-300 hover:scale-105"
             />
           </div>
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center flex-1">
-              <span className="text-[26px] font-black tracking-wider leading-none select-none truncate"
+              <span className="text-lg font-black tracking-widest leading-none select-none truncate"
                     style={{
-                      background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
-                      backgroundSize: '100% 300%',
-                      animation: 'liquidText 5s ease-in-out infinite',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
+                      color: '#1E5AA8',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
                 CLINIC
