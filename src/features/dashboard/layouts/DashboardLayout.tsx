@@ -95,25 +95,37 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 transition-all duration-300 bg-white ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', height: '76px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
         >
           {/* Main icon */}
-          <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
+          <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
             <img
               src={curaLogoMain}
-              alt="CLINIC Logo"
-              className="w-11 h-11 object-contain select-none transition-transform duration-300 hover:scale-105"
+              alt="CURA"
+              className="absolute object-contain transition-transform duration-500"
+              style={{ 
+                height: collapsed ? '80px' : '115px', /* Slightly smaller balanced size */
+                width: 'auto',
+                maxWidth: 'none',
+                transform: 'translateY(4px)' /* Perfect optical center alignment */
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1)'}
             />
           </div>
           {!collapsed && (
-            <div className="overflow-hidden min-w-0 flex flex-col justify-center flex-1">
-              <span className="text-lg font-black tracking-widest leading-none select-none truncate"
+            <div className="overflow-hidden min-w-0 flex flex-col justify-center">
+              <span className="text-[34px] font-black tracking-tighter leading-none"
                     style={{
-                      color: '#1E5AA8',
+                      background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
+                      backgroundSize: '100% 300%',
+                      animation: 'liquidText 5s ease-in-out infinite',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
-                CLINIC
+                CURA
               </span>
             </div>
           )}
