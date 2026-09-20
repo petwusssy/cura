@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop, Droplets, Megaphone } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import api from '../../../services/api';
 
 const PRIMARY = '#1E5AA8';
 
@@ -42,6 +43,29 @@ export function Settings() {
 
   const [broadcastStatus, setBroadcastStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
   const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
+
+  useEffect(() => {
+    api.get('/advisory/')
+      .then(res => {
+        if (res.data) {
+          if (res.data.status) setBroadcastStatus(res.data.status);
+          if (res.data.message) setBroadcastMessage(res.data.message);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handlePushAdvisory = async () => {
+    setSaved(true);
+    try {
+      await api.post('/advisory/', {
+        status: broadcastStatus,
+        message: broadcastMessage,
+      });
+    } catch (e) {}
+    setTimeout(() => setSaved(false), 2000);
+  };
+
 
   const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-background text-foreground';
   const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5';
@@ -269,7 +293,7 @@ export function Settings() {
               </div>
 
               <div className="flex justify-end pt-2">
-                <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
+                <button onClick={handlePushAdvisory} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
                   <Megaphone size={15} /> {saved ? 'Pushed!' : 'Push Update'}
                 </button>
               </div>
