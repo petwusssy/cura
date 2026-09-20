@@ -244,7 +244,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   <tr key={m.id} className={isOut ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                     <td className="px-5 py-3">
                       <div className="text-sm font-medium text-gray-700">{m.name}</div>
-                      <div className="text-xs text-gray-400">Added: {m.dateAdded || 'N/A'}</div>
+                      <div className="text-xs text-gray-400">Added: {m.dateAdded ? m.dateAdded.split(/[T\s]/)[0] : 'N/A'}</div>
                     </td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>

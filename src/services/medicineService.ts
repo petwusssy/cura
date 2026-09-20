@@ -4,7 +4,10 @@ import { MedicineItem, PurchaseRequest } from '@/types';
 export const medicineService = {
   getMedicines: async (): Promise<MedicineItem[]> => {
     const response = await api.get<MedicineItem[]>('/medicines/');
-    return response.data;
+    return response.data.map(m => ({
+      ...m,
+      dateAdded: m.dateAdded ? m.dateAdded.split(/[T\s]/)[0] : m.dateAdded,
+    }));
   },
 
   getMedicineById: async (id: string): Promise<MedicineItem> => {
