@@ -21,6 +21,7 @@ interface PatientProfileProps {
 
 export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient }: PatientProfileProps) {
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [selectedCert, setSelectedCert] = useState<MedicalCertificate | null>(null);
 
   const allPatientConsultations = consultations
     .filter(c => c.patientId === patient.id)
@@ -51,7 +52,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
     }
     return complaint;
   };
-  const patientCerts = medicalCerts.filter(m => m.patientId === patient.id);
+  const patientCerts = medicalCerts.filter(m => m.patientId === patient.id || (m as any).patient === patient.id);
   const catColor = categoryColors[patient.category] ?? { bg: '#f3f4f6', text: '#374151' };
 
   const infoItems = [
@@ -140,7 +141,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
               <Stethoscope size={16} /> New Consultation
             </button>
             <button
-              onClick={() => onNavigate('medical-certificates')}
+              onClick={() => { onSelectPatient(patient.id); onNavigate('medical-certificates'); }}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
             >
               <FileText size={16} /> Medical Certificate
@@ -417,26 +418,87 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
           </div>
 
           {/* Medical Certificates */}
-          {patientCerts.length > 0 && (
-            <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-gray-800 mb-4">Medical Certificates</h3>
-              <div className="space-y-3">
-                {patientCerts.map(cert => (
-                  <div key={cert.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
-                      <FileText size={14} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-800">{cert.purpose}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">Issued: {cert.date} • {cert.doctor}</div>
-                      {cert.diagnosis && <div className="text-xs text-gray-500 mt-0.5">Dx: {cert.diagnosis}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-800 font-bold">Medical Certificate History</h3>
+              <span className="text-xs text-gray-400 font-medium">{patientCerts.length} record{patientCerts.length !== 1 ? 's' : ''}</span>
             </div>
-          )}
+
+            {patientCerts.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No medical certificate records</p>
+              </div>
+            ) : (
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <th className="text-left pb-3 pr-3">No.</th>
+                        <th className="text-left pb-3 pr-3">Date</th>
+                        <th className="text-left pb-3 pr-3">Purpose</th>
+                        <th className="text-left pb-3 pr-3">Doctor</th>
+                        <th className="text-left pb-3 pr-3">Diagnosis</th>
+                        <th className="text-right pb-3">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {patientCerts.map((cert, i) => (
+                        <tr key={cert.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
+                          <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{cert.date}</td>
+                          <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[160px] truncate" title={cert.purpose}>
+                            {cert.purpose}
+                          </td>
+                          <td className="py-2.5 pr-3 text-sm text-gray-600">{cert.doctor || 'Clinic Doctor'}</td>
+                          <td className="py-2.5 pr-3 text-sm text-gray-600 max-w-[160px] truncate" title={cert.diagnosis}>
+                            {cert.diagnosis || '—'}
+                          </td>
+                          <td className="py-2.5 text-right">
+                            <button
+                              onClick={() => setSelectedCert(cert)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex"
+                              title="View Certificate Details"
+                            >
+                              <Eye size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards for Medical Certificates */}
+                <div className="flex flex-col gap-3 md:hidden mt-2">
+                  {patientCerts.map((cert, i) => (
+                    <div key={cert.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-2 relative">
+                      <div className="absolute top-4 right-4">
+                        <button
+                          onClick={() => setSelectedCert(cert)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 bg-white shadow-sm rounded-lg transition-colors inline-flex"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </div>
+                      <div className="text-xs font-bold text-gray-400">Certificate #{i + 1}</div>
+                      <div>
+                        <div className="font-bold text-gray-900">{cert.purpose}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{cert.date} • {cert.doctor || 'Physician'}</div>
+                      </div>
+                      {cert.diagnosis && (
+                        <div className="text-xs text-gray-500 mt-1 italic">
+                          Dx: {cert.diagnosis}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -651,6 +713,88 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                    </div>
                  </div>
                )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Medical Certificate Details Modal */}
+      {selectedCert && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/95">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Medical Certificate Details</h3>
+                  <p className="text-xs text-gray-400">Official Clinic Record</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedCert(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-sm max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Date Issued</span>
+                  <span className="font-semibold text-gray-800">{selectedCert.date}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Doctor</span>
+                  <span className="font-semibold text-gray-800">{selectedCert.doctor || 'Clinic Physician'}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Purpose / Subject</span>
+                <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{selectedCert.purpose}</p>
+              </div>
+
+              {selectedCert.diagnosis && (
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Diagnosis</span>
+                  <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{selectedCert.diagnosis}</p>
+                </div>
+              )}
+
+              {(selectedCert.recommendation || (selectedCert as any).recommendations) && (
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Recommendations</span>
+                  <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{selectedCert.recommendation || (selectedCert as any).recommendations}</p>
+                </div>
+              )}
+
+              {selectedCert.issuedBy && (
+                <div className="text-xs text-gray-400 pt-2 border-t border-gray-100">
+                  Issued by: <span className="font-medium text-gray-600">{selectedCert.issuedBy}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setSelectedCert(null);
+                  onSelectPatient(patient.id);
+                  onNavigate('medical-certificates');
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-colors hover:opacity-95"
+                style={{ background: PRIMARY }}
+              >
+                Open in Certificate Editor
+              </button>
+              <button
+                onClick={() => setSelectedCert(null)}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

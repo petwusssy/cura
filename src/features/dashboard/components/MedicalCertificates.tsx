@@ -159,9 +159,21 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       setSelectedCertId(certIdToUse);
     }
 
+    let pId = currentPatientId;
+    if (!pId && patientName) {
+      const matched = patients.find(p => p.name.trim().toUpperCase() === patientName.trim().toUpperCase());
+      if (matched) pId = matched.id;
+    }
+    if (!pId && selectedPatientId) {
+      pId = selectedPatientId;
+    }
+    if (!pId && patients.length > 0) {
+      pId = patients[0].id;
+    }
+
     const updatedCert: MedicalCertificate = {
       id: certIdToUse,
-      patientId: currentPatientId || 'STU-2024-001',
+      patientId: pId || 'STU-2024-001',
       date: date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
       purpose: purpose || 'Medical Certificate issuance',
       diagnosis: diagnosis,
@@ -183,12 +195,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       if (existing) {
         await onUpdateCert(updatedCert);
       } else {
-        await onAddCert(updatedCert);
+        const created = await onAddCert(updatedCert);
+        if (created && (created as any).id) {
+          setSelectedCertId((created as any).id);
+        }
       }
     } catch (e) {
       console.error('Error saving certificate to archive:', e);
     }
-  }, [selectedCertId, currentPatientId, date, purpose, diagnosis, recommendations, doctor, patientName, age, sex, yearLevel, yearSuffix, courseAndSchool, examinedDueTo, treatment, doctorTitle, licenseNo, ptrNo, medicalCerts, onAddCert, onUpdateCert]);
+  }, [selectedCertId, currentPatientId, date, purpose, diagnosis, recommendations, doctor, patientName, age, sex, yearLevel, yearSuffix, courseAndSchool, examinedDueTo, treatment, doctorTitle, licenseNo, ptrNo, medicalCerts, onAddCert, onUpdateCert, patients, selectedPatientId]);
 
   const handleSelectCert = (cert: MedicalCertificate) => {
     setSelectedCertId(cert.id);
@@ -249,6 +264,13 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     triggerToast(`Populated template for ${p.name}. Click 'Save to Archives' to record it.`);
   };
 
+  useEffect(() => {
+    if (selectedPatientId) {
+      setSelectedPatientFilter(selectedPatientId);
+      handleQuickLoadPatient(selectedPatientId);
+    }
+  }, [selectedPatientId]);
+
   const handleSaveCertificate = async () => {
     await syncToArchives();
     triggerToast('✅ Successfully saved and locked certificate into Clinic Records Archive!');
@@ -286,9 +308,21 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const suffix = ylNum === '1' ? 'st' : ylNum === '2' ? 'nd' : ylNum === '3' ? 'rd' : ylNum ? 'th' : '';
     const designation = ylNum ? `${ylNum}${suffix} ${courseOrDepartment}` : courseOrDepartment;
 
+    let finalPatientId = patientId;
+    if (!finalPatientId && name) {
+      const matched = patients.find(p => p.name.trim().toUpperCase() === name.trim().toUpperCase());
+      if (matched) finalPatientId = matched.id;
+    }
+    if (!finalPatientId && selectedPatientId) {
+      finalPatientId = selectedPatientId;
+    }
+    if (!finalPatientId && patients.length > 0) {
+      finalPatientId = patients[0].id;
+    }
+
     // Populate the certificate template fields
     setSelectedCertId(newId);
-    setCurrentPatientId(patientId);
+    setCurrentPatientId(finalPatientId);
     setDate(fDate);
     setPatientName(name);
     setAge(fAge || '');
@@ -305,7 +339,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     // Build and save the cert record
     const newCert: MedicalCertificate = {
       id: newId,
-      patientId: patientId || 'unknown',
+      patientId: finalPatientId || 'unknown',
       date: fDate,
       purpose: `Medical certificate — ${complaint}`,
       diagnosis: fDiag,
@@ -323,11 +357,21 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       ptrNo,
     };
 
+    try {
+      const created = await onAddCert(newCert);
+      if (created && (created as any).id) {
+        setSelectedCertId((created as any).id);
+      }
+      triggerToast('✅ Medical Certificate successfully created and recorded!');
+    } catch (err) {
+      console.error('Error adding cert:', err);
+      triggerToast('✅ Certificate populated in template! Click "Save to Archives" to record it.');
+    }
+
     // Close modal, reset form, switch to template tab
     setShowIssueCertModal(false);
     setIssueCertForm({ patientId: '', date: '', name: '', age: '', gender: 'FEMALE', yearLevel: '', courseOrDepartment: '', complaint: '', diagnosis: '', treatment: '', recommendations: '' });
     setActiveTab('template');
-    triggerToast('✅ Certificate populated in template! Click "Save to Archives" to record it.');
   };
 
   // AUTOMATIC DIRECT PDF DOWNLOAD

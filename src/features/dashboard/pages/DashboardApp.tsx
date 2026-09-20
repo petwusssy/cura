@@ -384,15 +384,27 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     try {
       const { id, ...rest } = cert;
       const created = await certificateService.createCertificate(rest);
-      setMedicalCerts(prev => [...prev, created]);
-    } catch (e) { console.error(e); }
+      const fullCreated = { ...cert, ...created, patientId: created.patientId || cert.patientId };
+      setMedicalCerts(prev => [...prev.filter(c => c.id !== fullCreated.id), fullCreated]);
+      return fullCreated;
+    } catch (e) {
+      console.error('Error creating certificate:', e);
+      setMedicalCerts(prev => [...prev, cert]);
+      return cert;
+    }
   };
 
   const handleUpdateMedCert = async (cert: MedicalCertificate) => {
     try {
       const updated = await certificateService.updateCertificate(cert.id, cert);
-      setMedicalCerts(prev => prev.map(c => c.id === updated.id ? updated : c));
-    } catch (e) { console.error(e); }
+      const fullUpdated = { ...cert, ...updated, patientId: updated.patientId || cert.patientId };
+      setMedicalCerts(prev => prev.map(c => c.id === fullUpdated.id ? fullUpdated : c));
+      return fullUpdated;
+    } catch (e) {
+      console.error('Error updating certificate:', e);
+      setMedicalCerts(prev => prev.map(c => c.id === cert.id ? cert : c));
+      return cert;
+    }
   };
 
   const handleUpdateBed = async (bed: Bed) => {
