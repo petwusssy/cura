@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Users, Award } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import uaLogo from '@/assets/images/ua-logo.png';
@@ -728,8 +728,61 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     return matchDate && matchPatient && matchSearch;
   });
 
+  // Top metric stats calculated to match Dashboard stat row
+  const todayIso = new Date().toISOString().split('T')[0];
+  const issuedTodayCount = medicalCerts.filter(c => {
+    if (!c.date) return false;
+    const d = c.date.trim();
+    if (d === todayIso) return true;
+    try {
+      const parsed = new Date(d);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0] === todayIso;
+      }
+    } catch {}
+    return false;
+  }).length;
+
+  const studentCount = medicalCerts.filter(c => {
+    const des = (c.statusDesignation || '').toLowerCase();
+    return des.includes('student') || des.includes('bs ') || des.includes('yr') || des.includes('year') || des.includes('1st') || des.includes('2nd') || des.includes('3rd') || des.includes('4th') || !c.statusDesignation;
+  }).length;
+
+  const personnelCount = Math.max(0, medicalCerts.length - studentCount);
+
+  const medCertStats = [
+    {
+      label: 'Total Certificates',
+      value: medicalCerts.length,
+      sub: 'All-time clinic issuances',
+      icon: <FileText size={20} />,
+      color: PRIMARY,
+    },
+    {
+      label: 'Issued Today',
+      value: issuedTodayCount,
+      sub: 'Issued today',
+      icon: <Award size={20} />,
+      color: '#10B981',
+    },
+    {
+      label: 'Students',
+      value: studentCount,
+      sub: 'Undergraduate & Basic Ed',
+      icon: <Users size={20} />,
+      color: '#F59E0B',
+    },
+    {
+      label: 'Faculty & Personnel',
+      value: personnelCount,
+      sub: 'University staff & admin',
+      icon: <UserCheck size={20} />,
+      color: '#8B5CF6',
+    },
+  ];
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 max-w-[1600px] mx-auto min-h-screen bg-transparent">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-transparent min-h-full">
       {/* Custom Print & Font Styling ensuring 100% fidelity to Letter PDF template */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -790,34 +843,41 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         </div>
       )}
 
-      {/* Header Bar */}
-      <div className="no-print flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+      {/* 1. Header Bar & Controls (Matching Dashboard) */}
+      <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
-          <p className="text-xs text-gray-500 font-medium mt-1">
-            Official university medical certificate issuance with automatic clinic reports & mobile app synchronization.
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
+            Official university medical certificate issuance with automatic clinic reports & mobile app synchronization
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto self-start md:self-auto">
-          <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200/50">
+        {/* Tab switcher matching Dashboard pill buttons */}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
             <button
               onClick={() => setActiveTab('template')}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'}`}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer
+                ${activeTab === 'template' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+              style={{ background: activeTab === 'template' ? PRIMARY : 'transparent' }}
             >
-              <FileText size={15} /> Official Template
+              <FileText size={15} />
+              <span>Official Template</span>
             </button>
             <button
               onClick={() => {
                 syncToArchives();
                 setActiveTab('archives');
               }}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'archives' ? 'bg-white text-[#1E5AA8] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'}`}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer
+                ${activeTab === 'archives' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+              style={{ background: activeTab === 'archives' ? PRIMARY : 'transparent' }}
             >
-              <BookmarkCheck size={15} /> Archives
-              <span className={`ml-1 px-1.5 py-0.5 text-[9px] rounded-full font-black ${activeTab === 'archives' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-500'}`}>
+              <BookmarkCheck size={15} />
+              <span>Archives</span>
+              <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${activeTab === 'archives' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>
                 {medicalCerts.length}
               </span>
             </button>
@@ -826,11 +886,35 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           <button
             onClick={handleCreateNew}
             title="Clear and create a new blank certificate"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold shadow-xs hover:border-[#1E5AA8]/50 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-all cursor-pointer"
+            style={{ background: PRIMARY }}
           >
-            <Plus size={15} className="text-[#1E5AA8]" /> New Cert
+            <Plus size={16} />
+            <span>New Cert</span>
           </button>
         </div>
+      </div>
+
+      {/* 2. Stat Cards Row (Exact Dashboard Tokens) */}
+      <div className="no-print grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {medCertStats.map((card, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-4 flex flex-col gap-2 transition-all hover:shadow-lg hover:-translate-y-1"
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors" style={{ background: `${card.color}15`, color: card.color }}>
+                {card.icon}
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: card.color }}>{card.value}</div>
+            <div className="mt-auto">
+              <div className="text-xs font-bold text-gray-700 uppercase tracking-wide">{card.label}</div>
+              <div className="text-[11px] text-gray-400 font-medium mt-0.5">{card.sub}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* ========================================================================================= */}
@@ -839,39 +923,44 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {activeTab === 'template' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           {/* Patient Context & Issuance Status Bar */}
-          <div className="no-print bg-gradient-to-r from-blue-50/80 via-white to-sky-50/80 border border-blue-200/60 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-xs">
+          <div
+            className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+          >
             <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm shadow-xs ${isCertIssued ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-[#1E5AA8] border border-blue-200'}`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm shadow-xs ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-[#1E5AA8] border border-blue-200'}`}>
                 {isCertIssued ? <CheckCircle2 size={22} className="text-emerald-600" /> : <UserCheck size={22} className="text-[#1E5AA8]" />}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Patient:</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Patient:</span>
                   <span className="text-sm font-extrabold text-gray-900 uppercase">
                     {patientName || 'No patient selected'}
                   </span>
                   {age && <span className="text-xs text-gray-500 font-semibold">({age} y/o, {sex})</span>}
                 </div>
-                <div className="text-xs text-gray-600 font-medium mt-0.5">
+                <div className="text-xs text-gray-500 font-medium mt-0.5">
                   {courseAndSchool || 'University of the Assumption Clinic'}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5 self-end md:self-auto flex-wrap">
-              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isCertIssued ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                 <span className={`w-2 h-2 rounded-full ${isCertIssued ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
                 {isCertIssued ? `Issued & Recorded (${selectedCertId})` : 'Draft · Ready to Issue'}
               </span>
-              <span className="hidden lg:inline text-[11px] text-gray-500 font-medium">
+              <span className="hidden lg:inline text-[11px] text-gray-400 font-medium">
                 ⚡ Auto-updates Reports & Patient Mobile App
               </span>
             </div>
           </div>
 
           {/* Action & Configuration Toolbar */}
-          <div className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
-            
+          <div
+            className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-xl"
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+          >
             {/* Left side actions */}
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               {/* Quick Load Patient Dropdown */}
@@ -882,7 +971,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="w-full sm:w-56 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] focus:border-transparent transition-all cursor-pointer"
+                  className="w-full sm:w-56 appearance-none bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all cursor-pointer"
                 >
                   <option value="">Quick load patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
@@ -894,14 +983,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
               <button
                 onClick={() => setShowIssueCertModal(true)}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold transition-all"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold transition-all cursor-pointer"
               >
                 <Edit2 size={14} /> Fill via Form
               </button>
 
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                 title="Toggle visual highlights on editable words"
               >
                 {editMode ? <Edit size={14} /> : <Eye size={14} />}
@@ -914,14 +1003,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <button
                 onClick={handleSaveCertificate}
                 title="Save draft to archives without issuing or downloading"
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 font-bold text-xs transition-all"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 font-bold text-xs transition-all cursor-pointer"
               >
                 <BookmarkCheck size={15} className="text-gray-500" /> Save Draft
               </button>
 
               <button
                 onClick={handlePrint}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 font-bold text-xs transition-all"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 font-bold text-xs transition-all cursor-pointer"
               >
                 <Printer size={15} /> Print
               </button>
@@ -930,7 +1019,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isDownloading}
-                  className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-70 font-bold text-xs transition-all"
+                  className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-70 font-bold text-xs transition-all cursor-pointer"
                 >
                   <Download size={15} className={isDownloading ? 'animate-bounce' : ''} />
                   <span>{isDownloading ? 'Downloading...' : 'Re-download PDF'}</span>
@@ -941,7 +1030,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <button
                 onClick={() => handleIssueCertificate({ downloadPdf: true })}
                 disabled={isIssuing || isDownloading}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
               >
                 <CheckCircle2 size={16} className="text-white" />
                 <span>{isIssuing ? 'Issuing...' : isDownloading ? 'Downloading PDF...' : 'ISSUE CERTIFICATE'}</span>
@@ -952,7 +1041,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* ===================================================================================== */}
           {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
           {/* ===================================================================================== */}
-          <div className="overflow-x-auto w-full pb-8 flex justify-center hide-scrollbar">
+          <div className="bg-slate-100/70 p-4 sm:p-8 rounded-2xl border border-slate-200/80 overflow-x-auto flex justify-center shadow-inner hide-scrollbar">
             <div
               id="official-med-cert-page"
               className="font-official relative bg-white border border-gray-300 shadow-2xl mx-auto text-black text-[15.5px] font-bold leading-relaxed overflow-hidden box-border"
@@ -1163,7 +1252,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   </div>
                 </div>
               </div>
-            </div>
+                   </div>
           </div>
           </div>
         </div>
@@ -1173,13 +1262,21 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* VIEW 2: CERTIFICATE ARCHIVES & CLINIC RECORDS */}
       {/* ========================================================================================= */}
       {activeTab === 'archives' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
           {/* Filters Bar */}
-          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <h2 className="text-lg font-extrabold text-gray-800 flex items-center gap-2">
-              <BookmarkCheck size={20} className="text-[#1E5AA8]" />
-              Clinic Records
-            </h2>
+          <div
+            className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between"
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+          >
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                <BookmarkCheck size={20} className="text-[#1E5AA8]" />
+                Clinic Certificate Records
+              </h2>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Search, filter, print, and re-download previously issued certificates
+              </p>
+            </div>
 
             <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
               {/* Patient Filter */}
@@ -1190,11 +1287,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <select
                   value={selectedPatientFilter}
                   onChange={e => setSelectedPatientFilter(e.target.value)}
-                  className="w-full sm:w-48 appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
+                  className="w-full sm:w-48 appearance-none bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all cursor-pointer"
                 >
                   <option value="">All Patients</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
                 </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
               </div>
 
               {/* Date Filter */}
@@ -1207,10 +1307,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   placeholder="Filter date..."
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="w-full sm:w-36 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
+                  className="w-full sm:w-36 bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
                 />
                 {dateFilter && (
-                  <button onClick={() => setDateFilter('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                  <button onClick={() => setDateFilter('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer">
                     <X size={12} />
                   </button>
                 )}
@@ -1218,18 +1318,22 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
               <button
                 onClick={handleCreateNew}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-md hover:shadow-lg transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-all cursor-pointer"
                 style={{ background: PRIMARY }}
               >
-                <Plus size={15} /> Issue New
+                <Plus size={16} />
+                <span>Issue New</span>
               </button>
             </div>
           </div>
 
           {/* Certificates Grid/List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredCerts.length === 0 ? (
-              <div className="col-span-full bg-white rounded-2xl border border-gray-200 p-16 text-center text-gray-400 font-medium">
+              <div
+                className="col-span-full bg-white rounded-xl p-16 text-center text-gray-400 font-medium"
+                style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+              >
                 <FileText size={42} className="mx-auto mb-3 text-gray-300" />
                 <p className="text-base font-bold text-gray-600">No medical certificates found</p>
                 <p className="text-xs text-gray-400 mt-1">Try resetting your search filter or issue a new clinic certificate.</p>
@@ -1241,16 +1345,17 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   <div
                     key={cert.id}
                     onClick={() => handleSelectCert(cert)}
-                    className="bg-white rounded-2xl p-5 border border-gray-200 shadow-2xs hover:shadow-lg hover:border-[#1E5AA8]/40 transition-all cursor-pointer flex flex-col justify-between group"
+                    className="bg-white rounded-xl p-4 sm:p-5 flex flex-col justify-between group transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#1E5AA8] group-hover:text-white transition-colors" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[#1E5AA8] group-hover:text-white transition-colors" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
                             <FileText size={18} />
                           </div>
                           <div>
-                            <div className="text-base font-black text-gray-900 leading-tight uppercase">
+                            <div className="text-sm sm:text-base font-extrabold text-gray-900 leading-tight uppercase">
                               {cert.patientName || pt?.name || 'Clinic Patient'}
                             </div>
                             <div className="text-xs font-semibold text-gray-400 mt-0.5">
@@ -1258,7 +1363,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             </div>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
                           <CheckCircle2 size={10} className="text-emerald-600" /> Issued
                         </span>
                       </div>
@@ -1266,13 +1371,13 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                       <div className="space-y-2 py-3 border-t border-b border-gray-100 my-2 text-xs">
                         {cert.diagnosis && (
                           <div className="text-gray-700">
-                            <span className="font-black text-gray-500 uppercase tracking-wider text-[10px]">Diagnosis:</span>{' '}
+                            <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Diagnosis:</span>{' '}
                             <strong className="text-gray-900">{cert.diagnosis}</strong>
                           </div>
                         )}
                         {cert.purpose && (
                           <div className="text-gray-600 truncate">
-                            <span className="font-black text-gray-500 uppercase tracking-wider text-[10px]">Purpose:</span>{' '}
+                            <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Purpose:</span>{' '}
                             <span>{cert.purpose}</span>
                           </div>
                         )}
@@ -1295,7 +1400,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             handleSelectCert(cert);
                             setTimeout(() => handleDownloadPDF(), 200);
                           }}
-                          className="p-2 rounded-xl hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors"
+                          className="p-2 rounded-xl hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
                           title="Download as PDF"
                         >
                           <Download size={15} />
@@ -1306,7 +1411,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             handleSelectCert(cert);
                             setTimeout(() => handlePrint(), 200);
                           }}
-                          className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-[#1E5AA8] transition-colors"
+                          className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-[#1E5AA8] transition-colors cursor-pointer"
                           title="Print Certificate"
                         >
                           <Printer size={15} />
