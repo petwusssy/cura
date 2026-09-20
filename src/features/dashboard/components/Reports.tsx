@@ -661,77 +661,104 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     const isMed = tab === 'medicines';
     const numCols = isMed ? 43 : 42;
 
-    // Row 1 (Pale blue background #DCE6F1)
+    // Row 1: Title (White background matching web view)
     worksheet.mergeCells(1, 1, 1, numCols);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = 'UNIVERSITY OF THE ASSUMPTION COLLEGE CLINIC';
     titleCell.font = { name: 'Calibri', size: 14, bold: true };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).height = 30;
 
-    // Row 2
+    // Row 2: Inclusive Dates (Matching web view)
     worksheet.mergeCells(2, 1, 2, 8);
     const subtitleCell = worksheet.getCell(2, 1);
     subtitleCell.value = `Monthly Inventory of ${isMed ? 'Medicines' : 'Supplies'} (Inclusive Dates):`;
     subtitleCell.font = { name: 'Calibri', size: 11, bold: true };
-    
+    subtitleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    subtitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+
     worksheet.mergeCells(2, 9, 2, 16);
     const dateCell = worksheet.getCell(2, 9);
-    dateCell.value = `${reportMonth} ${reportYear}`; // or "May-26"
+    dateCell.value = `${reportMonth} ${reportYear}`;
     dateCell.font = { name: 'Calibri', size: 11, bold: true, underline: true };
     dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
 
-    worksheet.addRow([]); // Blank row 3
+    worksheet.mergeCells(2, 17, 2, numCols);
+    const blankHeaderRest = worksheet.getCell(2, 17);
+    blankHeaderRest.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(2).height = 24;
 
-    // Row 4 and 5 (Headers)
+    // Row 3: Blank separator row (Matching web view)
+    worksheet.mergeCells(3, 1, 3, numCols);
+    const row3Cell = worksheet.getCell(3, 1);
+    row3Cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(3).height = 12;
+
+    // Row 4 & 5: Table Column Headers (Matching web view colors and typography)
+    // No. (Yellow #FFFF00)
     worksheet.mergeCells(4, 1, 5, 1);
     const hNo = worksheet.getCell(4, 1);
     hNo.value = 'No.';
-    hNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } }; // Light purple
+    hNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    hNo.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+    hNo.alignment = { vertical: 'middle', horizontal: 'center' };
 
+    // Medicine / Supplies (Yellow #FFFF00)
     worksheet.mergeCells(4, 2, 5, 2);
     const hName = worksheet.getCell(4, 2);
     hName.value = isMed ? 'Medicine' : 'Supplies';
-    hName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
+    hName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    hName.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+    hName.alignment = { vertical: 'middle', horizontal: 'left' };
 
+    // Beg. Inv. (Olive Green #76923C, White bold text)
     worksheet.mergeCells(4, 3, 5, 3);
     const hBeg = worksheet.getCell(4, 3);
-    hBeg.value = 'Beginning\nInventory';
-    hBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF92D050' } }; // Light green
-    hBeg.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+    hBeg.value = 'Beg.\nInv.';
+    hBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+    hBeg.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
     hBeg.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
+    // Consumption/s (Days 1 - 31) (White background, Black bold text, span cols 4 to 40)
     worksheet.mergeCells(4, 4, 4, 40);
     const hCons = worksheet.getCell(4, 4);
-    hCons.value = 'Consumption/s';
-    hCons.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
-    hCons.font = { name: 'Calibri', size: 11, bold: true };
+    hCons.value = 'Consumption/s (Days 1 - 31)';
+    hCons.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+    hCons.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
     hCons.alignment = { vertical: 'middle', horizontal: 'center' };
 
+    // End. Inv. (Olive Green #76923C, White bold text)
     worksheet.mergeCells(4, 41, 5, 41);
     const hEnd = worksheet.getCell(4, 41);
-    hEnd.value = 'Ending\nInventory';
-    hEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF92D050' } };
-    hEnd.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+    hEnd.value = 'End.\nInv.';
+    hEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF76923C' } };
+    hEnd.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
     hEnd.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
+    // Sum Total Consumption (Teal #31859B, White bold text)
     worksheet.mergeCells(4, 42, 5, 42);
     const hSum = worksheet.getCell(4, 42);
     hSum.value = 'Sum Total\nConsumption';
     hSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF31859B' } };
-    hSum.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+    hSum.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
     hSum.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 
     if (isMed) {
+      // EXPIRATION (Brown #938953, White bold text)
       worksheet.mergeCells(4, 43, 5, 43);
       const hExp = worksheet.getCell(4, 43);
       hExp.value = 'EXPIRATION';
       hExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF938953' } };
-      hExp.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+      hExp.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
       hExp.alignment = { vertical: 'middle', horizontal: 'center' };
     }
 
-    // Row 5 for Consumption subtotals
+    worksheet.getRow(4).height = 24;
+    worksheet.getRow(5).height = 20;
+
+    // Row 5 for Consumption subheader days & totals (Matching web view)
     const intervals = [
       { start: 1, end: 5 }, { start: 6, end: 10 }, { start: 11, end: 15 }, 
       { start: 16, end: 20 }, { start: 21, end: 25 }, { start: 26, end: 31 }
@@ -741,55 +768,67 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       for (let i = int.start; i <= int.end; i++) {
         const c = worksheet.getCell(5, colOffset++);
         c.value = i;
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCC0DA' } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+        c.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF000000' } };
         c.alignment = { vertical: 'middle', horizontal: 'center' };
       }
       const t = worksheet.getCell(5, colOffset++);
       t.value = 'Total';
-      t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE26B0A' } };
-      t.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+      t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE36C09' } };
+      t.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
       t.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
-    // Apply borders and fonts to headers
-    for (let r = 4; r <= 5; r++) {
+    // Apply borders to header cells
+    for (let r = 1; r <= 5; r++) {
       for (let c = 1; c <= numCols; c++) {
         const cell = worksheet.getCell(r, c);
-        if (!cell.font) cell.font = { name: 'Calibri', size: 10, bold: true };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
       }
     }
-    // Also border for title block outer
-    for (let c = 1; c <= numCols; c++) {
-        worksheet.getCell(1, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
-    }
 
-    // Data Rows
+    // Data Rows (Matching web view exact logic and colors)
     const dataList = isMed ? MEDICINE_INVENTORY_TEMPLATE : SUPPLIES_LIST;
     dataList.forEach((item: any) => {
       const row = worksheet.addRow([]);
-      const isNoStock = isMed && item.status === 'NO STOCK';
-      const rowColor = isNoStock ? 'FFEA9999' : null; 
+      row.height = 20;
 
+      const actualItem = medicines.find(m => m.name.toLowerCase().includes(item.name.split(' ')[0].toLowerCase()));
+      const isNoStock = isMed
+        ? (actualItem ? actualItem.stock <= 0 : item.status === 'NO STOCK')
+        : (actualItem ? actualItem.stock <= 0 : false);
+      const statusText = isNoStock ? 'NO STOCK' : '';
+
+      // 1. No.
       const cNo = row.getCell(1);
       cNo.value = item.no;
-      cNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFFFFF00' } };
+      cNo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFEA9999' : 'FFFFFF00' } };
+      cNo.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
       cNo.alignment = { vertical: 'middle', horizontal: 'center' };
 
+      // 2. Name
       const cName = row.getCell(2);
       cName.value = item.name;
-      cName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFFFFF00' } };
+      cName.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFEA9999' : 'FFFFFF00' } };
+      cName.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
       cName.alignment = { vertical: 'middle', horizontal: 'left' };
 
+      // 3. Beg. Inv.
       const cBeg = row.getCell(3);
-      cBeg.value = item.beg; 
-      cBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF92D050' } };
-      cBeg.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
+      cBeg.value = item.beg;
+      cBeg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFF2DCDB' : 'FF76923C' } };
+      cBeg.font = { name: 'Calibri', size: 10, bold: true, color: { argb: isNoStock ? 'FF000000' : 'FFFFFFFF' } };
       cBeg.alignment = { vertical: 'middle', horizontal: 'center' };
 
+      // 4-40. Consumption Days and Subtotals
       let colIdx = 4;
       const cArray = isMed ? item.c : item.consumed;
-      
+
       intervals.forEach(int => {
         let subTotal = 0;
         for (let i = int.start - 1; i < int.end; i++) {
@@ -797,51 +836,62 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           subTotal += val;
           const cData = row.getCell(colIdx++);
           cData.value = val > 0 ? val : '';
-          if (rowColor) cData.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor } };
+          cData.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFF2DCDB' : 'FFFFFFFF' } };
+          cData.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
           cData.alignment = { vertical: 'middle', horizontal: 'center' };
         }
         const cSub = row.getCell(colIdx++);
-        cSub.value = subTotal; 
-        cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FFE26B0A' } };
-        cSub.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
+        cSub.value = subTotal > 0 ? subTotal : 0;
+        cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFEA9999' : 'FFE36C09' } };
+        cSub.font = { name: 'Calibri', size: 10, bold: true, color: { argb: isNoStock ? 'FF000000' : 'FFFFFFFF' } };
         cSub.alignment = { vertical: 'middle', horizontal: 'center' };
       });
 
+      // 41. End. Inv.
       const cEnd = row.getCell(colIdx++);
-      cEnd.value = item.end; 
-      cEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF92D050' } };
-      cEnd.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
+      cEnd.value = item.end;
+      cEnd.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFF2DCDB' : 'FF76923C' } };
+      cEnd.font = { name: 'Calibri', size: 10, bold: true, color: { argb: isNoStock ? 'FF000000' : 'FFFFFFFF' } };
       cEnd.alignment = { vertical: 'middle', horizontal: 'center' };
 
+      // 42. Sum Total Consumption
       const cSum = row.getCell(colIdx++);
-      cSum.value = item.total; 
-      cSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor || 'FF31859B' } };
-      cSum.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
+      cSum.value = item.total;
+      cSum.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFF2DCDB' : 'FF31859B' } };
+      cSum.font = { name: 'Calibri', size: 10, bold: true, color: { argb: isNoStock ? 'FF000000' : 'FFFFFFFF' } };
       cSum.alignment = { vertical: 'middle', horizontal: 'center' };
 
+      // 43. EXPIRATION (if med)
       if (isMed) {
         const cExp = row.getCell(colIdx++);
-        cExp.value = item.status || '';
-        if (rowColor) cExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor } };
+        cExp.value = statusText;
+        cExp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFEA9999' : 'FFFFFFFF' } };
+        cExp.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
         cExp.alignment = { vertical: 'middle', horizontal: 'center' };
       }
 
+      // Borders for all cells in row
       for (let c = 1; c <= numCols; c++) {
-        row.getCell(c).border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-        if (!row.getCell(c).font) {
-          row.getCell(c).font = { name: 'Calibri', size: 10 };
-        }
+        row.getCell(c).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
       }
     });
 
-    // Column Widths
-    worksheet.getColumn(1).width = 5; 
-    worksheet.getColumn(2).width = 30; 
-    worksheet.getColumn(3).width = 9; 
-    for (let c = 4; c <= 40; c++) worksheet.getColumn(c).width = 3.5; 
-    worksheet.getColumn(41).width = 9; 
-    worksheet.getColumn(42).width = 12; 
-    if (isMed) worksheet.getColumn(43).width = 15; 
+    // Column Widths (matching web proportions)
+    worksheet.getColumn(1).width = 6;
+    worksheet.getColumn(2).width = 32;
+    worksheet.getColumn(3).width = 10;
+    for (let c = 4; c <= 40; c++) {
+      const isSubtotalCol = [9, 15, 21, 27, 33, 40].includes(c);
+      worksheet.getColumn(c).width = isSubtotalCol ? 7 : 4.5;
+    }
+    worksheet.getColumn(41).width = 10;
+    worksheet.getColumn(42).width = 14;
+    if (isMed) worksheet.getColumn(43).width = 15;
 
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `inventory_${tab}_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
