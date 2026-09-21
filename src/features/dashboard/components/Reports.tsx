@@ -1001,62 +1001,87 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           }
         }
       `}</style>
-      {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 print:hidden bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Reports Dashboard</h1>
+      {/* Page header - Fixed, Stable Layout across all report types */}
+      <div className="flex items-center justify-between gap-4 print:hidden bg-white px-5 py-3.5 rounded-xl shadow-sm border border-gray-100 min-h-[74px] overflow-x-auto hide-scrollbar">
+        <div className="shrink-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-foreground whitespace-nowrap">Reports Dashboard</h1>
         </div>
 
-        {/* Filters and Controls */}
-        <div className="flex items-center gap-4 flex-wrap w-full lg:w-auto mt-4 lg:mt-0">
+        {/* Filters and Controls - Fixed positioning and height */}
+        <div className="flex items-center gap-3 shrink-0">
           
           <div className="flex flex-col">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Type</label>
-            <select value={activeReport} onChange={e => setActiveReport(e.target.value)}
-              className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] min-w-[220px] cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Type</label>
+            <select
+              value={activeReport}
+              onChange={e => setActiveReport(e.target.value as ReportType)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-[180px] sm:w-[200px] cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-xs"
+            >
               {reportTypes.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </div>
 
-          <div className="w-px h-10 bg-gray-200 hidden sm:block mx-1"></div>
+          <div className="w-px h-8 bg-gray-200 hidden sm:block mx-0.5"></div>
 
           {['daily', 'cases', 'inventory'].includes(activeReport) ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Month</label>
-                <select value={reportMonth} onChange={e => setReportMonth(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-36 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Month</label>
+                <select
+                  value={reportMonth}
+                  onChange={e => setReportMonth(e.target.value)}
+                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-28 sm:w-32 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-xs"
+                >
                   {Object.keys(monthMap).map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Report Year</label>
-                <input type="number" value={reportYear} onChange={e => setReportYear(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-28 bg-gray-50 hover:bg-gray-100 transition-colors text-center shadow-sm" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Year</label>
+                <input
+                  type="number"
+                  value={reportYear}
+                  onChange={e => setReportYear(e.target.value)}
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-20 bg-gray-50 hover:bg-gray-100 transition-colors text-center shadow-xs"
+                />
               </div>
             </div>
           ) : (
-            <div className="flex flex-col">
-               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Date Range Filter</label>
-               <div className="flex flex-wrap gap-1.5 bg-gray-100/80 border border-gray-200 rounded-lg p-1.5 w-full sm:w-auto shadow-sm">
-                 {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
-                   <button key={f} onClick={() => setFilter(f)}
-                     className="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
-                     style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                     {f === 'all' ? 'All' : f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
-                   </button>
-                 ))}
-               </div>
-            </div>
-          )}
-          
-          {filter === 'custom' && !['daily', 'cases', 'inventory'].includes(activeReport) && (
-            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto self-end mb-1">
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-sm" />
-              <span className="text-gray-400 text-xs font-bold px-1">to</span>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-sm" />
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Date Range Filter</label>
+                <div className="flex items-center gap-1 bg-gray-100/90 border border-gray-200 rounded-lg p-1 shadow-xs">
+                  {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap cursor-pointer ${
+                        filter === f
+                          ? 'bg-white text-[#1B3A6B] shadow-xs'
+                          : 'text-gray-500 hover:text-gray-800 bg-transparent'
+                      }`}
+                    >
+                      {f === 'all' ? 'All' : f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filter === 'custom' && (
+                <div className="flex items-center gap-1 self-end pb-0.5">
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={e => setCustomFrom(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-xs"
+                  />
+                  <span className="text-gray-400 text-xs font-bold">-</span>
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={e => setCustomTo(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-xs"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
