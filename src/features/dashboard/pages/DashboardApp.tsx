@@ -391,12 +391,21 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         patientName: cert.patientName || created.patientName,
         date: cert.date || created.date,
       };
-      setMedicalCerts(prev => [...prev.filter(c => c.id !== fullCreated.id), fullCreated]);
+      setMedicalCerts(prev => [...prev.filter(c => c.id !== cert.id && c.id !== fullCreated.id), fullCreated]);
       return fullCreated;
     } catch (e) {
       console.error('Error creating certificate:', e);
-      setMedicalCerts(prev => [...prev, cert]);
+      setMedicalCerts(prev => [...prev.filter(c => c.id !== cert.id), cert]);
       return cert;
+    }
+  };
+
+  const handleDeleteMedCert = async (id: string) => {
+    setMedicalCerts(prev => prev.filter(c => c.id !== id));
+    try {
+      await certificateService.deleteCertificate(id);
+    } catch (e) {
+      console.warn('Backend delete certificate note:', e);
     }
   };
 
@@ -663,6 +672,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             medicalCerts={medicalCerts} patients={patients}
             selectedPatientId={selectedPatientId} searchQuery={searchQuery}
             onAddCert={handleAddMedCert} onUpdateCert={handleUpdateMedCert}
+            onDeleteCert={handleDeleteMedCert}
           />
         );
       case 'beds':

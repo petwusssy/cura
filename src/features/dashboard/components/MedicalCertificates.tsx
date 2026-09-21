@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import uaLogo from '@/assets/images/ua-logo.png';
@@ -14,6 +14,7 @@ interface MedicalCertificatesProps {
   selectedPatientId: string | null;
   onAddCert: (cert: MedicalCertificate) => void | Promise<void>;
   onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
+  onDeleteCert?: (id: string) => void | Promise<void>;
   searchQuery: string;
 }
 
@@ -132,7 +133,7 @@ function PhilHealthYakapBanner() {
   );
 }
 
-export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, searchQuery }: MedicalCertificatesProps) {
+export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, onDeleteCert, searchQuery }: MedicalCertificatesProps) {
   const [activeTab, setActiveTab] = useState<'template' | 'archives'>('template');
   const [editMode, setEditMode] = useState(true);
   const [selectedCertId, setSelectedCertId] = useState<string>('');
@@ -192,6 +193,25 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const triggerToast = (msg: string) => {
     setShowToast(msg);
     setTimeout(() => setShowToast(null), 4000);
+  };
+
+  const handleDeleteCert = async (certId: string, name?: string) => {
+    const displayName = name || 'this record';
+    if (!window.confirm(`Are you sure you want to delete medical certificate #${certId} for ${displayName}? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      if (onDeleteCert) {
+        await onDeleteCert(certId);
+      }
+      triggerToast(`🗑️ Medical Certificate #${certId} deleted from archives.`);
+      if (selectedCertId === certId) {
+        handleCreateNew();
+      }
+    } catch (err) {
+      console.error('Failed to delete certificate:', err);
+      triggerToast('⚠️ Error deleting certificate.');
+    }
   };
 
   // Save the certificate record to archives explicitly
@@ -350,7 +370,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       setYearSuffix('');
       setCourseAndSchool(`Patient of University of the Assumption Clinic`);
     }
-    triggerToast(`Populated template for ${p.name}. Click 'Save to Archives' to record it.`);
+    triggerToast(`Loaded patient details for ${p.name}.`);
   };
 
   useEffect(() => {
@@ -474,7 +494,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       triggerToast(`✅ Medical Certificate #${assignedId} successfully issued to ${name}!`);
     } catch (err) {
       console.error('Error adding cert:', err);
-      triggerToast('✅ Certificate populated in template! Click "Save to Archives" to record it.');
+      triggerToast('✅ Certificate template populated.');
       setShowIssueCertModal(false);
       setActiveTab('template');
     }
@@ -745,9 +765,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Official clinic medical certificate issuance and archives
-          </p>
         </div>
 
         {/* Tab switcher and actions */}
@@ -881,7 +898,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 title="Issue certificate, sync to mobile app, and download official PDF"
               >
                 <CheckCircle2 size={15} className="text-white shrink-0" />
-                <span>{isIssuing ? 'Issuing...' : isCertIssued ? 'Re-Issue Certificate' : 'Issue Certificate'}</span>
+                <span>{isIssuing ? 'Issuing...' : 'Issue Certificate'}</span>
               </button>
             </div>
           </div>
@@ -1270,6 +1287,16 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                           title="Print Certificate"
                         >
                           <Printer size={15} />
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteCert(cert.id, cert.patientName || pt?.name);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                          title="Delete Certificate Record"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
