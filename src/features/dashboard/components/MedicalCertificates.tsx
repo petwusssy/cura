@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Users, Award } from 'lucide-react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
 import uaSeal from '@/assets/images/ua-seal.png';
 import uaLogo from '@/assets/images/ua-logo.png';
@@ -728,59 +728,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     return matchDate && matchPatient && matchSearch;
   });
 
-  // Top metric stats calculated to match Dashboard stat row
-  const todayIso = new Date().toISOString().split('T')[0];
-  const issuedTodayCount = medicalCerts.filter(c => {
-    if (!c.date) return false;
-    const d = c.date.trim();
-    if (d === todayIso) return true;
-    try {
-      const parsed = new Date(d);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toISOString().split('T')[0] === todayIso;
-      }
-    } catch {}
-    return false;
-  }).length;
-
-  const studentCount = medicalCerts.filter(c => {
-    const des = (c.statusDesignation || '').toLowerCase();
-    return des.includes('student') || des.includes('bs ') || des.includes('yr') || des.includes('year') || des.includes('1st') || des.includes('2nd') || des.includes('3rd') || des.includes('4th') || !c.statusDesignation;
-  }).length;
-
-  const personnelCount = Math.max(0, medicalCerts.length - studentCount);
-
-  const medCertStats = [
-    {
-      label: 'Total Certificates',
-      value: medicalCerts.length,
-      sub: 'All-time clinic issuances',
-      icon: <FileText size={20} />,
-      color: PRIMARY,
-    },
-    {
-      label: 'Issued Today',
-      value: issuedTodayCount,
-      sub: 'Issued today',
-      icon: <Award size={20} />,
-      color: '#10B981',
-    },
-    {
-      label: 'Students',
-      value: studentCount,
-      sub: 'Undergraduate & Basic Ed',
-      icon: <Users size={20} />,
-      color: '#F59E0B',
-    },
-    {
-      label: 'Faculty & Personnel',
-      value: personnelCount,
-      sub: 'University staff & admin',
-      icon: <UserCheck size={20} />,
-      color: '#8B5CF6',
-    },
-  ];
-
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-transparent min-h-full">
       {/* Custom Print & Font Styling ensuring 100% fidelity to Letter PDF template */}
@@ -836,32 +783,32 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       {/* Toast Notifier */}
       {showToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-950 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium animate-in slide-in-from-bottom-5 duration-300 border border-gray-800">
           <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
           <span>{showToast}</span>
-          <button onClick={() => setShowToast(null)} className="text-gray-400 hover:text-white ml-2"><X size={16} /></button>
+          <button onClick={() => setShowToast(null)} className="text-gray-400 hover:text-white ml-2 cursor-pointer"><X size={16} /></button>
         </div>
       )}
 
-      {/* 1. Header Bar & Controls (Matching Dashboard) */}
+      {/* 1. Header Bar & Controls */}
       <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">
             Medical Certificates
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
-            Official university medical certificate issuance with automatic clinic reports & mobile app synchronization
+          <p className="text-sm text-gray-500 mt-0.5">
+            Official clinic medical certificate issuance and archives
           </p>
         </div>
 
-        {/* Tab switcher matching Dashboard pill buttons */}
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-          <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        {/* Tab switcher and actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto hide-scrollbar">
             <button
               onClick={() => setActiveTab('template')}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer
-                ${activeTab === 'template' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-              style={{ background: activeTab === 'template' ? PRIMARY : 'transparent' }}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               <FileText size={15} />
               <span>Official Template</span>
@@ -871,13 +818,13 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 syncToArchives();
                 setActiveTab('archives');
               }}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer
-                ${activeTab === 'archives' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-              style={{ background: activeTab === 'archives' ? PRIMARY : 'transparent' }}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'archives' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               <BookmarkCheck size={15} />
               <span>Archives</span>
-              <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${activeTab === 'archives' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-semibold ${activeTab === 'archives' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-600'}`}>
                 {medicalCerts.length}
               </span>
             </button>
@@ -886,7 +833,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           <button
             onClick={handleCreateNew}
             title="Clear and create a new blank certificate"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-sm hover:opacity-90 transition-all cursor-pointer w-full sm:w-auto"
             style={{ background: PRIMARY }}
           >
             <Plus size={16} />
@@ -895,72 +842,41 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         </div>
       </div>
 
-      {/* 2. Stat Cards Row (Exact Dashboard Tokens) */}
-      <div className="no-print grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        {medCertStats.map((card, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-xl p-4 flex flex-col gap-2 transition-all hover:shadow-lg hover:-translate-y-1"
-            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors" style={{ background: `${card.color}15`, color: card.color }}>
-                {card.icon}
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: card.color }}>{card.value}</div>
-            <div className="mt-auto">
-              <div className="text-xs font-bold text-gray-700 uppercase tracking-wide">{card.label}</div>
-              <div className="text-[11px] text-gray-400 font-medium mt-0.5">{card.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* ========================================================================================= */}
       {/* VIEW 1: OFFICIAL INTERACTIVE MEDICAL CERTIFICATE (EXACT PDF REPLICA) */}
       {/* ========================================================================================= */}
       {activeTab === 'template' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           {/* Patient Context & Issuance Status Bar */}
-          <div
-            className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
-            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
-          >
+          <div className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm shadow-xs ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-[#1E5AA8] border border-blue-200'}`}>
-                {isCertIssued ? <CheckCircle2 size={22} className="text-emerald-600" /> : <UserCheck size={22} className="text-[#1E5AA8]" />}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-[#1E5AA8] border border-blue-200'}`}>
+                {isCertIssued ? <CheckCircle2 size={20} className="text-emerald-600" /> : <UserCheck size={20} className="text-[#1E5AA8]" />}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Patient:</span>
-                  <span className="text-sm font-extrabold text-gray-900 uppercase">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient:</span>
+                  <span className="text-sm font-bold text-gray-900 uppercase">
                     {patientName || 'No patient selected'}
                   </span>
-                  {age && <span className="text-xs text-gray-500 font-semibold">({age} y/o, {sex})</span>}
+                  {age && <span className="text-xs text-gray-500 font-medium">({age} y/o, {sex})</span>}
                 </div>
-                <div className="text-xs text-gray-500 font-medium mt-0.5">
+                <div className="text-xs text-gray-500 mt-0.5">
                   {courseAndSchool || 'University of the Assumption Clinic'}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5 self-end md:self-auto flex-wrap">
-              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                <span className={`w-2 h-2 rounded-full ${isCertIssued ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                <span className={`w-2 h-2 rounded-full ${isCertIssued ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                 {isCertIssued ? `Issued & Recorded (${selectedCertId})` : 'Draft · Ready to Issue'}
-              </span>
-              <span className="hidden lg:inline text-[11px] text-gray-400 font-medium">
-                ⚡ Auto-updates Reports & Patient Mobile App
               </span>
             </div>
           </div>
 
           {/* Action & Configuration Toolbar */}
-          <div
-            className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-xl"
-            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
-          >
+          <div className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
             {/* Left side actions */}
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               {/* Quick Load Patient Dropdown */}
@@ -971,7 +887,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="w-full sm:w-56 appearance-none bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all cursor-pointer"
+                  className="w-full sm:w-56 appearance-none bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all cursor-pointer"
                 >
                   <option value="">Quick load patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
@@ -983,14 +899,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
               <button
                 onClick={() => setShowIssueCertModal(true)}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
               >
                 <Edit2 size={14} /> Fill via Form
               </button>
 
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
                 title="Toggle visual highlights on editable words"
               >
                 {editMode ? <Edit size={14} /> : <Eye size={14} />}
@@ -1003,25 +919,25 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <button
                 onClick={handleSaveCertificate}
                 title="Save draft to archives without issuing or downloading"
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 font-bold text-xs transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
               >
-                <BookmarkCheck size={15} className="text-gray-500" /> Save Draft
+                <BookmarkCheck size={14} className="text-gray-500" /> Save Draft
               </button>
 
               <button
                 onClick={handlePrint}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 font-bold text-xs transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
               >
-                <Printer size={15} /> Print
+                <Printer size={14} /> Print
               </button>
 
               {isCertIssued && (
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isDownloading}
-                  className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-70 font-bold text-xs transition-all cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-70 text-xs font-medium transition-all cursor-pointer"
                 >
-                  <Download size={15} className={isDownloading ? 'animate-bounce' : ''} />
+                  <Download size={14} className={isDownloading ? 'animate-bounce' : ''} />
                   <span>{isDownloading ? 'Downloading...' : 'Re-download PDF'}</span>
                 </button>
               )}
@@ -1030,10 +946,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <button
                 onClick={() => handleIssueCertificate({ downloadPdf: true })}
                 disabled={isIssuing || isDownloading}
-                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all shadow-sm disabled:opacity-50 cursor-pointer"
               >
-                <CheckCircle2 size={16} className="text-white" />
-                <span>{isIssuing ? 'Issuing...' : isDownloading ? 'Downloading PDF...' : 'ISSUE CERTIFICATE'}</span>
+                <CheckCircle2 size={15} className="text-white" />
+                <span>{isIssuing ? 'Issuing...' : isDownloading ? 'Downloading PDF...' : 'Issue Certificate'}</span>
               </button>
             </div>
           </div>
@@ -1041,7 +957,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* ===================================================================================== */}
           {/* THE OFFICIAL DOCUMENT SHEET (Exact Letter Paper Dimensions, Fonts, & Watermark) */}
           {/* ===================================================================================== */}
-          <div className="bg-slate-100/70 p-4 sm:p-8 rounded-2xl border border-slate-200/80 overflow-x-auto flex justify-center shadow-inner hide-scrollbar">
+          <div className="bg-gray-100/70 p-4 sm:p-8 rounded-xl border border-gray-200 overflow-x-auto flex justify-center hide-scrollbar">
             <div
               id="official-med-cert-page"
               className="font-official relative bg-white border border-gray-300 shadow-2xl mx-auto text-black text-[15.5px] font-bold leading-relaxed overflow-hidden box-border"
@@ -1262,18 +1178,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* VIEW 2: CERTIFICATE ARCHIVES & CLINIC RECORDS */}
       {/* ========================================================================================= */}
       {activeTab === 'archives' && (
-        <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
           {/* Filters Bar */}
-          <div
-            className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between"
-            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
-          >
+          <div className="no-print bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
-                <BookmarkCheck size={20} className="text-[#1E5AA8]" />
+                <BookmarkCheck size={18} className="text-[#1E5AA8]" />
                 Clinic Certificate Records
               </h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Search, filter, print, and re-download previously issued certificates
               </p>
             </div>
@@ -1287,7 +1200,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <select
                   value={selectedPatientFilter}
                   onChange={e => setSelectedPatientFilter(e.target.value)}
-                  className="w-full sm:w-48 appearance-none bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all cursor-pointer"
+                  className="w-full sm:w-48 appearance-none bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all cursor-pointer"
                 >
                   <option value="">All Patients</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
@@ -1307,7 +1220,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   placeholder="Filter date..."
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="w-full sm:w-36 bg-gray-50/80 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8] transition-all"
+                  className="w-full sm:w-36 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 />
                 {dateFilter && (
                   <button onClick={() => setDateFilter('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer">
@@ -1318,7 +1231,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
               <button
                 onClick={handleCreateNew}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-all cursor-pointer"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-sm hover:opacity-90 transition-all cursor-pointer"
                 style={{ background: PRIMARY }}
               >
                 <Plus size={16} />
@@ -1330,12 +1243,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           {/* Certificates Grid/List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredCerts.length === 0 ? (
-              <div
-                className="col-span-full bg-white rounded-xl p-16 text-center text-gray-400 font-medium"
-                style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
-              >
-                <FileText size={42} className="mx-auto mb-3 text-gray-300" />
-                <p className="text-base font-bold text-gray-600">No medical certificates found</p>
+              <div className="col-span-full bg-white rounded-xl p-16 text-center text-gray-400 font-medium border border-gray-100 shadow-sm">
+                <FileText size={40} className="mx-auto mb-3 text-gray-300" />
+                <p className="text-base font-bold text-gray-700">No medical certificates found</p>
                 <p className="text-xs text-gray-400 mt-1">Try resetting your search filter or issue a new clinic certificate.</p>
               </div>
             ) : (
@@ -1345,8 +1255,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   <div
                     key={cert.id}
                     onClick={() => handleSelectCert(cert)}
-                    className="bg-white rounded-xl p-4 sm:p-5 flex flex-col justify-between group transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
-                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+                    className="bg-white rounded-xl p-4 sm:p-5 flex flex-col justify-between group border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
@@ -1355,52 +1264,52 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             <FileText size={18} />
                           </div>
                           <div>
-                            <div className="text-sm sm:text-base font-extrabold text-gray-900 leading-tight uppercase">
+                            <div className="text-sm font-bold text-gray-900 leading-tight uppercase">
                               {cert.patientName || pt?.name || 'Clinic Patient'}
                             </div>
-                            <div className="text-xs font-semibold text-gray-400 mt-0.5">
-                              ID: {cert.id} • Issued: {cert.date}
+                            <div className="text-xs text-gray-400 mt-0.5">
+                              ID: {cert.id} • {cert.date}
                             </div>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
-                          <CheckCircle2 size={10} className="text-emerald-600" /> Issued
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
+                          <CheckCircle2 size={12} className="text-emerald-600" /> Issued
                         </span>
                       </div>
 
-                      <div className="space-y-2 py-3 border-t border-b border-gray-100 my-2 text-xs">
+                      <div className="space-y-1.5 py-2.5 border-t border-b border-gray-100 my-2 text-xs">
                         {cert.diagnosis && (
                           <div className="text-gray-700">
-                            <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Diagnosis:</span>{' '}
-                            <strong className="text-gray-900">{cert.diagnosis}</strong>
+                            <span className="font-medium text-gray-400 uppercase tracking-wider text-[10px]">Diagnosis:</span>{' '}
+                            <span className="font-semibold text-gray-900">{cert.diagnosis}</span>
                           </div>
                         )}
                         {cert.purpose && (
                           <div className="text-gray-600 truncate">
-                            <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Purpose:</span>{' '}
+                            <span className="font-medium text-gray-400 uppercase tracking-wider text-[10px]">Purpose:</span>{' '}
                             <span>{cert.purpose}</span>
                           </div>
                         )}
                         {cert.doctor && (
                           <div className="text-gray-500 text-[11px]">
-                            Signed by: <strong className="text-gray-800">{cert.doctor}</strong>
+                            Signed by: <span className="font-medium text-gray-800">{cert.doctor}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 mt-1">
-                      <span className="text-[11px] font-extrabold text-[#1E5AA8] group-hover:underline flex items-center gap-1">
-                        Open in Official Template &rarr;
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs font-semibold text-[#1E5AA8] group-hover:underline flex items-center gap-1">
+                        Open in Template &rarr;
                       </span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={e => {
                             e.stopPropagation();
                             handleSelectCert(cert);
                             setTimeout(() => handleDownloadPDF(), 200);
                           }}
-                          className="p-2 rounded-xl hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
                           title="Download as PDF"
                         >
                           <Download size={15} />
@@ -1411,7 +1320,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                             handleSelectCert(cert);
                             setTimeout(() => handlePrint(), 200);
                           }}
-                          className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-[#1E5AA8] transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-[#1E5AA8] transition-colors cursor-pointer"
                           title="Print Certificate"
                         >
                           <Printer size={15} />
@@ -1428,20 +1337,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       {/* Issue Certificate Modal */}
       {showIssueCertModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 border border-gray-200 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-xl p-6 border border-gray-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-5">
               <div>
-                <h3 className="text-base font-extrabold text-gray-900">Issue Medical Certificate</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Fill in the details — the template will reflect them automatically.</p>
+                <h3 className="text-lg font-bold text-gray-900">Issue Medical Certificate</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Fill in the details — the template will reflect them automatically.</p>
               </div>
-              <button onClick={() => setShowIssueCertModal(false)} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors"><X size={18} /></button>
+              <button onClick={() => setShowIssueCertModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"><X size={18} /></button>
             </div>
 
             <div className="space-y-4 text-xs">
               {/* Select Patient */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Select Patient</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Select Patient</label>
                 <select
                   value={issueCertForm.patientId}
                   onChange={e => {
@@ -1456,7 +1365,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                       courseOrDepartment: p?.course || p?.department || p?.position || f.courseOrDepartment,
                     }));
                   }}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 >
                   <option value="">Select patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
@@ -1465,47 +1374,47 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
               {/* Date */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
                 <input
                   type="text"
                   placeholder="e.g., August 8, 2026"
                   value={issueCertForm.date}
                   onChange={e => setIssueCertForm(f => ({ ...f, date: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 />
               </div>
 
               {/* Name */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Name <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Name <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   placeholder="Full name of patient"
                   value={issueCertForm.name}
                   onChange={e => setIssueCertForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 />
               </div>
 
               {/* Age & Gender */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Age</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Age</label>
                   <input
                     type="number"
                     min={1}
                     placeholder="e.g., 21"
                     value={issueCertForm.age}
                     onChange={e => setIssueCertForm(f => ({ ...f, age: e.target.value }))}
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Gender</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Gender</label>
                   <select
                     value={issueCertForm.gender}
                     onChange={e => setIssueCertForm(f => ({ ...f, gender: e.target.value }))}
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                   >
                     <option value="FEMALE">Female</option>
                     <option value="MALE">Male</option>
@@ -1516,78 +1425,78 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               {/* Year Level & Course/Department */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Year Level</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Year Level</label>
                   <input
                     type="text"
                     placeholder="e.g., 3 (leave blank if N/A)"
                     value={issueCertForm.yearLevel}
                     onChange={e => setIssueCertForm(f => ({ ...f, yearLevel: e.target.value }))}
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Course / Department</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Course / Department</label>
                   <input
                     type="text"
                     placeholder="e.g., BS Nursing / HR Dept"
                     value={issueCertForm.courseOrDepartment}
                     onChange={e => setIssueCertForm(f => ({ ...f, courseOrDepartment: e.target.value }))}
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                   />
                 </div>
               </div>
 
               {/* Examination Reason / Complaint */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Examination Reason / Complaint <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Examination Reason / Complaint <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   placeholder="e.g., fever and body pain"
                   value={issueCertForm.complaint}
                   onChange={e => setIssueCertForm(f => ({ ...f, complaint: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 />
               </div>
 
               {/* Diagnosis */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Diagnosis <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Diagnosis <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   placeholder="e.g., Acute Viral Pharyngitis"
                   value={issueCertForm.diagnosis}
                   onChange={e => setIssueCertForm(f => ({ ...f, diagnosis: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all"
                 />
               </div>
 
               {/* Treatment */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Treatment</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Treatment</label>
                 <textarea
                   rows={3}
                   placeholder="e.g., Paracetamol 500mg every 6 hours for 3 days."
                   value={issueCertForm.treatment}
                   onChange={e => setIssueCertForm(f => ({ ...f, treatment: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] resize-none"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all resize-none"
                 />
               </div>
 
               {/* Recommendations */}
               <div>
-                <label className="block font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">Recommendations</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Recommendations</label>
                 <textarea
                   rows={3}
                   placeholder="e.g., Rest for 2-3 days. May return to school upon full recovery."
                   value={issueCertForm.recommendations}
                   onChange={e => setIssueCertForm(f => ({ ...f, recommendations: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] resize-none"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all resize-none"
                 />
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-100">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 font-bold select-none">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 font-medium select-none">
                 <input
                   type="checkbox"
                   checked={autoDownloadOnFormIssue}
@@ -1597,21 +1506,22 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <span>Auto-download official PDF upon issuing</span>
               </label>
 
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setShowIssueCertModal(false)}
-                  className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
                 >
-                  CANCEL
+                  Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleIssueCertSubmit}
                   disabled={!issueCertForm.name || !issueCertForm.date || !issueCertForm.complaint || !issueCertForm.diagnosis}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer hover:opacity-90"
+                  style={{ background: PRIMARY }}
                 >
-                  <CheckCircle2 size={16} /> ISSUE & GENERATE
+                  <CheckCircle2 size={16} /> Issue & Generate
                 </button>
               </div>
             </div>
@@ -1623,69 +1533,69 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* MODAL: ISSUE SUCCESS & MULTI-CHANNEL CONFIRMATION */}
       {/* ===================================================================================== */}
       {showIssueSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-100 animate-in zoom-in-95 duration-200 relative">
             <button
               onClick={() => setShowIssueSuccessModal(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
-            <div className="flex items-center gap-3.5 mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs shrink-0">
-                <CheckCircle2 size={26} />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                <CheckCircle2 size={22} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-gray-900">Medical Certificate Issued!</h3>
-                <p className="text-xs text-gray-500 font-semibold">Official Clinic Document recorded and distributed</p>
+                <h3 className="text-lg font-bold text-gray-900">Medical Certificate Issued!</h3>
+                <p className="text-xs text-gray-500">Official Clinic Document recorded and distributed</p>
               </div>
             </div>
 
             {/* Issued Summary Box */}
-            <div className="bg-gradient-to-br from-blue-50/70 to-sky-50/70 rounded-2xl p-4 border border-blue-100 mb-5 space-y-2 text-xs">
+            <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100 mb-4 space-y-2 text-xs">
               <div className="flex justify-between items-center pb-2 border-b border-blue-200/50">
-                <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Certificate No.</span>
-                <span className="font-mono font-black text-[#1E5AA8] text-sm">{issuedSummary?.id || selectedCertId}</span>
+                <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Certificate No.</span>
+                <span className="font-mono font-bold text-[#1E5AA8] text-sm">{issuedSummary?.id || selectedCertId}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Patient:</span>
-                <span className="font-extrabold text-gray-900 uppercase">{issuedSummary?.patientName || patientName}</span>
+                <span className="font-bold text-gray-900 uppercase">{issuedSummary?.patientName || patientName}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Date Issued:</span>
-                <span className="font-bold text-gray-800">{issuedSummary?.date || date}</span>
+                <span className="font-medium text-gray-800">{issuedSummary?.date || date}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Diagnosis:</span>
-                <span className="font-bold text-gray-800 truncate max-w-[200px]">{issuedSummary?.diagnosis || diagnosis}</span>
+                <span className="font-medium text-gray-800 truncate max-w-[200px]">{issuedSummary?.diagnosis || diagnosis}</span>
               </div>
             </div>
 
             {/* Verification checklist badges */}
-            <div className="space-y-2.5 mb-6">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center shrink-0">📊</span>
+            <div className="space-y-2 mb-5">
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
+                <span className="w-7 h-7 rounded-md bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">📊</span>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-800">Recorded in Clinic Reports</div>
+                  <div className="font-semibold text-gray-800">Recorded in Clinic Reports</div>
                   <div className="text-[10px] text-gray-500">Available under Reports &gt; Medical Certificate</div>
                 </div>
                 <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               </div>
 
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-black flex items-center justify-center shrink-0">📱</span>
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
+                <span className="w-7 h-7 rounded-md bg-sky-100 text-sky-700 font-bold flex items-center justify-center shrink-0 text-xs">📱</span>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-800">Synced to Patient Mobile App</div>
+                  <div className="font-semibold text-gray-800">Synced to Patient Mobile App</div>
                   <div className="text-[10px] text-gray-500">Visible under My Documents &gt; Certificates tab</div>
                 </div>
                 <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               </div>
 
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center shrink-0">📥</span>
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
+                <span className="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center shrink-0 text-xs">📥</span>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-800">Downloaded Official PDF</div>
+                  <div className="font-semibold text-gray-800">Downloaded Official PDF</div>
                   <div className="text-[10px] text-gray-500">Official letterhead PDF saved to your downloads</div>
                 </div>
                 <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
@@ -1699,7 +1609,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   setShowIssueSuccessModal(false);
                   handlePrint();
                 }}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer size={14} /> Print Copy
               </button>
@@ -1708,13 +1618,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   setShowIssueSuccessModal(false);
                   setActiveTab('archives');
                 }}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-[#1E5AA8] text-xs font-bold transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[#1E5AA8] text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <BookmarkCheck size={14} /> Archives
               </button>
               <button
                 onClick={() => setShowIssueSuccessModal(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#1E5AA8] hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm"
+                className="px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer hover:opacity-90"
+                style={{ background: PRIMARY }}
               >
                 Done
               </button>
