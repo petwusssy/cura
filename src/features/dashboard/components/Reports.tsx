@@ -263,7 +263,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear));
 
   const acceptedAppointments = appRequests.filter(req => {
-    const isAccepted = req.status === 'Approved' || req.status === 'Completed';
+    const isAccepted = req.status === 'Approved' || req.status === 'Completed' || req.status === 'Rejected';
     if (!isAccepted) return false;
     const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
     return matchesFilter(dateStr, filter, customFrom, customTo, selectedMonthYear);
@@ -1522,7 +1522,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </thead>
                   <tbody>
                     {acceptedAppointments.length === 0 ? (
-                      <tr><td colSpan={7} className="text-center py-8 text-gray-400">No accepted appointment records found for this period</td></tr>
+                      <tr><td colSpan={7} className="text-center py-8 text-gray-400">No appointment records found for this period</td></tr>
                     ) : (
                       acceptedAppointments.map((req, idx) => {
                         const p = getPatient(req.patient);
@@ -1537,7 +1537,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                             <td className="border border-gray-200 px-3 py-2 text-gray-700">{req.reason}</td>
                             <td className="border border-gray-200 px-3 py-2 text-center font-medium text-gray-700">{req.scheduled_date || req.preferred_date} {req.scheduled_time || req.preferred_time}</td>
                             <td className="border border-gray-200 px-3 py-2 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${req.status === 'Completed' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${req.status === 'Completed' ? 'bg-blue-100 text-blue-800' : req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                                 {req.status}
                               </span>
                             </td>
