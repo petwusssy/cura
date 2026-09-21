@@ -17,38 +17,75 @@ interface MedicalCertificatesProps {
   searchQuery: string;
 }
 
-// High-fidelity Bagong Pilipinas Emblem rendering exact official graphic logo
+// Standard professional filename format: LAST NAME - NAME - DATE - MEDCERT.pdf
+export function formatMedCertFilename(rawName?: string, rawDate?: string): string {
+  const name = (rawName || 'PATIENT').trim();
+  let lastName = '';
+  let firstName = '';
+
+  if (name.includes(',')) {
+    const parts = name.split(',');
+    lastName = parts[0].trim();
+    firstName = parts.slice(1).join(' ').trim();
+  } else {
+    const tokens = name.split(/\s+/);
+    if (tokens.length <= 1) {
+      lastName = tokens[0] || 'PATIENT';
+      firstName = '';
+    } else {
+      const compoundPrefixes = ['DE LA', 'DE LOS', 'DELA', 'DELOS', 'SAN', 'DE', 'DEL', 'STA', 'SANTA'];
+      let foundCompound = false;
+      for (let i = tokens.length - 2; i >= 1; i--) {
+        const prefixTwo = tokens.slice(i, -1).join(' ').toUpperCase();
+        if (compoundPrefixes.includes(prefixTwo)) {
+          lastName = tokens.slice(i).join(' ');
+          firstName = tokens.slice(0, i).join(' ');
+          foundCompound = true;
+          break;
+        }
+      }
+      if (!foundCompound) {
+        lastName = tokens[tokens.length - 1];
+        firstName = tokens.slice(0, -1).join(' ');
+      }
+    }
+  }
+
+  // Format date YYYY-MM-DD
+  let dateStr = (rawDate || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      dateStr = parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    } else {
+      dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    }
+  }
+
+  // Clean characters illegal in filenames
+  const cleanLast = lastName.toUpperCase().replace(/[\\/:*?"<>|]/g, '').trim() || 'PATIENT';
+  const cleanFirst = firstName.toUpperCase().replace(/[\\/:*?"<>|]/g, '').trim();
+
+  const namePart = cleanFirst ? `${cleanLast} - ${cleanFirst}` : cleanLast;
+  return `${namePart} - ${dateStr} - MEDCERT.pdf`;
+}
+
+// High-fidelity Bagong Pilipinas Emblem rendering with pure solid hex colors (100% html2canvas compatible)
 function BagongPilipinasLogo() {
   return (
     <div className="flex flex-col items-center justify-center select-none w-32 flex-shrink-0">
       <div className="flex flex-col items-center justify-center w-full">
         <div className="relative w-[76px] h-[76px] mb-0.5">
           <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <defs>
-              <linearGradient id="redRibbon" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#8A0000" />
-                <stop offset="50%" stopColor="#D21034" />
-                <stop offset="100%" stopColor="#FF2341" />
-              </linearGradient>
-              <linearGradient id="blueRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00186B" />
-                <stop offset="50%" stopColor="#0038A8" />
-                <stop offset="100%" stopColor="#1C65DB" />
-              </linearGradient>
-              <linearGradient id="sunGold" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#FFF200" />
-                <stop offset="100%" stopColor="#F5B300" />
-              </linearGradient>
-            </defs>
-            <path d="M50 6 L52.5 11.5 L58 11.5 L53.5 15 L55 20 L50 17 L45 20 L46.5 15 L42 11.5 L47.5 11.5 Z" fill="url(#sunGold)"/>
-            <path d="M30 14 L32 18 L37 18 L33 21 L35 25 L30 22 L25 25 L27 21 L23 18 L28 18 Z" fill="url(#sunGold)"/>
-            <path d="M70 14 L72 18 L77 18 L73 21 L75 25 L70 22 L65 25 L67 21 L63 18 L68 18 Z" fill="url(#sunGold)"/>
-            <path d="M50 22 L55 33 L66 28 L60 39 L72 41 L63 49 L72 59 L50 59 L28 59 L37 49 L28 41 L40 39 L34 28 L45 33 Z" fill="url(#sunGold)"/>
-            <circle cx="50" cy="51" r="16" fill="url(#sunGold)"/>
-            <path d="M12 44 C12 68 28 88 50 92 C36 84 26 68 26 50 C26 48 26 45 12 44 Z" fill="url(#blueRibbon)"/>
-            <path d="M88 44 C88 68 72 88 50 92 C64 84 74 68 74 50 C74 48 74 45 88 44 Z" fill="url(#redRibbon)"/>
-            <path d="M16 56 C24 78 54 94 84 62 C68 84 38 82 18 64 C16 62 16 58 16 56 Z" fill="url(#redRibbon)"/>
-            <path d="M84 56 C76 78 46 94 16 62 C32 84 62 82 82 64 C84 62 84 58 84 56 Z" fill="url(#blueRibbon)"/>
+            <path d="M50 6 L52.5 11.5 L58 11.5 L53.5 15 L55 20 L50 17 L45 20 L46.5 15 L42 11.5 L47.5 11.5 Z" fill="#F5B300"/>
+            <path d="M30 14 L32 18 L37 18 L33 21 L35 25 L30 22 L25 25 L27 21 L23 18 L28 18 Z" fill="#F5B300"/>
+            <path d="M70 14 L72 18 L77 18 L73 21 L75 25 L70 22 L65 25 L67 21 L63 18 L68 18 Z" fill="#F5B300"/>
+            <path d="M50 22 L55 33 L66 28 L60 39 L72 41 L63 49 L72 59 L50 59 L28 59 L37 49 L28 41 L40 39 L34 28 L45 33 Z" fill="#F5B300"/>
+            <circle cx="50" cy="51" r="16" fill="#F5B300"/>
+            <path d="M12 44 C12 68 28 88 50 92 C36 84 26 68 26 50 C26 48 26 45 12 44 Z" fill="#0038A8"/>
+            <path d="M88 44 C88 68 72 88 50 92 C64 84 74 68 74 50 C74 48 74 45 88 44 Z" fill="#D21034"/>
+            <path d="M16 56 C24 78 54 94 84 62 C68 84 38 82 18 64 C16 62 16 58 16 56 Z" fill="#D21034"/>
+            <path d="M84 56 C76 78 46 94 16 62 C32 84 62 82 82 64 C84 62 84 58 84 56 Z" fill="#0038A8"/>
           </svg>
         </div>
         <span className="text-[11px] font-black text-[#002060] uppercase tracking-tight leading-none font-sans italic mt-1 text-center select-all">
@@ -508,7 +545,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   };
 
   // AUTOMATIC DIRECT PDF DOWNLOAD
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (override?: { patientName?: string; date?: string }) => {
     if (isDownloading) return;
     setIsDownloading(true);
     triggerToast('Generating official PDF... Please wait!');
@@ -520,14 +557,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       // Ensure we are viewing the template tab
       if (activeTab !== 'template') {
         setActiveTab('template');
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise(r => setTimeout(r, 200));
       }
 
       // Temporarily switch to read-only clean presentation (inputs become clean text spans)
       setEditMode(false);
-      await new Promise(r => setTimeout(r, 120));
+      await new Promise(r => setTimeout(r, 150));
 
-      let element = document.getElementById('official-med-cert-page');
+      const element = document.getElementById('official-med-cert-page');
       if (!element) {
         setEditMode(true);
         setIsDownloading(false);
@@ -535,13 +572,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         return;
       }
 
-      const cleanName = (patientName || 'Patient').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `Medical_Certificate_${cleanName}_${Date.now().toString().slice(-4)}.pdf`;
+      const targetPatientName = override?.patientName || issuedSummary?.patientName || patientName || 'PATIENT';
+      const targetDate = override?.date || issuedSummary?.date || date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+      const filename = formatMedCertFilename(targetPatientName, targetDate);
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         scrollX: 0,
@@ -564,17 +602,24 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       console.error('PDF Generation Error:', err);
       setEditMode(true);
       setIsDownloading(false);
-      triggerToast('⚠️ Download PDF note: Please use Print -> Save as PDF.');
+      triggerToast('⚠️ Error generating PDF. Please try again.');
     }
   };
 
-  const handlePrint = async () => {
+  const handlePrint = async (override?: { patientName?: string; date?: string }) => {
     syncToArchives().catch(e => console.error('Archive sync:', e));
     setEditMode(false);
     triggerToast('Opening print document view. Automatically recorded to archives!');
 
+    const targetPatientName = override?.patientName || issuedSummary?.patientName || patientName || 'PATIENT';
+    const targetDate = override?.date || issuedSummary?.date || date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    const docTitle = formatMedCertFilename(targetPatientName, targetDate).replace(/\.pdf$/i, '');
+    const oldTitle = document.title;
+    document.title = docTitle;
+
     const onAfterPrint = () => {
       setEditMode(true);
+      document.title = oldTitle;
       window.removeEventListener('afterprint', onAfterPrint);
     };
     window.addEventListener('afterprint', onAfterPrint);
@@ -815,7 +860,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <img
                 src={uaLogoBase64}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[680px] h-[680px] object-contain opacity-25 grayscale"
+                className="watermark-seal w-[680px] h-[680px] object-contain select-none pointer-events-none"
+                style={{ opacity: 0.15 }}
               />
             </div>
 
@@ -1394,7 +1440,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* MODAL: ISSUE SUCCESS & MULTI-CHANNEL CONFIRMATION */}
       {/* ===================================================================================== */}
       {showIssueSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="no-print fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-100 animate-in zoom-in-95 duration-200 relative">
             <button
               onClick={() => setShowIssueSuccessModal(false)}
@@ -1467,18 +1513,27 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
               <button
                 onClick={() => {
-                  handleDownloadPDF();
+                  handleDownloadPDF({
+                    patientName: issuedSummary?.patientName || patientName,
+                    date: issuedSummary?.date || date,
+                  });
                 }}
-                className="px-3.5 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                disabled={isDownloading}
+                className="px-3.5 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                title="Download official PDF to your computer"
               >
-                <Download size={14} /> Download PDF
+                <Download size={14} className={isDownloading ? 'animate-bounce text-emerald-600' : ''} />
+                <span>{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
               </button>
               <button
                 onClick={() => {
-                  setShowIssueSuccessModal(false);
-                  handlePrint();
+                  handlePrint({
+                    patientName: issuedSummary?.patientName || patientName,
+                    date: issuedSummary?.date || date,
+                  });
                 }}
                 className="px-3.5 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Print certificate copy"
               >
                 <Printer size={14} /> Print Copy
               </button>
