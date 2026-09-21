@@ -766,28 +766,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               </button>
             </div>
 
-            {/* Right: Actions Hierarchy (Secondary Utilities + Single Hero Primary Button) */}
+            {/* Right: Actions Hierarchy */}
             <div className="flex items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 border-gray-100 pt-2 lg:pt-0">
-              {/* Secondary Export: Print */}
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium transition-all cursor-pointer"
-                title="Print official certificate"
-              >
-                <Printer size={14} className="text-gray-500" />
-                <span>Print</span>
-              </button>
-
-              {/* Secondary Export: Download PDF */}
-              <button
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 text-xs font-medium transition-all cursor-pointer"
-                title="Download official PDF"
-              >
-                <Download size={14} className={isDownloading ? 'animate-bounce text-emerald-600' : 'text-gray-500'} />
-                <span>{isDownloading ? 'Downloading...' : 'PDF'}</span>
-              </button>
 
               {/* Form Modal entry shortcut */}
               <button

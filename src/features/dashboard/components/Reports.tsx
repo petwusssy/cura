@@ -128,10 +128,7 @@ function normalizeDateStr(d?: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
   const parsed = new Date(trimmed);
   if (!isNaN(parsed.getTime())) {
-    const y = parsed.getFullYear();
-    const m = String(parsed.getMonth() + 1).padStart(2, '0');
-    const day = String(parsed.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   }
   return trimmed;
 }
@@ -1185,48 +1182,64 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           )}
 
           {/* ── 3. MEDICAL CERTIFICATES ISSUED (Kept untouched as original layout) ── */}
-          {activeReport === 'medcert' && (
-            <div>
-              <PrintBar title="MEDICAL CERTIFICATES ISSUED" />
-              <div className="overflow-x-auto custom-scrollbar p-4">
-                <table className="w-full border-collapse text-xs" style={{ minWidth: 700 }}>
-                  <thead>
-                    <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
-                      <th className="border border-blue-900 px-3 py-2 text-left">Cert ID</th>
-                      <th className="border border-blue-900 px-3 py-2 text-left">Patient Name</th>
-                      <th className="border border-blue-900 px-3 py-2 text-center">Category</th>
-                      <th className="border border-blue-900 px-3 py-2 text-left">Purpose / Remarks</th>
-                      <th className="border border-blue-900 px-3 py-2 text-left">Doctor</th>
-                      <th className="border border-blue-900 px-3 py-2 text-center">Date Issued</th>
-                      <th className="border border-blue-900 px-3 py-2 text-left">Issued By</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCerts.length === 0 ? (
-                      <tr><td colSpan={7} className="text-center py-8 text-gray-400">No medical certificates issued for this period</td></tr>
-                    ) : (
-                      filteredCerts.map((mc, idx) => {
-                        const p = getPatient(mc.patientId);
-                        return (
-                          <tr key={mc.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                            <td className="border border-gray-200 px-3 py-2 font-mono text-[#1B3A6B] font-bold">{mc.id}</td>
-                            <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{p?.name || mc.patientName || mc.patientId}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-center">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p?.category === 'Student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{p?.category || 'Student'}</span>
-                            </td>
-                            <td className="border border-gray-200 px-3 py-2 text-gray-700">{mc.purpose}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-gray-700">{mc.doctor}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-center font-medium text-gray-700">{mc.date}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-gray-600">{mc.issuedBy}</td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+          {activeReport === 'medcert' && (() => {
+            const sortedCerts = [...filteredCerts].sort((a, b) => {
+              const dateA = normalizeDateStr((a as any).createdAt || (a as any).created_at || a.date);
+              const dateB = normalizeDateStr((b as any).createdAt || (b as any).created_at || b.date);
+              if (dateA && dateB && dateA !== dateB) {
+                return dateB.localeCompare(dateA); // Latest date first
+              }
+              const timeA = new Date((a as any).createdAt || (a as any).created_at || a.date).getTime() || 0;
+              const timeB = new Date((b as any).createdAt || (b as any).created_at || b.date).getTime() || 0;
+              if (timeA !== timeB) return timeB - timeA;
+              return (b.id || '').localeCompare(a.id || '');
+            });
+
+            return (
+              <div>
+                <PrintBar title="MEDICAL CERTIFICATES ISSUED" />
+                <div className="overflow-x-auto custom-scrollbar p-4">
+                  <table className="w-full border-collapse text-xs" style={{ minWidth: 700 }}>
+                    <thead>
+                      <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
+                        <th className="border border-blue-900 px-3 py-2 text-left">Cert ID</th>
+                        <th className="border border-blue-900 px-3 py-2 text-left">Patient Name</th>
+                        <th className="border border-blue-900 px-3 py-2 text-center">Category</th>
+                        <th className="border border-blue-900 px-3 py-2 text-left">Purpose / Remarks</th>
+                        <th className="border border-blue-900 px-3 py-2 text-left">Doctor</th>
+                        <th className="border border-blue-900 px-3 py-2 text-center">Date Issued</th>
+                        <th className="border border-blue-900 px-3 py-2 text-left">Issued By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedCerts.length === 0 ? (
+                        <tr><td colSpan={7} className="text-center py-8 text-gray-400">No medical certificates issued for this period</td></tr>
+                      ) : (
+                        sortedCerts.map((mc, idx) => {
+                          const p = getPatient(mc.patientId);
+                          const rawDate = mc.date || (mc as any).createdAt || (mc as any).created_at;
+                          const displayDate = normalizeDateStr(rawDate) || rawDate;
+                          return (
+                            <tr key={mc.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
+                              <td className="border border-gray-200 px-3 py-2 font-mono text-[#1B3A6B] font-bold">{mc.id}</td>
+                              <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{p?.name || mc.patientName || mc.patientId}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p?.category === 'Student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{p?.category || 'Student'}</span>
+                              </td>
+                              <td className="border border-gray-200 px-3 py-2 text-gray-700">{mc.purpose}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-gray-700">{mc.doctor}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center font-medium text-gray-700">{displayDate}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-gray-600">{mc.issuedBy}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── 4. NON-CONSULTATION / OVER-THE-COUNTER REPORT (Kept untouched as original layout) ── */}
           {activeReport === 'nonconsult' && (
