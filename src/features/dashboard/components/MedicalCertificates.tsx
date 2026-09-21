@@ -579,7 +579,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
         scrollX: 0,
@@ -594,7 +594,23 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
       pdf.addImage(imgData, 'JPEG', 0, 0, 8.5, 11);
 
-      pdf.save(filename);
+      // Direct automatic download with fallback
+      try {
+        pdf.save(filename);
+      } catch (saveErr) {
+        console.warn('pdf.save fallback to Blob download:', saveErr);
+        const blob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
+      }
 
       setIsDownloading(false);
       triggerToast(`✅ Successfully downloaded ${filename}!`);
@@ -677,6 +693,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           }
           .no-print {
             display: none !important;
+          }
+          .watermark-seal {
+            filter: grayscale(100%) !important;
+            -webkit-filter: grayscale(100%) !important;
+            opacity: 0.22 !important;
           }
           input, textarea, select {
             background: transparent !important;
@@ -860,8 +881,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <img
                 src={uaLogoBase64}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[680px] h-[680px] object-contain select-none pointer-events-none"
-                style={{ opacity: 0.15 }}
+                className="watermark-seal w-[680px] h-[680px] object-contain opacity-25 grayscale select-none pointer-events-none"
+                style={{
+                  opacity: 0.22,
+                  filter: 'grayscale(100%)',
+                  WebkitFilter: 'grayscale(100%)',
+                }}
               />
             </div>
 
