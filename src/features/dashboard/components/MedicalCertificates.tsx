@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2 } from 'lucide-react';
 import { MedicalCertificate, Patient } from '../types';
-import uaSeal from '@/assets/images/ua-seal.png';
-import uaLogo from '@/assets/images/ua-logo.png';
+import { uaSealBase64, uaLogoBase64 } from '@/assets/images/medCertAssets';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -226,19 +225,27 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
     let pId = currentPatientId;
     if (!pId && patientName) {
-      const matched = patients.find(p => p.name.trim().toUpperCase() === patientName.trim().toUpperCase());
+      const cleanInput = patientName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const matched = patients.find(p => {
+        const cleanPName = (p.name || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return cleanPName === cleanInput || cleanPName.includes(cleanInput) || cleanInput.includes(cleanPName);
+      });
       if (matched) pId = matched.id;
     }
     if (!pId && selectedPatientId) {
       pId = selectedPatientId;
     }
-    if (!pId && patients.length > 0) {
-      pId = patients[0].id;
+    // Guarantee pId is a valid UUID for Django backend if possible
+    if (!pId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pId)) {
+      const validPatient = patients.find(p => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id));
+      if (validPatient) {
+        pId = validPatient.id;
+      }
     }
 
     const updatedCert: MedicalCertificate = {
       id: certIdToUse,
-      patientId: pId || 'STU-2024-001',
+      patientId: pId || (patients[0]?.id || 'STU-2024-001'),
       date: date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
       purpose: purpose || 'Medical Certificate issuance',
       diagnosis: diagnosis,
@@ -298,14 +305,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         doctor: doctor,
       });
 
+      setShowIssueSuccessModal(true);
+      triggerToast(`✅ Medical Certificate #${certId} successfully issued to ${patientName}!`);
+
       if (options.downloadPdf) {
         await handleDownloadPDF();
       } else if (options.printAfter) {
         handlePrint();
       }
-
-      setShowIssueSuccessModal(true);
-      triggerToast(`✅ Medical Certificate #${certId} successfully issued to ${patientName}!`);
     } catch (err) {
       console.error('Issue failed:', err);
       triggerToast('⚠️ Error issuing certificate. Please try again.');
@@ -509,137 +516,40 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     // Auto-save to archives in the background (non-blocking)
     syncToArchives().catch(e => console.error('Background archive sync error:', e));
 
-    let clone: HTMLElement | null = null;
-
     try {
-      // Ensure element is present in the DOM
-      let element = document.getElementById('official-med-cert-page');
-      if (!element) {
+      // Ensure we are viewing the template tab
+      if (activeTab !== 'template') {
         setActiveTab('template');
-        await new Promise(r => setTimeout(r, 300));
-        element = document.getElementById('official-med-cert-page');
+        await new Promise(r => setTimeout(r, 150));
       }
 
+      // Temporarily switch to read-only clean presentation (inputs become clean text spans)
+      setEditMode(false);
+      await new Promise(r => setTimeout(r, 120));
+
+      let element = document.getElementById('official-med-cert-page');
       if (!element) {
-        triggerToast('Error: Certificate document element not found.');
+        setEditMode(true);
         setIsDownloading(false);
+        triggerToast('Error: Certificate document element not found.');
         return;
       }
 
-      const filename = `Medical_Certificate_${(patientName || 'Patient').trim().replace(/\s+/g, '_')}_${Date.now().toString().slice(-4)}.pdf`;
+      const cleanName = (patientName || 'Patient').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `Medical_Certificate_${cleanName}_${Date.now().toString().slice(-4)}.pdf`;
 
-      // Helper: convert any image URL to base64 (prevents canvas CORS taint)
-      const toBase64 = async (imgUrl: string): Promise<string> => {
-        try {
-          const res = await fetch(imgUrl);
-          const blob = await res.blob();
-          return await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => resolve(imgUrl);
-            reader.readAsDataURL(blob);
-          });
-        } catch {
-          return imgUrl;
-        }
-      };
-
-      // Clone element
-      clone = element.cloneNode(true) as HTMLElement;
-
-      // Replace inputs with styled plain text spans (removes edit highlights, borders, & carets)
-      clone.querySelectorAll('input').forEach(inp => {
-        const span = document.createElement('span');
-        span.textContent = inp.value || inp.placeholder || '';
-        span.className = inp.className;
-        span.style.cssText = [
-          'background: transparent !important',
-          'border: none !important',
-          'outline: none !important',
-          'box-shadow: none !important',
-          'color: #000000 !important',
-          'font-family: inherit !important',
-          'font-weight: bold !important',
-          'display: inline !important',
-        ].join('; ');
-        inp.parentNode?.replaceChild(span, inp);
-      });
-
-      // Replace textareas with whitespace-pre-line divs
-      clone.querySelectorAll('textarea').forEach(txt => {
-        const div = document.createElement('div');
-        div.textContent = txt.value || txt.placeholder || '';
-        div.className = txt.className;
-        div.style.cssText = [
-          'background: transparent !important',
-          'border: none !important',
-          'outline: none !important',
-          'box-shadow: none !important',
-          'color: #000000 !important',
-          'font-family: inherit !important',
-          'font-weight: bold !important',
-          'white-space: pre-line !important',
-          'display: block !important',
-        ].join('; ');
-        txt.parentNode?.replaceChild(div, txt);
-      });
-
-      // Convert all images to base64
-      const cloneImgs = Array.from(clone.querySelectorAll('img'));
-      await Promise.all(
-        cloneImgs.map(async img => {
-          if (img.src && !img.src.startsWith('data:')) {
-            try {
-              img.src = await toBase64(img.src);
-            } catch { /* keep src */ }
-          }
-        })
-      );
-
-      // Mount the clone off-screen with explicit dimensions and visibility: visible
-      clone.style.cssText = [
-        'position: fixed',
-        'left: -9999px',
-        'top: 0',
-        'width: 8.5in',
-        'min-height: 11in',
-        'height: 11in',
-        'max-width: 8.5in',
-        'max-height: 11in',
-        'box-sizing: border-box',
-        'padding: 0.65in 0.75in',
-        'visibility: visible',
-        'opacity: 1',
-        'pointer-events: none',
-        'z-index: -9999',
-        'color: #000000',
-        'background-color: #ffffff',
-        'overflow: hidden',
-      ].join('; ');
-
-      document.body.appendChild(clone);
-
-      // Wait a tick for fonts/images to settle
-      await new Promise(r => setTimeout(r, 120));
-
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: (_clonedDoc, clonedEl) => {
-          clonedEl.style.backgroundColor = '#ffffff';
-          clonedEl.style.color = '#000000';
-          clonedEl.style.visibility = 'visible';
-        },
+        scrollX: 0,
+        scrollY: 0,
       });
 
-      // Remove the hidden clone immediately after capture
-      if (clone && document.body.contains(clone)) {
-        document.body.removeChild(clone);
-        clone = null;
-      }
+      // Restore edit mode immediately
+      setEditMode(true);
 
       // Build 1-page Letter PDF from canvas using jsPDF
       const pdf = new jsPDF({ unit: 'in', format: 'letter', orientation: 'portrait' });
@@ -652,11 +562,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       triggerToast(`✅ Successfully downloaded ${filename}!`);
     } catch (err: any) {
       console.error('PDF Generation Error:', err);
-      if (clone && document.body.contains(clone)) {
-        document.body.removeChild(clone);
-      }
+      setEditMode(true);
       setIsDownloading(false);
-      triggerToast('Failed to generate PDF. Please try again.');
+      triggerToast('⚠️ Download PDF note: Please use Print -> Save as PDF.');
     }
   };
 
@@ -925,7 +833,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             {/* Center Background Watermark (Larger UA seal matching Image 2) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
               <img
-                src={uaLogo}
+                src={uaLogoBase64}
                 alt="University Seal Watermark"
                 className="watermark-seal w-[680px] h-[680px] object-contain opacity-25 grayscale"
               />
@@ -939,7 +847,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <div className="flex items-center justify-between gap-3">
                   {/* Far Left: University of the Assumption Seal */}
                   <div className="w-28 flex-shrink-0 flex items-center justify-start">
-                    <img src={uaSeal} alt="UA Seal" className="w-[105px] h-[105px] object-contain" />
+                    <img src={uaSealBase64} alt="UA Seal" className="w-[105px] h-[105px] object-contain" />
                   </div>
 
                   {/* Center: University typography and PhilHealth YAKAP Logo banner */}

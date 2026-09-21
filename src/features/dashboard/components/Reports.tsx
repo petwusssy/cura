@@ -114,7 +114,7 @@ const MEDICINE_INVENTORY_TEMPLATE = [
   { no: 43, name: 'Ventolin nebules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' }
 ];
 
-type ReportFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
+type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'bed' | 'appointments' | 'telemedicine';
 
 const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
@@ -124,16 +124,22 @@ const YESTERDAY = yesterdayDate.toLocaleDateString('en-CA');
 
 function normalizeDateStr(d?: string): string {
   if (!d) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-  const parsed = new Date(d);
+  const trimmed = String(d).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const parsed = new Date(trimmed);
   if (!isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
-  return d;
+  return trimmed;
 }
 
-function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string): boolean {
+function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string, selectedMonthYear?: string): boolean {
+  if (filter === 'all') return true;
   const date = normalizeDateStr(rawDate);
+  if (!date) return true;
   if (filter === 'today') return date === TODAY;
   if (filter === 'yesterday') return date === YESTERDAY;
   if (filter === 'week') {
@@ -141,7 +147,10 @@ function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string
     const diff = (t.getTime() - d.getTime()) / 86400000;
     return diff >= 0 && diff < 7;
   }
-  if (filter === 'month') return date.slice(0, 7) === TODAY.slice(0, 7);
+  if (filter === 'month') {
+    if (selectedMonthYear && date.slice(0, 7) === selectedMonthYear) return true;
+    return date.slice(0, 7) === TODAY.slice(0, 7);
+  }
   if (filter === 'custom' && customFrom && customTo) return date >= customFrom && date <= customTo;
   return true;
 }
@@ -177,6 +186,10 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
 
 const filterLabel = (f: ReportFilter) => {
   const now = new Date();
+  
+  if (f === 'all') {
+    return 'All Records';
+  }
   
   if (f === 'today') {
     return `Today, ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
@@ -242,32 +255,33 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     if (telemedicineRequests) setTeleRequests(telemedicineRequests);
   }, [telemedicineRequests]);
 
-  const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
-  const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo));
+  const monthMap: Record<string, string> = {
+    'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
+    'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
+  };
+  const monthNum = monthMap[reportMonth] || '06';
+  const selectedMonthYear = `${reportYear}-${monthNum}`;
+
+  const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear));
+  const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear));
 
   const acceptedAppointments = appRequests.filter(req => {
     const isAccepted = req.status === 'Approved' || req.status === 'Completed';
     if (!isAccepted) return false;
     const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
-    return matchesFilter(dateStr, filter, customFrom, customTo);
+    return matchesFilter(dateStr, filter, customFrom, customTo, selectedMonthYear);
   });
 
   const acceptedTelemedicine = teleRequests.filter(req => {
     const isAccepted = req.status === 'Approved' || req.status === 'Completed';
     if (!isAccepted) return false;
     const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
-    return matchesFilter(dateStr, filter, customFrom, customTo);
+    return matchesFilter(dateStr, filter, customFrom, customTo, selectedMonthYear);
   });
   const days = getDaysInFilter(filter, customFrom, customTo);
 
   const getPatient = (id: string) => patients.find(p => p.id === id);
   const pat = (c: Consultation) => getPatient(c.patientId);
-
-  const monthMap: Record<string, string> = {
-    'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
-    'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
-  };
-  const monthNum = monthMap[reportMonth] || '06';
 
   const casesConsForMonth = consultations.filter(c => c.date.startsWith(`${reportYear}-${monthNum}`));
 
@@ -1028,11 +1042,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
             <div className="flex flex-col">
                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Date Range Filter</label>
                <div className="flex flex-wrap gap-1.5 bg-gray-100/80 border border-gray-200 rounded-lg p-1.5 w-full sm:w-auto shadow-sm">
-                 {(['today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
+                 {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
                    <button key={f} onClick={() => setFilter(f)}
                      className="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap min-w-[70px] text-center"
                      style={{ background: filter === f ? 'white' : 'transparent', color: filter === f ? PRIMARY : '#6b7280', boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                     {f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
+                     {f === 'all' ? 'All' : f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
                    </button>
                  ))}
                </div>

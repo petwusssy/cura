@@ -49,7 +49,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     } catch { return []; }
   });
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
-  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>([]);
+  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_medical_certs');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [beds, setBeds]                         = useState<Bed[]>([]);
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
   const [queues, setQueues]                     = useState<PatientQueue[]>([]);
@@ -89,7 +94,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }).catch(console.error);
     medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
     bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
-    certificateService.getCertificates().then(d => d !== undefined && setMedicalCerts(d)).catch(console.error);
+    certificateService.getCertificates().then(d => {
+      if (d !== undefined && d.length > 0) {
+        setMedicalCerts(prev => {
+          const map = new Map<string, MedicalCertificate>();
+          prev.forEach(c => map.set(c.id, c));
+          d.forEach(c => map.set(c.id, c));
+          const merged = Array.from(map.values());
+          try { localStorage.setItem('cura_medical_certs', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+      }
+    }).catch(console.error);
     queueService.getQueues().then(d => d !== undefined && setQueues(d)).catch(console.error);
 
     const fetchAndMergeNotifications = () => {
@@ -391,17 +407,29 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         patientName: cert.patientName || created.patientName,
         date: cert.date || created.date,
       };
-      setMedicalCerts(prev => [...prev.filter(c => c.id !== cert.id && c.id !== fullCreated.id), fullCreated]);
+      setMedicalCerts(prev => {
+        const next = [...prev.filter(c => c.id !== cert.id && c.id !== fullCreated.id), fullCreated];
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        return next;
+      });
       return fullCreated;
     } catch (e) {
       console.error('Error creating certificate:', e);
-      setMedicalCerts(prev => [...prev.filter(c => c.id !== cert.id), cert]);
+      setMedicalCerts(prev => {
+        const next = [...prev.filter(c => c.id !== cert.id), cert];
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        return next;
+      });
       return cert;
     }
   };
 
   const handleDeleteMedCert = async (id: string) => {
-    setMedicalCerts(prev => prev.filter(c => c.id !== id));
+    setMedicalCerts(prev => {
+      const next = prev.filter(c => c.id !== id);
+      try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+      return next;
+    });
     try {
       await certificateService.deleteCertificate(id);
     } catch (e) {
@@ -413,11 +441,19 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     try {
       const updated = await certificateService.updateCertificate(cert.id, cert);
       const fullUpdated = { ...cert, ...updated, patientId: updated.patientId || cert.patientId };
-      setMedicalCerts(prev => prev.map(c => c.id === fullUpdated.id ? fullUpdated : c));
+      setMedicalCerts(prev => {
+        const next = prev.map(c => c.id === fullUpdated.id ? fullUpdated : c);
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        return next;
+      });
       return fullUpdated;
     } catch (e) {
       console.error('Error updating certificate:', e);
-      setMedicalCerts(prev => prev.map(c => c.id === cert.id ? cert : c));
+      setMedicalCerts(prev => {
+        const next = prev.map(c => c.id === cert.id ? cert : c);
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        return next;
+      });
       return cert;
     }
   };
