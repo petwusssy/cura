@@ -84,16 +84,49 @@ const AutoResizeInput = ({ value, onChange, readOnly, placeholder = '', classNam
 function PhilHealthYakapBanner() {
   return (
     <div className="flex flex-col items-center justify-center my-0.5 select-none">
-      <div className="flex items-baseline justify-center gap-1.5 leading-none">
-        <span className="text-[#367BB8] font-black italic text-[24px] tracking-tight font-sans">
+      <div className="flex items-baseline justify-center gap-1.5 leading-none mb-0.5">
+        <span
+          className="font-black italic text-[25px] tracking-tight font-sans"
+          style={{
+            color: '#2B72BA',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
           PhilHealth
         </span>
-        <span className="text-[#FFB81C] font-black text-[24px] tracking-wider font-sans">
+        <span
+          className="font-black text-[25px] tracking-wider font-sans"
+          style={{
+            color: '#FFB81C',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
           YAKAP
         </span>
       </div>
-      <div className="bg-[#FFB81C] text-white text-[11px] font-black px-6 py-0.5 rounded-full uppercase tracking-widest mt-0.5 font-sans">
-        PARA MALAYO SA SAKIT
+      <div
+        className="rounded-full px-6 py-0.5 text-center flex items-center justify-center mt-0.5"
+        style={{
+          backgroundColor: '#FFB81C',
+          color: '#FFFFFF',
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact',
+          boxShadow: 'inset 0 0 0 1000px #FFB81C',
+          border: '1px solid #FFB81C',
+        }}
+      >
+        <span
+          className="text-white text-[11px] font-black uppercase tracking-widest font-sans"
+          style={{
+            color: '#FFFFFF',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
+          PARA MALAYO SA SAKIT
+        </span>
       </div>
     </div>
   );
@@ -451,7 +484,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const handleDownloadPDF = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
-    triggerToast('Generating PDF file... Please wait!');
+    triggerToast('Generating official PDF... Please wait!');
 
     // Auto-save to archives in the background (non-blocking)
     syncToArchives().catch(e => console.error('Background archive sync error:', e));
@@ -459,137 +492,106 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     let clone: HTMLElement | null = null;
 
     try {
-      const element = document.getElementById('official-med-cert-page');
+      // Ensure element is present in the DOM
+      let element = document.getElementById('official-med-cert-page');
       if (!element) {
-        triggerToast('Error: Document element not found.');
+        setActiveTab('template');
+        await new Promise(r => setTimeout(r, 300));
+        element = document.getElementById('official-med-cert-page');
+      }
+
+      if (!element) {
+        triggerToast('Error: Certificate document element not found.');
         setIsDownloading(false);
         return;
       }
 
-      const filename = `Medical_Certificate_${patientName.trim().replace(/\s+/g, '_') || 'Patient'}_${Date.now().toString().slice(-4)}.pdf`;
+      const filename = `Medical_Certificate_${(patientName || 'Patient').trim().replace(/\s+/g, '_')}_${Date.now().toString().slice(-4)}.pdf`;
 
-      // Helper: convert any URL to base64 via fetch (avoids canvas CORS taint)
-      const urlToBase64 = async (url: string): Promise<string> => {
+      // Helper: convert any image URL to base64 (prevents canvas CORS taint)
+      const toBase64 = async (imgUrl: string): Promise<string> => {
         try {
-          const res = await fetch(url);
+          const res = await fetch(imgUrl);
           const blob = await res.blob();
           return await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => resolve(url);
+            reader.onerror = () => resolve(imgUrl);
             reader.readAsDataURL(blob);
           });
         } catch {
-          return url;
+          return imgUrl;
         }
       };
 
-      // Helper: convert SVG element to a base64 PNG data URI
-      const svgToBase64 = (svgEl: SVGSVGElement, w: number, h: number): Promise<string> =>
-        new Promise(resolve => {
-          try {
-            const serialized = new XMLSerializer().serializeToString(svgEl);
-            const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serialized);
-            const img = new Image(w, h);
-            img.onload = () => {
-              const c = document.createElement('canvas');
-              c.width = w; c.height = h;
-              c.getContext('2d')!.drawImage(img, 0, 0, w, h);
-              resolve(c.toDataURL('image/png'));
-            };
-            img.onerror = () => resolve('');
-            img.src = dataUri;
-          } catch { resolve(''); }
-        });
+      // Clone element
+      clone = element.cloneNode(true) as HTMLElement;
 
-      // Helper: convert oklch() color value to a safe hex/rgb fallback.
-      // html2canvas (even standalone) can crash on oklch() computed colors.
-      const oklchToSafe = (val: string): string => {
-        if (!val || !val.includes('oklch')) return val;
-        const m = val.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+[\d.]+/);
-        if (!m) return '#000000';
-        const L = parseFloat(m[1]);
-        const C = parseFloat(m[2]);
-        if (C < 0.02) {
-          // Achromatic — just use lightness as gray
-          const g = Math.round(Math.min(1, Math.max(0, L)) * 255);
-          return `rgb(${g},${g},${g})`;
-        }
-        return '#1e293b'; // Safe chromatic fallback
-      };
+      // Replace inputs with styled plain text spans (removes edit highlights, borders, & carets)
+      clone.querySelectorAll('input').forEach(inp => {
+        const span = document.createElement('span');
+        span.textContent = inp.value || inp.placeholder || '';
+        span.className = inp.className;
+        span.style.cssText = [
+          'background: transparent !important',
+          'border: none !important',
+          'outline: none !important',
+          'box-shadow: none !important',
+          'color: #000000 !important',
+          'font-family: inherit !important',
+          'font-weight: bold !important',
+          'display: inline !important',
+        ].join('; ');
+        inp.parentNode?.replaceChild(span, inp);
+      });
 
-      // COLOR_PROPS that html2canvas reads — we must sanitise these in the onclone doc.
-      const COLOR_PROPS = [
-        'color', 'backgroundColor', 'borderColor', 'borderTopColor',
-        'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-        'outlineColor', 'textDecorationColor', 'caretColor',
-      ] as const;
+      // Replace textareas with whitespace-pre-line divs
+      clone.querySelectorAll('textarea').forEach(txt => {
+        const div = document.createElement('div');
+        div.textContent = txt.value || txt.placeholder || '';
+        div.className = txt.className;
+        div.style.cssText = [
+          'background: transparent !important',
+          'border: none !important',
+          'outline: none !important',
+          'box-shadow: none !important',
+          'color: #000000 !important',
+          'font-family: inherit !important',
+          'font-weight: bold !important',
+          'white-space: pre-line !important',
+          'display: block !important',
+        ].join('; ');
+        txt.parentNode?.replaceChild(div, txt);
+      });
 
-      // 1. Pre-render all SVGs from the LIVE element to base64 PNGs (needs live layout)
-      const liveSvgs = Array.from(element.querySelectorAll('svg')) as SVGSVGElement[];
-      const svgDataUrls: string[] = await Promise.all(
-        liveSvgs.map(svg => {
-          const rect = svg.getBoundingClientRect();
-          const w = Math.round(rect.width) || 100;
-          const h = Math.round(rect.height) || 100;
-          return svgToBase64(svg, w, h);
+      // Convert all images to base64
+      const cloneImgs = Array.from(clone.querySelectorAll('img'));
+      await Promise.all(
+        cloneImgs.map(async img => {
+          if (img.src && !img.src.startsWith('data:')) {
+            try {
+              img.src = await toBase64(img.src);
+            } catch { /* keep src */ }
+          }
         })
       );
 
-      // 2. Clone element (never mutate the live DOM)
-      clone = element.cloneNode(true) as HTMLElement;
-
-      // 3. Replace SVGs in clone with pre-rendered <img> tags
-      const cloneSvgs = Array.from(clone.querySelectorAll('svg')) as SVGSVGElement[];
-      cloneSvgs.forEach((svgEl, i) => {
-        const dataUrl = svgDataUrls[i];
-        if (!dataUrl) return;
-        const rect = liveSvgs[i].getBoundingClientRect();
-        const img = document.createElement('img');
-        img.src = dataUrl;
-        img.width = Math.round(rect.width) || 100;
-        img.height = Math.round(rect.height) || 100;
-        img.style.display = 'block';
-        svgEl.parentNode?.replaceChild(img, svgEl);
-      });
-
-      // 4. Convert all <img> src to base64 (prevent canvas CORS taint)
-      const cloneImgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
-      await Promise.all(cloneImgs.map(async img => {
-        if (img.src && !img.src.startsWith('data:')) {
-          img.src = await urlToBase64(img.src);
-        }
-      }));
-
-      // 5. Strip input/textarea styling for clean PDF render
-      clone.querySelectorAll('input, textarea').forEach(el => {
-        const e = el as HTMLElement;
-        e.style.background = 'transparent';
-        e.style.border = 'none';
-        e.style.outline = 'none';
-        e.style.boxShadow = 'none';
-        e.style.color = '#000000';
-      });
-
-      // 6. Mount the clone off-screen with position:fixed + visibility:hidden.
-      //    - position:fixed → does NOT affect document layout (no page tilt/shift)
-      //    - visibility:hidden → invisible to user but still measurable by html2canvas
-      //    - pointer-events:none → UI remains fully interactive (no freeze)
+      // Mount the clone off-screen with explicit dimensions and visibility: visible
       clone.style.cssText = [
         'position: fixed',
+        'left: -9999px',
         'top: 0',
-        'left: 0',
         'width: 8.5in',
-        'height: 11in',
-        'min-width: 8.5in',
         'min-height: 11in',
+        'height: 11in',
         'max-width: 8.5in',
         'max-height: 11in',
         'box-sizing: border-box',
         'padding: 0.65in 0.75in',
-        'visibility: hidden',
+        'visibility: visible',
+        'opacity: 1',
         'pointer-events: none',
-        'z-index: -99999',
+        'z-index: -9999',
         'color: #000000',
         'background-color: #ffffff',
         'overflow: hidden',
@@ -597,98 +599,32 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
       document.body.appendChild(clone);
 
-      // 7. Render to canvas using standalone html2canvas.
-      //    The onclone callback fires on the cloned document that html2canvas creates
-      //    internally — this is where we strip any remaining oklch() computed values
-      //    BEFORE html2canvas's color parser reads them.
+      // Wait a tick for fonts/images to settle
+      await new Promise(r => setTimeout(r, 120));
+
       const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: false,
-        logging: false,
+        allowTaint: true,
         backgroundColor: '#ffffff',
-        onclone: (_clonedDoc: Document, clonedEl: HTMLElement) => {
-          // Inject safe CSS variable overrides so var(--xxx) resolves to hex, not oklch
-          const safeStyle = _clonedDoc.createElement('style');
-          safeStyle.textContent = `
-            :root, *, *::before, *::after {
-              --background: #ffffff !important; --foreground: #000000 !important;
-              --card: #ffffff !important; --card-foreground: #000000 !important;
-              --popover: #ffffff !important; --popover-foreground: #000000 !important;
-              --primary: #1e5aa8 !important; --primary-foreground: #ffffff !important;
-              --secondary: #f1f5f9 !important; --secondary-foreground: #1e293b !important;
-              --muted: #f1f5f9 !important; --muted-foreground: #64748b !important;
-              --accent: #f1f5f9 !important; --accent-foreground: #1e293b !important;
-              --destructive: #dc2626 !important; --destructive-foreground: #ffffff !important;
-              --border: #e2e8f0 !important; --input: #e2e8f0 !important; --ring: #94a3b8 !important;
-              --chart-1: #e67e22 !important; --chart-2: #2ecc71 !important;
-              --chart-3: #2c3e50 !important; --chart-4: #f1c40f !important;
-              --chart-5: #e74c3c !important;
-              --sidebar: #1e293b !important; --sidebar-foreground: #f8fafc !important;
-              --sidebar-primary: #3b82f6 !important;
-              --sidebar-primary-foreground: #ffffff !important;
-              --sidebar-accent: #334155 !important;
-              --sidebar-accent-foreground: #f8fafc !important;
-              --sidebar-border: #334155 !important; --sidebar-ring: #64748b !important;
-              --header-bg: #1e293b !important; --header-border: #334155 !important;
-            }
-          `;
-          if (_clonedDoc.head) _clonedDoc.head.appendChild(safeStyle);
-
-          // Walk every element and inline-override any remaining oklch computed colors
-          const allEls = _clonedDoc.querySelectorAll('*');
-          allEls.forEach(el => {
-            const htmlEl = el as HTMLElement;
-            try {
-              // Use the ORIGINAL (live) window's getComputedStyle since the cloned doc
-              // may not have a complete style cascade. We read from the htmlEl's style.
-              COLOR_PROPS.forEach(prop => {
-                const inlineVal = htmlEl.style[prop as any];
-                if (inlineVal && inlineVal.includes('oklch')) {
-                  htmlEl.style[prop as any] = oklchToSafe(inlineVal);
-                }
-              });
-            } catch { /* skip */ }
-          });
-
-          // Guarantee the root cert element is white on black
+        logging: false,
+        onclone: (_clonedDoc, clonedEl) => {
           clonedEl.style.backgroundColor = '#ffffff';
           clonedEl.style.color = '#000000';
+          clonedEl.style.visibility = 'visible';
         },
       });
 
-      // 8. Remove the hidden clone immediately after capture
-      document.body.removeChild(clone);
-      clone = null;
-
-      // 9. Build PDF from canvas using jsPDF
-      const pdf = new jsPDF({ unit: 'in', format: 'letter', orientation: 'portrait' });
-      const pageW = pdf.internal.pageSize.getWidth();   // 8.5 in
-      const pageH = pdf.internal.pageSize.getHeight();  // 11 in
-      const imgData = canvas.toDataURL('image/jpeg', 0.97);
-      const canvasAspect = canvas.height / canvas.width;
-      const imgH = pageW * canvasAspect;
-
-      if (imgH <= pageH) {
-        // Fits on one page
-        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, imgH);
-      } else {
-        // Multi-page: slice the canvas into letter-height strips
-        const pxPerPage = Math.floor(canvas.width * (pageH / pageW));
-        let yOffset = 0;
-        while (yOffset < canvas.height) {
-          const sliceH = Math.min(pxPerPage, canvas.height - yOffset);
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = sliceH;
-          pageCanvas.getContext('2d')!.drawImage(canvas, 0, -yOffset, canvas.width, canvas.height);
-          const sliceData = pageCanvas.toDataURL('image/jpeg', 0.97);
-          if (yOffset > 0) pdf.addPage();
-          pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, pageH * (sliceH / pxPerPage));
-          yOffset += pxPerPage;
-        }
+      // Remove the hidden clone immediately after capture
+      if (clone && document.body.contains(clone)) {
+        document.body.removeChild(clone);
+        clone = null;
       }
+
+      // Build 1-page Letter PDF from canvas using jsPDF
+      const pdf = new jsPDF({ unit: 'in', format: 'letter', orientation: 'portrait' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      pdf.addImage(imgData, 'JPEG', 0, 0, 8.5, 11);
 
       pdf.save(filename);
 
@@ -696,7 +632,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       triggerToast(`✅ Successfully downloaded ${filename}!`);
     } catch (err: any) {
       console.error('PDF Generation Error:', err);
-      // Always clean up the clone even if something went wrong
       if (clone && document.body.contains(clone)) {
         document.body.removeChild(clone);
       }
@@ -705,16 +640,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     }
   };
 
-
-
   const handlePrint = async () => {
-    await syncToArchives();
+    syncToArchives().catch(e => console.error('Archive sync:', e));
     setEditMode(false);
     triggerToast('Opening print document view. Automatically recorded to archives!');
+
+    const onAfterPrint = () => {
+      setEditMode(true);
+      window.removeEventListener('afterprint', onAfterPrint);
+    };
+    window.addEventListener('afterprint', onAfterPrint);
+
     setTimeout(() => {
       window.print();
-      setEditMode(true);
-    }, 300);
+    }, 250);
   };
 
   const filteredCerts = medicalCerts.filter(c => {
@@ -735,6 +674,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
         @media print {
+          *, *::before, *::after {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
           body * {
             visibility: hidden !important;
           }
@@ -747,23 +691,28 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             top: 0 !important;
             width: 8.5in !important;
             min-height: 11in !important;
-            max-width: 100% !important;
+            height: 11in !important;
+            max-width: 8.5in !important;
             border: none !important;
             box-shadow: none !important;
-            padding: 0.7in 0.9in !important;
-            margin: 0 !important;
-            background: white !important;
-            color: black !important;
+            padding: 0.65in 0.75in !important;
+            margin: 0 auto !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
           }
           input, textarea, select {
             background: transparent !important;
+            border: none !important;
+            outline: none !important;
             padding: 0 !important;
             margin: 0 !important;
             resize: none !important;
-            color: #000 !important;
+            color: #000000 !important;
             box-shadow: none !important;
             font-family: inherit !important;
           }
@@ -931,16 +880,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <Printer size={14} /> Print
               </button>
 
-              {isCertIssued && (
-                <button
-                  onClick={handleDownloadPDF}
-                  disabled={isDownloading}
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-70 text-xs font-medium transition-all cursor-pointer"
-                >
-                  <Download size={14} className={isDownloading ? 'animate-bounce' : ''} />
-                  <span>{isDownloading ? 'Downloading...' : 'Re-download PDF'}</span>
-                </button>
-              )}
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 disabled:opacity-70 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                title="Download official PDF"
+              >
+                <Download size={14} className={isDownloading ? 'animate-bounce' : ''} />
+                <span>{isDownloading ? 'Downloading PDF...' : 'Download PDF'}</span>
+              </button>
 
               {/* PRIMARY HERO BUTTON: ISSUE CERTIFICATE */}
               <button
@@ -995,7 +943,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
                   {/* Center: University typography and PhilHealth YAKAP Logo banner */}
                   <div className="flex-1 text-center space-y-0.5 px-1">
-                    <div className="text-[26px] font-bold text-[#002060] font-official tracking-tight leading-none">
+                    <div
+                      className="text-[26px] font-bold font-official tracking-tight leading-none"
+                      style={{
+                        color: '#002060',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact',
+                      }}
+                    >
                       UNIVERSITY of the ASSUMPTION
                     </div>
                     
@@ -1009,7 +964,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 </div>
 
                 {/* Address line centered underneath top row */}
-                <div className="text-[14px] font-bold text-[#002060] font-official text-center pt-1 tracking-tight">
+                <div
+                  className="text-[14px] font-bold font-official text-center pt-1 tracking-tight"
+                  style={{
+                    color: '#002060',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
+                  }}
+                >
                   Unisite Subdivision, Del Pilar, City of San Fernando, 2000 Pampanga, Philippines
                 </div>
               </div>
@@ -1604,6 +1566,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
             {/* Action buttons */}
             <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  handleDownloadPDF();
+                }}
+                className="px-3.5 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Download size={14} /> Download PDF
+              </button>
               <button
                 onClick={() => {
                   setShowIssueSuccessModal(false);
