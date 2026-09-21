@@ -796,108 +796,92 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       {/* ========================================================================================= */}
       {activeTab === 'template' && (
         <div className="space-y-4 animate-in fade-in duration-300">
-          {/* Patient Context & Issuance Status Bar */}
-          <div className="no-print bg-white rounded-xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-[#1E5AA8] border border-blue-200'}`}>
-                {isCertIssued ? <CheckCircle2 size={20} className="text-emerald-600" /> : <UserCheck size={20} className="text-[#1E5AA8]" />}
+          {/* Unified Clinical Action Bar (High-Hierarchy Command Bar) */}
+          <div className="no-print bg-white p-3 sm:p-3.5 rounded-xl border border-gray-200 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+            {/* Left: Patient Context & Quick Selector */}
+            <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCertIssued ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-blue-50 text-[#1E5AA8] border border-blue-200'}`}>
+                {isCertIssued ? <CheckCircle2 size={16} /> : <UserCheck size={16} />}
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient:</span>
-                  <span className="text-sm font-bold text-gray-900 uppercase">
-                    {patientName || 'No patient selected'}
-                  </span>
-                  {age && <span className="text-xs text-gray-500 font-medium">({age} y/o, {sex})</span>}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {courseAndSchool || 'University of the Assumption Clinic'}
-                </div>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2.5 self-end md:self-auto flex-wrap">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                <span className={`w-2 h-2 rounded-full ${isCertIssued ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                {isCertIssued ? `Issued & Recorded (${selectedCertId})` : 'Draft · Ready to Issue'}
-              </span>
-            </div>
-          </div>
-
-          {/* Action & Configuration Toolbar */}
-          <div className="no-print flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
-            {/* Left side actions */}
-            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-              {/* Quick Load Patient Dropdown */}
-              <div className="relative w-full sm:w-auto">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <UserCheck size={14} />
-                </div>
+              {/* Patient dropdown */}
+              <div className="relative min-w-[200px] max-w-xs flex-1 sm:flex-initial">
                 <select
                   value={currentPatientId}
                   onChange={e => handleQuickLoadPatient(e.target.value)}
-                  className="w-full sm:w-56 appearance-none bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all cursor-pointer"
+                  className="w-full appearance-none bg-gray-50 hover:bg-gray-100/80 border border-gray-200 text-gray-800 text-xs font-semibold rounded-lg pl-3 pr-7 py-2 focus:outline-none focus:border-[#1E5AA8] focus:ring-1 focus:ring-[#1E5AA8] transition-all cursor-pointer truncate"
+                  title="Switch patient to load into certificate"
                 >
-                  <option value="">Quick load patient...</option>
-                  {patients.map(p => <option key={p.id} value={p.id}>{p.name ? p.name.toUpperCase() : p.name} ({p.category})</option>)}
+                  <option value="">Choose patient...</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name ? p.name.toUpperCase() : p.name} {p.category ? `(${p.category})` : ''}
+                    </option>
+                  ))}
                 </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
 
-              <button
-                onClick={() => setShowIssueCertModal(true)}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
-              >
-                <Edit2 size={14} /> Fill via Form
-              </button>
+              {/* Status Badge */}
+              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight inline-flex items-center gap-1.5 shrink-0 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-amber-50 text-amber-700 border border-amber-200/80'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isCertIssued ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                {isCertIssued ? `Issued #${selectedCertId}` : 'Draft'}
+              </span>
 
+              {/* New Blank Certificate button */}
               <button
-                onClick={() => setEditMode(!editMode)}
-                className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${editMode ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                title="Toggle visual highlights on editable words"
+                onClick={handleCreateNew}
+                title="Start a new blank medical certificate"
+                className="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer shrink-0"
               >
-                {editMode ? <Edit size={14} /> : <Eye size={14} />}
-                <span>{editMode ? 'Editing Mode' : 'Preview Mode'}</span>
+                <Plus size={13} />
+                <span className="hidden sm:inline">New</span>
               </button>
             </div>
 
-            {/* Right side actions */}
-            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 border-gray-100 pt-3 lg:pt-0">
-              <button
-                onClick={handleSaveCertificate}
-                title="Save draft to archives without issuing or downloading"
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
-              >
-                <BookmarkCheck size={14} className="text-gray-500" /> Save Draft
-              </button>
-
+            {/* Right: Actions Hierarchy (Secondary Utilities + Single Hero Primary Button) */}
+            <div className="flex items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 border-gray-100 pt-2 lg:pt-0">
+              {/* Secondary Export: Print */}
               <button
                 onClick={handlePrint}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium transition-all cursor-pointer"
+                title="Print official certificate"
               >
-                <Printer size={14} /> Print
+                <Printer size={14} className="text-gray-500" />
+                <span>Print</span>
               </button>
 
+              {/* Secondary Export: Download PDF */}
               <button
                 onClick={handleDownloadPDF}
                 disabled={isDownloading}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 disabled:opacity-70 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 text-xs font-medium transition-all cursor-pointer"
                 title="Download official PDF"
               >
-                <Download size={14} className={isDownloading ? 'animate-bounce' : ''} />
-                <span>{isDownloading ? 'Downloading PDF...' : 'Download PDF'}</span>
+                <Download size={14} className={isDownloading ? 'animate-bounce text-emerald-600' : 'text-gray-500'} />
+                <span>{isDownloading ? 'Downloading...' : 'PDF'}</span>
               </button>
 
-              {/* PRIMARY HERO BUTTON: ISSUE CERTIFICATE */}
+              {/* Form Modal entry shortcut */}
+              <button
+                onClick={() => setShowIssueCertModal(true)}
+                className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-colors text-xs cursor-pointer"
+                title="Fill via form popup"
+              >
+                <Edit2 size={14} />
+              </button>
+
+              {/* THE ONE PRIMARY HERO ACTION: ISSUE CERTIFICATE */}
               <button
                 onClick={() => handleIssueCertificate({ downloadPdf: true })}
                 disabled={isIssuing || isDownloading}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-xs transition-all shadow-sm disabled:opacity-50 cursor-pointer ml-1"
+                title="Issue certificate, sync to mobile app, and download official PDF"
               >
-                <CheckCircle2 size={15} className="text-white" />
-                <span>{isIssuing ? 'Issuing...' : isDownloading ? 'Downloading PDF...' : 'Issue Certificate'}</span>
+                <CheckCircle2 size={15} className="text-white shrink-0" />
+                <span>{isIssuing ? 'Issuing...' : isCertIssued ? 'Re-Issue Certificate' : 'Issue Certificate'}</span>
               </button>
             </div>
           </div>
