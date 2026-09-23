@@ -212,7 +212,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       ...h,
       _bedNumber: (h as any)._bedNumber ?? bed.bedNumber,
     }))
-  );
+  ).filter(h => isInRange(h.date, gridFilter));
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -490,7 +490,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-gray-800">All Bed Usage History</h3>
-          <span className="text-xs text-gray-400">All records</span>
+          <span className="text-xs text-gray-400">{allUsageHistory.length} record{allUsageHistory.length !== 1 ? 's' : ''} — {filterLabels[gridFilter].toLowerCase()}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
