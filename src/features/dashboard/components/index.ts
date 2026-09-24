@@ -6,6 +6,9 @@ export {
   PageSkeleton,
   TablePageSkeleton,
   CardGridSkeleton,
+  BedsPageSkeleton,
+  InventoryPageSkeleton,
+  NotificationsPageSkeleton,
   FormPageSkeleton,
   ProfilePageSkeleton,
   ReportsPageSkeleton

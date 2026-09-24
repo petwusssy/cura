@@ -78,19 +78,16 @@ export function TablePageSkeleton({ titleWidth = 180 }: { titleWidth?: number })
 
 /**
  * CardGridSkeleton
- * Matches card grid views (Appointments, Telemedicine)
+ * Matches card grid views (Appointments, Telemedicine) — 1:1 match to reference structure
  */
 export function CardGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="p-4 sm:p-6 space-y-5 min-h-full animate-in fade-in duration-200">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className="skeleton h-7 w-48 rounded-lg" />
-            <div className="skeleton h-5 w-28 rounded-full" />
-          </div>
-          <div className="skeleton h-3.5 w-56 rounded" />
+          <div className="skeleton h-7 w-48 rounded-lg" />
+          <div className="skeleton h-3.5 w-56 rounded-full" />
         </div>
         <div className="skeleton h-10 w-full sm:w-72 rounded-xl" />
       </div>
@@ -100,28 +97,27 @@ export function CardGridSkeleton({ count = 6 }: { count?: number }) {
         {Array.from({ length: count }).map((_, i) => (
           <div
             key={i}
-            className="bg-white rounded-2xl p-5 flex flex-col justify-between gap-4"
-            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}
+            className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4"
           >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <div className="skeleton skeleton-circle w-11 h-11 flex-shrink-0" />
-                <div className="space-y-1.5">
-                  <div className="skeleton h-4 w-32 rounded" />
-                  <div className="skeleton h-2.5 w-20 rounded" />
+                <div className="space-y-2">
+                  <div className="skeleton h-3.5 w-32 rounded-full" />
+                  <div className="skeleton h-2.5 w-20 rounded-full" />
                 </div>
               </div>
-              <div className="skeleton h-5 w-16 rounded-full" />
+              <div className="skeleton h-5 w-16 rounded-md" />
             </div>
 
-            <div className="space-y-2 py-2 border-y border-gray-50">
-              <div className="skeleton h-3 w-40 rounded" />
-              <div className="skeleton h-3 w-28 rounded" />
+            <div className="space-y-2.5 py-1">
+              <div className="skeleton h-3 w-4/5 rounded-full" />
+              <div className="skeleton h-3 w-1/2 rounded-full" />
             </div>
 
-            <div className="flex gap-2 pt-1">
-              <div className="skeleton h-9 flex-1 rounded-xl" />
-              <div className="skeleton h-9 flex-1 rounded-xl" />
+            <div className="flex gap-3 pt-2">
+              <div className="skeleton h-10 flex-1 rounded-xl" />
+              <div className="skeleton h-10 flex-1 rounded-xl" />
             </div>
           </div>
         ))}
@@ -317,6 +313,199 @@ export function ReportsPageSkeleton() {
 }
 
 /**
+ * BedsPageSkeleton
+ * Matches Beds Management view (3 stats KPI cards + 4x2 bed cards grid)
+ */
+export function BedsPageSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="skeleton h-7 w-48 rounded-lg" />
+        </div>
+        <div className="skeleton h-9 w-56 rounded-xl" />
+      </div>
+
+      {/* 3 Stats KPI cards */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3 border border-gray-100"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+          >
+            <div className="skeleton w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex-shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <div className="skeleton h-6 sm:h-7 w-8 rounded" />
+              <div className="skeleton h-2.5 sm:h-3 w-16 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bed Grid (8 beds: 4 cols x 2 rows) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-5 flex flex-col justify-between border border-gray-100 min-h-[200px]"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+          >
+            {/* Top row */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="skeleton w-5 h-5 rounded" />
+                  <div className="skeleton h-4 w-16 rounded" />
+                </div>
+                <div className="skeleton h-5 w-16 rounded-full" />
+              </div>
+              <div className="skeleton h-3 w-28 rounded-full mb-3" />
+            </div>
+
+            {/* Middle patient placeholder */}
+            <div className="flex flex-col items-center py-2 space-y-1.5 my-auto">
+              <div className="skeleton h-2.5 w-16 rounded" />
+              <div className="skeleton h-4 w-28 rounded-full" />
+            </div>
+
+            {/* Bottom action buttons */}
+            <div className="flex gap-2 w-full mt-auto pt-2">
+              <div className="skeleton h-9 flex-1 rounded-lg" />
+              <div className="skeleton h-9 w-9 rounded-lg flex-shrink-0" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * InventoryPageSkeleton
+ * Matches Pharmacy Inventory view (4 stats KPI cards + search & filters + 6-col table)
+ */
+export function InventoryPageSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 space-y-6 min-h-full animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="skeleton h-7 w-52 rounded-lg" />
+        <div className="skeleton h-10 w-32 rounded-lg" />
+      </div>
+
+      {/* 4 Stats KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-4 flex items-center gap-3 border border-gray-100"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+          >
+            <div className="skeleton w-10 h-10 rounded-xl flex-shrink-0" />
+            <div className="space-y-1.5">
+              <div className="skeleton h-7 w-12 rounded" />
+              <div className="skeleton h-3 w-20 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="skeleton h-10 flex-1 max-w-lg rounded-xl" />
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <div className="skeleton h-10 w-56 rounded-xl" />
+          <div className="skeleton h-10 w-44 rounded-xl" />
+        </div>
+      </div>
+
+      {/* Table Container */}
+      <div
+        className="bg-white rounded-xl overflow-hidden border border-gray-100"
+        style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}
+      >
+        {/* Table Header (6 cols) */}
+        <div className="grid grid-cols-6 p-4 border-b border-gray-100 gap-4">
+          <div className="skeleton h-4 w-28 rounded" />
+          <div className="skeleton h-4 w-20 rounded" />
+          <div className="skeleton h-4 w-20 rounded" />
+          <div className="skeleton h-4 w-16 rounded" />
+          <div className="skeleton h-4 w-20 rounded" />
+          <div className="skeleton h-4 w-16 rounded ml-auto" />
+        </div>
+
+        {/* Table Rows (8 rows) */}
+        <div className="divide-y divide-gray-50">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-6 p-4 items-center gap-4">
+              <div className="space-y-1">
+                <div className="skeleton h-3.5 w-32 rounded" />
+                <div className="skeleton h-2.5 w-20 rounded" />
+              </div>
+              <div className="skeleton h-5 w-20 rounded-md" />
+              <div className="skeleton h-4 w-12 rounded" />
+              <div className="skeleton h-3.5 w-14 rounded" />
+              <div className="skeleton h-5 w-24 rounded-full" />
+              <div className="flex gap-2 justify-end">
+                <div className="skeleton h-8 w-8 rounded-lg" />
+                <div className="skeleton h-8 w-8 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination Bar */}
+        <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+          <div className="skeleton h-3.5 w-32 rounded" />
+          <div className="flex gap-2">
+            <div className="skeleton h-8 w-20 rounded-lg" />
+            <div className="skeleton h-8 w-20 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * NotificationsPageSkeleton
+ * Matches Notifications view (Header + 5 filter tabs + list of notification cards)
+ */
+export function NotificationsPageSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 max-w-3xl mx-auto min-h-full animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="skeleton h-7 w-36 rounded-lg" />
+        <div className="skeleton h-9 w-28 rounded-lg" />
+      </div>
+
+      {/* Filter Tabs Container */}
+      <div className="skeleton h-10 w-full rounded-xl" />
+
+      {/* List of Notification Cards */}
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-4 border border-gray-100 flex items-start gap-3 shadow-xs"
+          >
+            <div className="skeleton w-10 h-10 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-4 w-3/4 rounded" />
+              <div className="skeleton h-3 w-1/3 rounded" />
+            </div>
+            <div className="skeleton h-3 w-12 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * PageSkeleton
  * Smart dispatcher that renders the corresponding skeleton for any active page
  */
@@ -327,6 +516,12 @@ export function PageSkeleton({ page }: { page: Page }) {
     case 'appointments':
     case 'telemedicine':
       return <CardGridSkeleton />;
+    case 'beds':
+      return <BedsPageSkeleton />;
+    case 'inventory':
+      return <InventoryPageSkeleton />;
+    case 'notifications':
+      return <NotificationsPageSkeleton />;
     case 'patient-form':
     case 'new-consultation':
     case 'new-consultation-tab':
@@ -341,11 +536,8 @@ export function PageSkeleton({ page }: { page: Page }) {
     case 'patients':
     case 'consultations':
     case 'non-consultations':
-    case 'inventory':
     case 'purchase-receipts':
     case 'medical-certificates':
-    case 'beds':
-    case 'notifications':
     case 'search':
     default:
       return <TablePageSkeleton />;
