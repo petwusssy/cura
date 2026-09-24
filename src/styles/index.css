@@ -352,3 +352,39 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ═══════════════════════════════════════════════
+   Skeleton / Shimmer Loading UI
+   ═══════════════════════════════════════════════ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e8eaed 25%,
+    #f4f5f7 50%,
+    #e8eaed 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-circle {
+  border-radius: 50% !important;
+}
+
+/* Dark-mode shimmer */
+:is(.dark, .ocean) .skeleton {
+  background: linear-gradient(
+    90deg,
+    oklch(0.22 0 0) 25%,
+    oklch(0.30 0 0) 50%,
+    oklch(0.22 0 0) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+

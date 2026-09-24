@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
 import {
-  Dashboard, PatientManagement, PatientForm, PatientProfile, NewConsultation,
+  Dashboard, DashboardSkeleton,
+  PatientManagement, PatientForm, PatientProfile, NewConsultation,
   ConsultationTab, NonConsultationTab, Inventory, PurchaseReceipts,
   MedicalCertificates, BedsManagement, Reports, Notifications, Settings,
   GlobalSearch, Appointments, Telemedicine
@@ -59,6 +60,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [beds, setBeds]                         = useState<Bed[]>([]);
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
   const [queues, setQueues]                     = useState<PatientQueue[]>([]);
+  // true while the first batch of API calls is in-flight
+  const [isLoading, setIsLoading]               = useState(true);
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
   const completedQueueIdsRef = useRef<Set<string>>(new Set());
@@ -83,15 +86,23 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   useEffect(() => {
-    patientService.getPatients().then(d => {
-      if (d !== undefined) {
-        setPatients(d.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name })));
+    // ─── Parallel initial fetch ────────────────────────────────────────────
+    // allSettled so a single failing endpoint doesn't block the rest.
+    Promise.allSettled([
+      patientService.getPatients(),
+      consultationService.getConsultations(),
+      medicineService.getMedicines(),
+      medicineService.getPurchaseRequests(),
+      bedService.getBeds(),
+      certificateService.getCertificates(),
+      queueService.getQueues(),
+    ]).then(([pRes, cRes, mRes, prRes, bRes, certRes, qRes]) => {
+      if (pRes.status === 'fulfilled' && pRes.value !== undefined) {
+        setPatients(pRes.value.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name })));
       }
-    }).catch(console.error);
-    consultationService.getConsultations().then(d => {
-      if (d !== undefined) {
+      if (cRes.status === 'fulfilled' && cRes.value !== undefined) {
         const seen = new Set<string>();
-        const unique = d.filter(c => {
+        const unique = cRes.value.filter(c => {
           const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
           if (seen.has(key)) return false;
           seen.add(key);
@@ -99,28 +110,33 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         setConsultations(unique);
       }
-    }).catch(console.error);
-    medicineService.getMedicines().then(d => {
-      if (d !== undefined) {
-        setMedicines(d);
-        localStorage.setItem('cura_medicines_cache', JSON.stringify(d));
+      if (mRes.status === 'fulfilled' && mRes.value !== undefined) {
+        setMedicines(mRes.value);
+        localStorage.setItem('cura_medicines_cache', JSON.stringify(mRes.value));
       }
-    }).catch(console.error);
-    medicineService.getPurchaseRequests().then(d => d !== undefined && setPurchaseRequests(d)).catch(console.error);
-    bedService.getBeds().then(d => d !== undefined && setBeds(d)).catch(console.error);
-    certificateService.getCertificates().then(d => {
-      if (d !== undefined && d.length > 0) {
+      if (prRes.status === 'fulfilled' && prRes.value !== undefined) {
+        setPurchaseRequests(prRes.value);
+      }
+      if (bRes.status === 'fulfilled' && bRes.value !== undefined) {
+        setBeds(bRes.value);
+      }
+      if (certRes.status === 'fulfilled' && certRes.value !== undefined && certRes.value.length > 0) {
         setMedicalCerts(prev => {
           const map = new Map<string, MedicalCertificate>();
           prev.forEach(c => map.set(c.id, c));
-          d.forEach(c => map.set(c.id, c));
+          certRes.value!.forEach(c => map.set(c.id, c));
           const merged = Array.from(map.values());
           try { localStorage.setItem('cura_medical_certs', JSON.stringify(merged)); } catch {}
           return merged;
         });
       }
-    }).catch(console.error);
-    queueService.getQueues().then(d => d !== undefined && setQueues(d)).catch(console.error);
+      if (qRes.status === 'fulfilled' && qRes.value !== undefined) {
+        setQueues(qRes.value);
+      }
+    }).finally(() => {
+      // All initial requests settled — hide skeleton
+      setIsLoading(false);
+    });
 
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
@@ -588,6 +604,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const renderPage = () => {
+    // Show skeleton only for the main dashboard while data is loading
+    if (isLoading && currentPage === 'dashboard') {
+      return <DashboardSkeleton />;
+    }
+
     switch (currentPage) {
       case 'dashboard':
         return (
