@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2 } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
-import { getManilaDate } from '@/utils/philippineTime';
+import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
 import uaSeal from '@/assets/images/ua-seal.png';
 
 const PRIMARY = '#1E5AA8';
@@ -797,7 +797,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           </span>
                         </div>
                         <div className="text-xs text-gray-400 font-medium mt-1">
-                          Ref #{req.prfNo || 'PRF-2026-001'} • Request ID: {req.id} • Date Initiated: {req.date} • Unit: <strong>{req.unit || 'Tablet'}</strong>
+                          Ref #{req.prfNo || 'PRF-2026-001'} • Request ID: {req.id} • Date Initiated: {normalizeDate(req.date)} • Unit: <strong>{req.unit || 'Tablet'}</strong>
                         </div>
 
                         {/* Delivery Stock Progress Bar */}
@@ -857,7 +857,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                               <div className="flex-1 overflow-hidden">
                                 <span className="font-bold text-gray-800 break-words">{h.note}</span>
                                 <div className="text-gray-400 mt-0.5 font-medium">
-                                  {h.date} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
+                                  {formatManilaDateTime(h.date)} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
                                 </div>
                               </div>
                             </div>

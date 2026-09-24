@@ -1281,7 +1281,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                       const p = pat(c);
                       return (
                         <tr key={c.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                          <td className="border border-gray-200 px-3 py-2 font-medium text-gray-700">{c.date} {c.timeIn}</td>
+                          <td className="border border-gray-200 px-3 py-2 font-medium text-gray-700">{normalizeDate(c.date)} {c.timeIn}</td>
                           <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-900">{p?.name || c.patientId}</td>
                           <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.complaint}</td>
                           <td className="border border-gray-200 px-3 py-2 text-gray-700">{c.treatments && c.treatments.length > 0 ? c.treatments.map(m => m.medicineName).join(', ') : 'BP measurement / Rest'}</td>

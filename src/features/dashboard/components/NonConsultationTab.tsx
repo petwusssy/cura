@@ -170,7 +170,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="text-sm text-gray-700">{c.date}</div>
+                      <div className="text-sm text-gray-700">{normalizeDate(c.date)}</div>
                       <div className="text-xs text-gray-400">{c.timeIn}</div>
                     </td>
                     <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[160px]">
@@ -252,7 +252,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
               <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-1">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time</span>
-                  <span className="text-sm text-gray-700">{c.date} <br/> <span className="text-xs text-gray-500">{c.timeIn}</span></span>
+                  <span className="text-sm text-gray-700">{normalizeDate(c.date)} <br/> <span className="text-xs text-gray-500">{c.timeIn}</span></span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Complaint</span>
@@ -302,7 +302,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                   <h3 className="text-lg font-bold text-gray-900">
                     Non-Consultation Record: <span className="uppercase">{patient?.name}</span>
                   </h3>
-                  <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn}</p>
+                  <p className="text-sm text-gray-500">{normalizeDate(viewDetail.date)} • {viewDetail.timeIn}</p>
                 </div>
                 <button
                   onClick={() => setViewDetail(null)}

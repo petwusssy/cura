@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, Stethoscope, FileText, Plus, Eye, Clock, Pill, User, Phone, Mail, AlertCircle, X } from 'lucide-react';
 import { Patient, Consultation, MedicalCertificate, Page } from '../types';
+import { normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -182,7 +183,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     {patientConsultations.map((c, i) => (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
-                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{c.date}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
                           <div className="truncate">{formatComplaint(c.complaint)}</div>
                         </td>
@@ -230,7 +231,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
-                        <div className="text-sm text-gray-600 mt-0.5">{c.date} • {c.timeIn}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {c.timeIn}</div>
                       </div>
                     </div>
                     
@@ -293,7 +294,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     {patientNonConsultations.map((c, i) => (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
-                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{c.date}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
                           <div className="truncate">{formatComplaint(c.complaint)}</div>
                         </td>
@@ -341,7 +342,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
-                        <div className="text-sm text-gray-600 mt-0.5">{c.date} • {c.timeIn}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {c.timeIn}</div>
                       </div>
                     </div>
                     
@@ -395,7 +396,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     {/* Content */}
                     <div className="flex-1 pb-4">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-800">{c.date}</span>
+                        <span className="text-sm font-semibold text-gray-800">{normalizeDate(c.date)}</span>
                         <span className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
                           {c.status}
@@ -447,7 +448,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                       {patientCerts.map((cert, i) => (
                         <tr key={cert.id} className="hover:bg-gray-50 transition-colors">
                           <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
-                          <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{cert.date}</td>
+                          <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(cert.date)}</td>
                           <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[160px] truncate" title={cert.purpose}>
                             {cert.purpose}
                           </td>
@@ -486,7 +487,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                       <div className="text-xs font-bold text-gray-400">Certificate #{i + 1}</div>
                       <div>
                         <div className="font-bold text-gray-900">{cert.purpose}</div>
-                        <div className="text-sm text-gray-600 mt-0.5">{cert.date} • {cert.doctor || 'Physician'}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(cert.date)} • {cert.doctor || 'Physician'}</div>
                       </div>
                       {cert.diagnosis && (
                         <div className="text-xs text-gray-500 mt-1 italic">
@@ -512,7 +513,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 <h3 className="text-lg font-bold text-gray-900">
                   {selectedConsultation.status === 'Consultation' ? 'Consultation Record' : 'Non-Consultation Record'}
                 </h3>
-                <p className="text-sm text-gray-500">{selectedConsultation.date} • {selectedConsultation.timeIn} - {selectedConsultation.timeOut || 'Present'}</p>
+                <p className="text-sm text-gray-500">{normalizeDate(selectedConsultation.date)} • {selectedConsultation.timeIn} - {selectedConsultation.timeOut || 'Present'}</p>
               </div>
               <button
                 onClick={() => setSelectedConsultation(null)}
@@ -743,7 +744,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
               <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl">
                 <div>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Date Issued</span>
-                  <span className="font-semibold text-gray-800">{selectedCert.date}</span>
+                  <span className="font-semibold text-gray-800">{normalizeDate(selectedCert.date)}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Doctor</span>

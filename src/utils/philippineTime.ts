@@ -138,3 +138,35 @@ export const normalizeDate = (raw?: string | Date | number | null): string => {
   return getManilaDate(raw);
 };
 
+/**
+ * Formats any raw date/timestamp string (e.g. ISO string "2026-09-24T11:57:53.711194+08:00")
+ * into a clean, human-readable date and time in Philippine Time:
+ * e.g. "2026-09-24 • 11:57 AM" or "2026-09-24" if pure date.
+ */
+export const formatManilaDateTime = (raw?: string | Date | number | null): string => {
+  if (!raw) return '';
+  const str = String(raw).trim();
+  // Pure date YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+  // Already formatted e.g. "2026-09-24 11:57 AM" or "2026-09-24 • 11:57 AM"
+  if (/^\d{4}-\d{2}-\d{2}(\s+|(\s*•\s*))\d{1,2}:\d{2}\s+(AM|PM)$/i.test(str)) {
+    return str;
+  }
+  const dateObj = typeof raw === 'string' || typeof raw === 'number' ? new Date(raw) : raw;
+  if (isNaN(dateObj.getTime())) {
+    if (str.includes('T')) {
+      const parts = str.split('T');
+      const dPart = parts[0];
+      const tPart = parts[1].slice(0, 5);
+      return `${dPart} • ${tPart}`;
+    }
+    return str;
+  }
+  const datePart = getManilaDate(dateObj);
+  const timePart = formatManilaDisplayTime(dateObj);
+  return `${datePart} • ${timePart}`;
+};
+
+

@@ -277,7 +277,7 @@ export function ConsultationTab({
                           </div>
                         </td>
                         <td className="px-5 py-3.5 hidden md:table-cell">
-                          <div className="text-sm text-gray-700">{c.date}</div>
+                          <div className="text-sm text-gray-700">{normalizeDate(c.date)}</div>
                           <div className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</div>
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px]">
@@ -345,7 +345,7 @@ export function ConsultationTab({
                 <div key={c.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                   <div>
                     <div className="font-semibold text-gray-800 uppercase">{patient?.name}</div>
-                    <div className="text-xs text-gray-500">{c.date} • {c.complaint}</div>
+                    <div className="text-xs text-gray-500">{normalizeDate(c.date)} • {c.complaint}</div>
                   </div>
                   <button onClick={() => setViewDetail(c)} className="p-2 bg-gray-50 rounded-lg text-gray-600"><Eye size={16} /></button>
                 </div>
@@ -390,7 +390,7 @@ export function ConsultationTab({
                           </div>
                         </td>
                         <td className="px-5 py-3.5 hidden md:table-cell">
-                          <div className="text-sm text-gray-700">{t.date}</div>
+                          <div className="text-sm text-gray-700">{normalizeDate(t.date)}</div>
                           <div className="text-xs text-gray-400">{t.time}</div>
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-700 max-w-[200px]">
@@ -419,7 +419,7 @@ export function ConsultationTab({
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-bold text-gray-900 uppercase">{patient?.name}</div>
-                      <div className="text-xs text-gray-500">{t.date} • {t.time}</div>
+                      <div className="text-xs text-gray-500">{normalizeDate(t.date)} • {t.time}</div>
                     </div>
                     <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide bg-orange-50 text-orange-700">
                       {t.transportMode}
@@ -558,7 +558,7 @@ export function ConsultationTab({
                   <h3 className="text-lg font-bold text-gray-900">
                     Consultation Record: <span className="uppercase">{patient?.name}</span>
                   </h3>
-                  <p className="text-sm text-gray-500">{viewDetail.date} • {viewDetail.timeIn} - {viewDetail.timeOut || 'Present'}</p>
+                  <p className="text-sm text-gray-500">{normalizeDate(viewDetail.date)} • {viewDetail.timeIn} - {viewDetail.timeOut || 'Present'}</p>
                 </div>
                 <button
                   onClick={() => setViewDetail(null)}

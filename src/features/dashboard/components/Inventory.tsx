@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
-import { getManilaDate } from '@/utils/philippineTime';
+import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -245,7 +245,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   <tr key={m.id} className={isOut ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                     <td className="px-5 py-3">
                       <div className="text-sm font-medium text-gray-700">{m.name}</div>
-                      <div className="text-xs text-gray-400">Added: {m.dateAdded ? m.dateAdded.split(/[T\s]/)[0] : 'N/A'}</div>
+                      <div className="text-xs text-gray-400">Added: {normalizeDate(m.dateAdded) || 'N/A'}</div>
                     </td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>
@@ -489,7 +489,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                     <div className="text-sm font-bold text-gray-800">
                       {h.type === 'add' ? 'Restocked' : 'Dispensed'} {h.qty} {historyModal.unit}s
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">{h.date} — <span className="italic">{h.note || 'No remarks'}</span></div>
+                    <div className="text-xs text-gray-500 mt-0.5">{formatManilaDateTime(h.date)} — <span className="italic">{h.note || 'No remarks'}</span></div>
                   </div>
                 </div>
               ))}

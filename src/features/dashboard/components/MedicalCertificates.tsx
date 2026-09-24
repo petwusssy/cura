@@ -1194,7 +1194,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                               {cert.patientName || pt?.name || 'Clinic Patient'}
                             </div>
                             <div className="text-xs text-gray-400 mt-0.5">
-                              ID: {cert.id} • {cert.date}
+                              ID: {cert.id} • {normalizeDate(cert.date)}
                             </div>
                           </div>
                         </div>

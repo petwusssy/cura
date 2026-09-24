@@ -3,6 +3,7 @@ import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, Ext
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
+import { normalizeDate } from '@/utils/philippineTime';
 
 interface TelemedicineProps {
   patients: Patient[];
@@ -217,7 +218,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-xs font-medium text-gray-600">
                       <Calendar size={13} className="mr-1.5 text-gray-400" />
-                      Preferred Date: <span className="ml-1 text-gray-800 font-semibold">{req.preferred_date}</span>
+                      Preferred Date: <span className="ml-1 text-gray-800 font-semibold">{normalizeDate(req.preferred_date)}</span>
                     </div>
                     <div className="flex items-center text-xs font-medium text-gray-600">
                       <Clock size={13} className="mr-1.5 text-gray-400" />
@@ -252,7 +253,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                   <div className="mt-2 pt-3.5 border-t border-gray-100 space-y-2.5">
                     <div className="flex items-center justify-between text-xs bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                       <span className="text-gray-500">Scheduled Session:</span>
-                      <span className="font-bold text-gray-900">{req.scheduled_date} at {req.scheduled_time}</span>
+                      <span className="font-bold text-gray-900">{normalizeDate(req.scheduled_date)} at {req.scheduled_time}</span>
                     </div>
 
                     {/* Primary Button: Join Embedded In-App Call */}
