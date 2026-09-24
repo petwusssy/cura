@@ -215,15 +215,15 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto border-r ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
         style={{
           width: collapsed ? 64 : 248,
-          background: 'var(--color-sidebar)',
-          borderColor: 'rgba(147, 197, 253, 0.4)',
+          background: 'linear-gradient(180deg, #0d213f 0%, #122e56 25%, #183e6f 55%, #1e518d 80%, #2465ad 100%)',
+          borderColor: 'rgba(147, 197, 253, 0.25)',
           boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
         }}
       >
         {/* Brand */}
         <div
           className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
+          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.2)', height: '88px' }}
         >
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
             <img
@@ -259,14 +259,14 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           )}
         </div>
 
-        {/* Animated Blobs */}
+        {/* Subtle Ambient Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-[10%] left-[-20%] w-[120px] h-[120px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-[#dbeafe]/10 dark:bg-white/5 animate-[blob1_8s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[20%] right-[-10%] w-[150px] h-[150px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-[#bfdbfe]/10 dark:bg-white/5 animate-[blob2_10s_ease-in-out_infinite]" />
+          <div className="absolute top-[10%] left-[-20%] w-[140px] h-[140px] rounded-full bg-white/[0.04] blur-2xl animate-[blob1_8s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[20%] right-[-10%] w-[160px] h-[160px] rounded-full bg-sky-300/[0.05] blur-2xl animate-[blob2_10s_ease-in-out_infinite]" />
         </div>
 
         {/* Nav */}
-        <nav className="relative z-10 flex-1 py-2 overflow-y-auto">
+        <nav className="relative z-10 flex-1 py-2 overflow-y-auto hide-scrollbar">
           {navSections.map(section => (
             <div key={section.section} className="mb-1">
               {/* Section label — hidden when collapsed */}
@@ -289,7 +289,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </nav>
 
         {/* UA Seal + Sign Out */}
-        <div className="relative z-10 flex-shrink-0 p-3 space-y-3" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.4)' }}>
+        <div className="relative z-10 flex-shrink-0 p-3 space-y-3" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.2)' }}>
           {!collapsed && (
             <div className="flex items-center gap-3 px-2 pb-1">
               <img src={uaLogo} alt="UA Logo" className="w-10 h-10 object-contain opacity-80" />
