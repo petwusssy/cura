@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Printer, Download, FileText, Package, BedDouble, BarChart2, ClipboardList, Award, Calendar, Video } from 'lucide-react';
+import { Printer, Download, FileText, Package, BarChart2, ClipboardList, Award, Calendar, Video } from 'lucide-react';
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
 import { appointmentService, AppointmentRequest } from '@/services/appointmentService';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
@@ -164,7 +164,7 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 ];
 
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'bed' | 'appointments' | 'telemedicine';
+type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'appointments' | 'telemedicine';
 
 function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string, selectedMonthYear?: string): boolean {
   if (filter === 'all') return true;
@@ -443,7 +443,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     { id: 'medcert'      as ReportType, label: 'Medical Certificate',       icon: <Award size={15} /> },
     { id: 'nonconsult'   as ReportType, label: 'Non-Consultation',        icon: <ClipboardList size={15} /> },
     { id: 'inventory'   as ReportType, label: 'Inventory / Medicine',     icon: <Package size={15} /> },
-    { id: 'bed'         as ReportType, label: 'Bed Management',            icon: <BedDouble size={15} /> },
     { id: 'appointments' as ReportType, label: 'Appointments Report',       icon: <Calendar size={15} /> },
     { id: 'telemedicine'  as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
   ];
@@ -1660,68 +1659,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
 
 
-          {/* ── 7. BED MANAGEMENT (Kept untouched as original layout) ── */}
-          {activeReport === 'bed' && (
-            <div>
-              <PrintBar title="BED MANAGEMENT & RECOVERY ROOM CENSUS REPORT" />
-              <div className="p-4 space-y-4">
-                <div className="grid grid-cols-4 gap-3">
-                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="text-xs text-gray-500 font-medium">Total Beds</div>
-                    <div className="text-lg font-extrabold text-gray-900">{beds.length}</div>
-                  </div>
-                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <div className="text-xs text-emerald-600 font-medium">Available Beds</div>
-                    <div className="text-lg font-extrabold text-emerald-700">{beds.filter(b => b.status === 'Available').length}</div>
-                  </div>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="text-xs text-blue-600 font-medium">Currently Occupied</div>
-                    <div className="text-lg font-extrabold text-blue-700">{beds.filter(b => b.status === 'Occupied').length}</div>
-                  </div>
-                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <div className="text-xs text-amber-600 font-medium">Under Maintenance</div>
-                    <div className="text-lg font-extrabold text-amber-700">{beds.filter(b => b.status === 'Maintenance' || b.status === 'Cleaning').length}</div>
-                  </div>
-                </div>
 
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
-                    <thead>
-                      <tr className="bg-[#1B3A6B] text-white font-bold text-[11px]">
-                        <th className="border border-blue-900 px-3 py-2 text-left">Bed ID & Number</th>
-                        <th className="border border-blue-900 px-3 py-2 text-center">Status</th>
-                        <th className="border border-blue-900 px-3 py-2 text-left">Current Patient / Occupant</th>
-                        <th className="border border-blue-900 px-3 py-2 text-left">Complaint / Diagnosis</th>
-                        <th className="border border-blue-900 px-3 py-2 text-center">Time Admitted</th>
-                        <th className="border border-blue-900 px-3 py-2 text-left">Assigned Provider</th>
-                        <th className="border border-blue-900 px-3 py-2 text-center">History Records</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {beds.map((b, idx) => {
-                        const statusCls = b.status === 'Available' ? 'bg-emerald-100 text-emerald-800'
-                          : b.status === 'Occupied' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800';
-
-                        return (
-                          <tr key={b.id} className={`hover:bg-blue-50 text-[11px] ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                            <td className="border border-gray-200 px-3 py-2 font-bold text-gray-900">{b.name} ({b.id})</td>
-                            <td className="border border-gray-200 px-3 py-2 text-center">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCls}`}>{b.status}</span>
-                            </td>
-                            <td className="border border-gray-200 px-3 py-2 font-medium text-gray-800">{b.patientName || 'None'}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-gray-600">{b.diagnosis || '-'}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-center font-mono text-gray-700">{b.timeAdmitted || '-'}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-gray-600">{b.assignedStaff || '-'}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-center font-bold text-gray-500">{b.history ? b.history.length : 0} logged</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ── 8. APPOINTMENTS REPORT ── */}
           {activeReport === 'appointments' && (
