@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
+import { getManilaDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -35,7 +36,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   }>({
     name: '',
     stock: '',
-    dateAdded: new Date().toLocaleDateString('en-CA'),
+    dateAdded: getManilaDate(),
     unit: 'Tablet',
     threshold: '15',
     category: 'Medicine'
@@ -99,7 +100,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       dispensed: newDispensed,
       status: newStatus as any,
       stockHistory: [...(adjustModal.stockHistory || []), {
-        date: new Date().toLocaleDateString('en-CA'),
+        date: getManilaDate(),
         qty,
         type: adjustType,
         note: adjustNote || (adjustType === 'add' ? 'Manual stock intake' : 'Stock adjustment decrement'),
@@ -125,18 +126,18 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       name: newMed.name,
       stock: qty,
       unit: newMed.unit,
-      dateAdded: newMed.dateAdded || new Date().toLocaleDateString('en-CA'),
+      dateAdded: newMed.dateAdded || getManilaDate(),
       status: qty === 0 ? 'Out of Stock' : qty <= thresh ? 'Low Stock' : 'Normal',
       beginningQty: qty,
       dispensed: 0,
       threshold: thresh,
-      stockHistory: [{ date: newMed.dateAdded || new Date().toLocaleDateString('en-CA'), qty, type: 'add', note: 'Initial inventory' }],
+      stockHistory: [{ date: newMed.dateAdded || getManilaDate(), qty, type: 'add', note: 'Initial inventory' }],
     };
 
     try {
       onAddMedicine(med);
       setShowAddForm(false);
-      setNewMed({ name: '', stock: '', dateAdded: new Date().toLocaleDateString('en-CA'), unit: 'Tablet', threshold: '15', category: 'Medicine' });
+      setNewMed({ name: '', stock: '', dateAdded: getManilaDate(), unit: 'Tablet', threshold: '15', category: 'Medicine' });
     } catch (e) {
       console.error(e);
     }

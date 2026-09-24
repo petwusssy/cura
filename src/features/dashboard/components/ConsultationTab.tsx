@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
+import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -78,28 +79,13 @@ export function ConsultationTab({
   const isDateMatch = (dateStr: string) => {
     if (datePreset === 'all') return true;
     
-    const today = new Date();
-    const getLocal = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    const todayStr = getLocal(today);
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = getLocal(yesterday);
+    const todayStr = getManilaDate();
+    const yesterdayStr = getManilaYesterday();
+    const weekAgoStr = getManilaDaysAgo(7);
 
     if (datePreset === 'today') return dateStr === todayStr;
     if (datePreset === 'yesterday') return dateStr === yesterdayStr;
-    if (datePreset === 'week') {
-      const target = new Date(dateStr);
-      const diffTime = today.getTime() - target.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 7;
-    }
+    if (datePreset === 'week') return dateStr >= weekAgoStr && dateStr <= todayStr;
     if (datePreset === 'custom') {
       return !customDate || dateStr === customDate;
     }
@@ -142,8 +128,8 @@ export function ConsultationTab({
       id: `TRF-${Date.now()}`,
       consultationId: transferModal.id,
       patientId: transferModal.patientId,
-      date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
-      time: new Date().toTimeString().slice(0, 5),
+      date: getManilaDate(),
+      time: getManilaTime(),
       receivingHospital: hospital,
       reason,
       transportMode: tfTransport,

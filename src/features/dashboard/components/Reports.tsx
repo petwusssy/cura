@@ -6,6 +6,7 @@ import { telemedicineService, TelemedicineRequest } from '@/services/telemedicin
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -117,10 +118,8 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'bed' | 'appointments' | 'telemedicine';
 
-const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-const yesterdayDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-const YESTERDAY = yesterdayDate.toLocaleDateString('en-CA');
+const TODAY = getManilaDate();
+const YESTERDAY = getManilaYesterday();
 
 function normalizeDateStr(d?: string): string {
   if (!d) return '';
@@ -140,9 +139,8 @@ function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string
   if (filter === 'today') return date === TODAY;
   if (filter === 'yesterday') return date === YESTERDAY;
   if (filter === 'week') {
-    const d = new Date(date); const t = new Date(TODAY);
-    const diff = (t.getTime() - d.getTime()) / 86400000;
-    return diff >= 0 && diff < 7;
+    const weekAgo = getManilaDaysAgo(7);
+    return date >= weekAgo && date <= TODAY;
   }
   if (filter === 'month') {
     if (selectedMonthYear && date.slice(0, 7) === selectedMonthYear) return true;
@@ -158,8 +156,7 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
   if (filter === 'yesterday') return [YESTERDAY];
   if (filter === 'week') {
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(TODAY); d.setDate(d.getDate() - i);
-      days.push(d.toLocaleDateString('en-CA'));
+      days.push(getManilaDaysAgo(i));
     }
     return days;
   }
@@ -172,9 +169,11 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
     return days;
   }
   if (filter === 'custom' && customFrom && customTo) {
-    let cur = new Date(customFrom);
-    while (cur.toLocaleDateString('en-CA') <= customTo) {
-      days.push(cur.toLocaleDateString('en-CA')); cur.setDate(cur.getDate() + 1);
+    let cur = new Date(customFrom + 'T00:00:00');
+    const endDate = new Date(customTo + 'T00:00:00');
+    while (cur <= endDate) {
+      days.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
     }
     return days;
   }
@@ -486,7 +485,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
     const buffer = await workbook.xlsx.writeBuffer();
     const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    saveAs(new Blob([buffer]), `${cleanTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`);
+    saveAs(new Blob([buffer]), `${cleanTitle}_${getManilaDate()}.xlsx`);
   };
 
   const exportDailyReportExcel = async () => {

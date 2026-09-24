@@ -19,6 +19,7 @@ import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
 import { queueService } from '@/services/queueService';
+import { getManilaDate, getManilaTime } from '@/utils/philippineTime';
 
 
 interface DashboardAppProps {
@@ -148,10 +149,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   // Check for upcoming medication doses
   useEffect(() => {
     const checkUpcomingDoses = () => {
-      const now = new Date();
-      const currentHours = now.getHours();
-      const currentMinutes = now.getMinutes();
-      const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+      const [currHStr, currMStr] = getManilaTime().split(':');
+      const currentHours = parseInt(currHStr, 10);
+      const currentMinutes = parseInt(currMStr, 10);
+      const today = getManilaDate();
 
       setNotifications(prev => {
         const newNotifs: AppNotification[] = [];

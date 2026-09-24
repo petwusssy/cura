@@ -337,7 +337,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       setIssuedSummary({
         id: certId,
         patientName: patientName,
-        date: date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        date: date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' }),
         diagnosis: diagnosis || examinedDueTo || 'Medical Consultation',
         doctor: doctor,
       });

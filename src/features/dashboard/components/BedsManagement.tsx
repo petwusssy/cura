@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { BedDouble, Clock, X, UserCheck, History, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Bed, Patient, BedHistory } from '../types';
+import { getManilaDate, getManilaTime } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
 
 type DateFilterType = 'today' | 'week' | 'month';
 
-const TODAY = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); // Gets YYYY-MM-DD in local time
+const TODAY = getManilaDate(); // Gets YYYY-MM-DD in Asia/Manila
 
 function isInRange(date: string, filter: DateFilterType): boolean {
   if (filter === 'today') return date === TODAY;
@@ -144,9 +145,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     const entry: BedHistory = {
       patientName: releaseModal.patientName || 'Unknown Patient',
       patientId: releaseModal.patientId || 'N/A',
-      date: now.toLocaleDateString('en-CA'),
-      timeIn: start.toTimeString().slice(0, 5),
-      timeOut: now.toTimeString().slice(0, 5),
+      date: getManilaDate(now),
+      timeIn: getManilaTime(start),
+      timeOut: getManilaTime(now),
       duration: `${h}h ${m}m`,
       reason: releaseModal.reason || 'N/A',
     };

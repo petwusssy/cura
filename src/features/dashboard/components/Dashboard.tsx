@@ -8,6 +8,8 @@ import {
 } from 'recharts';
 import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
+
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
 const YELLOW = '#F4C542';
@@ -31,17 +33,9 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
 
-
-
-
-  const todayDate = new Date();
-  const today = todayDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  const yesterdayDate = new Date(todayDate);
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterday = yesterdayDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  const weekAgoDate = new Date(todayDate);
-  weekAgoDate.setDate(weekAgoDate.getDate() - 7);
-  const weekAgo = weekAgoDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const today = getManilaDate();
+  const yesterday = getManilaYesterday();
+  const weekAgo = getManilaDaysAgo(7);
 
   const filteredConsultations = consultations.filter(c => {
     if (dateFilter === 'today') return c.date === today;
@@ -56,7 +50,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     return true;
   });
 
-  const currentYear = todayDate.getFullYear();
+  const currentYear = parseInt(today.slice(0, 4), 10);
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthlyData = months.map((month, index) => {
     const monthStr = String(index + 1).padStart(2, '0');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, ArrowRight, Calendar, Eye, Plus, User, X, Pill } from 'lucide-react';
 import { Patient, Consultation, Page } from '../types';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 const YELLOW = '#F4C542';
@@ -40,28 +41,13 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const isDateMatch = (dateStr: string) => {
     if (datePreset === 'all') return true;
     
-    const today = new Date();
-    const getLocal = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    const todayStr = getLocal(today);
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = getLocal(yesterday);
+    const todayStr = getManilaDate();
+    const yesterdayStr = getManilaYesterday();
+    const weekAgoStr = getManilaDaysAgo(7);
 
     if (datePreset === 'today') return dateStr === todayStr;
     if (datePreset === 'yesterday') return dateStr === yesterdayStr;
-    if (datePreset === 'week') {
-      const target = new Date(dateStr);
-      const diffTime = today.getTime() - target.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 7;
-    }
+    if (datePreset === 'week') return dateStr >= weekAgoStr && dateStr <= todayStr;
     if (datePreset === 'custom') {
       return !customDate || dateStr === customDate;
     }

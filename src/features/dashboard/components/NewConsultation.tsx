@@ -29,6 +29,8 @@ const DEFAULT_CASE_CATEGORIES = [
 
 
 
+import { getManilaDate, getManilaTime } from '@/utils/philippineTime';
+
 const UNITS = ['tablet', 'capsule', 'sachet', 'lozenge', 'piece', 'bottle', 'mL', 'application'];
 
 interface NewConsultationProps {
@@ -40,15 +42,8 @@ interface NewConsultationProps {
   onNavigate: (page: Page) => void;
 }
 
-const now = () => {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-};
-
-const today = () => {
-  const d = new Date();
-  return d.toLocaleDateString('en-CA');
-};
+const now = () => getManilaTime();
+const today = () => getManilaDate();
 
 export function NewConsultation({ patient, patients = [], medicines = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {
   const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || initialData?.patientId || '');

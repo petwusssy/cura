@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2 } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
+import { getManilaDate } from '@/utils/philippineTime';
 import uaSeal from '@/assets/images/ua-seal.png';
 
 const PRIMARY = '#1E5AA8';
@@ -101,7 +102,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       ...receiveModal,
       receivedQty: newReceived,
       status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
-      history: [...receiveModal.history, { date: new Date().toLocaleDateString('en-CA'), qty, note: receiveNote || `Received delivery (+${qty} units)` }],
+      history: [...receiveModal.history, { date: getManilaDate(), qty, note: receiveNote || `Received delivery (+${qty} units)` }],
     };
     try {
       await onUpdateRequest(updated);
@@ -123,9 +124,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       unitPrice: parseFloat(newReq.unitPrice) || 0,
       requestedQty: parseInt(newReq.requestedQty) || 1,
       receivedQty: 0,
-      date: new Date().toLocaleDateString('en-CA'),
+      date: getManilaDate(),
       status: 'Pending',
-      history: [{ date: new Date().toLocaleDateString('en-CA'), qty: 0, note: `Requisition initiated under ${newReq.prfNo || prfNo}` }],
+      history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${newReq.prfNo || prfNo}` }],
     };
     try {
       await onAddRequest(req);
@@ -164,9 +165,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
             requestedQty: qty,
             receivedQty: 0,
-            date: new Date().toLocaleDateString('en-CA'),
+            date: getManilaDate(),
             status: 'Pending',
-            history: [{ date: new Date().toLocaleDateString('en-CA'), qty: 0, note: `Requisition registered via ${prfNo}` }],
+            history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${prfNo}` }],
           };
           await onAddRequest(req);
           addedCount++;
