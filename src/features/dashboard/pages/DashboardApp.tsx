@@ -232,11 +232,16 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     const updates = treatments.map(async (t) => {
       const med = medicines.find(m => m.name === t.medicineName);
       if (med) {
+        const currentDispensed = Math.max(
+          Number(med.dispensed) || 0,
+          (med.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + (Number(h.qty) || 0), 0)
+        );
         const newStock = Math.max(0, med.stock - t.quantity);
         const updatedMed = {
           ...med,
           stock: newStock,
-          status: newStock <= 10 ? 'Low Stock' : 'Normal' as any,
+          dispensed: currentDispensed + t.quantity,
+          status: newStock === 0 ? 'Out of Stock' : newStock <= (med.threshold ?? 10) ? 'Low Stock' : 'Normal' as any,
           stockHistory: [...(med.stockHistory || []), {
             date: consultationDate,
             qty: t.quantity,

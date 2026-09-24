@@ -43,10 +43,10 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   });
 
   const getMedicineDetails = (m: MedicineItem) => {
-    const adds = (m.stockHistory || []).filter(h => h.type === 'add').reduce((sum, h) => sum + h.qty, 0);
-    const dispenses = (m.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + h.qty, 0);
-    const dispensed = m.dispensed ?? dispenses;
-    const beginningQty = m.beginningQty !== undefined ? m.beginningQty : (adds > 0 ? adds : m.stock + dispensed);
+    const adds = (m.stockHistory || []).filter(h => h.type === 'add').reduce((sum, h) => sum + (Number(h.qty) || 0), 0);
+    const historyDispenses = (m.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + (Number(h.qty) || 0), 0);
+    const dispensed = Math.max(Number(m.dispensed) || 0, historyDispenses);
+    const beginningQty = m.beginningQty !== undefined && m.beginningQty !== null ? m.beginningQty : (adds > 0 ? adds : m.stock + dispensed);
 
     const thresh = m.threshold ?? 5;
     let status: 'Healthy' | 'Low Stock' | 'Out of Stock' = 'Healthy';
