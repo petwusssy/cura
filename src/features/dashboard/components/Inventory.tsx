@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar, PackageSearch } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
 
@@ -18,8 +18,15 @@ interface InventoryProps {
 export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQuery }: InventoryProps) {
   const displayMedicines = medicines ?? [];
 
+  const [localSearch, setLocalSearch] = useState(searchQuery || '');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock' | 'Healthy'>('All');
   const [typeFilter, setTypeFilter] = useState<'All' | 'Medicine' | 'Supply'>('All');
+
+  useEffect(() => {
+    if (searchQuery !== undefined) {
+      setLocalSearch(searchQuery);
+    }
+  }, [searchQuery]);
   const [adjustModal, setAdjustModal] = useState<MedicineItem | null>(null);
   const [adjustType, setAdjustType] = useState<'add' | 'dispense'>('add');
   const [adjustQty, setAdjustQty] = useState('');
@@ -67,6 +74,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     return { beginningQty, dispensed, status, displayUnit };
   };
 
+  const query = (localSearch || searchQuery || '').trim().toLowerCase();
+
   const seenMedKeys = new Set<string>();
   const filtered = displayMedicines.filter(m => {
     const key = m.id ? `id:${m.id}` : '';
@@ -77,8 +86,17 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     if (nameKey) seenMedKeys.add(nameKey);
 
     const details = getMedicineDetails(m);
-    const matchSearch = !searchQuery || 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Deep search matching across all fields: name, category, unit, status, dateAdded, and stock history notes
+    const matchSearch = !query || 
+      (m.name && m.name.toLowerCase().includes(query)) ||
+      (m.category && m.category.toLowerCase().includes(query)) ||
+      (m.unit && m.unit.toLowerCase().includes(query)) ||
+      (details.displayUnit && details.displayUnit.toLowerCase().includes(query)) ||
+      (details.status && details.status.toLowerCase().includes(query)) ||
+      (m.dateAdded && m.dateAdded.toLowerCase().includes(query)) ||
+      (m.stockHistory || []).some(h => (h.note && h.note.toLowerCase().includes(query)));
+
     const matchStatus = statusFilter === 'All' || details.status === statusFilter;
     const matchType = typeFilter === 'All' || m.category === typeFilter;
     return matchSearch && matchStatus && matchType;
@@ -196,39 +214,63 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Status</span>
-          <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
-          <div className="flex gap-1 overflow-x-auto hide-scrollbar">
-            {(['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const).map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
-                style={{
-                  background: statusFilter === s ? PRIMARY : 'transparent',
-                  color: statusFilter === s ? 'white' : '#6b7280',
-                }}>
-                {s}
-              </button>
-            ))}
-          </div>
+      {/* Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        {/* Search input */}
+        <div className="relative flex-1 max-w-lg">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={localSearch}
+            onChange={e => setLocalSearch(e.target.value)}
+            placeholder="Search medicine, supply, unit, status, remarks..."
+            className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#1E5AA8] focus:ring-2 focus:ring-[#1E5AA8]/20 transition-all shadow-xs"
+          />
+          {localSearch && (
+            <button
+              onClick={() => setLocalSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Type</span>
-          <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
-          <div className="flex gap-1 overflow-x-auto hide-scrollbar">
-            {(['All', 'Medicine', 'Supply'] as const).map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)}
-                className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
-                style={{
-                  background: typeFilter === t ? PRIMARY : 'transparent',
-                  color: typeFilter === t ? 'white' : '#6b7280',
-                }}>
-                {t}
-              </button>
-            ))}
+        {/* Filters */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto shadow-xs">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Status</span>
+            <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
+            <div className="flex gap-1 overflow-x-auto hide-scrollbar">
+              {(['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const).map(s => (
+                <button key={s} onClick={() => setStatusFilter(s)}
+                  className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
+                  style={{
+                    background: statusFilter === s ? PRIMARY : 'transparent',
+                    color: statusFilter === s ? 'white' : '#6b7280',
+                  }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto shadow-xs">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Type</span>
+            <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
+            <div className="flex gap-1 overflow-x-auto hide-scrollbar">
+              {(['All', 'Medicine', 'Supply'] as const).map(t => (
+                <button key={t} onClick={() => setTypeFilter(t)}
+                  className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
+                  style={{
+                    background: typeFilter === t ? PRIMARY : 'transparent',
+                    color: typeFilter === t ? 'white' : '#6b7280',
+                  }}>
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -253,7 +295,19 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No records</td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <PackageSearch size={36} className="mx-auto mb-2 text-gray-300" />
+                    <p className="font-semibold text-gray-600">No inventory items found</p>
+                    {query ? (
+                      <p className="text-xs text-gray-400 mt-1">
+                        No matches for "{query}". <button onClick={() => setLocalSearch('')} className="text-[#1E5AA8] underline font-medium hover:opacity-80">Clear search</button>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-1">Try selecting a different filter.</p>
+                    )}
+                  </td>
+                </tr>
               ) : filtered.map(m => {
                 const details = getMedicineDetails(m);
                 const isOut = details.status === 'Out of Stock';
@@ -305,8 +359,14 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       {/* Mobile Cards */}
       <div className="flex flex-col gap-3 md:hidden">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-100">
-            No records
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-100 p-4">
+            <PackageSearch size={36} className="mx-auto mb-2 text-gray-300" />
+            <p className="font-semibold text-gray-600">No inventory items found</p>
+            {query && (
+              <p className="text-xs text-gray-400 mt-1">
+                No matches for "{query}". <button onClick={() => setLocalSearch('')} className="text-[#1E5AA8] underline font-medium">Clear search</button>
+              </p>
+            )}
           </div>
         ) : filtered.map(m => {
           const details = getMedicineDetails(m);
