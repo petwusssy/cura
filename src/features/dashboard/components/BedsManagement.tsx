@@ -7,9 +7,9 @@ import { getManilaDate, getManilaTime, getManilaDaysAgo, normalizeDate } from '@
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
 
-type DateFilterType = 'today' | 'week' | 'month';
+type DateFilterType = 'today' | 'week' | 'month' | 'custom';
 
-function isInRange(rawDate: string, filter: DateFilterType): boolean {
+function isInRange(rawDate: string, filter: DateFilterType, customFrom?: string, customTo?: string): boolean {
   const date = normalizeDate(rawDate);
   if (!date) return false;
   const todayStr = getManilaDate();
@@ -18,8 +18,16 @@ function isInRange(rawDate: string, filter: DateFilterType): boolean {
     const weekAgoStr = getManilaDaysAgo(7);
     return date >= weekAgoStr && date <= todayStr;
   }
-  // month: same month & year
-  return date.slice(0, 7) === todayStr.slice(0, 7);
+  if (filter === 'month') {
+    return date.slice(0, 7) === todayStr.slice(0, 7);
+  }
+  if (filter === 'custom') {
+    if (!customFrom && !customTo) return true;
+    if (customFrom && !customTo) return date >= customFrom;
+    if (!customFrom && customTo) return date <= customTo;
+    return date >= customFrom && date <= customTo;
+  }
+  return true;
 }
 
 function useDurationTimers(beds: Bed[]) {
@@ -82,6 +90,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   const [selectedBedTracker, setSelectedBedTracker] = useState<Bed | null>(null);
   const [trackerFilter, setTrackerFilter] = useState<DateFilterType>('today');
   const [gridFilter, setGridFilter] = useState<DateFilterType>('today');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [trackerCustomFrom, setTrackerCustomFrom] = useState('');
+  const [trackerCustomTo, setTrackerCustomTo] = useState('');
   const [selectedPatient, setSelectedPatient] = useState('');
   const [assignReason, setAssignReason] = useState('');
   const [assignTime, setAssignTime] = useState('');
@@ -90,10 +102,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   const available = beds.filter(b => b.status === 'Available').length;
   const occupied = beds.filter(b => b.status === 'Occupied').length;
 
+  const todayStr = getManilaDate();
+
   // Total usage count per bed within the selected date range (for the grid)
-  const bedUsageCount = (bed: Bed, filter: DateFilterType): number => {
-    const histCount = bed.history.filter(h => isInRange(h.date, filter)).length;
-    const currentCount = bed.status === 'Occupied' && isInRange(TODAY, filter) ? 1 : 0;
+  const bedUsageCount = (bed: Bed, filter: DateFilterType, from?: string, to?: string): number => {
+    const histCount = bed.history.filter(h => isInRange(h.date, filter, from, to)).length;
+    const currentCount = bed.status === 'Occupied' && isInRange(todayStr, filter, from, to) ? 1 : 0;
     return histCount + currentCount;
   };
 
@@ -174,12 +188,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   // Tracker history filtered
   const trackerHistory = selectedBedTracker
     ? [
-        ...selectedBedTracker.history.filter(h => isInRange(h.date, trackerFilter)),
-        ...(selectedBedTracker.status === 'Occupied' && isInRange(TODAY, trackerFilter)
+        ...selectedBedTracker.history.filter(h => isInRange(h.date, trackerFilter, trackerCustomFrom, trackerCustomTo)),
+        ...(selectedBedTracker.status === 'Occupied' && isInRange(todayStr, trackerFilter, trackerCustomFrom, trackerCustomTo)
           ? [{
               patientName: selectedBedTracker.patientName || '',
               patientId: selectedBedTracker.patientId || '',
-              date: TODAY,
+              date: todayStr,
               timeIn: selectedBedTracker.timeOccupied ? new Date(selectedBedTracker.timeOccupied).toTimeString().slice(0, 5) : '—',
               timeOut: '(current)',
               duration: durations[selectedBedTracker.id] || '—',
@@ -188,7 +202,17 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       ]
     : [];
 
-  const filterLabels: Record<DateFilterType, string> = { today: 'Today', week: 'This Week', month: 'This Month' };
+  const filterLabels: Record<DateFilterType, string> = { today: 'Today', week: 'This Week', month: 'This Month', custom: 'Custom' };
+
+  const getFilterDisplay = (f: DateFilterType, from?: string, to?: string) => {
+    if (f === 'custom') {
+      if (from && to) return `${from} to ${to}`;
+      if (from) return `From ${from}`;
+      if (to) return `Until ${to}`;
+      return 'custom range';
+    }
+    return filterLabels[f]?.toLowerCase() || f;
+  };
 
   // Get list of patient IDs and names currently assigned to occupied beds
   const occupiedPatientIds = beds
@@ -202,7 +226,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
     [...bed.history, ...(bed.status === 'Occupied' ? [{
       patientName: bed.patientName || '',
       patientId: bed.patientId || '',
-      date: TODAY,
+      date: todayStr,
       timeIn: bed.timeOccupied ? new Date(bed.timeOccupied).toTimeString().slice(0, 5) : '—',
       timeOut: '(current)',
       duration: durations[bed.id] || '—',
@@ -211,7 +235,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       ...h,
       _bedNumber: (h as any)._bedNumber ?? bed.bedNumber,
     }))
-  ).filter(h => isInRange(h.date, gridFilter));
+  ).filter(h => isInRange(h.date, gridFilter, customFrom, customTo));
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -221,14 +245,33 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Beds Management</h1>
         </div>
         {/* Grid date filter */}
-        <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
-          {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
-            <button key={f} onClick={() => setGridFilter(f)}
-              className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap"
-              style={{ background: gridFilter === f ? 'white' : 'transparent', color: gridFilter === f ? PRIMARY : '#6b7280', boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              {filterLabels[f]}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {gridFilter === 'custom' && (
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
+              <input
+                type="date"
+                value={customFrom}
+                onChange={e => setCustomFrom(e.target.value)}
+                className="bg-transparent border-none text-xs text-gray-700 focus:outline-none"
+              />
+              <span className="text-gray-400 text-xs font-medium">-</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={e => setCustomTo(e.target.value)}
+                className="bg-transparent border-none text-xs text-gray-700 focus:outline-none"
+              />
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+            {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
+              <button key={f} onClick={() => setGridFilter(f)}
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap"
+                style={{ background: gridFilter === f ? 'white' : 'transparent', color: gridFilter === f ? PRIMARY : '#6b7280', boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                {filterLabels[f]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -256,7 +299,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
         {[...beds].sort((a, b) => a.bedNumber - b.bedNumber).map(bed => {
           const isOccupied = bed.status === 'Occupied';
           const dur = durations[bed.id];
-          const usageCount = bedUsageCount(bed, gridFilter);
+          const usageCount = bedUsageCount(bed, gridFilter, customFrom, customTo);
           return (
             <div
               key={bed.id}
@@ -282,7 +325,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               {/* Usage count badge */}
               <div className="flex items-center gap-1.5 mb-auto text-[11px] text-gray-400">
                 <Users size={12} />
-                <span>{usageCount} patient{usageCount !== 1 ? 's' : ''} — {filterLabels[gridFilter].toLowerCase()}</span>
+                <span>{usageCount} patient{usageCount !== 1 ? 's' : ''} — {getFilterDisplay(gridFilter, customFrom, customTo)}</span>
               </div>
 
               {isOccupied ? (
@@ -351,14 +394,31 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 <div>
                   <div className="text-lg font-bold text-gray-900">Bed {selectedBedTracker.bedNumber} — Usage History</div>
                   <div className="text-sm text-gray-500">
-                    {bedUsageCount(selectedBedTracker, trackerFilter)} patient{bedUsageCount(selectedBedTracker, trackerFilter) !== 1 ? 's' : ''} — {filterLabels[trackerFilter].toLowerCase()}
+                    {bedUsageCount(selectedBedTracker, trackerFilter, trackerCustomFrom, trackerCustomTo)} patient{bedUsageCount(selectedBedTracker, trackerFilter, trackerCustomFrom, trackerCustomTo) !== 1 ? 's' : ''} — {getFilterDisplay(trackerFilter, trackerCustomFrom, trackerCustomTo)}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
+                {trackerFilter === 'custom' && (
+                  <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-xs">
+                    <input
+                      type="date"
+                      value={trackerCustomFrom}
+                      onChange={e => setTrackerCustomFrom(e.target.value)}
+                      className="bg-transparent border-none text-[11px] text-gray-700 focus:outline-none"
+                    />
+                    <span className="text-gray-400 text-[11px]">-</span>
+                    <input
+                      type="date"
+                      value={trackerCustomTo}
+                      onChange={e => setTrackerCustomTo(e.target.value)}
+                      className="bg-transparent border-none text-[11px] text-gray-700 focus:outline-none"
+                    />
+                  </div>
+                )}
                 {/* Tracker date filter */}
                 <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
-                  {(['today', 'week', 'month'] as DateFilterType[]).map(f => (
+                  {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
                     <button key={f} onClick={() => setTrackerFilter(f)}
                       className="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-all text-center whitespace-nowrap"
                       style={{ background: trackerFilter === f ? 'white' : 'transparent', color: trackerFilter === f ? PRIMARY : '#6b7280', boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
@@ -489,7 +549,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
       <div className="hidden md:block bg-white rounded-xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-gray-800">All Bed Usage History</h3>
-          <span className="text-xs text-gray-400">{allUsageHistory.length} record{allUsageHistory.length !== 1 ? 's' : ''} — {filterLabels[gridFilter].toLowerCase()}</span>
+          <span className="text-xs text-gray-400">{allUsageHistory.length} record{allUsageHistory.length !== 1 ? 's' : ''} — {getFilterDisplay(gridFilter, customFrom, customTo)}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
