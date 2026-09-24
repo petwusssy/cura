@@ -1,35 +1,79 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList, Package, ShoppingCart,
-  FileText, BedDouble, BarChart2, Bell, Settings, Search, LogOut, Menu, Calendar, Video
+  FileText, BedDouble, BarChart2, Bell, Settings, LogOut, Menu, Calendar, Video, ChevronDown
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
 import uaLogo from '@/assets/images/ua-logo.png';
 import curaLogoMain from '@/assets/images/cura-logo.png';
 import { authService } from '@/services/authService';
 
-interface NavItem {
-  id: Page;
-  label: string;
-  icon: React.ReactNode;
-}
+// ── Nav structure ──────────────────────────────────────────────────────────────
+type NavLeaf  = { kind: 'leaf';  id: Page;   label: string; icon: React.ReactNode };
+type NavGroup = { kind: 'group'; id: string; label: string; icon: React.ReactNode; children: NavLeaf[] };
+type NavItem  = NavLeaf | NavGroup;
+type NavSection = { section: string; items: NavItem[] };
 
-const navItems: NavItem[] = [
-  { id: 'dashboard',           label: 'Dashboard',            icon: <LayoutDashboard size={18} /> },
-  { id: 'patients',            label: 'Patients',             icon: <Users size={18} /> },
-  { id: 'appointments',        label: 'Appointments',         icon: <Calendar size={18} /> },
-  { id: 'telemedicine',        label: 'Telemedicine',         icon: <Video size={18} /> },
-  { id: 'consultations',       label: 'Consultations',        icon: <Stethoscope size={18} /> },
-  { id: 'non-consultations',   label: 'Non-Consultation',     icon: <ClipboardList size={18} /> },
-  { id: 'inventory',           label: 'Inventory',            icon: <Package size={18} /> },
-  { id: 'purchase-receipts',   label: 'Purchase Receipts',    icon: <ShoppingCart size={18} /> },
-  { id: 'medical-certificates',label: 'Medical Certificates', icon: <FileText size={18} /> },
-  { id: 'beds',                label: 'Beds Management',      icon: <BedDouble size={18} /> },
-  { id: 'reports',             label: 'Reports',              icon: <BarChart2 size={18} /> },
-  { id: 'notifications',       label: 'Notifications',        icon: <Bell size={18} /> },
-  { id: 'settings',            label: 'Settings',             icon: <Settings size={18} /> },
+const navSections: NavSection[] = [
+  {
+    section: 'MAIN',
+    items: [
+      { kind: 'leaf',  id: 'dashboard',  label: 'Dashboard',   icon: <LayoutDashboard size={18} /> },
+      { kind: 'leaf',  id: 'patients',   label: 'Patients',    icon: <Users size={18} /> },
+      {
+        kind: 'group', id: 'appointments-group', label: 'Appointments', icon: <Calendar size={18} />,
+        children: [
+          { kind: 'leaf', id: 'appointments',         label: 'Appointments',         icon: <Calendar size={16} /> },
+          { kind: 'leaf', id: 'medical-certificates', label: 'Medical Certificates', icon: <FileText size={16} /> },
+        ],
+      },
+      {
+        kind: 'group', id: 'consultations-group', label: 'Consultations', icon: <Stethoscope size={18} />,
+        children: [
+          { kind: 'leaf', id: 'consultations',     label: 'Consultations',    icon: <Stethoscope size={16} /> },
+          { kind: 'leaf', id: 'non-consultations', label: 'Non-Consultation', icon: <ClipboardList size={16} /> },
+        ],
+      },
+      { kind: 'leaf', id: 'telemedicine', label: 'Telemedicine', icon: <Video size={18} /> },
+    ],
+  },
+  {
+    section: 'OPERATIONS',
+    items: [
+      {
+        kind: 'group', id: 'inventory-group', label: 'Inventory', icon: <Package size={18} />,
+        children: [
+          { kind: 'leaf', id: 'inventory',         label: 'Inventory',         icon: <Package size={16} /> },
+          { kind: 'leaf', id: 'purchase-receipts', label: 'Purchase Receipts', icon: <ShoppingCart size={16} /> },
+        ],
+      },
+      { kind: 'leaf', id: 'beds', label: 'Beds Management', icon: <BedDouble size={18} /> },
+    ],
+  },
+  {
+    section: 'REPORTS',
+    items: [
+      { kind: 'leaf', id: 'reports', label: 'Reports', icon: <BarChart2 size={18} /> },
+    ],
+  },
+  {
+    section: 'SYSTEM',
+    items: [
+      { kind: 'leaf', id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
+    ],
+  },
 ];
+
+// Child pages that belong to each group (for active-parent detection)
+const groupChildren: Record<string, Page[]> = {
+  'appointments-group':  ['appointments', 'medical-certificates'],
+  'consultations-group': [
+    'consultations', 'non-consultations',
+    'new-consultation', 'new-consultation-tab', 'new-non-consultation-tab', 'convert-consultation-tab',
+  ],
+  'inventory-group': ['inventory', 'purchase-receipts'],
+};
 
 interface LayoutProps {
   currentPage: Page;
@@ -45,28 +89,111 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
   const unread = notifications.filter(n => !n.read).length;
 
   const roles = authService.getRoles();
-  const isAdmin = roles.includes('Admin');
   const username = authService.getUsername() || 'Staff';
   const displayRole = roles.length > 0 ? roles.join(', ') : 'Staff';
 
-  const filteredNavItems = navItems.filter(item => {
-    // Add role checks here based on requirements if needed in the future
-    // Currently, all items are visible
-    return true;
-  });
-
-  const isActive = (id: Page) =>
-    currentPage === id ||
-    (id === 'patients' && ['patient-profile', 'patient-form', 'new-consultation'].includes(currentPage));
+  // Auto-open the group that contains currentPage
+  const activeGroup = Object.entries(groupChildren).find(([, pages]) => pages.includes(currentPage))?.[0] ?? null;
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroup);
 
   useEffect(() => {
-    if (window.innerWidth < 768) {
-      setCollapsed(true);
-    }
+    if (activeGroup) setOpenGroup(activeGroup);
+  }, [activeGroup]);
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setCollapsed(true);
   }, []);
 
+  const isLeafActive = (id: Page) =>
+    currentPage === id ||
+    (id === 'patients' && ['patient-profile', 'patient-form'].includes(currentPage));
+
+  const isGroupActive = (groupId: string) =>
+    (groupChildren[groupId] ?? []).includes(currentPage);
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroup(prev => (prev === groupId ? null : groupId));
+  };
+
+  const renderLeaf = (item: NavLeaf, indent = false) => {
+    const active = isLeafActive(item.id);
+    return (
+      <button
+        key={item.id}
+        onClick={() => {
+          onNavigate(item.id);
+          if (window.innerWidth < 768) setCollapsed(true);
+        }}
+        title={collapsed ? item.label : undefined}
+        className={`w-full flex items-center gap-3 text-left relative transition-all group ${indent && !collapsed ? 'pl-10 pr-4 py-2' : 'px-4 py-2.5'}`}
+        style={{ color: active ? '#fff' : 'rgba(255,255,255,0.6)' }}
+      >
+        {active && (
+          <span
+            className="absolute inset-0"
+            style={{ background: 'rgba(255,255,255,0.12)', borderRight: '3px solid #F4C542' }}
+          />
+        )}
+        <span className="relative flex-shrink-0">{item.icon}</span>
+        {!collapsed && <span className="relative text-sm font-medium truncate flex-1">{item.label}</span>}
+      </button>
+    );
+  };
+
+  const renderGroup = (item: NavGroup) => {
+    const gActive = isGroupActive(item.id);
+    const isOpen  = openGroup === item.id;
+    return (
+      <div key={item.id}>
+        <button
+          onClick={() => {
+            if (collapsed) { setCollapsed(false); setOpenGroup(item.id); }
+            else toggleGroup(item.id);
+          }}
+          title={collapsed ? item.label : undefined}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group"
+          style={{ color: gActive ? '#fff' : 'rgba(255,255,255,0.6)' }}
+        >
+          {gActive && !isOpen && (
+            <span
+              className="absolute inset-0"
+              style={{ background: 'rgba(255,255,255,0.12)', borderRight: '3px solid #F4C542' }}
+            />
+          )}
+          <span className="relative flex-shrink-0">{item.icon}</span>
+          {!collapsed && (
+            <>
+              <span className="relative text-sm font-medium truncate flex-1">{item.label}</span>
+              <ChevronDown
+                size={14}
+                className="relative flex-shrink-0 transition-transform duration-200"
+                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', opacity: 0.7 }}
+              />
+            </>
+          )}
+        </button>
+
+        <AnimatePresence initial={false}>
+          {isOpen && !collapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div className="border-l border-white/10 ml-6 my-0.5">
+                {item.children.map(child => renderLeaf(child, true))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   return (
-    <motion.div 
+    <motion.div
       className="flex h-[100dvh] overflow-hidden bg-background text-foreground transition-colors duration-300"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -74,7 +201,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
     >
       {/* Mobile Backdrop */}
       {!collapsed && (
-        <div 
+        <div
           className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setCollapsed(true)}
         />
@@ -84,7 +211,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       <motion.aside
         initial={{ x: -250 }}
         animate={{ x: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut", delay: 0.05 }}
+        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
         className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto border-r ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
         style={{
           width: collapsed ? 64 : 248,
@@ -98,90 +225,67 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
           style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.4)', height: '88px' }}
         >
-          {/* Main icon */}
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
             <img
               src={curaLogoMain}
               alt="CURA"
               className="absolute object-contain transition-transform duration-500"
-              style={{ 
-                height: collapsed ? '80px' : '115px', /* Slightly smaller balanced size */
+              style={{
+                height: collapsed ? '80px' : '115px',
                 width: 'auto',
                 maxWidth: 'none',
-                transform: 'translateY(4px)' /* Perfect optical center alignment */
+                transform: 'translateY(4px)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(4px) scale(1)'}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(4px) scale(1.05)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(4px) scale(1)')}
             />
           </div>
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
-              <span className="text-[34px] font-black tracking-tighter leading-none"
-                    style={{
-                      background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
-                      backgroundSize: '100% 300%',
-                      animation: 'liquidText 5s ease-in-out infinite',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif"
-                    }}>
+              <span
+                className="text-[34px] font-black tracking-tighter leading-none"
+                style={{
+                  background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
+                  backgroundSize: '100% 300%',
+                  animation: 'liquidText 5s ease-in-out infinite',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
                 CURA
               </span>
             </div>
           )}
         </div>
 
-        {/* Animated Blobs for Sidebar */}
+        {/* Animated Blobs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <div className="absolute top-[10%] left-[-20%] w-[120px] h-[120px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-[#dbeafe]/10 dark:bg-white/5 animate-[blob1_8s_ease-in-out_infinite]" />
           <div className="absolute bottom-[20%] right-[-10%] w-[150px] h-[150px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-[#bfdbfe]/10 dark:bg-white/5 animate-[blob2_10s_ease-in-out_infinite]" />
         </div>
 
         {/* Nav */}
-        <nav className="relative z-10 flex-1 py-3 overflow-y-auto">
-          {filteredNavItems.map(item => {
-            const active = isActive(item.id);
-            return (
-              <button
-                key={item.id}
-                onClick={() => { 
-                  onNavigate(item.id);
-                  if (window.innerWidth < 768) setCollapsed(true);
-                }}
-                title={collapsed ? item.label : undefined}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group"
-                style={{ color: active ? '#fff' : 'rgba(255,255,255,0.6)' }}
-              >
-                {active && (
-                  <span
-                    className="absolute inset-0"
-                    style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      borderRight: '3px solid #F4C542',
-                    }}
-                  />
-                )}
-                <span className="relative flex-shrink-0">{item.icon}</span>
-                {!collapsed && (
-                  <span className="relative text-sm font-medium truncate flex-1">{item.label}</span>
-                )}
-                {!collapsed && item.id === 'notifications' && unread > 0 && (
-                  <span
-                    className="relative ml-auto flex-shrink-0 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
-                    style={{ background: '#D64545' }}
-                  >
-                    {unread}
-                  </span>
-                )}
-                {collapsed && item.id === 'notifications' && unread > 0 && (
-                  <span
-                    className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full"
-                    style={{ background: '#D64545' }}
-                  />
-                )}
-              </button>
-            );
-          })}
+        <nav className="relative z-10 flex-1 py-2 overflow-y-auto">
+          {navSections.map(section => (
+            <div key={section.section} className="mb-1">
+              {/* Section label — hidden when collapsed */}
+              {!collapsed && (
+                <div
+                  className="px-4 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase"
+                  style={{ color: 'rgba(255,255,255,0.3)' }}
+                >
+                  {section.section}
+                </div>
+              )}
+              {collapsed && (
+                <div className="my-1 mx-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+              )}
+              {section.items.map(item =>
+                item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)
+              )}
+            </div>
+          ))}
         </nav>
 
         {/* UA Seal + Sign Out */}
@@ -213,11 +317,11 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         <motion.header
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.25, delay: 0.15, ease: "easeOut" }}
+          transition={{ duration: 0.25, delay: 0.15, ease: 'easeOut' }}
           className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground"
-          style={{ 
+          style={{
             background: 'var(--header-bg)',
-            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
           }}
         >
           {/* Animated blobs */}
@@ -276,10 +380,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </motion.header>
 
         {/* Page content */}
-        <motion.main 
+        <motion.main
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.25, delay: 0.25, ease: 'easeOut' }}
           className="flex-1 overflow-y-auto"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
