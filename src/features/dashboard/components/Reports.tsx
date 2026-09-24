@@ -7,6 +7,7 @@ import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -269,6 +270,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [filter, setFilter] = useState<ReportFilter>('month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
@@ -1279,35 +1281,30 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
                     <button
                       key={f}
-                      onClick={() => setFilter(f)}
+                      onClick={() => {
+                        if (f === 'custom') {
+                          setIsCustomModalOpen(true);
+                        } else {
+                          setFilter(f);
+                        }
+                      }}
                       className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap cursor-pointer ${
                         filter === f
                           ? 'bg-white text-[#1B3A6B] shadow-xs'
                           : 'text-gray-500 hover:text-gray-800 bg-transparent'
                       }`}
                     >
-                      {f === 'all' ? 'All' : f === 'custom' ? 'Custom' : f.charAt(0).toUpperCase() + f.slice(1)}
+                      {f === 'custom' && filter === 'custom' && (customFrom || customTo)
+                        ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
+                        : f === 'all'
+                        ? 'All'
+                        : f === 'custom'
+                        ? 'Custom'
+                        : f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
-              {filter === 'custom' && (
-                <div className="flex items-center gap-1 self-end pb-0.5">
-                  <input
-                    type="date"
-                    value={customFrom}
-                    onChange={e => setCustomFrom(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-xs"
-                  />
-                  <span className="text-gray-400 text-xs font-bold">-</span>
-                  <input
-                    type="date"
-                    value={customTo}
-                    onChange={e => setCustomTo(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-[#1B3A6B] bg-gray-50 shadow-xs"
-                  />
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1765,6 +1762,20 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
         </div>
       </div>
+
+      {/* Custom Date Modal */}
+      <CustomDateRangeModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        initialFrom={customFrom}
+        initialTo={customTo}
+        onApply={(from, to) => {
+          setCustomFrom(from);
+          setCustomTo(to);
+          setFilter('custom');
+        }}
+        title="Custom Date Range — Reports"
+      />
     </div>
   );
 }

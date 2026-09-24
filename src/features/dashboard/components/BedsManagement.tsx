@@ -3,6 +3,7 @@ import { BedDouble, Clock, X, UserCheck, History, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Bed, Patient, BedHistory } from '../types';
 import { getManilaDate, getManilaTime, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -92,8 +93,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
   const [gridFilter, setGridFilter] = useState<DateFilterType>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [trackerCustomFrom, setTrackerCustomFrom] = useState('');
   const [trackerCustomTo, setTrackerCustomTo] = useState('');
+  const [isTrackerCustomModalOpen, setIsTrackerCustomModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState('');
   const [assignReason, setAssignReason] = useState('');
   const [assignTime, setAssignTime] = useState('');
@@ -245,33 +248,29 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Beds Management</h1>
         </div>
         {/* Grid date filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          {gridFilter === 'custom' && (
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
-              <input
-                type="date"
-                value={customFrom}
-                onChange={e => setCustomFrom(e.target.value)}
-                className="bg-transparent border-none text-xs text-gray-700 focus:outline-none"
-              />
-              <span className="text-gray-400 text-xs font-medium">-</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={e => setCustomTo(e.target.value)}
-                className="bg-transparent border-none text-xs text-gray-700 focus:outline-none"
-              />
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
-            {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
-              <button key={f} onClick={() => setGridFilter(f)}
-                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap"
-                style={{ background: gridFilter === f ? 'white' : 'transparent', color: gridFilter === f ? PRIMARY : '#6b7280', boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                {filterLabels[f]}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+          {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
+            <button
+              key={f}
+              onClick={() => {
+                if (f === 'custom') {
+                  setIsCustomModalOpen(true);
+                } else {
+                  setGridFilter(f);
+                }
+              }}
+              className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap cursor-pointer"
+              style={{
+                background: gridFilter === f ? 'white' : 'transparent',
+                color: gridFilter === f ? PRIMARY : '#6b7280',
+                boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              {f === 'custom' && gridFilter === 'custom' && (customFrom || customTo)
+                ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
+                : filterLabels[f]}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -399,30 +398,28 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
-                {trackerFilter === 'custom' && (
-                  <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-xs">
-                    <input
-                      type="date"
-                      value={trackerCustomFrom}
-                      onChange={e => setTrackerCustomFrom(e.target.value)}
-                      className="bg-transparent border-none text-[11px] text-gray-700 focus:outline-none"
-                    />
-                    <span className="text-gray-400 text-[11px]">-</span>
-                    <input
-                      type="date"
-                      value={trackerCustomTo}
-                      onChange={e => setTrackerCustomTo(e.target.value)}
-                      className="bg-transparent border-none text-[11px] text-gray-700 focus:outline-none"
-                    />
-                  </div>
-                )}
                 {/* Tracker date filter */}
                 <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
                   {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
-                    <button key={f} onClick={() => setTrackerFilter(f)}
-                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-all text-center whitespace-nowrap"
-                      style={{ background: trackerFilter === f ? 'white' : 'transparent', color: trackerFilter === f ? PRIMARY : '#6b7280', boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                      {filterLabels[f]}
+                    <button
+                      key={f}
+                      onClick={() => {
+                        if (f === 'custom') {
+                          setIsTrackerCustomModalOpen(true);
+                        } else {
+                          setTrackerFilter(f);
+                        }
+                      }}
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer"
+                      style={{
+                        background: trackerFilter === f ? 'white' : 'transparent',
+                        color: trackerFilter === f ? PRIMARY : '#6b7280',
+                        boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      }}
+                    >
+                      {f === 'custom' && trackerFilter === 'custom' && (trackerCustomFrom || trackerCustomTo)
+                        ? `Custom (${trackerCustomFrom || '...'} to ${trackerCustomTo || '...'})`
+                        : filterLabels[f]}
                     </button>
                   ))}
                 </div>
@@ -706,6 +703,33 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           </div>
         </div>
       )}
+
+      {/* Custom Date Modals */}
+      <CustomDateRangeModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        initialFrom={customFrom}
+        initialTo={customTo}
+        onApply={(from, to) => {
+          setCustomFrom(from);
+          setCustomTo(to);
+          setGridFilter('custom');
+        }}
+        title="Custom Date Range — Beds Management"
+      />
+
+      <CustomDateRangeModal
+        isOpen={isTrackerCustomModalOpen}
+        onClose={() => setIsTrackerCustomModalOpen(false)}
+        initialFrom={trackerCustomFrom}
+        initialTo={trackerCustomTo}
+        onApply={(from, to) => {
+          setTrackerCustomFrom(from);
+          setTrackerCustomTo(to);
+          setTrackerFilter('custom');
+        }}
+        title={`Custom Date Range — Bed ${selectedBedTracker?.bedNumber || ''} History`}
+      />
     </div>
   );
 }

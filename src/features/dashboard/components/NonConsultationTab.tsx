@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, ArrowRight, Calendar, Eye, Plus, User, X, Pill } from 'lucide-react';
 import { Patient, Consultation, Page } from '../types';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1E5AA8';
 const YELLOW = '#F4C542';
@@ -17,7 +18,9 @@ interface NonConsultationTabProps {
 
 export function NonConsultationTab({ patients, consultations, onConvertToConsultation, onNavigate, onSelectPatient, searchQuery }: NonConsultationTabProps) {
   const [datePreset, setDatePreset] = useState<'all' | 'today' | 'yesterday' | 'week' | 'custom'>('all');
-  const [customDate, setCustomDate] = useState('');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
 
@@ -48,7 +51,10 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
     if (datePreset === 'yesterday') return dateStr === yesterdayStr;
     if (datePreset === 'week') return dateStr >= weekAgoStr && dateStr <= todayStr;
     if (datePreset === 'custom') {
-      return !customDate || dateStr === customDate;
+      if (!customFrom && !customTo) return true;
+      if (customFrom && !customTo) return dateStr >= customFrom;
+      if (!customFrom && customTo) return dateStr <= customTo;
+      return dateStr >= customFrom && dateStr <= customTo;
     }
     return true;
   };
@@ -111,25 +117,24 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
             return (
               <button
                 key={p}
-                onClick={() => { setDatePreset(p); if(p !== 'custom') setCustomDate(''); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${datePreset === p ? 'bg-[#1E5AA8] text-white shadow-sm' : 'text-[#1E5AA8] hover:bg-blue-50'}`}
+                onClick={() => {
+                  if (p === 'custom') {
+                    setIsCustomModalOpen(true);
+                  } else {
+                    setDatePreset(p);
+                  }
+                }}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  datePreset === p ? 'bg-[#1E5AA8] text-white shadow-sm' : 'text-[#1E5AA8] hover:bg-blue-50'
+                }`}
               >
-                {labels[p]}
+                {p === 'custom' && datePreset === 'custom' && (customFrom || customTo)
+                  ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
+                  : labels[p]}
               </button>
             );
           })}
         </div>
-
-        {datePreset === 'custom' && (
-          <div className="flex items-center gap-2 w-full sm:w-auto animate-in fade-in zoom-in-95 duration-200">
-            <Calendar size={15} className="text-gray-400 hidden sm:block" />
-            <input type="date" value={customDate} onChange={e => setCustomDate(e.target.value)}
-              className="flex-1 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white w-full sm:w-auto shadow-sm" />
-            {customDate && (
-              <button onClick={() => setCustomDate('')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100 flex-shrink-0">Clear</button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Desktop Table */}
@@ -396,6 +401,20 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
           </div>
         );
       })()}
+
+      {/* Custom Date Modal */}
+      <CustomDateRangeModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        initialFrom={customFrom}
+        initialTo={customTo}
+        onApply={(from, to) => {
+          setCustomFrom(from);
+          setCustomTo(to);
+          setDatePreset('custom');
+        }}
+        title="Custom Date Range — Non-Consultations"
+      />
     </div>
   );
 }

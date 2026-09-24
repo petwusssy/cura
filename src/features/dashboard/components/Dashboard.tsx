@@ -10,6 +10,7 @@ import {
 import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -33,6 +34,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
   const today = getManilaDate();
   const yesterday = getManilaYesterday();
@@ -106,33 +108,28 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         </div>
         {/* Date filter */}
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-          {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <input 
-                type="date" 
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="border-none bg-transparent rounded-lg px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E5AA8]"
-              />
-              <span className="text-gray-400 text-sm font-medium">-</span>
-              <input 
-                type="date" 
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="border-none bg-transparent rounded-lg px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E5AA8]"
-              />
-            </div>
-          )}
           <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
             {(['all', 'today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
               <button
                 key={f}
-                onClick={() => setDateFilter(f)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
+                onClick={() => {
+                  if (f === 'custom') {
+                    setIsCustomModalOpen(true);
+                  } else {
+                    setDateFilter(f);
+                  }
+                }}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize cursor-pointer
                   ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
                 style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
               >
-                {f === 'all' ? 'All' : f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'custom' && dateFilter === 'custom' && (customFrom || customTo)
+                  ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
+                  : f === 'all'
+                  ? 'All'
+                  : f === 'week'
+                  ? 'This Week'
+                  : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -456,6 +453,20 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
             </div>
         </div>
       </div>
+
+      {/* Custom Date Modal */}
+      <CustomDateRangeModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        initialFrom={customFrom}
+        initialTo={customTo}
+        onApply={(from, to) => {
+          setCustomFrom(from);
+          setCustomTo(to);
+          setDateFilter('custom');
+        }}
+        title="Custom Date Range — Dashboard"
+      />
     </div>
   );
 }
