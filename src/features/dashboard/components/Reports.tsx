@@ -32,6 +32,54 @@ const ALL_CASES = [
   'Vision blurring', 'Lab works reading', 'Constipation', 'Hair loss', 'Hypoglycemia', 'Indigestion', 'Lethargic', 'Fracture', 'Sinusitis'
 ];
 
+export function isCaseMatch(targetCase: string, catOrComplaint: string): boolean {
+  if (!catOrComplaint || !targetCase) return false;
+  const a = targetCase.toLowerCase().trim();
+  const b = catOrComplaint.toLowerCase().trim();
+  if (a === b) return true;
+
+  // Split multi-word/slashed categories like "Headache/Dizziness" or "Cough/Colds"
+  const aParts = a.split(/[/,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  const bParts = b.split(/[/,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+
+  if (bParts.includes(a)) return true;
+  if (aParts.includes(b)) return true;
+  if (aParts.some(ap => bParts.includes(ap))) return true;
+
+  // Domain aliases & substring matching
+  if ((a.includes('abdominal pain') || a.includes('stomachache')) && 
+      (b.includes('abdominal pain') || b.includes('stomachache') || b.includes('stomach ache') || b.includes('abdominal'))) return true;
+  if (a.includes('diarrhea') && (b.includes('diarrhea') || b.includes('lbm'))) return true;
+  if (a.includes('chest pain') && (b.includes('chest pain') || b.includes('tightness'))) return true;
+  if (a.includes('palpitation') && b.includes('palpitation')) return true;
+  if (a.includes('fainting') && (b.includes('fainting') || b.includes('syncope'))) return true;
+  if (a.includes('stiff neck') && b.includes('stiff neck')) return true;
+  if (a.includes('wounds') && (b.includes('wound') || b.includes('laceration') || b.includes('abrasion') || b.includes('puncture'))) return true;
+  if (a.includes('eye irritation') && (b.includes('eye complaint') || b.includes('sore eyes') || b.includes('eye irritation') || b.includes('eye pain'))) return true;
+  if (a.includes('ear pain') && (b.includes('ear complaint') || b.includes('ear pain') || b.includes('earache'))) return true;
+  if (a.includes('allergy') && b.includes('allergy')) return true;
+  if (a.includes('rashes') && (b.includes('rashes') || b.includes('rash'))) return true;
+  if (a.includes('headache') && b.includes('headache')) return true;
+  if (a.includes('dizziness') && (b.includes('dizziness') || b.includes('dizzy'))) return true;
+  if (a.includes('fever') && (b.includes('fever') || b.includes('febrile') || b.includes('lagnat'))) return true;
+  if (a.includes('cough') && (b.includes('cough') || b.includes('ubo'))) return true;
+  if (a.includes('colds') && (b.includes('colds') || b.includes('sipon'))) return true;
+  if (a.includes('sore throat') && (b.includes('sore throat') || b.includes('throat pain'))) return true;
+  if (a.includes('toothache') && (b.includes('toothache') || b.includes('tooth pain') || b.includes('ngipin'))) return true;
+  if (a.includes('dysmenorrhea') && (b.includes('dysmenorrhea') || b.includes('menstrual cramps') || b.includes('period pain'))) return true;
+  if (a.includes('hypertension') && (b.includes('hypertension') || b.includes('high blood') || b.includes('elevated bp'))) return true;
+  if (a.includes('asthma') && b.includes('asthma')) return true;
+
+  // Exact word boundary match in complaint text (e.g. if complaint is "Severe headache and vomiting")
+  if (b.length > a.length) {
+    const escaped = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (regex.test(b)) return true;
+  }
+
+  return false;
+}
+
 // 32 Standard Supplies matching the uploaded May-26 Supplies Inventory template
 const SUPPLIES_LIST = [
   { no: 1, name: 'Adhesive steristrips packs 1/2"x4"', beg: 0, consumed: Array(31).fill(0), total: 0, end: 0 },
@@ -297,15 +345,44 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const getPatient = (id: string) => patients.find(p => p.id === id);
   const pat = (c: Consultation) => getPatient(c.patientId);
 
-  const casesConsForMonth = consultations.filter(c => c.date.startsWith(`${reportYear}-${monthNum}`));
+  const casesConsForMonth = consultations.filter(c => {
+    const dStr = normalizeDate(c.date);
+    return dStr ? dStr.startsWith(selectedMonthYear) : (c.date && c.date.startsWith(selectedMonthYear));
+  });
+
+  // Dynamic categories from consultations for the selected month not already matching ALL_CASES
+  const extraCases = Array.from(
+    new Set(
+      casesConsForMonth.flatMap(c => c.categories || []).filter(cat => {
+        if (!cat || !cat.trim()) return false;
+        return !ALL_CASES.some(ac => isCaseMatch(ac, cat));
+      })
+    )
+  );
+
+  const displayCases = [...ALL_CASES, ...extraCases];
 
   // Case count per category
   const caseCount = (cat: string, category: 'Student' | 'Personnel') => {
     return casesConsForMonth.filter(c => {
       const p = getPatient(c.patientId);
-      const hasCat = (c.categories || []).some(catName => catName.toLowerCase() === cat.toLowerCase());
-      if (category === 'Student') return p?.category === 'Student' && hasCat;
-      return (p?.category === 'Employee' || p?.category === 'Outsider') && hasCat;
+      const isTargetPatient = category === 'Student'
+        ? p?.category === 'Student'
+        : (p ? (p.category === 'Employee' || p.category === 'Outsider') : true);
+
+      if (!isTargetPatient) return false;
+
+      // 1. Check in c.categories
+      if (Array.isArray(c.categories) && c.categories.some(catName => isCaseMatch(cat, catName))) {
+        return true;
+      }
+
+      // 2. Check in c.complaint
+      if (c.complaint && isCaseMatch(cat, c.complaint)) {
+        return true;
+      }
+
+      return false;
     }).length;
   };
 
@@ -776,7 +853,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     });
 
     // Data Rows
-    ALL_CASES.forEach((c) => {
+    displayCases.forEach((c) => {
       if (c === 'Vision blurring') {
         const othersRow = worksheet.addRow(['Others:', '', '', '']);
         othersRow.eachCell((cell, colNumber) => {
@@ -803,8 +880,8 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     });
 
     // Footer Row
-    const totalStu = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0);
-    const totalEmp = ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0);
+    const totalStu = displayCases.reduce((sum, c) => sum + caseCount(c, 'Student'), 0);
+    const totalEmp = displayCases.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0);
     const totalSum = totalStu + totalEmp;
     
     const footerRow = worksheet.addRow(['TOTAL CASES ATTENDED', totalStu || '', totalEmp || '', totalSum]);
@@ -1331,7 +1408,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     </tr>
                   </thead>
                   <tbody>
-                    {ALL_CASES.map((c, index) => {
+                    {displayCases.map((c, index) => {
                       const stu = caseCount(c, 'Student');
                       const emp = caseCount(c, 'Personnel');
                       const total = stu + emp;
@@ -1346,9 +1423,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     })}
                     <tr className="bg-[#C6E0B4] text-black font-black text-center border-2 border-black text-sm">
                       <td className="border-2 border-black py-2 px-4 text-left font-extrabold">TOTAL CASES ATTENDED</td>
-                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student'), 0) || ''}</td>
-                      <td className="border border-black py-2 px-4 font-mono">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0) || ''}</td>
-                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">{ALL_CASES.reduce((sum, c) => sum + caseCount(c, 'Student') + caseCount(c, 'Personnel'), 0) || ''}</td>
+                      <td className="border border-black py-2 px-4 font-mono">{displayCases.reduce((sum, c) => sum + caseCount(c, 'Student'), 0) || ''}</td>
+                      <td className="border border-black py-2 px-4 font-mono">{displayCases.reduce((sum, c) => sum + caseCount(c, 'Personnel'), 0) || ''}</td>
+                      <td className="border-2 border-black py-2 px-4 bg-[#A9D18E] font-mono font-black text-base">{displayCases.reduce((sum, c) => sum + caseCount(c, 'Student') + caseCount(c, 'Personnel'), 0) || ''}</td>
                     </tr>
                   </tbody>
                 </table>

@@ -6,25 +6,26 @@ const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
 
 const DEFAULT_CASE_CATEGORIES = [
-  'Fever', 'Headache/Dizziness', 'Cough/Colds', 'Sore Throat', 'Nausea/Vomiting',
-  'Abdominal Pain', 'Diarrhea', 'Hypertension', 'Hypoglycemia', 'Wounds (abrasion/laceration/puncture)',
-  'Pain (upper and lower body)', 'Allergy/Rashes', 'Asthma', 'UTI (urinary tract infection)',
-  'Eye Complaint', 'Ear Complaint', 'Toothache', 'Seizure', 'Fainting/Syncope',
-  'Sprain', 'Stiff Neck', 'Back Pain', 'Chest Pain', 'Palpitation', 'Others',
-  'Abdominal Pain/Stomachache', 'Accidents', 'Acute Gingivitis', 'Acute Resp. Tract Infection',
-  'Allergy', 'Allergic Rhinitis', 'Anxiety', 'Blister', 'Body weakness/malaise', 'Body pain',
-  'Burns', 'Cat bite/scratch', 'Cellulitis', 'Chicken pox', 'Chest pain/tightness/Palpitation',
-  'Colds', 'Contusion/bumps', 'Cough', 'Cyst', 'Dengue Fever', 'Diarrhea/LBM', 'Dislocation/Fracture',
-  'Dizziness', 'Dyspepsia', 'Dog bite/scratch', 'Dysmenorrhea', 'Difficulty of breathing',
-  'Ear pain', 'Eye irritation/Sore eyes', 'Fainting', 'Furuncle/carbuncle/boils',
-  'Gastritis/Hyperacidity/epigastric pain/heartburn', 'Headache', 'Heat stress',
-  'Hypotension', 'Hyperventilation', 'Infected toenail', 'Inflammation/swelling',
-  'Insect bites', 'Joint pain', 'Lack of sleep', 'Measles', 'Migraine', 'Mouth sore',
-  'Mumps', 'Muscle pain', 'Nape pain', 'Nausea', 'Nose bleeding (epistaxis)',
+  'Fever', 'Headache', 'Dizziness', 'Cough', 'Colds', 'Sore throat',
+  'Nausea', 'Vomiting', 'Abdominal Pain/Stomachache', 'Diarrhea/LBM',
+  'Hypertension', 'Hypoglycemia', 'Asthma', 'Dysmenorrhea',
+  'Allergy', 'Rashes', 'Toothache', 'Back Pain', 'Body pain',
+  'Chest pain/tightness/Palpitation', 'Wounds (abrasion,laceration,puncture)',
+  'Eye irritation/Sore eyes', 'Ear pain', 'Fainting', 'Sprain', 'Stiff neck',
+  'Accidents', 'Acute Gingivitis', 'Acute Resp. Tract Infection',
+  'Allergic Rhinitis', 'Anxiety', 'Blister', 'Body weakness/malaise',
+  'Burns', 'Cat bite/scratch', 'Cellulitis', 'Chicken pox',
+  'Contusion/bumps', 'Cyst', 'Dengue Fever', 'Dislocation/Fracture',
+  'Dyspepsia', 'Dog bite/scratch', 'Difficulty of breathing',
+  'Furuncle/carbuncle/boils', 'Gastritis/Hyperacidity/epigastric pain/heartburn',
+  'Heat stress', 'Hypotension', 'Hyperventilation', 'Infected toenail',
+  'Inflammation/swelling', 'Insect bites', 'Joint pain', 'Lack of sleep',
+  'Measles', 'Migraine', 'Mouth sore', 'Mumps', 'Muscle pain', 'Nape pain',
+  'Nose bleeding (epistaxis)', 'Pain (upper and lower body)',
   'Pain Right lower quadrant (T/C Appendicitis)', 'Pruritus/skin irritation/skin condition',
-  'Rashes', 'Splinter', 'Tinnitus', 'Vaccine site pain', 'Vertigo', 'Vomiting',
-  'Vision blurring', 'Lab works reading', 'Constipation', 'Hair loss', 'Indigestion',
-  'Lethargic', 'Fracture', 'Sinusitis'
+  'Seizure', 'Splinter', 'Tinnitus', 'UTI (urinary tract infection)',
+  'Vaccine site pain', 'Vertigo', 'Vision blurring', 'Lab works reading',
+  'Constipation', 'Hair loss', 'Indigestion', 'Lethargic', 'Fracture', 'Sinusitis', 'Others'
 ];
 
 
@@ -109,11 +110,15 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   };
 
   const handleAddCategory = () => {
-    if (newCategory.trim() && !caseCategoriesList.includes(newCategory.trim())) {
-      setCaseCategoriesList(prev => [...prev, newCategory.trim()]);
-      setCategories(prev => [...prev, newCategory.trim()]);
-      setNewCategory('');
+    const trimmed = newCategory.trim();
+    if (!trimmed) return;
+    if (!caseCategoriesList.includes(trimmed)) {
+      setCaseCategoriesList(prev => [trimmed, ...prev]);
     }
+    if (!categories.includes(trimmed)) {
+      setCategories(prev => [...prev, trimmed]);
+    }
+    setNewCategory('');
   };
 
   const addTreatment = () => {
