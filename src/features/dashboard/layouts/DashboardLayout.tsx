@@ -202,21 +202,21 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         {/* Brand */}
         <div
           className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.2)', height: '88px' }}
+          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.2)', height: '72px' }}
         >
-          <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '40px' : '44px', height: '44px' }}>
+          <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '38px' : '42px', height: '42px' }}>
             <img
               src={curaLogoMain}
               alt="CURA"
               className="absolute object-contain transition-transform duration-500"
               style={{
-                height: collapsed ? '80px' : '115px',
+                height: collapsed ? '68px' : '94px',
                 width: 'auto',
                 maxWidth: 'none',
-                transform: 'translateY(4px)',
+                transform: 'translateY(2px)',
               }}
-              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(4px) scale(1.05)')}
-              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(4px) scale(1)')}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(2px) scale(1.05)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(2px) scale(1)')}
             />
           </div>
           {!collapsed && (
@@ -281,7 +281,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: 'easeOut' }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 h-[72px] flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground border-b border-border/40"
           style={{
             background: 'var(--header-bg)',
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',

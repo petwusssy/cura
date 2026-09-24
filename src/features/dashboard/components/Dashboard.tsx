@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
   Users, Stethoscope, Package, AlertTriangle, Activity, ChevronRight,
-  Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill
+  Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill,
+  Calendar, Video
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
@@ -86,12 +87,14 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   ];
 
   const quickActions = [
-    { label: 'Search Patient', icon: <Search size={20} />, page: 'patients' as Page, color: PRIMARY },
-    { label: 'Add Patient', icon: <UserPlus size={20} />, page: 'patient-form' as Page, color: '#4CAF50' },
+    { label: 'Patients', icon: <Users size={20} />, page: 'patients' as Page, color: '#1B3A6B' },
+    { label: 'Beds Management', icon: <BedDouble size={20} />, page: 'beds' as Page, color: '#2E7D32' },
+    { label: 'Appointments', icon: <Calendar size={20} />, page: 'appointments' as Page, color: '#D97706' },
+    { label: 'Consultations', icon: <Stethoscope size={20} />, page: 'consultations' as Page, color: PRIMARY },
+    { label: 'Telemedicine', icon: <Video size={20} />, page: 'telemedicine' as Page, color: '#0284C7' },
     { label: 'Inventory', icon: <Package size={20} />, page: 'inventory' as Page, color: '#FF9800' },
-    { label: 'Purchase Receipts', icon: <ShoppingCart size={20} />, page: 'purchase-receipts' as Page, color: '#9C27B0' },
-    { label: 'Med Certificate', icon: <FileText size={20} />, page: 'medical-certificates' as Page, color: '#00BCD4' },
     { label: 'Reports', icon: <BarChart2 size={20} />, page: 'reports' as Page, color: '#607D8B' },
+    { label: 'Add Patient', icon: <UserPlus size={20} />, page: 'patient-form' as Page, color: '#16A34A' },
   ];
 
   return (
@@ -333,7 +336,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         {/* Quick Actions */}
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
           <h3 className="text-gray-900 font-bold mb-5">Quick Actions</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3">
             {quickActions.map(a => (
               <button
                 key={a.label}
