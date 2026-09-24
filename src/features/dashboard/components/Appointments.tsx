@@ -118,8 +118,29 @@ export function Appointments({ patients }: AppointmentsProps) {
 
       {/* Main Content Area */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: PRIMARY }}></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in duration-150">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between gap-4">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="skeleton skeleton-circle w-10 h-10" />
+                  <div className="space-y-1.5">
+                    <div className="skeleton h-4 w-32 rounded" />
+                    <div className="skeleton h-2.5 w-20 rounded" />
+                  </div>
+                </div>
+                <div className="skeleton h-5 w-16 rounded-full" />
+              </div>
+              <div className="space-y-2 py-2 border-y border-gray-50">
+                <div className="skeleton h-3 w-40 rounded" />
+                <div className="skeleton h-3 w-28 rounded" />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <div className="skeleton h-9 flex-1 rounded-xl" />
+                <div className="skeleton h-9 flex-1 rounded-xl" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredRequests.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">

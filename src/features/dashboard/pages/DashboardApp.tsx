@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
 import {
-  Dashboard, DashboardSkeleton,
+  Dashboard, DashboardSkeleton, PageSkeleton,
   PatientManagement, PatientForm, PatientProfile, NewConsultation,
   ConsultationTab, NonConsultationTab, Inventory, PurchaseReceipts,
   MedicalCertificates, BedsManagement, Reports, Notifications, Settings,
@@ -40,9 +40,19 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [convertingId, setConvertingId]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
 
-  // Initialize with empty arrays to prevent mock data from showing before real data is fetched
-  const [patients, setPatients]                 = useState<Patient[]>([]);
-  const [consultations, setConsultations]       = useState<Consultation[]>([]);
+  // Initialize with cached data when available to eliminate skeleton on repeat views
+  const [patients, setPatients]                 = useState<Patient[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_patients_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [consultations, setConsultations]       = useState<Consultation[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_consultations_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
   const [medicines, setMedicines]               = useState<MedicineItem[]>(() => {
     try {
@@ -57,11 +67,38 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [beds, setBeds]                         = useState<Bed[]>([]);
+  const [beds, setBeds]                         = useState<Bed[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_beds_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [notifications, setNotifications]       = useState<AppNotification[]>([]);
-  const [queues, setQueues]                     = useState<PatientQueue[]>([]);
+  const [queues, setQueues]                     = useState<PatientQueue[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_queues_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   // true while the first batch of API calls is in-flight
   const [isLoading, setIsLoading]               = useState(true);
+
+  // If we already have loaded data, never show a blocking skeleton
+  const hasExistingData = patients.length > 0 || consultations.length > 0 || medicines.length > 0;
+
+  // Threshold delay: only reveal skeleton if network is actually slow (> 150ms) and we have no data
+  const [skeletonVisible, setSkeletonVisible]   = useState(false);
+
+  useEffect(() => {
+    if (!isLoading || hasExistingData) {
+      setSkeletonVisible(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSkeletonVisible(true);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [isLoading, hasExistingData]);
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
   const completedQueueIdsRef = useRef<Set<string>>(new Set());
@@ -98,7 +135,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       queueService.getQueues(),
     ]).then(([pRes, cRes, mRes, prRes, bRes, certRes, qRes]) => {
       if (pRes.status === 'fulfilled' && pRes.value !== undefined) {
-        setPatients(pRes.value.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name })));
+        const formatted = pRes.value.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name }));
+        setPatients(formatted);
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(formatted)); } catch {}
       }
       if (cRes.status === 'fulfilled' && cRes.value !== undefined) {
         const seen = new Set<string>();
@@ -109,16 +148,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           return true;
         });
         setConsultations(unique);
+        try { localStorage.setItem('cura_consultations_cache', JSON.stringify(unique)); } catch {}
       }
       if (mRes.status === 'fulfilled' && mRes.value !== undefined) {
         setMedicines(mRes.value);
-        localStorage.setItem('cura_medicines_cache', JSON.stringify(mRes.value));
+        try { localStorage.setItem('cura_medicines_cache', JSON.stringify(mRes.value)); } catch {}
       }
       if (prRes.status === 'fulfilled' && prRes.value !== undefined) {
         setPurchaseRequests(prRes.value);
       }
       if (bRes.status === 'fulfilled' && bRes.value !== undefined) {
         setBeds(bRes.value);
+        try { localStorage.setItem('cura_beds_cache', JSON.stringify(bRes.value)); } catch {}
       }
       if (certRes.status === 'fulfilled' && certRes.value !== undefined && certRes.value.length > 0) {
         setMedicalCerts(prev => {
@@ -132,9 +173,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }
       if (qRes.status === 'fulfilled' && qRes.value !== undefined) {
         setQueues(qRes.value);
+        try { localStorage.setItem('cura_queues_cache', JSON.stringify(qRes.value)); } catch {}
       }
     }).finally(() => {
-      // All initial requests settled — hide skeleton
+      // Immediate transition when network requests settle
       setIsLoading(false);
     });
 
@@ -604,9 +646,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const renderPage = () => {
-    // Show skeleton only for the main dashboard while data is loading
-    if (isLoading && currentPage === 'dashboard') {
-      return <DashboardSkeleton />;
+    // Show layout-matched skeleton for ALL pages ONLY when actively loading without cached/loaded data
+    if (isLoading && !hasExistingData && skeletonVisible) {
+      return <PageSkeleton page={currentPage} />;
     }
 
     switch (currentPage) {
