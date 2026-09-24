@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, Save, User } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
-const PRIMARY = '#1E5AA8';
+const PRIMARY = '#1B3A6B';
 
 interface PatientFormProps {
   patients: Patient[];
@@ -84,7 +84,6 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
       let errMsg = 'Failed to save patient data.';
       if (error.response?.data) {
         if (typeof error.response.data === 'string') {
-          // If it's a 404 HTML page or plain text
           errMsg = `Server Error (${error.response.status}): ${error.message}`;
         } else if (typeof error.response.data === 'object') {
           const values = Object.values(error.response.data);
@@ -98,7 +97,6 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         errMsg = error.message;
       }
       
-      // If it tries to fetch from itself (Vercel) and gets 404, the API URL is missing.
       if (
         error.response?.status === 404 && 
         window.location.hostname.includes('vercel.app') &&
@@ -122,51 +120,61 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
   const field = (label: string, key: keyof Patient, type = 'text', placeholder = '') => (
     <div key={key}>
-      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{label}</label>
+      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{label}</label>
       <input
         type={type}
         value={(form[key] as string) ?? ''}
         onChange={e => set(key, key === 'name' ? e.target.value.toUpperCase() : e.target.value)}
         placeholder={placeholder || label}
         style={key === 'name' ? { textTransform: 'uppercase' } : undefined}
-        className={`w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm
-          ${errors[key] ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : ''}`}
+        className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all ${
+          errors[key] ? 'border-red-400 bg-red-50' : ''
+        }`}
       />
       {errors[key] && <p className="text-xs text-red-500 mt-1">{errors[key]}</p>}
     </div>
   );
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4">
         <button
           onClick={() => onNavigate('patients')}
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
         >
           <ChevronLeft size={20} />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
             <User size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Category Selection */}
-          <div className="bg-blue-50 dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-200 dark:border-gray-800/50">Patient Category</h3>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Category Selection */}
+        <div
+          className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+          style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+        >
+          <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+            Patient Category
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => set('category', cat)}
-                className={`py-3 rounded-xl border-2 text-sm font-semibold transition-all ${form.category === cat ? 'text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+                className={`py-2.5 px-3 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${
+                  form.category === cat
+                    ? 'text-white border-transparent shadow-sm'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                }`}
                 style={form.category === cat ? { background: PRIMARY, borderColor: PRIMARY } : {}}
               >
                 {cat}
@@ -175,19 +183,24 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         </div>
 
-          {/* Basic Information */}
-          <div className="bg-blue-50 dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-200 dark:border-gray-800/50">Basic Information</h3>
+        {/* Basic Information */}
+        <div
+          className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+          style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+        >
+          <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+            Basic Information
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Full Name', 'name', 'text', 'Last, First Middle')}
             {field('Contact Number', 'contact', 'tel', '09XX-XXX-XXXX')}
             {field('Birthday', 'birthday', 'date')}
             <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Sex</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sex</label>
               <select
                 value={form.sex ?? ''}
                 onChange={e => set('sex', e.target.value)}
-                className="w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all"
               >
                 <option value="Female">Female</option>
                 <option value="Male">Male</option>
@@ -201,19 +214,24 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
         </div>
 
         {/* Category-specific fields */}
-          {form.category === 'Student' && (
-            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Student Information</h3>
+        {form.category === 'Student' && (
+          <div
+            className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+          >
+            <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              Student Information
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Student ID', 'id', 'text', 'e.g., 202012345')}
 
               {/* Student Category Dropdown */}
               <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Student Category</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Student Category</label>
                 <select
                   value={form.studentCategory ?? 'College'}
                   onChange={e => set('studentCategory', e.target.value)}
-                  className="w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all"
                 >
                   {STUDENT_CATEGORIES.map(sc => (
                     <option key={sc} value={sc}>{sc}</option>
@@ -234,11 +252,11 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
               {/* Year Level — shown for College */}
               {form.studentCategory === 'College' && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Year Level</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Year Level</label>
                   <select
                     value={form.yearLevel ?? ''}
                     onChange={e => set('yearLevel', e.target.value)}
-                    className="w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm"
+                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all"
                   >
                     <option value="">Select Year</option>
                     {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate'].map(y => (
@@ -256,9 +274,14 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         )}
 
-          {form.category === 'Employee' && (
-            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Employee Information</h3>
+        {form.category === 'Employee' && (
+          <div
+            className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+          >
+            <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              Employee Information
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Employee ID', 'id', 'text', 'e.g., EMP-1234')}
               {field('Position / Designation', 'position', 'text', 'e.g., Professor')}
@@ -267,35 +290,40 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </div>
         )}
 
-          {form.category === 'Outsider' && (
-            <div className="bg-white dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-100 dark:border-gray-800/50">Address</h3>
+        {form.category === 'Outsider' && (
+          <div
+            className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+          >
+            <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              Address
+            </h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Home Address</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Home Address</label>
               <textarea
                 value={form.address ?? ''}
                 onChange={e => set('address', e.target.value)}
                 rows={2}
                 placeholder="Street, Barangay, City, Province"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] bg-white resize-none"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all resize-none"
               />
             </div>
-            </div>
-          )}
+          </div>
+        )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={() => onNavigate('patients')}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
             style={{ background: PRIMARY }}
           >
             {isSubmitting ? (
