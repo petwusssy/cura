@@ -13,63 +13,42 @@ import { authService } from '@/services/authService';
 type NavLeaf  = { kind: 'leaf';  id: Page;   label: string; icon: React.ReactNode };
 type NavGroup = { kind: 'group'; id: string; label: string; icon: React.ReactNode; children: NavLeaf[] };
 type NavItem  = NavLeaf | NavGroup;
-type NavSection = { section: string; items: NavItem[] };
 
-const navSections: NavSection[] = [
+const navItems: NavItem[] = [
+  { kind: 'leaf',  id: 'dashboard',  label: 'Dashboard',       icon: <LayoutDashboard size={18} /> },
+  { kind: 'leaf',  id: 'patients',   label: 'Patients',        icon: <Users size={18} /> },
+  { kind: 'leaf',  id: 'beds',       label: 'Beds Management', icon: <BedDouble size={18} /> },
   {
-    section: 'MAIN',
-    items: [
-      { kind: 'leaf',  id: 'dashboard',  label: 'Dashboard',   icon: <LayoutDashboard size={18} /> },
-      { kind: 'leaf',  id: 'patients',   label: 'Patients',    icon: <Users size={18} /> },
-      {
-        kind: 'group', id: 'appointments-group', label: 'Appointments', icon: <Calendar size={18} />,
-        children: [
-          { kind: 'leaf', id: 'appointments',         label: 'Appointments',         icon: <Calendar size={16} /> },
-          { kind: 'leaf', id: 'medical-certificates', label: 'Medical Certificates', icon: <FileText size={16} /> },
-        ],
-      },
-      {
-        kind: 'group', id: 'consultations-group', label: 'Consultations', icon: <Stethoscope size={18} />,
-        children: [
-          { kind: 'leaf', id: 'consultations',     label: 'Consultations',    icon: <Stethoscope size={16} /> },
-          { kind: 'leaf', id: 'non-consultations', label: 'Non-Consultation', icon: <ClipboardList size={16} /> },
-        ],
-      },
-      { kind: 'leaf', id: 'telemedicine', label: 'Telemedicine', icon: <Video size={18} /> },
+    kind: 'group', id: 'appointments-group', label: 'Appointments', icon: <Calendar size={18} />,
+    children: [
+      { kind: 'leaf', id: 'appointments',         label: 'Appointments',         icon: <Calendar size={16} /> },
+      { kind: 'leaf', id: 'medical-certificates', label: 'Medical Certificates', icon: <FileText size={16} /> },
     ],
   },
   {
-    section: 'OPERATIONS',
-    items: [
-      {
-        kind: 'group', id: 'inventory-group', label: 'Inventory', icon: <Package size={18} />,
-        children: [
-          { kind: 'leaf', id: 'inventory',         label: 'Inventory',         icon: <Package size={16} /> },
-          { kind: 'leaf', id: 'purchase-receipts', label: 'Purchase Receipts', icon: <ShoppingCart size={16} /> },
-        ],
-      },
-      { kind: 'leaf', id: 'beds', label: 'Beds Management', icon: <BedDouble size={18} /> },
+    kind: 'group', id: 'consultations-group', label: 'Consultations', icon: <Stethoscope size={18} />,
+    children: [
+      { kind: 'leaf', id: 'consultations',     label: 'Consultations',    icon: <Stethoscope size={16} /> },
+      { kind: 'leaf', id: 'non-consultations', label: 'Non-Consultation', icon: <ClipboardList size={16} /> },
+      { kind: 'leaf', id: 'telemedicine',      label: 'Telemedicine',     icon: <Video size={16} /> },
     ],
   },
   {
-    section: 'REPORTS',
-    items: [
-      { kind: 'leaf', id: 'reports', label: 'Reports', icon: <BarChart2 size={18} /> },
+    kind: 'group', id: 'inventory-group', label: 'Inventory', icon: <Package size={18} />,
+    children: [
+      { kind: 'leaf', id: 'inventory',         label: 'Inventory',         icon: <Package size={16} /> },
+      { kind: 'leaf', id: 'purchase-receipts', label: 'Purchase Receipts', icon: <ShoppingCart size={16} /> },
     ],
   },
-  {
-    section: 'SYSTEM',
-    items: [
-      { kind: 'leaf', id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
-    ],
-  },
+  { kind: 'leaf',  id: 'reports',    label: 'Reports',         icon: <BarChart2 size={18} /> },
+  { kind: 'leaf',  id: 'settings',   label: 'Settings',        icon: <Settings size={18} /> },
 ];
 
 // Child pages that belong to each group (for active-parent detection)
 const groupChildren: Record<string, Page[]> = {
   'appointments-group':  ['appointments', 'medical-certificates'],
   'consultations-group': [
-    'consultations', 'non-consultations',
+    'consultations', 'non-consultations', 'telemedicine',
     'new-consultation', 'new-consultation-tab', 'new-non-consultation-tab', 'convert-consultation-tab',
   ],
   'inventory-group': ['inventory', 'purchase-receipts'],
@@ -266,26 +245,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </div>
 
         {/* Nav */}
-        <nav className="relative z-10 flex-1 py-2 overflow-y-auto hide-scrollbar">
-          {navSections.map(section => (
-            <div key={section.section} className="mb-1">
-              {/* Section label — hidden when collapsed */}
-              {!collapsed && (
-                <div
-                  className="px-4 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}
-                >
-                  {section.section}
-                </div>
-              )}
-              {collapsed && (
-                <div className="my-1 mx-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-              )}
-              {section.items.map(item =>
-                item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)
-              )}
-            </div>
-          ))}
+        <nav className="relative z-10 flex-1 py-3 overflow-y-auto hide-scrollbar space-y-0.5">
+          {navItems.map(item =>
+            item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)
+          )}
         </nav>
 
         {/* UA Seal + Sign Out */}
