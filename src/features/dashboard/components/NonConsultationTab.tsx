@@ -21,15 +21,17 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const [converting, setConverting] = useState<string | null>(null);
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
 
-  // Keep ALL distinct non-consultation records
-  const seenIds = new Set<string>();
+  // Keep ALL distinct non-consultation records (deduplicate by id and semantic fingerprint)
+  const seenKeys = new Set<string>();
   const nonConsultations = consultations.filter(c => {
     if (c.status !== 'Non-Consultation') return false;
     if (c.complaint && c.complaint.includes('[CONVERTED]')) return false;
-    if (c.id) {
-      if (seenIds.has(c.id)) return false;
-      seenIds.add(c.id);
-    }
+    const key = c.id ? `id:${c.id}` : '';
+    const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}`;
+    if (key && seenKeys.has(key)) return false;
+    if (seenKeys.has(semanticKey)) return false;
+    if (key) seenKeys.add(key);
+    seenKeys.add(semanticKey);
     return true;
   });
 

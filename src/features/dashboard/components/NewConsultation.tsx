@@ -102,6 +102,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   const [purposeOfVisit, setPurposeOfVisit] = useState(initialData?.purposeOfVisit || '');
   const [operationalNotes, setOperationalNotes] = useState(initialData?.operationalNotes || '');
   const [prescriptionImage, setPrescriptionImage] = useState(initialData?.prescriptionImage || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleCategory = (cat: string) => {
     setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -140,6 +141,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!selectedPatientId) {
       alert('Please select a patient first.');
       return;
@@ -183,6 +185,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
       operationalNotes: !isConsultation ? operationalNotes : undefined,
       prescriptionImage: prescriptionImage || undefined,
     };
+    setIsSubmitting(true);
     try {
       await onSave(consultation);
       if (status === 'Consultation') {
@@ -193,6 +196,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
     } catch (err) {
       console.error('Failed to save consultation', err);
       alert('Failed to save consultation. Please check console for details.');
+      setIsSubmitting(false);
     }
   };
 
@@ -630,8 +634,22 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
           <button type="button" onClick={() => onNavigate('patients')} className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button type="submit" className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90" style={{ background: PRIMARY }}>
-            <Save size={16} /> Save Consultation
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" 
+            style={{ background: PRIMARY }}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} /> Save Consultation
+              </>
+            )}
           </button>
         </div>
       </form>

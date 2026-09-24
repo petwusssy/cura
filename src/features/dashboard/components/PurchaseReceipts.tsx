@@ -50,6 +50,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   // New Tracker Request state
   const [showNewForm, setShowNewForm] = useState(false);
   const [newReq, setNewReq] = useState({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: 'PRF-2026-001' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Editable PRF Document state (so users can type immediately and print)
   const [prfNo, setPrfNo] = useState('PRF-2026-001');
@@ -113,7 +114,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   };
 
   const handleNewRequest = async () => {
+    if (isSubmitting) return;
     if (!newReq.medicine || !newReq.requestedQty) return;
+    setIsSubmitting(true);
     const tempId = `PR-${Date.now()}`;
     const req: PurchaseRequest = {
       id: tempId,
@@ -132,50 +135,62 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       await onAddRequest(req);
       setShowNewForm(false);
       setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: prfNo });
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRegisterAllToTracker = async () => {
-    let addedCount = 0;
-    for (const row of prfItems) {
-      const qty = typeof row.qty === 'string' ? parseInt(row.qty) : row.qty;
-      if (qty && qty > 0 && row.item.trim()) {
-        const isExisting = purchaseRequests.find(r => r.id === row.id);
-        
-        if (isExisting) {
-          // If it exists, update it if changed
-          const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
-          if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
-            await onUpdateRequest({
-              ...isExisting,
-              requestedQty: qty,
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      let addedCount = 0;
+      for (const row of prfItems) {
+        const qty = typeof row.qty === 'string' ? parseInt(row.qty) : row.qty;
+        if (qty && qty > 0 && row.item.trim()) {
+          const isExisting = purchaseRequests.find(r => r.id === row.id);
+          
+          if (isExisting) {
+            // If it exists, update it if changed
+            const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
+            if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
+              await onUpdateRequest({
+                ...isExisting,
+                requestedQty: qty,
+                medicine: row.item,
+                description: row.description || undefined,
+                unitPrice: unitPrice,
+              });
+            }
+          } else {
+            // New request
+            const req: PurchaseRequest = {
+              id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
               medicine: row.item,
               description: row.description || undefined,
-              unitPrice: unitPrice,
-            });
+              unit: row.unit || 'pc',
+              prfNo: prfNo,
+              unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
+              requestedQty: qty,
+              receivedQty: 0,
+              date: getManilaDate(),
+              status: 'Pending',
+              history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${prfNo}` }],
+            };
+            await onAddRequest(req);
+            addedCount++;
           }
-        } else {
-          // New request
-          const req: PurchaseRequest = {
-            id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
-            medicine: row.item,
-            description: row.description || undefined,
-            unit: row.unit || 'pc',
-            prfNo: prfNo,
-            unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
-            requestedQty: qty,
-            receivedQty: 0,
-            date: getManilaDate(),
-            status: 'Pending',
-            history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${prfNo}` }],
-          };
-          await onAddRequest(req);
-          addedCount++;
         }
       }
-    }
-    if (addedCount > 0) {
-      setViewMode('tracker');
+      if (addedCount > 0) {
+        setViewMode('tracker');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -194,6 +209,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setPrfItems(prev => prev.map(r => r.id === id ? { ...r, [field]: val } : r));
   };
 
+  const seenPrKeys = new Set<string>();
   const filteredRequests = purchaseRequests.filter(req => {
     const matchesStatus = statusFilter === 'All' ? true : req.status === statusFilter;
     const matchesSearch = searchQuery.trim() === '' || 
@@ -201,7 +217,15 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       (req.description && req.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (req.prfNo && req.prfNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
       req.id.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    if (!matchesStatus || !matchesSearch) return false;
+
+    const key = req.id ? `id:${req.id}` : '';
+    const semanticKey = `${(req.medicine || '').toLowerCase()}|${(req.prfNo || '').toLowerCase()}|${req.requestedQty}`;
+    if (key && seenPrKeys.has(key)) return false;
+    if (seenPrKeys.has(semanticKey)) return false;
+    if (key) seenPrKeys.add(key);
+    seenPrKeys.add(semanticKey);
+    return true;
   });
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {

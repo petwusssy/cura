@@ -26,6 +26,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const [adjustNote, setAdjustNote] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newMed, setNewMed] = useState<{
     name: string;
     stock: string;
@@ -66,7 +67,15 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     return { beginningQty, dispensed, status, displayUnit };
   };
 
+  const seenMedKeys = new Set<string>();
   const filtered = displayMedicines.filter(m => {
+    const key = m.id ? `id:${m.id}` : '';
+    const nameKey = (m.name || '').trim().toLowerCase();
+    if (key && seenMedKeys.has(key)) return false;
+    if (nameKey && seenMedKeys.has(nameKey)) return false;
+    if (key) seenMedKeys.add(key);
+    if (nameKey) seenMedKeys.add(nameKey);
+
     const details = getMedicineDetails(m);
     const matchSearch = !searchQuery || 
       m.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -107,6 +116,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       }],
     };
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       onUpdateMedicine(updated);
       setAdjustModal(null);
@@ -114,11 +125,15 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       setAdjustNote('');
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleAddNewMedicine = async () => {
+    if (isSubmitting) return;
     if (!newMed.name || !newMed.stock) return;
+    setIsSubmitting(true);
     const qty = parseInt(newMed.stock) || 0;
     const thresh = parseInt(newMed.threshold) || 15;
     const med: MedicineItem = {
@@ -140,6 +155,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       setNewMed({ name: '', stock: '', dateAdded: getManilaDate(), unit: 'Tablet', threshold: '15', category: 'Medicine' });
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

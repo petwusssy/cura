@@ -33,7 +33,10 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
   const [page, setPage] = useState(1);
   const ROWS = 10;
 
+  const seenPatientIds = new Set<string>();
   const filtered = patients.filter(p => {
+    if (seenPatientIds.has(p.id)) return false;
+    seenPatientIds.add(p.id);
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.contact.includes(q);
     const matchCat = categoryFilter === 'All' || p.category === categoryFilter;

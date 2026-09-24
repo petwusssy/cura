@@ -253,8 +253,31 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const monthNum = monthMap[reportMonth] || '06';
   const selectedMonthYear = `${reportYear}-${monthNum}`;
 
-  const filteredCons = consultations.filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear));
-  const filteredCerts = medicalCerts.filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear));
+  const seenReportConsKeys = new Set<string>();
+  const filteredCons = consultations
+    .filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear))
+    .filter(c => {
+      const key = c.id ? `id:${c.id}` : '';
+      const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+      if (key && seenReportConsKeys.has(key)) return false;
+      if (seenReportConsKeys.has(semanticKey)) return false;
+      if (key) seenReportConsKeys.add(key);
+      seenReportConsKeys.add(semanticKey);
+      return true;
+    });
+
+  const seenReportCertKeys = new Set<string>();
+  const filteredCerts = medicalCerts
+    .filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear))
+    .filter(c => {
+      const key = c.id ? `id:${c.id}` : '';
+      const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${(c.purpose || '').trim()}`;
+      if (key && seenReportCertKeys.has(key)) return false;
+      if (seenReportCertKeys.has(semanticKey)) return false;
+      if (key) seenReportCertKeys.add(key);
+      seenReportCertKeys.add(semanticKey);
+      return true;
+    });
 
   const acceptedAppointments = appRequests.filter(req => {
     const isAccepted = req.status === 'Approved' || req.status === 'Completed' || req.status === 'Rejected';

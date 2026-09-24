@@ -63,6 +63,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
   const completedQueueIdsRef = useRef<Set<string>>(new Set());
   const notifiedQueueIdsRef = useRef<Set<string>>(new Set());
+  const savingConsultationRef = useRef<boolean>(false);
+  const savingConversionRef = useRef<boolean>(false);
 
   useEffect(() => {
     try {
@@ -86,7 +88,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         setPatients(d.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name })));
       }
     }).catch(console.error);
-    consultationService.getConsultations().then(d => d !== undefined && setConsultations(d)).catch(console.error);
+    consultationService.getConsultations().then(d => {
+      if (d !== undefined) {
+        const seen = new Set<string>();
+        const unique = d.filter(c => {
+          const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setConsultations(unique);
+      }
+    }).catch(console.error);
     medicineService.getMedicines().then(d => {
       if (d !== undefined) {
         setMedicines(d);
@@ -271,16 +284,27 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleSaveConsultation = async (consultation: Consultation) => {
+    if (savingConsultationRef.current) return;
+    savingConsultationRef.current = true;
     try {
       const { id, ...rest } = consultation;
       const created = await consultationService.createConsultation(rest);
-      setConsultations(prev => [...prev, created]);
+      setConsultations(prev => {
+        if (prev.some(c => c.id === created.id)) return prev;
+        const key = `${created.patientId}|${created.date}|${created.timeIn}|${(created.complaint || '').trim()}|${created.status}`;
+        if (prev.some(c => `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}` === key)) {
+          return prev;
+        }
+        return [...prev, created];
+      });
       
       await processMedicineDeductions(consultation.date, consultation.patientId, consultation.treatments);
       // Removed instant hardcoded notification; now handled by interval inside useEffect
     } catch (e) {
       console.error('Failed to save consultation', e);
       throw e;
+    } finally {
+      savingConsultationRef.current = false;
     }
   };
 
@@ -299,7 +323,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleSaveConversion = async (newConsultation: Consultation) => {
-    if (!convertingId) return;
+    if (!convertingId || savingConversionRef.current) return;
+    savingConversionRef.current = true;
     try {
       const existing = consultations.find(c => c.id === convertingId);
       if (!existing) return;
@@ -313,12 +338,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
       setConsultations(prev => {
         const mapped = prev.map(c => c.id === convertingId ? updatedOld : c);
+        if (mapped.some(c => c.id === created.id)) return mapped;
         return [...mapped, created];
       });
       setConvertingId(null);
     } catch (e) {
       console.error('Failed to save conversion', e);
       throw e;
+    } finally {
+      savingConversionRef.current = false;
     }
   };
 

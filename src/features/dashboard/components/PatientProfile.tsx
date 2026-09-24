@@ -24,8 +24,18 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [selectedCert, setSelectedCert] = useState<MedicalCertificate | null>(null);
 
+  const seenConsKeys = new Set<string>();
   const allPatientConsultations = consultations
     .filter(c => c.patientId === patient.id)
+    .filter(c => {
+      const key = c.id ? `id:${c.id}` : '';
+      const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+      if (key && seenConsKeys.has(key)) return false;
+      if (seenConsKeys.has(semanticKey)) return false;
+      if (key) seenConsKeys.add(key);
+      seenConsKeys.add(semanticKey);
+      return true;
+    })
     .sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeIn || '00:00'}`).getTime();
       const timeB = new Date(`${b.date}T${b.timeIn || '00:00'}`).getTime();
@@ -53,7 +63,18 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
     }
     return complaint;
   };
-  const patientCerts = medicalCerts.filter(m => m.patientId === patient.id || (m as any).patient === patient.id);
+  const seenCertKeys = new Set<string>();
+  const patientCerts = medicalCerts
+    .filter(m => m.patientId === patient.id || (m as any).patient === patient.id)
+    .filter(m => {
+      const key = m.id ? `id:${m.id}` : '';
+      const semanticKey = `${m.patientId}|${normalizeDate(m.date)}|${(m.purpose || '').trim()}`;
+      if (key && seenCertKeys.has(key)) return false;
+      if (seenCertKeys.has(semanticKey)) return false;
+      if (key) seenCertKeys.add(key);
+      seenCertKeys.add(semanticKey);
+      return true;
+    });
   const catColor = categoryColors[patient.category] ?? { bg: '#f3f4f6', text: '#374151' };
 
   const infoItems = [

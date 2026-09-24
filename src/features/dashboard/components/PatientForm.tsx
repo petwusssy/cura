@@ -32,6 +32,7 @@ const defaultForm = (): Patient => ({
 export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: PatientFormProps) {
   const [form, setForm] = useState<Patient>(defaultForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = editingPatientId !== null;
 
@@ -67,15 +68,18 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validate()) return;
     const finalId = isEditing ? editingPatientId! : (form.category === 'Outsider' ? generateId('Outsider') : form.id);
     // Calculate age from birthday
     const bday = new Date(form.birthday);
     const age = new Date().getFullYear() - bday.getFullYear();
+    setIsSubmitting(true);
     try {
       await onSave({ ...form, name: form.name.trim().toUpperCase(), id: finalId, age });
       onNavigate('patients');
     } catch (error: any) {
+      setIsSubmitting(false);
       console.error('Save failed', error);
       let errMsg = 'Failed to save patient data.';
       if (error.response?.data) {
@@ -290,11 +294,21 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
           </button>
           <button
             type="submit"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: PRIMARY }}
           >
-            <Save size={16} />
-            {isEditing ? 'Save Changes' : 'Add Patient'}
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                {isEditing ? 'Save Changes' : 'Add Patient'}
+              </>
+            )}
           </button>
         </div>
       </form>

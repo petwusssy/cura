@@ -452,6 +452,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   // Issue Certificate: populate template from form data and save to archives
   const handleIssueCertSubmit = async () => {
+    if (isIssuing) return;
+    setIsIssuing(true);
     const { patientId, date: fDate, name, age: fAge, gender, yearLevel: fYL, courseOrDepartment, complaint, diagnosis: fDiag, treatment: fTreat, recommendations: fRec } = issueCertForm;
     if (!name || !fDate || !complaint || !fDiag) return;
 
@@ -542,6 +544,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       triggerToast('✅ Certificate template populated.');
       setShowIssueCertModal(false);
       setActiveTab('template');
+    } finally {
+      setIsIssuing(false);
     }
   };
 
@@ -646,6 +650,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     }, 250);
   };
 
+  const seenCertListKeys = new Set<string>();
   const filteredCerts = medicalCerts.filter(c => {
     const cDate = normalizeDate(c.date);
     const filterD = normalizeDate(dateFilter);
@@ -657,7 +662,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       (c.purpose && c.purpose.toLowerCase().includes(q)) ||
       (c.diagnosis && c.diagnosis.toLowerCase().includes(q)) ||
       (c.id && c.id.toLowerCase().includes(q));
-    return matchDate && matchPatient && matchSearch;
+    if (!matchDate || !matchPatient || !matchSearch) return false;
+
+    const key = c.id ? `id:${c.id}` : '';
+    const semanticKey = `${c.patientId}|${cDate}|${(c.purpose || '').trim()}`;
+    if (key && seenCertListKeys.has(key)) return false;
+    if (seenCertListKeys.has(semanticKey)) return false;
+    if (key) seenCertListKeys.add(key);
+    seenCertListKeys.add(semanticKey);
+    return true;
   });
 
   return (
@@ -1453,11 +1466,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <button
                   type="button"
                   onClick={handleIssueCertSubmit}
-                  disabled={!issueCertForm.name || !issueCertForm.date || !issueCertForm.complaint || !issueCertForm.diagnosis}
+                  disabled={isIssuing || !issueCertForm.name || !issueCertForm.date || !issueCertForm.complaint || !issueCertForm.diagnosis}
                   className="px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer hover:opacity-90"
                   style={{ background: PRIMARY }}
                 >
-                  <CheckCircle2 size={16} /> Issue & Generate
+                  <CheckCircle2 size={16} /> {isIssuing ? 'Issuing...' : 'Issue & Generate'}
                 </button>
               </div>
             </div>

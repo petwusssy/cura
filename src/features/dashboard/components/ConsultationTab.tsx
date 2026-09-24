@@ -59,14 +59,16 @@ export function ConsultationTab({
   const [tfTransport, setTfTransport] = useState('Ambulance');
   const [tfNotes, setTfNotes] = useState('');
 
-  // Keep ALL distinct consultations for doctor visits
-  const seenIds = new Set<string>();
+  // Keep ALL distinct consultations for doctor visits (deduplicate by id and semantic fingerprint)
+  const seenKeys = new Set<string>();
   const doctorConsultations = consultations.filter(c => {
     if (c.status !== 'Consultation') return false;
-    if (c.id) {
-      if (seenIds.has(c.id)) return false;
-      seenIds.add(c.id);
-    }
+    const key = c.id ? `id:${c.id}` : '';
+    const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}`;
+    if (key && seenKeys.has(key)) return false;
+    if (seenKeys.has(semanticKey)) return false;
+    if (key) seenKeys.add(key);
+    seenKeys.add(semanticKey);
     return true;
   });
 
