@@ -6,7 +6,7 @@ import { telemedicineService, TelemedicineRequest } from '@/services/telemedicin
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -118,42 +118,37 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 type ReportType = 'daily' | 'cases' | 'medcert' | 'nonconsult' | 'inventory' | 'bed' | 'appointments' | 'telemedicine';
 
-const TODAY = getManilaDate();
-const YESTERDAY = getManilaYesterday();
-
-function normalizeDateStr(d?: string): string {
-  if (!d) return '';
-  const trimmed = String(d).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  }
-  return trimmed;
-}
-
 function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string, selectedMonthYear?: string): boolean {
   if (filter === 'all') return true;
-  const date = normalizeDateStr(rawDate);
-  if (!date) return true;
-  if (filter === 'today') return date === TODAY;
-  if (filter === 'yesterday') return date === YESTERDAY;
+  const date = normalizeDate(rawDate);
+  if (!date) return false;
+  const todayStr = getManilaDate();
+  const yesterdayStr = getManilaYesterday();
+  if (filter === 'today') return date === todayStr;
+  if (filter === 'yesterday') return date === yesterdayStr;
   if (filter === 'week') {
     const weekAgo = getManilaDaysAgo(7);
-    return date >= weekAgo && date <= TODAY;
+    return date >= weekAgo && date <= todayStr;
   }
   if (filter === 'month') {
     if (selectedMonthYear && date.slice(0, 7) === selectedMonthYear) return true;
-    return date.slice(0, 7) === TODAY.slice(0, 7);
+    return date.slice(0, 7) === todayStr.slice(0, 7);
   }
-  if (filter === 'custom' && customFrom && customTo) return date >= customFrom && date <= customTo;
+  if (filter === 'custom') {
+    if (customFrom && customTo) return date >= customFrom && date <= customTo;
+    if (customFrom && !customTo) return date >= customFrom;
+    if (!customFrom && customTo) return date <= customTo;
+    return true;
+  }
   return true;
 }
 
 function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: string): string[] {
   const days: string[] = [];
-  if (filter === 'today') return [TODAY];
-  if (filter === 'yesterday') return [YESTERDAY];
+  const todayStr = getManilaDate();
+  const yesterdayStr = getManilaYesterday();
+  if (filter === 'today') return [todayStr];
+  if (filter === 'yesterday') return [yesterdayStr];
   if (filter === 'week') {
     for (let i = 6; i >= 0; i--) {
       days.push(getManilaDaysAgo(i));
@@ -161,7 +156,7 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
     return days;
   }
   if (filter === 'month') {
-    const [y, m] = TODAY.split('-').map(Number);
+    const [y, m] = todayStr.split('-').map(Number);
     const dim = new Date(y, m, 0).getDate();
     for (let d = 1; d <= dim; d++) {
       days.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
@@ -177,7 +172,7 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
     }
     return days;
   }
-  return [TODAY];
+  return [todayStr];
 }
 
 const filterLabel = (f: ReportFilter) => {

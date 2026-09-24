@@ -2,26 +2,24 @@ import { useState, useEffect, useRef } from 'react';
 import { BedDouble, Clock, X, UserCheck, History, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Bed, Patient, BedHistory } from '../types';
-import { getManilaDate, getManilaTime } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
 
 type DateFilterType = 'today' | 'week' | 'month';
 
-const TODAY = getManilaDate(); // Gets YYYY-MM-DD in Asia/Manila
-
-function isInRange(date: string, filter: DateFilterType): boolean {
-  if (filter === 'today') return date === TODAY;
+function isInRange(rawDate: string, filter: DateFilterType): boolean {
+  const date = normalizeDate(rawDate);
+  if (!date) return false;
+  const todayStr = getManilaDate();
+  if (filter === 'today') return date === todayStr;
   if (filter === 'week') {
-    // last 7 days
-    const d = new Date(date);
-    const t = new Date(TODAY);
-    const diff = (t.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff < 7;
+    const weekAgoStr = getManilaDaysAgo(7);
+    return date >= weekAgoStr && date <= todayStr;
   }
   // month: same month & year
-  return date.slice(0, 7) === TODAY.slice(0, 7);
+  return date.slice(0, 7) === todayStr.slice(0, 7);
 }
 
 function useDurationTimers(beds: Bed[]) {

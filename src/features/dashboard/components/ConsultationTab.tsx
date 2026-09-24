@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
-import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -59,25 +59,21 @@ export function ConsultationTab({
   const [tfTransport, setTfTransport] = useState('Ambulance');
   const [tfNotes, setTfNotes] = useState('');
 
-  const doctorConsultations = Object.values(
-    consultations
-      .filter(c => c.status === 'Consultation')
-      .reduce((acc, c) => {
-        if (!acc[c.patientId]) {
-          acc[c.patientId] = c;
-        } else {
-          const cTime = new Date(`${c.date}T${c.timeIn || '00:00'}`).getTime();
-          const currTime = new Date(`${acc[c.patientId].date}T${acc[c.patientId].timeIn || '00:00'}`).getTime();
-          if (cTime > currTime) {
-            acc[c.patientId] = c;
-          }
-        }
-        return acc;
-      }, {} as Record<string, Consultation>)
-  );
+  // Keep ALL distinct consultations for doctor visits
+  const seenIds = new Set<string>();
+  const doctorConsultations = consultations.filter(c => {
+    if (c.status !== 'Consultation') return false;
+    if (c.id) {
+      if (seenIds.has(c.id)) return false;
+      seenIds.add(c.id);
+    }
+    return true;
+  });
 
-  const isDateMatch = (dateStr: string) => {
+  const isDateMatch = (rawDate?: string) => {
     if (datePreset === 'all') return true;
+    const dateStr = normalizeDate(rawDate);
+    if (!dateStr) return false;
     
     const todayStr = getManilaDate();
     const yesterdayStr = getManilaYesterday();
@@ -94,19 +90,33 @@ export function ConsultationTab({
 
   const filtered = doctorConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q || patient?.name.toLowerCase().includes(q) || c.complaint.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q ||
+      patient?.name?.toLowerCase().includes(q) ||
+      patient?.id?.toLowerCase().includes(q) ||
+      c.complaint?.toLowerCase().includes(q) ||
+      c.id?.toLowerCase().includes(q) ||
+      (c.doctorName && c.doctorName.toLowerCase().includes(q));
     const matchDate = isDateMatch(c.date);
     return matchSearch && matchDate;
-  }).sort((a, b) => b.date.localeCompare(a.date) || b.timeIn.localeCompare(a.timeIn));
+  }).sort((a, b) => {
+    const dateDiff = (b.date || '').localeCompare(a.date || '');
+    if (dateDiff !== 0) return dateDiff;
+    return (b.timeIn || '').localeCompare(a.timeIn || '');
+  });
 
   const filteredTransfers = transfers.filter(t => {
     const patient = patients.find(p => p.id === t.patientId);
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q || patient?.name.toLowerCase().includes(q) || t.receivingHospital.toLowerCase().includes(q);
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q ||
+      patient?.name?.toLowerCase().includes(q) ||
+      patient?.id?.toLowerCase().includes(q) ||
+      t.receivingHospital?.toLowerCase().includes(q) ||
+      t.reason?.toLowerCase().includes(q);
     const matchDate = isDateMatch(t.date);
     return matchSearch && matchDate;
-  }).sort((a, b) => b.date.localeCompare(a.date));
+  }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
 
   const openTransferModal = (c: Consultation) => {
     setTransferModal(c);

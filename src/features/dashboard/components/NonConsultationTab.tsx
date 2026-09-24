@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, ArrowRight, Calendar, Eye, Plus, User, X, Pill } from 'lucide-react';
 import { Patient, Consultation, Page } from '../types';
-import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 const YELLOW = '#F4C542';
@@ -21,25 +21,22 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
   const [converting, setConverting] = useState<string | null>(null);
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
 
-  const nonConsultations = Object.values(
-    consultations
-      .filter(c => c.status === 'Non-Consultation' && !c.complaint.includes('[CONVERTED]'))
-      .reduce((acc, c) => {
-        if (!acc[c.patientId]) {
-          acc[c.patientId] = c;
-        } else {
-          const cTime = new Date(`${c.date}T${c.timeIn || '00:00'}`).getTime();
-          const currTime = new Date(`${acc[c.patientId].date}T${acc[c.patientId].timeIn || '00:00'}`).getTime();
-          if (cTime > currTime) {
-            acc[c.patientId] = c;
-          }
-        }
-        return acc;
-      }, {} as Record<string, Consultation>)
-  );
+  // Keep ALL distinct non-consultation records
+  const seenIds = new Set<string>();
+  const nonConsultations = consultations.filter(c => {
+    if (c.status !== 'Non-Consultation') return false;
+    if (c.complaint && c.complaint.includes('[CONVERTED]')) return false;
+    if (c.id) {
+      if (seenIds.has(c.id)) return false;
+      seenIds.add(c.id);
+    }
+    return true;
+  });
 
-  const isDateMatch = (dateStr: string) => {
+  const isDateMatch = (rawDate?: string) => {
     if (datePreset === 'all') return true;
+    const dateStr = normalizeDate(rawDate);
+    if (!dateStr) return false;
     
     const todayStr = getManilaDate();
     const yesterdayStr = getManilaYesterday();
@@ -56,11 +53,19 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
 
   const filtered = nonConsultations.filter(c => {
     const patient = patients.find(p => p.id === c.patientId);
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q || patient?.name.toLowerCase().includes(q) || c.complaint.toLowerCase().includes(q);
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q ||
+      patient?.name?.toLowerCase().includes(q) ||
+      patient?.id?.toLowerCase().includes(q) ||
+      c.complaint?.toLowerCase().includes(q) ||
+      c.id?.toLowerCase().includes(q);
     const matchDate = isDateMatch(c.date);
     return matchSearch && matchDate;
-  }).sort((a, b) => b.date.localeCompare(a.date) || b.timeIn.localeCompare(a.timeIn));
+  }).sort((a, b) => {
+    const dateDiff = (b.date || '').localeCompare(a.date || '');
+    if (dateDiff !== 0) return dateDiff;
+    return (b.timeIn || '').localeCompare(a.timeIn || '');
+  });
 
   const handleConvert = async (id: string) => {
     setConverting(id);

@@ -117,3 +117,24 @@ export const formatManilaDisplayTime = (d: Date | string | number): string => {
     hour12: true
   }).format(dateObj);
 };
+
+/**
+ * Normalizes any date input (YYYY-MM-DD, ISO string, datetime string, or Date)
+ * into a clean 'YYYY-MM-DD' string in Asia/Manila.
+ */
+export const normalizeDate = (raw?: string | Date | number | null): string => {
+  if (!raw) return '';
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime())) {
+      return getManilaDate(parsed);
+    }
+    return trimmed;
+  }
+  return getManilaDate(raw);
+};
+

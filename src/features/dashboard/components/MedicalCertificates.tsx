@@ -4,6 +4,7 @@ import { MedicalCertificate, Patient } from '../types';
 import { uaSealBase64, uaLogoBase64 } from '@/assets/images/medCertAssets';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 
@@ -646,13 +647,16 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   };
 
   const filteredCerts = medicalCerts.filter(c => {
-    const matchDate = !dateFilter || c.date.includes(dateFilter);
+    const cDate = normalizeDate(c.date);
+    const filterD = normalizeDate(dateFilter);
+    const matchDate = !filterD || cDate === filterD;
     const matchPatient = !selectedPatientFilter || c.patientId === selectedPatientFilter;
-    const matchSearch = searchQuery.trim() === '' ||
-      (c.patientName && c.patientName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      c.purpose.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.diagnosis && c.diagnosis.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      c.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q ||
+      (c.patientName && c.patientName.toLowerCase().includes(q)) ||
+      (c.purpose && c.purpose.toLowerCase().includes(q)) ||
+      (c.diagnosis && c.diagnosis.toLowerCase().includes(q)) ||
+      (c.id && c.id.toLowerCase().includes(q));
     return matchDate && matchPatient && matchSearch;
   });
 

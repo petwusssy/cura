@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
-import { getManilaDate, getManilaYesterday, getManilaDaysAgo } from '@/utils/philippineTime';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -26,7 +26,7 @@ interface DashboardProps {
   onSelectPatient: (id: string) => void;
 }
 
-type DateFilter = 'today' | 'yesterday' | 'week' | 'custom';
+type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'custom';
 
 export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onNavigate, onSelectPatient }: DashboardProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
@@ -38,14 +38,16 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const weekAgo = getManilaDaysAgo(7);
 
   const filteredConsultations = consultations.filter(c => {
-    if (dateFilter === 'today') return c.date === today;
-    if (dateFilter === 'yesterday') return c.date === yesterday;
-    if (dateFilter === 'week') return c.date >= weekAgo && c.date <= today;
+    const cDate = normalizeDate(c.date);
+    if (dateFilter === 'all') return true;
+    if (dateFilter === 'today') return cDate === today;
+    if (dateFilter === 'yesterday') return cDate === yesterday;
+    if (dateFilter === 'week') return cDate >= weekAgo && cDate <= today;
     if (dateFilter === 'custom') {
       if (!customFrom && !customTo) return true;
-      if (customFrom && !customTo) return c.date >= customFrom;
-      if (!customFrom && customTo) return c.date <= customTo;
-      return c.date >= customFrom && c.date <= customTo;
+      if (customFrom && !customTo) return cDate >= customFrom;
+      if (!customFrom && customTo) return cDate <= customTo;
+      return cDate >= customFrom && cDate <= customTo;
     }
     return true;
   });
@@ -119,7 +121,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
             </div>
           )}
           <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            {(['today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
+            {(['all', 'today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
               <button
                 key={f}
                 onClick={() => setDateFilter(f)}
@@ -127,7 +129,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                   ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
                 style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
               >
-                {f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'all' ? 'All' : f === 'week' ? 'This Week' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
