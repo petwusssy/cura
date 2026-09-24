@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page } from '../types';
 
-const PRIMARY = '#1E5AA8';
+const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
 
 const DEFAULT_CASE_CATEGORIES = [
@@ -206,27 +206,36 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   };
 
   const sectionCard = (title: string, children: React.ReactNode) => (
-    <div className="bg-blue-50 dark:bg-[#1a1b26] rounded-2xl p-6 shadow-sm border-2 border-blue-200 dark:border-blue-900 transition-all hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-md">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-5 pb-3 border-b border-gray-200 dark:border-gray-800/50">{title}</h3>
+    <div
+      className="bg-white rounded-xl p-5 sm:p-6 transition-all"
+      style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
+    >
+      <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">{title}</h3>
       {children}
     </div>
   );
 
-  const inputCls = 'w-full border border-blue-200 dark:border-blue-900/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] bg-white dark:bg-[#13141f] text-gray-900 dark:text-gray-100 transition-all shadow-sm';
-  const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2';
+  const inputCls = 'w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all shadow-2xs';
+  const labelCls = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5';
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => onNavigate(patient ? 'patient-profile' : 'consultations')} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => onNavigate(patient ? 'patient-profile' : status === 'Non-Consultation' ? 'non-consultations' : 'consultations')}
+          className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
+        >
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">New Consultation</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {status === 'Non-Consultation' ? 'New Non-Consultation' : 'New Consultation'}
+          </h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Select Patient */}
         {patient ? sectionCard('Patient Information', (
           <div>
@@ -255,7 +264,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                     <input
                       autoFocus
                       type="text"
-                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:border-[#1E5AA8]"
+                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#1B3A6B]"
                       placeholder="Search name or ID..."
                       value={patientSearch}
                       onChange={e => setPatientSearch(e.target.value)}
@@ -268,7 +277,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                   ) : filteredPatients.map(p => (
                     <div
                       key={p.id}
-                      className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer"
+                      className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
                       onClick={() => {
                         setSelectedPatientId(p.id);
                         setIsPatientDropdownOpen(false);
@@ -355,10 +364,10 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                     key={cat}
                     type="button"
                     onClick={() => toggleCategory(cat)}
-                    className="text-xs px-2.5 py-1.5 rounded-lg border transition-all font-medium"
+                    className="text-xs px-3 py-1.5 rounded-xl border transition-all font-medium cursor-pointer"
                     style={{
                       background: categories.includes(cat) ? PRIMARY : 'white',
-                      color: categories.includes(cat) ? 'white' : '#6b7280',
+                      color: categories.includes(cat) ? 'white' : '#4b5563',
                       borderColor: categories.includes(cat) ? PRIMARY : '#e5e7eb',
                     }}
                   >
@@ -377,7 +386,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                 <button 
                   type="button" 
                   onClick={handleAddCategory}
-                  className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 whitespace-nowrap" 
+                  className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-95 whitespace-nowrap cursor-pointer shadow-sm" 
                   style={{ background: PRIMARY }}
                 >
                   Add Case
@@ -474,7 +483,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                           m.name.toLowerCase().includes(query)
                         );
                         return (
-                          <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#13141f] border border-blue-200 dark:border-blue-900 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
                             {filtered.length === 0 ? (
                               <div className="px-4 py-3 text-sm text-gray-400 text-center">No medicine found</div>
                             ) : filtered.map(m => (
@@ -488,8 +497,8 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                                 }}
                                 className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors ${
                                   t.medicineName === m.name
-                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-[#1E5AA8] font-semibold'
-                                    : 'hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-800 dark:text-gray-200'
+                                    ? 'bg-gray-100 text-[#1B3A6B] font-semibold'
+                                    : 'hover:bg-gray-50 text-gray-800'
                                 } ${m.stock <= 0 ? 'opacity-50' : ''}`}
                               >
                                 <span>{m.name}</span>
@@ -537,7 +546,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
             <button
               type="button"
               onClick={addTreatment}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed text-sm font-medium transition-all w-full justify-center"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed text-sm font-semibold transition-all w-full justify-center hover:bg-gray-50 cursor-pointer"
               style={{ borderColor: PRIMARY, color: PRIMARY }}
             >
               <Plus size={16} /> Add Medicine
@@ -556,7 +565,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                     key={String(v)}
                     type="button"
                     onClick={() => setEarlyDismissal(v)}
-                    className="px-4 py-2 rounded-lg border text-sm font-medium transition-all"
+                    className="px-4 py-2 rounded-xl border text-sm font-semibold transition-all cursor-pointer"
                     style={{
                       background: earlyDismissal === v ? (v ? RED : PRIMARY) : 'white',
                       color: earlyDismissal === v ? 'white' : '#6b7280',
@@ -636,13 +645,17 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pb-4">
-          <button type="button" onClick={() => onNavigate('patients')} className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          <button
+            type="button"
+            onClick={() => onNavigate(patient ? 'patient-profile' : status === 'Non-Consultation' ? 'non-consultations' : 'consultations')}
+            className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
             Cancel
           </button>
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" 
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm" 
             style={{ background: PRIMARY }}
           >
             {isSubmitting ? (
@@ -652,7 +665,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
               </>
             ) : (
               <>
-                <Save size={16} /> Save Consultation
+                <Save size={16} /> {status === 'Non-Consultation' ? 'Save Non-Consultation' : 'Save Consultation'}
               </>
             )}
           </button>

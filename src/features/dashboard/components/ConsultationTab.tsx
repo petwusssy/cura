@@ -183,7 +183,7 @@ export function ConsultationTab({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Consultations</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-blue-50 text-sm font-semibold" style={{ color: PRIMARY }}>
+          <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">
             {filtered.length} records
           </span>
           <button
