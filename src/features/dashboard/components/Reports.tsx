@@ -371,6 +371,134 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     { id: 'telemedicine'  as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
   ];
 
+  const daysInSelectedMonth = new Date(parseInt(reportYear, 10), parseInt(monthNum, 10), 0).getDate();
+
+  // Helper to match an item name to medicines in inventory
+  const findInventoryItem = (itemName: string) => {
+    const clean = (s: string) => (s || '').toLowerCase().trim();
+    const target = clean(itemName);
+    if (!target) return undefined;
+    // 1. Exact match
+    let match = medicines.find(m => clean(m.name) === target);
+    if (match) return match;
+    // 2. Starts with / prefix match
+    match = medicines.find(m => target.startsWith(clean(m.name)) || clean(m.name).startsWith(target));
+    if (match) return match;
+    // 3. First two words match
+    const firstTwoWords = target.split(/\s+/).slice(0, 2).join(' ');
+    if (firstTwoWords.length > 3) {
+      match = medicines.find(m => clean(m.name).includes(firstTwoWords));
+      if (match) return match;
+    }
+    // 4. First word match
+    const firstWord = target.split(/\s+/)[0];
+    if (firstWord && firstWord.length > 3) {
+      match = medicines.find(m => clean(m.name).includes(firstWord));
+    }
+    return match;
+  };
+
+  const computeInventoryRow = (itemTemplate: { no: number; name: string }) => {
+    const actualMed = findInventoryItem(itemTemplate.name);
+    const consumptionDays = Array(31).fill(0);
+
+    if (actualMed) {
+      const dispenseHistory = (actualMed.stockHistory || []).filter(h => h.type === 'dispense');
+      if (dispenseHistory.length > 0) {
+        dispenseHistory.forEach(h => {
+          const dStr = normalizeDate(h.date);
+          if (dStr && dStr.startsWith(selectedMonthYear)) {
+            const day = parseInt(dStr.slice(8, 10), 10);
+            if (day >= 1 && day <= daysInSelectedMonth) {
+              consumptionDays[day - 1] += (Number(h.qty) || 0);
+            }
+          }
+        });
+      }
+
+      // Also check consultations treatments in case they were not in stockHistory
+      const medNameClean = actualMed.name.toLowerCase().trim();
+      consultations.forEach(cons => {
+        if (cons.date && cons.date.startsWith(selectedMonthYear)) {
+          const day = parseInt(cons.date.slice(8, 10), 10);
+          if (day >= 1 && day <= daysInSelectedMonth) {
+            (cons.treatments || []).forEach(t => {
+              if (t.medicineName && t.medicineName.toLowerCase().trim() === medNameClean) {
+                const alreadyInHistory = (actualMed.stockHistory || []).some(
+                  h => h.type === 'dispense' && normalizeDate(h.date) === cons.date && Number(h.qty) === Number(t.quantity)
+                );
+                if (!alreadyInHistory) {
+                  consumptionDays[day - 1] += (Number(t.quantity) || 0);
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    const total = consumptionDays.slice(0, daysInSelectedMonth).reduce((sum, v) => sum + v, 0);
+
+    // Beginning Inventory:
+    // Base current stock on hand + consumed in selected month (or beginningQty if explicit)
+    const baseStock = actualMed ? (Number(actualMed.stock) || 0) : 0;
+    const explicitBeg = actualMed?.beginningQty !== undefined && actualMed?.beginningQty !== null ? Number(actualMed.beginningQty) : null;
+    const beg = explicitBeg !== null && explicitBeg > (baseStock + total)
+      ? explicitBeg
+      : (baseStock + total);
+
+    const end = Math.max(0, beg - total);
+    const isNoStock = actualMed ? (end <= 0 || baseStock <= 0) : (end <= 0);
+    const statusText = isNoStock ? 'NO STOCK' : '';
+
+    return {
+      no: itemTemplate.no,
+      name: itemTemplate.name,
+      beg,
+      c: consumptionDays,
+      end,
+      total,
+      isNoStock,
+      statusText,
+    };
+  };
+
+  const computedMedicinesList = (() => {
+    const list = MEDICINE_INVENTORY_TEMPLATE.map(t => computeInventoryRow(t));
+
+    // Append any extra medicines in inventory not in the template
+    const templateNames = new Set(MEDICINE_INVENTORY_TEMPLATE.map(t => t.name.toLowerCase().trim()));
+    const extraMeds = medicines.filter(m => {
+      if (m.category === 'Supply') return false;
+      const matched = findInventoryItem(m.name);
+      return !templateNames.has(m.name.toLowerCase().trim()) && (!matched || !templateNames.has(matched.name.toLowerCase().trim()));
+    });
+
+    extraMeds.forEach((m) => {
+      list.push(computeInventoryRow({ no: list.length + 1, name: m.name }));
+    });
+
+    return list;
+  })();
+
+  const computedSuppliesList = (() => {
+    const list = SUPPLIES_LIST.map(t => computeInventoryRow(t));
+
+    // Append any extra supplies in inventory not in the template
+    const templateNames = new Set(SUPPLIES_LIST.map(t => t.name.toLowerCase().trim()));
+    const extraSupplies = medicines.filter(m => {
+      if (m.category !== 'Supply') return false;
+      const matched = findInventoryItem(m.name);
+      return !templateNames.has(m.name.toLowerCase().trim()) && (!matched || !templateNames.has(matched.name.toLowerCase().trim()));
+    });
+
+    extraSupplies.forEach((m) => {
+      list.push(computeInventoryRow({ no: list.length + 1, name: m.name }));
+    });
+
+    return list;
+  })();
+
   const renderConsumptionCells = (cArray: number[], isNoStock: boolean = false) => {
     const blocks: JSX.Element[] = [];
     const intervals = [
@@ -381,11 +509,15 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     intervals.forEach((int, idx) => {
       let subTotal = 0;
       for (let i = int.start; i < int.end; i++) {
-        const val = cArray[i] || 0;
-        subTotal += val;
+        const dayNum = i + 1;
+        const isBeyondMonth = dayNum > daysInSelectedMonth;
+        const val = isBeyondMonth ? 0 : (cArray[i] || 0);
+        if (!isBeyondMonth) {
+          subTotal += val;
+        }
         blocks.push(
           <td key={`cell-${i}`} style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#FFFFFF' }} className="border border-black px-1 py-1 text-center font-bold text-[11px] text-gray-900 min-w-[20px]">
-            {val > 0 ? val : ''}
+            {!isBeyondMonth && val > 0 ? val : ''}
           </td>
         );
       }
@@ -831,16 +963,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     }
 
     // Data Rows (Matching web view exact logic and colors)
-    const dataList = isMed ? MEDICINE_INVENTORY_TEMPLATE : SUPPLIES_LIST;
+    const dataList = isMed ? computedMedicinesList : computedSuppliesList;
     dataList.forEach((item: any) => {
       const row = worksheet.addRow([]);
       row.height = 20;
 
-      const actualItem = medicines.find(m => m.name.toLowerCase().includes(item.name.split(' ')[0].toLowerCase()));
-      const isNoStock = isMed
-        ? (actualItem ? actualItem.stock <= 0 : item.status === 'NO STOCK')
-        : (actualItem ? actualItem.stock <= 0 : false);
-      const statusText = isNoStock ? 'NO STOCK' : '';
+      const isNoStock = item.isNoStock;
+      const statusText = item.statusText || '';
 
       // 1. No.
       const cNo = row.getCell(1);
@@ -865,15 +994,19 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
       // 4-40. Consumption Days and Subtotals
       let colIdx = 4;
-      const cArray = isMed ? item.c : item.consumed;
+      const cArray = item.c;
 
       intervals.forEach(int => {
         let subTotal = 0;
-        for (let i = int.start - 1; i < int.end; i++) {
-          const val = cArray[i] || 0;
-          subTotal += val;
+        for (let i = int.start; i <= int.end; i++) {
+          const dayNum = i;
+          const isBeyondMonth = dayNum > daysInSelectedMonth;
+          const val = isBeyondMonth ? 0 : (cArray[dayNum - 1] || 0);
+          if (!isBeyondMonth) {
+            subTotal += val;
+          }
           const cData = row.getCell(colIdx++);
-          cData.value = val > 0 ? val : '';
+          cData.value = (!isBeyondMonth && val > 0) ? val : '';
           cData.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isNoStock ? 'FFF2DCDB' : 'FFFFFFFF' } };
           cData.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
           cData.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -1376,21 +1509,17 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         </tr>
                       </thead>
                       <tbody>
-                        {MEDICINE_INVENTORY_TEMPLATE.map(med => {
-                          const actualMed = medicines.find(m => m.name.toLowerCase().includes(med.name.split(' ')[0].toLowerCase()));
-                          const isNoStock = actualMed ? actualMed.stock <= 0 : med.status === 'NO STOCK';
-                          const statusText = isNoStock ? 'NO STOCK' : '';
-                          return (
-                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/10'}`}>
-                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{med.no}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{med.name}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{med.beg}</td>
-                            {renderConsumptionCells(med.c, isNoStock)}
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{med.end}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
-                            <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${isNoStock ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{statusText}</td>
+                        {computedMedicinesList.map(med => (
+                          <tr key={med.no} className={`border border-black text-[11px] font-semibold ${med.isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-blue-50/10'}`}>
+                            <td style={{ backgroundColor: med.isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{med.no}</td>
+                            <td style={{ backgroundColor: med.isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{med.name}</td>
+                            <td style={{ backgroundColor: med.isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.isNoStock ? 'text-black' : 'text-white'}`}>{med.beg}</td>
+                            {renderConsumptionCells(med.c, med.isNoStock)}
+                            <td style={{ backgroundColor: med.isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.isNoStock ? 'text-black' : 'text-white'}`}>{med.end}</td>
+                            <td style={{ backgroundColor: med.isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.isNoStock ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
+                            <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${med.isNoStock ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{med.statusText}</td>
                           </tr>
-                        )})}
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -1434,19 +1563,16 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                         </tr>
                       </thead>
                       <tbody>
-                        {SUPPLIES_LIST.map(sup => {
-                          const actualSup = medicines.find(m => m.name.toLowerCase().includes(sup.name.split(' ')[0].toLowerCase()));
-                          const isNoStock = actualSup ? actualSup.stock <= 0 : false;
-                          return (
-                          <tr key={sup.no} className={`border border-black text-[11px] font-semibold ${isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-amber-50/10'}`}>
-                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{sup.no}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{sup.name}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{sup.beg}</td>
-                            {renderConsumptionCells(sup.consumed, isNoStock)}
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'}`}>{sup.end}</td>
-                            <td style={{ backgroundColor: isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${isNoStock ? 'text-black' : 'text-white'} text-xs`}>{sup.total}</td>
+                        {computedSuppliesList.map(sup => (
+                          <tr key={sup.no} className={`border border-black text-[11px] font-semibold ${sup.isNoStock ? 'bg-[#F2DCDB]' : 'hover:bg-amber-50/10'}`}>
+                            <td style={{ backgroundColor: sup.isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-1 text-center font-black font-mono text-black">{sup.no}</td>
+                            <td style={{ backgroundColor: sup.isNoStock ? '#EA9999' : '#FFFF00' }} className="border-2 border-black py-1 px-2 font-black text-left whitespace-nowrap text-gray-950">{sup.name}</td>
+                            <td style={{ backgroundColor: sup.isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${sup.isNoStock ? 'text-black' : 'text-white'}`}>{sup.beg}</td>
+                            {renderConsumptionCells(sup.c, sup.isNoStock)}
+                            <td style={{ backgroundColor: sup.isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${sup.isNoStock ? 'text-black' : 'text-white'}`}>{sup.end}</td>
+                            <td style={{ backgroundColor: sup.isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${sup.isNoStock ? 'text-black' : 'text-white'} text-xs`}>{sup.total}</td>
                           </tr>
-                        )})}
+                        ))}
                       </tbody>
                     </table>
                   </div>
