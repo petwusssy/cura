@@ -182,7 +182,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                               {p.studentCategory}
                             </span>
                           )}
-                          <span>{p.course}{p.gradeLevel ? `Grade ${p.gradeLevel}` : ''}{p.yearLevel ? `, ${p.yearLevel}` : ''}</span>
+                          <span>{p.course}{p.gradeLevel ? (p.gradeLevel.toLowerCase().startsWith('grade') ? p.gradeLevel : `Grade ${p.gradeLevel}`) : ''}{p.yearLevel ? `, ${p.yearLevel}` : ''}</span>
                         </span>
                       )}
                       {p.category === 'Employee' && <span>{p.position}</span>}

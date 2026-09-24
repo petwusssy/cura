@@ -22,6 +22,12 @@ const STUDENT_CATEGORIES: StudentCategory[] = [
 
 const MINOR_CATEGORIES: StudentCategory[] = ['Elementary', 'Junior High School', 'Senior High School'];
 
+const GRADE_LEVELS: Record<'Elementary' | 'Junior High School' | 'Senior High School', string[]> = {
+  'Elementary': ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'],
+  'Junior High School': ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'],
+  'Senior High School': ['Grade 11', 'Grade 12'],
+};
+
 const defaultForm = (): Patient => ({
   id: '', name: '', category: 'Student', contact: '', birthday: '', age: 0,
   sex: 'Female', email: '', emergencyContact: '', emergencyPhone: '',
@@ -230,8 +236,27 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Student Category</label>
                 <select
                   value={form.studentCategory ?? 'College'}
-                  onChange={e => set('studentCategory', e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all"
+                  onChange={e => {
+                    const newCat = e.target.value as StudentCategory;
+                    setForm(f => ({
+                      ...f,
+                      studentCategory: newCat,
+                      gradeLevel: '',
+                      course: newCat !== 'College' ? '' : f.course,
+                      yearLevel: newCat !== 'College' ? '' : f.yearLevel,
+                      guardianName: newCat === 'College' ? '' : f.guardianName,
+                    }));
+                    if (errors.gradeLevel || errors.course || errors.guardianName) {
+                      setErrors(prev => {
+                        const n = { ...prev };
+                        delete n.gradeLevel;
+                        delete n.course;
+                        delete n.guardianName;
+                        return n;
+                      });
+                    }
+                  }}
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all cursor-pointer"
                 >
                   {STUDENT_CATEGORIES.map(sc => (
                     <option key={sc} value={sc}>{sc}</option>
@@ -239,10 +264,32 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
                 </select>
               </div>
 
-              {/* Grade Level — shown for Elementary, JHS, SHS */}
-              {MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && (
-                field('Grade Level', 'gradeLevel', 'text', 'e.g., Grade 7')
-              )}
+              {/* Grade Level Dropdown — shown for Elementary, JHS, SHS */}
+              {MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && (() => {
+                const currentCategory = form.studentCategory as keyof typeof GRADE_LEVELS;
+                const options = GRADE_LEVELS[currentCategory] || [];
+                const currentGrade = form.gradeLevel
+                  ? (form.gradeLevel.toLowerCase().startsWith('grade') ? form.gradeLevel : `Grade ${form.gradeLevel}`)
+                  : '';
+                return (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Grade Level</label>
+                    <select
+                      value={currentGrade}
+                      onChange={e => set('gradeLevel', e.target.value)}
+                      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all cursor-pointer ${
+                        errors.gradeLevel ? 'border-red-400 bg-red-50' : ''
+                      }`}
+                    >
+                      <option value="">Select Grade Level</option>
+                      {options.map(gl => (
+                        <option key={gl} value={gl}>{gl}</option>
+                      ))}
+                    </select>
+                    {errors.gradeLevel && <p className="text-xs text-red-500 mt-1">{errors.gradeLevel}</p>}
+                  </div>
+                );
+              })()}
 
               {/* Course / Program — shown for College */}
               {form.studentCategory === 'College' && (

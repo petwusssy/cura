@@ -84,7 +84,11 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
     { icon: <AlertCircle size={14} />, label: 'Emergency', value: `${patient.emergencyContact || '—'} (${patient.emergencyPhone || '—'})` },
     ...(patient.category === 'Student' ? [
       ...(patient.studentCategory ? [{ icon: <User size={14} />, label: 'Category', value: patient.studentCategory }] : []),
-      ...(patient.gradeLevel ? [{ icon: <User size={14} />, label: 'Grade Level', value: `Grade ${patient.gradeLevel}` }] : []),
+      ...(patient.gradeLevel ? [{
+        icon: <User size={14} />,
+        label: 'Grade Level',
+        value: patient.gradeLevel.toLowerCase().startsWith('grade') ? patient.gradeLevel : `Grade ${patient.gradeLevel}`
+      }] : []),
       ...(patient.course ? [{ icon: <User size={14} />, label: 'Course', value: patient.course }] : []),
       ...(patient.yearLevel ? [{ icon: <User size={14} />, label: 'Year Level', value: patient.yearLevel }] : []),
     ] : []),
