@@ -191,18 +191,13 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         initial={{ x: -250 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
-        className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto border-r ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
-        style={{
-          width: collapsed ? 64 : 248,
-          background: 'linear-gradient(180deg, #0d213f 0%, #122e56 25%, #183e6f 55%, #1e518d 80%, #2465ad 100%)',
-          borderColor: 'rgba(147, 197, 253, 0.25)',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
-        }}
+        className={`flex flex-col flex-shrink-0 transition-all duration-300 fixed md:relative inset-y-0 left-0 z-50 md:z-auto border-r border-blue-200/25 dark:border-sidebar-border shadow-[4px_0_24px_rgba(0,0,0,0.18)] dark:shadow-none bg-[linear-gradient(180deg,#0d213f_0%,#122e56_25%,#183e6f_55%,#1e518d_80%,#2465ad_100%)] dark:bg-none dark:bg-sidebar ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
+        style={{ width: collapsed ? 64 : 248 }}
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
-          style={{ borderBottom: '1px solid rgba(147, 197, 253, 0.2)', height: '72px' }}
+          className={`relative z-10 flex items-center flex-shrink-0 border-b border-blue-200/20 dark:border-sidebar-border ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          style={{ height: '72px' }}
         >
           <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '38px' : '42px', height: '42px' }}>
             <img
@@ -239,7 +234,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </div>
 
         {/* Subtle Ambient Glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 dark:hidden">
           <div className="absolute top-[10%] left-[-20%] w-[140px] h-[140px] rounded-full bg-white/[0.04] blur-2xl animate-[blob1_8s_ease-in-out_infinite]" />
           <div className="absolute bottom-[20%] right-[-10%] w-[160px] h-[160px] rounded-full bg-sky-300/[0.05] blur-2xl animate-[blob2_10s_ease-in-out_infinite]" />
         </div>
@@ -252,7 +247,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </nav>
 
         {/* UA Seal + Sign Out */}
-        <div className="relative z-10 flex-shrink-0 p-3 space-y-3" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.2)' }}>
+        <div className="relative z-10 flex-shrink-0 p-3 space-y-3 border-t border-blue-200/20 dark:border-sidebar-border">
           {!collapsed && (
             <div className="flex items-center gap-3 px-2 pb-1">
               <img src={uaLogo} alt="UA Logo" className="w-10 h-10 object-contain opacity-80" />
