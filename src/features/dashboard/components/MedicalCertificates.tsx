@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2, Clock, Check, Inbox } from 'lucide-react';
+import { medcertRequestService, MedicalCertificateRequest } from '@/services/medcertRequestService';
 import { MedicalCertificate, Patient } from '../types';
 import { uaSealBase64, uaLogoBase64 } from '@/assets/images/medCertAssets';
 import html2canvas from 'html2canvas';
@@ -12,8 +13,8 @@ interface MedicalCertificatesProps {
   medicalCerts: MedicalCertificate[];
   patients: Patient[];
   selectedPatientId: string | null;
-  onAddCert: (cert: MedicalCertificate) => void | Promise<void>;
-  onUpdateCert: (cert: MedicalCertificate) => void | Promise<void>;
+  onAddCert: (cert: MedicalCertificate) => any;
+  onUpdateCert: (cert: MedicalCertificate) => any;
   onDeleteCert?: (id: string) => void | Promise<void>;
   searchQuery: string;
 }
@@ -171,7 +172,20 @@ function PhilHealthYakapBanner() {
 }
 
 export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, onDeleteCert, searchQuery }: MedicalCertificatesProps) {
-  const [activeTab, setActiveTab] = useState<'template' | 'archives'>('template');
+  const [activeTab, setActiveTab] = useState<'template' | 'archives' | 'requests'>('template');
+
+  // Issuance Requests state
+  const [requests, setRequests] = useState<MedicalCertificateRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestSearch, setRequestSearch] = useState('');
+  const [requestStatusFilter, setRequestStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
+  const [selectedReq, setSelectedReq] = useState<MedicalCertificateRequest | null>(null);
+  const [reqActionType, setReqActionType] = useState<'Approve' | 'Reject' | null>(null);
+  const [reqDiagnosis, setReqDiagnosis] = useState('');
+  const [reqRecommendations, setReqRecommendations] = useState('');
+  const [reqDoctor, setReqDoctor] = useState('JOHNNY MICHAEL P. MANGULABNAN, MD');
+  const [reqRemarks, setReqRemarks] = useState('');
+  const [isReqSubmitting, setIsReqSubmitting] = useState(false);
   const [editMode, setEditMode] = useState(true);
   const [selectedCertId, setSelectedCertId] = useState<string>('');
   const [dateFilter, setDateFilter] = useState('');
@@ -249,6 +263,97 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       console.error('Failed to delete certificate:', err);
       triggerToast('⚠️ Error deleting certificate.');
     }
+  };
+
+  const fetchMedCertRequests = useCallback(async () => {
+    try {
+      const data = await medcertRequestService.getRequests();
+      setRequests(data);
+    } catch (err) {
+      console.error('Failed to load medcert requests:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMedCertRequests();
+    const interval = setInterval(fetchMedCertRequests, 4000);
+    return () => clearInterval(interval);
+  }, [fetchMedCertRequests]);
+
+  const openApproveReqModal = (req: MedicalCertificateRequest) => {
+    setSelectedReq(req);
+    setReqActionType('Approve');
+    setReqDiagnosis(req.diagnosis || 'Medically evaluated and cleared for academic/work activities.');
+    setReqRecommendations(req.recommendations || 'Excused from physical activities / advised rest as indicated.');
+    setReqDoctor(doctor || 'JOHNNY MICHAEL P. MANGULABNAN, MD');
+    setReqRemarks(req.remarks || '');
+  };
+
+  const openRejectReqModal = (req: MedicalCertificateRequest) => {
+    setSelectedReq(req);
+    setReqActionType('Reject');
+    setReqRemarks('');
+  };
+
+  const handleReqAction = async () => {
+    if (!selectedReq || !reqActionType) return;
+    setIsReqSubmitting(true);
+    try {
+      const status = reqActionType === 'Approve' ? 'Approved' : 'Rejected';
+      const res = await medcertRequestService.approveRequest(selectedReq.id, {
+        status,
+        diagnosis: reqDiagnosis,
+        recommendations: reqRecommendations,
+        doctor: reqDoctor,
+        remarks: reqRemarks,
+      });
+
+      if (res) {
+        setRequests(prev => prev.map(r => r.id === res.id ? res : r));
+        triggerToast(
+          status === 'Approved'
+            ? `✅ Request approved! Medical Certificate generated for ${res.patient_name || selectedReq.patient_name || 'patient'}.`
+            : `⚠️ Request rejected for ${res.patient_name || selectedReq.patient_name || 'patient'}.`
+        );
+        setSelectedReq(null);
+        setReqActionType(null);
+      } else {
+        triggerToast('⚠️ Error processing issuance request.');
+      }
+    } catch (err) {
+      console.error('Error handling request action:', err);
+      triggerToast('⚠️ Server error processing request.');
+    } finally {
+      setIsReqSubmitting(false);
+    }
+  };
+
+  const handleDeleteRequest = async (id: string, name?: string) => {
+    if (!window.confirm(`Are you sure you want to delete this issuance request for ${name || 'patient'}?`)) return;
+    const success = await medcertRequestService.deleteRequest(id);
+    if (success) {
+      setRequests(prev => prev.filter(r => r.id !== id));
+      triggerToast('🗑️ Issuance request deleted.');
+    } else {
+      triggerToast('⚠️ Failed to delete request.');
+    }
+  };
+
+  const handleOpenInTemplate = (req: MedicalCertificateRequest) => {
+    const p = patients.find(pt => pt.id === req.patient);
+    setCurrentPatientId(req.patient);
+    setPatientName(req.patient_name || p?.name || '');
+    setAge(p?.age || '');
+    setSex(p?.sex ? p.sex.toUpperCase() : 'FEMALE');
+    setYearLevel(p?.yearLevel ? p.yearLevel.replace(/\D/g, '') : '');
+    setCourseAndSchool(p?.course || p?.department || 'University of the Assumption');
+    setExaminedDueTo(req.complaint || 'Medical evaluation');
+    setDiagnosis(req.diagnosis || 'Medically evaluated');
+    setRecommendations(req.recommendations || 'Advised rest');
+    setDoctor(req.doctor || doctor);
+    setPurpose(req.purpose || 'Medical Certificate issuance');
+    setActiveTab('template');
+    triggerToast(`Loaded request details for ${req.patient_name || 'patient'} into template.`);
   };
 
   // Save the certificate record to archives explicitly
@@ -785,6 +890,24 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 {medicalCerts.length}
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'requests' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Clock size={15} />
+              <span>Issuance Requests</span>
+              {requests.filter(r => r.status === 'Pending').length > 0 ? (
+                <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-bold bg-amber-500 text-white animate-pulse">
+                  {requests.filter(r => r.status === 'Pending').length}
+                </span>
+              ) : (
+                <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-semibold ${activeTab === 'requests' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-600'}`}>
+                  {requests.length}
+                </span>
+              )}
+            </button>
           </div>
 
           <button
@@ -1284,6 +1407,272 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         </div>
       )}
 
+      {/* ========================================================================================= */}
+      {/* VIEW 3: ISSUANCE REQUESTS TAB (MOBILE APP REQUESTS VALIDATION & APPROVAL) */}
+      {/* ========================================================================================= */}
+      {activeTab === 'requests' && (
+        <div className="space-y-4 animate-in fade-in duration-300">
+          {/* Controls Bar: Search & Status Filters */}
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Search by patient, purpose, complaint..."
+                value={requestSearch}
+                onChange={(e) => setRequestSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-gray-50 hover:bg-gray-100/60 focus:bg-white border border-gray-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-[#1E5AA8] transition-colors"
+              />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              {requestSearch && (
+                <button
+                  onClick={() => setRequestSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+              {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((filterStatus) => {
+                const count = filterStatus === 'All'
+                  ? requests.length
+                  : requests.filter(r => r.status === filterStatus).length;
+                const isActive = requestStatusFilter === filterStatus;
+                return (
+                  <button
+                    key={filterStatus}
+                    onClick={() => setRequestStatusFilter(filterStatus)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                      isActive
+                        ? 'bg-[#1E5AA8] text-white shadow-xs'
+                        : 'bg-gray-100 hover:bg-gray-200/80 text-gray-600'
+                    }`}
+                  >
+                    <span>{filterStatus}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : filterStatus === 'Pending' && count > 0
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={fetchMedCertRequests}
+                title="Refresh requests list"
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#1E5AA8] transition-colors cursor-pointer shrink-0 ml-1"
+              >
+                <RefreshCw size={14} className={requestsLoading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {/* Requests Content Grid */}
+          {requests.filter(req => {
+            if (requestStatusFilter !== 'All' && req.status !== requestStatusFilter) return false;
+            const q = (requestSearch || searchQuery).toLowerCase().trim();
+            if (!q) return true;
+            const nameMatch = (req.patient_name || '').toLowerCase().includes(q);
+            const purposeMatch = (req.purpose || '').toLowerCase().includes(q);
+            const complaintMatch = (req.complaint || '').toLowerCase().includes(q);
+            const idMatch = (req.id || '').toLowerCase().includes(q);
+            return nameMatch || purposeMatch || complaintMatch || idMatch;
+          }).length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-xs">
+              <div className="w-14 h-14 rounded-full bg-blue-50 text-[#1E5AA8] flex items-center justify-center mx-auto mb-3">
+                <Clock size={28} />
+              </div>
+              <h3 className="text-base font-bold text-gray-800 mb-1">No Issuance Requests</h3>
+              <p className="text-xs text-gray-500 max-w-md mx-auto">
+                {requestSearch || requestStatusFilter !== 'All'
+                  ? 'No certificate requests match the specified search or filter criteria.'
+                  : 'Medical certificate requests submitted from the patient mobile app will automatically reflect here for validation and approval.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {requests.filter(req => {
+                if (requestStatusFilter !== 'All' && req.status !== requestStatusFilter) return false;
+                const q = (requestSearch || searchQuery).toLowerCase().trim();
+                if (!q) return true;
+                const nameMatch = (req.patient_name || '').toLowerCase().includes(q);
+                const purposeMatch = (req.purpose || '').toLowerCase().includes(q);
+                const complaintMatch = (req.complaint || '').toLowerCase().includes(q);
+                const idMatch = (req.id || '').toLowerCase().includes(q);
+                return nameMatch || purposeMatch || complaintMatch || idMatch;
+              }).map(req => {
+                const pt = patients.find(p => p.id === req.patient);
+                const displayName = (req.patient_name || pt?.name || 'Patient').toUpperCase();
+                const displayCategory = req.patient_category || pt?.category || 'Student';
+                const isPending = req.status === 'Pending';
+                const isApproved = req.status === 'Approved';
+                const isRejected = req.status === 'Rejected';
+
+                return (
+                  <div
+                    key={req.id}
+                    className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-3 relative"
+                  >
+                    {/* Top Row: Name, Status Badge, Purpose */}
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-gray-900 text-sm sm:text-base uppercase truncate">
+                            {displayName}
+                          </h3>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600">
+                              {displayCategory}
+                            </span>
+                            {req.purpose && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-[#1E5AA8]">
+                                {req.purpose}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Badge & Delete */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                              isPending
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                : isApproved
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-800 border border-rose-200'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isPending ? 'bg-amber-500 animate-pulse' : isApproved ? 'bg-emerald-500' : 'bg-rose-500'
+                              }`}
+                            />
+                            {req.status}
+                          </span>
+
+                          <button
+                            onClick={() => handleDeleteRequest(req.id, displayName)}
+                            className="p-1 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Request"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Request Details */}
+                      <div className="space-y-1.5 text-xs text-gray-600 mt-3">
+                        {(req.start_date || req.end_date) && (
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <Calendar size={13} className="text-[#1E5AA8] shrink-0" />
+                            <span className="font-medium">
+                              Period: {req.start_date ? normalizeDate(req.start_date) : 'N/A'}
+                              {req.end_date ? ` — ${normalizeDate(req.end_date)}` : ''}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 text-gray-500 text-[11px]">
+                          <Clock size={13} className="shrink-0" />
+                          <span>Submitted: {req.created_at ? new Date(req.created_at).toLocaleString() : 'Recent'}</span>
+                        </div>
+
+                        {/* Complaint Box */}
+                        <div className="mt-2.5 p-3 bg-gray-50 rounded-lg border border-gray-100 text-xs">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+                            Chief Complaint / Medical Need:
+                          </span>
+                          <span className="italic text-gray-700">"{req.complaint}"</span>
+                        </div>
+
+                        {/* Approved Summary Note */}
+                        {isApproved && (
+                          <div className="mt-2.5 p-2.5 bg-emerald-50/70 rounded-lg border border-emerald-200/60 text-xs space-y-1">
+                            <div className="flex items-center gap-1 font-bold text-emerald-800 text-[11px]">
+                              <CheckCircle2 size={13} className="text-emerald-600" />
+                              <span>Approved & Issued</span>
+                            </div>
+                            {req.diagnosis && (
+                              <div className="text-emerald-950">
+                                <span className="font-semibold">Diagnosis: </span>
+                                {req.diagnosis}
+                              </div>
+                            )}
+                            {req.recommendations && (
+                              <div className="text-emerald-950">
+                                <span className="font-semibold">Recommendation: </span>
+                                {req.recommendations}
+                              </div>
+                            )}
+                            {req.doctor && (
+                              <div className="text-[10px] text-emerald-700 font-medium">
+                                Doctor: {req.doctor}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Rejected Reason Note */}
+                        {isRejected && (
+                          <div className="mt-2.5 p-2.5 bg-rose-50/70 rounded-lg border border-rose-200/60 text-xs">
+                            <div className="flex items-center gap-1 font-bold text-rose-800 text-[11px] mb-0.5">
+                              <X size={13} className="text-rose-600" />
+                              <span>Declined</span>
+                            </div>
+                            <div className="text-rose-950">
+                              <span className="font-semibold">Remarks: </span>
+                              {req.remarks || 'Request could not be approved at this time.'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Buttons */}
+                    {isPending ? (
+                      <div className="flex gap-2 pt-3 border-t border-gray-100 mt-2">
+                        <button
+                          onClick={() => openApproveReqModal(req)}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                        >
+                          <Check size={14} /> Validate & Approve
+                        </button>
+                        <button
+                          onClick={() => openRejectReqModal(req)}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-rose-200/60"
+                        >
+                          <X size={14} /> Decline
+                        </button>
+                      </div>
+                    ) : isApproved ? (
+                      <div className="flex gap-2 pt-3 border-t border-gray-100 mt-2">
+                        <button
+                          onClick={() => handleOpenInTemplate(req)}
+                          className="flex-1 bg-blue-50 hover:bg-blue-100 text-[#1E5AA8] font-medium py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-blue-200/60"
+                        >
+                          <FileText size={14} /> View in Official Template
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Issue Certificate Modal */}
       {showIssueCertModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -1594,6 +1983,183 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 style={{ background: PRIMARY }}
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* ISSUANCE REQUEST APPROVAL MODAL */}
+      {/* ========================================================================================= */}
+      {selectedReq && reqActionType === 'Approve' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 border border-gray-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Check size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Validate & Approve Request</h3>
+                  <p className="text-xs text-gray-500">Official medical certificate will be generated and synced to mobile app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setSelectedReq(null); setReqActionType(null); }}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Patient Context Summary */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 mb-4 text-xs space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-500">Patient:</span>
+                <span className="font-bold text-gray-900 uppercase">{selectedReq.patient_name || 'Patient'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Purpose:</span>
+                <span className="font-medium text-gray-800">{selectedReq.purpose}</span>
+              </div>
+              {selectedReq.complaint && (
+                <div className="text-gray-600 pt-1 border-t border-gray-200/50">
+                  <span className="font-semibold text-gray-500">Chief Complaint: </span>
+                  <span className="italic">{selectedReq.complaint}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Clinical Diagnosis <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reqDiagnosis}
+                  onChange={e => setReqDiagnosis(e.target.value)}
+                  placeholder="e.g. Acute Upper Respiratory Tract Infection"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Medical Recommendations / Orders
+                </label>
+                <textarea
+                  rows={3}
+                  value={reqRecommendations}
+                  onChange={e => setReqRecommendations(e.target.value)}
+                  placeholder="e.g. Advised rest for 2 days. Excused from strenuous physical activities."
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Attending Physician
+                </label>
+                <input
+                  type="text"
+                  value={reqDoctor}
+                  onChange={e => setReqDoctor(e.target.value)}
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Remarks / Advice for Patient (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={reqRemarks}
+                  onChange={e => setReqRemarks(e.target.value)}
+                  placeholder="e.g. Please present this certificate to your instructor."
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#1E5AA8] transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-4 mt-5 border-t border-gray-100">
+              <button
+                onClick={() => { setSelectedReq(null); setReqActionType(null); }}
+                disabled={isReqSubmitting}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-medium transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReqAction}
+                disabled={isReqSubmitting || !reqDiagnosis.trim()}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <Check size={14} />
+                <span>{isReqSubmitting ? 'Issuing...' : 'Approve & Issue Certificate'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* ISSUANCE REQUEST REJECTION MODAL */}
+      {/* ========================================================================================= */}
+      {selectedReq && reqActionType === 'Reject' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <X size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Decline Certificate Request</h3>
+                  <p className="text-xs text-gray-500">Notify patient with reason</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setSelectedReq(null); setReqActionType(null); }}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-3">
+              You are declining the medical certificate request from <span className="font-bold uppercase text-gray-900">{selectedReq.patient_name || 'Patient'}</span>.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                Reason for Decline <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={reqRemarks}
+                onChange={e => setReqRemarks(e.target.value)}
+                placeholder="e.g. In-person clinic consultation required for physical assessment."
+                className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2 text-sm text-gray-800 focus:outline-none focus:border-rose-500 transition-all"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-4 mt-5 border-t border-gray-100">
+              <button
+                onClick={() => { setSelectedReq(null); setReqActionType(null); }}
+                disabled={isReqSubmitting}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-medium transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReqAction}
+                disabled={isReqSubmitting || !reqRemarks.trim()}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isReqSubmitting ? 'Declining...' : 'Confirm Decline'}
               </button>
             </div>
           </div>
