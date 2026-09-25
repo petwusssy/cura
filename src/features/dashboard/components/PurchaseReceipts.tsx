@@ -616,8 +616,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-black text-center font-bold">
-                  CANVASSER
+                <div className="mt-4 pt-1 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center font-bold mt-1">
+                    CANVASSER
+                  </div>
                 </div>
               </div>
 
@@ -664,8 +668,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                     />
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-black text-center font-bold">
-                  HEAD, RMS
+                <div className="mt-4 pt-1 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center font-bold mt-1">
+                    HEAD, RMS
+                  </div>
                 </div>
               </div>
             </div>
@@ -690,8 +698,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <div className="pt-1 font-bold">Verified by/Date:</div>
                   <input type="text" value={verifiedBy} onChange={e => setVerifiedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
-                  HEAD, AFMS
+                <div className="mt-2 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center font-bold mt-1">
+                    HEAD, AFMS
+                  </div>
                 </div>
               </div>
 
@@ -703,9 +715,13 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <div className="font-bold pt-1">Endorsed by/Date:</div>
                   <input type="text" value={endorsedBy} onChange={e => setEndorsedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center font-bold mt-2 pt-2 border-t border-black">
-                  <div>CLUSTER HEAD</div>
-                  <div className="text-[9px] font-normal">(VPAA, VPA,VPF, PRESIDENT)</div>
+                <div className="mt-2 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center font-bold mt-1">
+                    <div>CLUSTER HEAD</div>
+                    <div className="text-[9px] font-normal">(VPAA, VPA,VPF, PRESIDENT)</div>
+                  </div>
                 </div>
               </div>
 
@@ -715,9 +731,13 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <div className="font-bold mb-2">Recommended by/Date:</div>
                   <input type="text" value={recFinance} onChange={e => setRecFinance(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center mt-2 pt-2 border-t border-black">
-                  <div className="font-bold">VP FOR FINANCE</div>
-                  <div className="text-[10px]">(more than 500K)</div>
+                <div className="mt-2 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center mt-1">
+                    <div className="font-bold">VP FOR FINANCE</div>
+                    <div className="text-[10px]">(more than 500K)</div>
+                  </div>
                 </div>
               </div>
 
@@ -727,9 +747,13 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <div className="font-bold mb-2">Approved by/Date:</div>
                   <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
-                <div className="text-center mt-2 pt-2 border-t border-black">
-                  <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
-                  <div className="font-bold mt-0.5">PRESIDENT (more than 500K to 1M)</div>
+                <div className="mt-2 flex flex-col gap-1">
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
+                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
+                  <div className="text-center mt-1">
+                    <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
+                    <div className="font-bold mt-0.5">PRESIDENT (more than 500K to 1M)</div>
+                  </div>
                 </div>
               </div>
             </div>
