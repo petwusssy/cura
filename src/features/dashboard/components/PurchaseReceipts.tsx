@@ -617,7 +617,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   </div>
                 </div>
                 <div className="mt-4 pt-1 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center font-bold mt-1">
                     CANVASSER
@@ -669,7 +668,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   </div>
                 </div>
                 <div className="mt-4 pt-1 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center font-bold mt-1">
                     HEAD, RMS
@@ -699,7 +697,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input type="text" value={verifiedBy} onChange={e => setVerifiedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center font-bold mt-1">
                     HEAD, AFMS
@@ -716,7 +713,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input type="text" value={endorsedBy} onChange={e => setEndorsedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center font-bold mt-1">
                     <div>CLUSTER HEAD</div>
@@ -732,7 +728,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input type="text" value={recFinance} onChange={e => setRecFinance(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center mt-1">
                     <div className="font-bold">VP FOR FINANCE</div>
@@ -748,7 +743,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50" />
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
-                  <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px]" />
                   <input type="text" className="w-full border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 text-center text-[11px] font-bold" />
                   <div className="text-center mt-1">
                     <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
