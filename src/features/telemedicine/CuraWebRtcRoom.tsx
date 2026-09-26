@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Peer, { MediaConnection } from 'peerjs';
 import { 
   Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, 
-  ShieldCheck, RefreshCw, User, Clock, Check, Copy, ExternalLink 
+  ShieldCheck, RefreshCw, User, Clock, Check, Copy, ExternalLink, Volume2 
 } from 'lucide-react';
 
 interface CuraWebRtcRoomProps {
@@ -26,6 +26,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const remoteStreamRef = useRef<MediaStream>(new MediaStream());
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -42,6 +44,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const [callDuration, setCallDuration] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [audioNeedsInteraction, setAudioNeedsInteraction] = useState(false);
 
   const effectiveRemoteName = (remotePeerName || remoteUserName || (role === 'doctor' ? 'Patient' : 'Clinic Doctor')).toUpperCase();
 
@@ -127,6 +130,22 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       { urls: 'stun:global.stun.twilio.com:3478' }
     ];
 
+    const playRemoteAudio = (stream: MediaStream) => {
+      if (!remoteAudioRef.current) return;
+      if (remoteAudioRef.current.srcObject !== stream) {
+        remoteAudioRef.current.srcObject = stream;
+      }
+      remoteAudioRef.current.muted = false;
+      remoteAudioRef.current.volume = 1.0;
+      remoteAudioRef.current.play().then(() => {
+        console.log('[CURA WebRTC] Remote audio playback active');
+        setAudioNeedsInteraction(false);
+      }).catch((err) => {
+        console.warn('[CURA WebRTC] Audio autoplay blocked, waiting for user gesture:', err);
+        setAudioNeedsInteraction(true);
+      });
+    };
+
     const attachRemoteStream = (incomingStream: MediaStream) => {
       console.log('[CURA WebRTC] Attaching remote stream with tracks:', incomingStream.getTracks().map(t => `${t.kind}:${t.enabled}`));
       setRemoteStream(incomingStream);
@@ -155,25 +174,34 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       }
 
       const aTracks = incomingStream.getAudioTracks();
-      aTracks.forEach((t) => {
-        t.onmute = () => setIsRemoteMicMuted(true);
-        t.onunmute = () => setIsRemoteMicMuted(false);
-      });
+      if (aTracks.length > 0) {
+        aTracks.forEach((t) => {
+          t.enabled = true;
+          t.onmute = () => {
+            console.log('[CURA WebRTC] Remote audio track muted');
+            setIsRemoteMicMuted(true);
+          };
+          t.onunmute = () => {
+            console.log('[CURA WebRTC] Remote audio track unmuted');
+            setIsRemoteMicMuted(false);
+          };
+        });
+        setIsRemoteMicMuted(aTracks.every(t => !t.enabled || t.muted));
+      }
 
+      // Video element is muted so browser autoplay policy NEVER blocks video rendering
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = incomingStream;
-        remoteVideoRef.current.play().catch(async (err) => {
-          console.warn('[CURA WebRTC] Autoplay blocked, attempting muted fallback:', err);
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = true;
-            try {
-              await remoteVideoRef.current.play();
-            } catch (e2) {
-              console.error('[CURA WebRTC] Could not play remote video:', e2);
-            }
-          }
+        if (remoteVideoRef.current.srcObject !== incomingStream) {
+          remoteVideoRef.current.srcObject = incomingStream;
+        }
+        remoteVideoRef.current.muted = true;
+        remoteVideoRef.current.play().catch((err) => {
+          console.warn('[CURA WebRTC] Remote video play error:', err);
         });
       }
+
+      // Dedicated audio element plays the remote microphone sound
+      playRemoteAudio(incomingStream);
     };
 
     let activeDataConn: any = null;
@@ -219,7 +247,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       });
     };
 
-    // Helper to bind call events with immediate track listening
+    // Helper to bind call events with consolidated track handling
     const bindCallEvents = (call: MediaConnection) => {
       if (activeMediaCall && activeMediaCall !== call) {
         try { activeMediaCall.close(); } catch {}
@@ -231,8 +259,20 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         call.peerConnection.ontrack = (event) => {
           if (isCancelled) return;
           console.log('[CURA WebRTC] Direct track received:', event.track.kind);
-          const incomingStream = event.streams[0] || new MediaStream([event.track]);
-          attachRemoteStream(incomingStream);
+          const consolidated = remoteStreamRef.current;
+          const existing = consolidated.getTracks().filter(t => t.kind === event.track.kind);
+          existing.forEach(t => consolidated.removeTrack(t));
+          consolidated.addTrack(event.track);
+
+          if (event.streams && event.streams[0]) {
+            event.streams[0].getTracks().forEach(t => {
+              if (!consolidated.getTracks().some(ct => ct.id === t.id)) {
+                consolidated.addTrack(t);
+              }
+            });
+          }
+
+          attachRemoteStream(consolidated);
         };
 
         call.peerConnection.onconnectionstatechange = () => {
@@ -253,12 +293,19 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       call.on('stream', (incomingRemoteStream) => {
         if (isCancelled) return;
         console.log('[CURA WebRTC] Stream received via PeerJS:', incomingRemoteStream);
-        attachRemoteStream(incomingRemoteStream);
+        const consolidated = remoteStreamRef.current;
+        incomingRemoteStream.getTracks().forEach(t => {
+          if (!consolidated.getTracks().some(ct => ct.id === t.id)) {
+            consolidated.addTrack(t);
+          }
+        });
+        attachRemoteStream(consolidated);
       });
 
       call.on('close', () => {
         console.log('[CURA WebRTC] Call closed');
         if (isCancelled) return;
+        remoteStreamRef.current = new MediaStream();
         setRemoteStream(null);
         setConnectionStatus('waiting');
         isInitiatingCall = false;
@@ -286,9 +333,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       }
 
       // Check if we already have an active call with valid remote tracks
-      if (activeMediaCall?.open && remoteVideoRef.current?.srcObject) {
-        const stream = remoteVideoRef.current.srcObject as MediaStream;
-        if (stream && stream.getVideoTracks().length > 0) return;
+      if (activeMediaCall?.open && remoteStreamRef.current.getTracks().length > 0) {
+        return;
       }
 
       isInitiatingCall = true;
@@ -372,19 +418,35 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     async function requestMediaStream() {
       try {
         let stream: MediaStream | null = null;
+        const audioConstraints = {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        };
+
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'user' },
-            audio: true
+            audio: audioConstraints
           });
         } catch (e) {
           console.warn('[CURA WebRTC] Primary constraints failed, trying fallback:', e);
           try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           } catch (e2) {
-            console.warn('[CURA WebRTC] Audio-only fallback:', e2);
+            console.warn('[CURA WebRTC] Video+Audio fallback failed, trying separate capture:', e2);
             try {
-              stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
+              let videoOnly: MediaStream | null = null;
+              try {
+                videoOnly = await navigator.mediaDevices.getUserMedia({ video: true });
+              } catch {}
+              const combined = new MediaStream();
+              audioOnly.getAudioTracks().forEach(t => combined.addTrack(t));
+              if (videoOnly) {
+                videoOnly.getVideoTracks().forEach(t => combined.addTrack(t));
+              }
+              stream = combined;
             } catch (e3) {
               console.warn('[CURA WebRTC] No media access:', e3);
             }
@@ -397,6 +459,11 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         }
 
         if (stream) {
+          // Explicitly ensure captured audio tracks are enabled
+          stream.getAudioTracks().forEach((track) => {
+            track.enabled = !isMicMutedRef.current;
+          });
+
           currentStream = stream;
           setLocalStream(stream);
 
@@ -429,15 +496,13 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     createPeerInstance();
     requestMediaStream();
 
-    // Reconnection retry loop every 2.5s if not receiving video
+    // Reconnection retry loop every 3s if not yet connected
     checkTimer = setInterval(() => {
       if (isCancelled || !currentPeer || currentPeer.destroyed) return;
-      if (activeMediaCall?.open && remoteVideoRef.current?.srcObject) {
-        const stream = remoteVideoRef.current.srcObject as MediaStream;
-        if (stream && stream.getVideoTracks().length > 0) return;
-      }
+      if (activeMediaCall?.open && connectionStatus === 'connected') return;
+      if (activeMediaCall?.open && remoteStreamRef.current.getTracks().length > 0) return;
       attemptDirectCall();
-    }, 2500);
+    }, 3000);
 
     const cleanupWindow = () => {
       try { currentPeer?.destroy(); } catch {}
@@ -470,18 +535,44 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   }, [localStream]);
 
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(async (err) => {
-        console.warn('[CURA WebRTC] Remote autoplay fallback:', err);
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.muted = true;
-          try {
-            await remoteVideoRef.current.play();
-          } catch {}
+    if (remoteStream) {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.muted = true;
+        remoteVideoRef.current.srcObject = remoteStream;
+        remoteVideoRef.current.play().catch(() => {});
+      }
+      if (remoteAudioRef.current) {
+        if (remoteAudioRef.current.srcObject !== remoteStream) {
+          remoteAudioRef.current.srcObject = remoteStream;
         }
-      });
+        remoteAudioRef.current.muted = false;
+        remoteAudioRef.current.volume = 1.0;
+        remoteAudioRef.current.play().then(() => {
+          setAudioNeedsInteraction(false);
+        }).catch((err) => {
+          console.warn('[CURA WebRTC] Remote audio autoplay blocked:', err);
+          setAudioNeedsInteraction(true);
+        });
+      }
     }
+  }, [remoteStream]);
+
+  // Global gesture listener to unlock audio as soon as user clicks anywhere
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (remoteAudioRef.current && remoteAudioRef.current.paused && remoteStream) {
+        remoteAudioRef.current.play().then(() => {
+          setAudioNeedsInteraction(false);
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
   }, [remoteStream]);
 
   const broadcastState = (videoOff: boolean, micMuted: boolean) => {
@@ -531,8 +622,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     const newFacing = facingMode === 'user' ? 'environment' : 'user';
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newFacing },
-        audio: !isMicMuted
+        video: { facingMode: newFacing }
       });
 
       const newVideoTrack = newStream.getVideoTracks()[0];
@@ -689,7 +779,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       {/* Camera / Mic Warning Banner (if blocked in WebView/browser) */}
       {cameraError && (
         <div className="absolute top-16 left-4 right-4 z-40 bg-amber-500/95 text-slate-950 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between shadow-2xl backdrop-blur-md border border-amber-400">
-          <span className="truncate pr-2">⚠️ Camera blocked. If testing on mobile, switch to Chrome browser.</span>
+          <span className="truncate pr-2">⚠️ Camera or Microphone blocked. If testing on mobile, switch to Chrome browser.</span>
           <a
             href={directLink}
             target="_blank"
@@ -701,14 +791,38 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         </div>
       )}
 
+      {/* Tap to Unmute Audio Banner (if autoplay policy paused audio) */}
+      {audioNeedsInteraction && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in duration-200">
+          <button
+            onClick={() => {
+              if (remoteAudioRef.current) {
+                remoteAudioRef.current.play().then(() => setAudioNeedsInteraction(false)).catch(() => {});
+              }
+            }}
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-full shadow-2xl border-2 border-emerald-300 active:scale-95 transition-all animate-bounce"
+          >
+            <Volume2 className="w-4 h-4 animate-pulse" />
+            <span>Tap to Enable Call Audio</span>
+          </button>
+        </div>
+      )}
+
       {/* Main Video Stage */}
       <div className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden">
+        {/* Dedicated Remote Audio Player */}
+        <audio
+          ref={remoteAudioRef}
+          autoPlay
+          playsInline
+        />
+
         {/* Remote Video Stream (Main Fullscreen) */}
         <video
           ref={remoteVideoRef}
           autoPlay
           playsInline
-          muted={false}
+          muted={true}
           className={`w-full h-full object-cover transition-opacity duration-300 ${
             connectionStatus === 'connected' && !isRemoteOffCam ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
