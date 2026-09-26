@@ -761,15 +761,15 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
               </a>
             )}
 
-            {/* Quick End Call Button */}
+            {/* Quick End Call / Leave Button */}
             {onEndCall && (
               <button
                 onClick={handleEndCall}
                 className="bg-rose-600 hover:bg-rose-700 active:bg-rose-800 px-3 sm:px-4 py-1.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 active:scale-95"
-                title="Exit Consultation"
+                title={role === 'patient' ? "Leave Consultation" : "Exit Consultation"}
               >
                 <PhoneOff className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Exit</span>
+                <span className="hidden xs:inline">{role === 'patient' ? 'Leave' : 'Exit'}</span>
               </button>
             )}
           </div>
@@ -823,7 +823,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           autoPlay
           playsInline
           muted={true}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
+          className={`w-full h-full object-contain transition-opacity duration-300 ${
             connectionStatus === 'connected' && !isRemoteOffCam ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         />
@@ -946,7 +946,9 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center mb-5 text-white shadow-xl shadow-emerald-950/50">
                 <ShieldCheck className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight">Consultation Concluded</h3>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight">
+                {role === 'patient' ? 'You Have Left the Call' : 'Consultation Concluded'}
+              </h3>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#081729]/90 border border-white/10 text-xs font-mono font-bold text-slate-200 mb-5">
                 <Clock className="w-4 h-4 text-emerald-400" />
                 <span>Session Duration: {formatDuration(callDuration)}</span>
@@ -978,7 +980,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             autoPlay
             muted
             playsInline
-            style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
+            style={{ transform: 'none' }}
             className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`}
           />
           {isVideoOff && (
@@ -1039,14 +1041,14 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             <RefreshCw className="w-5 h-5" />
           </button>
 
-          {/* End Call Button */}
+          {/* End Call / Leave Button */}
           <button
             onClick={handleEndCall}
             className="h-12 px-6 sm:px-7 rounded-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-900/40 transition-all active:scale-95 flex items-center gap-2"
-            title="End Consultation"
+            title={role === 'patient' ? "Leave Call" : "End Consultation"}
           >
             <PhoneOff className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>End Call</span>
+            <span>{role === 'patient' ? 'Leave' : 'End Call'}</span>
           </button>
         </div>
       </div>
