@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, ShieldCheck, Sparkles } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
 import { normalizeDate } from '@/utils/philippineTime';
-import { TELEMEDICINE_TIME_SLOTS, checkMeetingJoinable } from '@/utils/telemedicineSchedule';
 
 interface TelemedicineProps {
   patients: Patient[];
@@ -88,28 +87,11 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     }
   };
 
-  const isSlotOccupied = (targetDate: string, targetSlot: string, currentReqId?: string) => {
-    if (!targetDate || !targetSlot) return false;
-    const norm = normalizeDate(targetDate);
-    return requests.some(r => {
-      if (r.id === currentReqId || r.status === 'Rejected') return false;
-      const rDate = normalizeDate(r.scheduled_date || r.preferred_date);
-      const rTime = r.scheduled_time || r.preferred_time;
-      return rDate === norm && rTime === targetSlot;
-    });
-  };
-
   const openApproveModal = (req: TelemedicineRequest) => {
     setSelectedReq(req);
     setActionType('Approve');
     setScheduledDate(req.preferred_date);
-    let initialTime = req.preferred_time;
-    if (!TELEMEDICINE_TIME_SLOTS.includes(initialTime as any)) {
-      if (/morning/i.test(initialTime)) initialTime = '08:00 AM - 09:00 AM';
-      else if (/afternoon/i.test(initialTime)) initialTime = '01:00 PM - 02:00 PM';
-      else initialTime = TELEMEDICINE_TIME_SLOTS[0];
-    }
-    setScheduledTime(initialTime);
+    setScheduledTime(req.preferred_time);
   };
 
   const openRejectModal = (req: TelemedicineRequest) => {
@@ -288,105 +270,62 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                   </div>
                 )}
                 
-                {req.status === 'Approved' && (() => {
-                  const schedDate = req.scheduled_date || req.preferred_date;
-                  const schedTime = req.scheduled_time || req.preferred_time;
-                  const schedule = checkMeetingJoinable(schedDate, schedTime);
+                {req.status === 'Approved' && (
+                  <div className="mt-2 pt-3.5 border-t border-gray-100 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                      <span className="text-gray-500">Scheduled Session:</span>
+                      <span className="font-bold text-gray-900">{normalizeDate(req.scheduled_date)} at {req.scheduled_time}</span>
+                    </div>
 
-                  return (
-                    <div className="mt-2 pt-3.5 border-t border-gray-100 space-y-2.5">
-                      <div className="flex items-center justify-between text-xs bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                        <span className="text-gray-500">Scheduled Session:</span>
-                        <div className="text-right">
-                          <span className="font-bold text-gray-900 block">{normalizeDate(schedDate)} at {schedTime}</span>
-                          <span className={`text-[10px] font-semibold ${
-                            schedule.canJoin ? 'text-emerald-600' : schedule.status === 'ended' ? 'text-gray-500' : 'text-amber-600'
-                          }`}>
-                            {schedule.canJoin ? '● Call window active' : schedule.status === 'ended' ? '● Session concluded' : `● ${schedule.message}`}
-                          </span>
-                        </div>
-                      </div>
+                    {/* Primary Button: Join Embedded In-App Call */}
+                    <button
+                      onClick={() => setActiveCallReq(req)}
+                      className="w-full bg-[#1B3A6B] hover:bg-[#142d54] text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 text-xs sm:text-sm group"
+                    >
+                      <Video size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <span>Start In-App Video Call</span>
+                      <span className="ml-auto text-[10px] bg-emerald-500/30 text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
+                        Embedded
+                      </span>
+                    </button>
 
-                      {/* Primary Button: Join Embedded In-App Call */}
-                      {schedule.canJoin ? (
-                        <button
-                          onClick={() => setActiveCallReq(req)}
-                          className="w-full bg-[#1B3A6B] hover:bg-[#142d54] text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 text-xs sm:text-sm group"
+                    {/* Secondary Actions: Google Meet & Copy Link */}
+                    <div className="flex items-center gap-2">
+                      {hasGoogleMeet && googleMeetUrl ? (
+                        <a 
+                          href={googleMeetUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
+                          title="Open Google Meet in a new tab (Secondary option)"
                         >
-                          <Video size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-                          <span>Start In-App Video Call</span>
-                          <span className="ml-auto text-[10px] bg-emerald-500/30 text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
-                            Active
-                          </span>
-                        </button>
-                      ) : schedule.status === 'upcoming' ? (
-                        <button
-                          onClick={() => {
-                            alert(`Consultation Room Locked\n\nThis appointment is scheduled for ${schedDate} at ${schedTime}.\n\nAccess will automatically unlock 15 minutes before the session starts (${schedule.opensAt || schedTime}).`);
-                          }}
-                          className="w-full bg-amber-50 hover:bg-amber-100/80 border border-amber-200 text-amber-900 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all text-xs sm:text-sm shadow-xs"
-                          title="Room opens 15 minutes before the scheduled time"
-                        >
-                          <Lock size={15} className="text-amber-600" />
-                          <span>Locked • Opens at {schedule.opensAt || schedTime}</span>
-                        </button>
+                          <ExternalLink size={13} />
+                          <span>Google Meet (Backup)</span>
+                        </a>
                       ) : (
-                        <div className="w-full bg-gray-100 border border-gray-200 text-gray-500 font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-xs">
-                          <span>Consultation Window Concluded</span>
-                        </div>
+                        <a 
+                          href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
+                          title="Open in external browser window"
+                        >
+                          <ExternalLink size={13} />
+                          <span>Open in Browser</span>
+                        </a>
                       )}
 
-                      {/* Secondary Actions: Google Meet & Copy Link */}
-                      <div className="flex items-center gap-2">
-                        {schedule.canJoin ? (
-                          hasGoogleMeet && googleMeetUrl ? (
-                            <a 
-                              href={googleMeetUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex-1 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
-                              title="Open Google Meet in a new tab (Secondary option)"
-                            >
-                              <ExternalLink size={13} />
-                              <span>Google Meet (Backup)</span>
-                            </a>
-                          ) : (
-                            <a 
-                              href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
-                              title="Open in external browser window"
-                            >
-                              <ExternalLink size={13} />
-                              <span>Open in Browser</span>
-                            </a>
-                          )
-                        ) : (
-                          <button
-                            onClick={() => {
-                              alert(`Consultation Room Locked\n\nThis appointment is scheduled for ${schedDate} at ${schedTime}.\n\nAccess opens 15 minutes before the session.`);
-                            }}
-                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-400 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs cursor-not-allowed"
-                            title="Locked outside scheduled hours"
-                          >
-                            <Lock size={13} />
-                            <span>Browser Call (Locked)</span>
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => handleCopyLink(req)}
-                          className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg border border-gray-200 transition-colors flex items-center gap-1 text-xs"
-                          title="Copy patient invitation link"
-                        >
-                          {copiedId === req.id ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                          <span>{copiedId === req.id ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleCopyLink(req)}
+                        className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg border border-gray-200 transition-colors flex items-center gap-1 text-xs"
+                        title="Copy patient invitation link"
+                      >
+                        {copiedId === req.id ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                        <span>{copiedId === req.id ? 'Copied' : 'Copy'}</span>
+                      </button>
                     </div>
-                  );
-                })()}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -433,31 +372,17 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                        Confirm Time Slot
+                        Confirm Time
                       </label>
-                      <select 
+                      <input 
+                        type="text" 
                         value={scheduledTime}
                         onChange={e => setScheduledTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                      >
-                        <option value="" disabled>Select Time Slot</option>
-                        {TELEMEDICINE_TIME_SLOTS.map(slot => {
-                          const occupied = isSlotOccupied(scheduledDate, slot, selectedReq.id);
-                          return (
-                            <option key={slot} value={slot}>
-                              {slot} {occupied ? '(⚠️ Booked)' : '(Available)'}
-                            </option>
-                          );
-                        })}
-                      </select>
+                        className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="e.g. 10:00 AM"
+                      />
                     </div>
                   </div>
-
-                  {isSlotOccupied(scheduledDate, scheduledTime, selectedReq.id) && (
-                    <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
-                      <span>⚠️ Notice: The {scheduledTime} slot is already occupied by another consultation on {scheduledDate}.</span>
-                    </div>
-                  )}
 
                   {/* Auto-Generated Video Room Notice */}
                   <div className="p-3.5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border border-blue-100 flex items-start gap-3">
@@ -466,10 +391,10 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-                        Automated Schedule Protection
+                        Automated In-App Video Room
                       </h4>
                       <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                        The video room is locked and strictly opens 15 minutes before the confirmed time slot ({scheduledTime || 'selected time'}), ensuring consultations run only during their approved schedule.
+                        A secure, encrypted video consultation room will be automatically created. Both you and the patient can join directly with one click — zero link setup needed.
                       </p>
                     </div>
                   </div>
