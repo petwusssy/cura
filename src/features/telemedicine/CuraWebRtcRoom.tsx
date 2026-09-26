@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Peer, { MediaConnection } from 'peerjs';
 import { 
   Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, 
-  ShieldCheck, RefreshCw, User, Clock, Check, Copy, ExternalLink, Volume2 
+  ShieldCheck, RefreshCw, User, Clock, Check, Copy, ExternalLink, Volume2, FlipHorizontal 
 } from 'lucide-react';
 
 interface CuraWebRtcRoomProps {
@@ -45,6 +45,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [audioNeedsInteraction, setAudioNeedsInteraction] = useState(false);
+  const [isRemoteMirrored, setIsRemoteMirrored] = useState(true);
+  const [isLocalMirrored, setIsLocalMirrored] = useState(true);
 
   const effectiveRemoteName = (remotePeerName || remoteUserName || (role === 'doctor' ? 'Patient' : 'Clinic Doctor')).toUpperCase();
 
@@ -823,6 +825,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           autoPlay
           playsInline
           muted={true}
+          style={{ transform: isRemoteMirrored ? 'scaleX(-1)' : 'none' }}
           className={`w-full h-full object-contain transition-opacity duration-300 ${
             connectionStatus === 'connected' && !isRemoteOffCam ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
@@ -972,15 +975,17 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
 
         {/* Local Video Stream (Picture-in-Picture) */}
         <div 
-          className="absolute right-3 sm:right-5 z-20 w-32 h-44 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border-2 border-white/20 bg-[#081729] shadow-2xl transition-all"
+          onClick={() => setIsLocalMirrored((prev) => !prev)}
+          className="absolute right-3 sm:right-5 z-20 w-32 h-44 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border-2 border-white/20 bg-[#081729] shadow-2xl transition-all cursor-pointer"
           style={{ bottom: 'max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 20px)))' }}
+          title="Click to flip camera mirror"
         >
           <video
             ref={localVideoRef}
             autoPlay
             muted
             playsInline
-            style={{ transform: 'none' }}
+            style={{ transform: isLocalMirrored ? 'scaleX(-1)' : 'none' }}
             className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`}
           />
           {isVideoOff && (
@@ -1030,6 +1035,22 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
             title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
           >
             {isVideoOff ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
+          </button>
+
+          {/* Flip / Unmirror Video */}
+          <button
+            onClick={() => {
+              setIsRemoteMirrored((prev) => !prev);
+              setIsLocalMirrored((prev) => !prev);
+            }}
+            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all duration-200 shadow-md active:scale-95 ${
+              isRemoteMirrored 
+                ? 'bg-[#1B3A6B] hover:bg-[#224A84] text-white border border-white/15' 
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/40'
+            }`}
+            title="Unmirror / Flip Video"
+          >
+            <FlipHorizontal className="w-5 h-5" />
           </button>
 
           {/* Flip Camera (Mobile Only) */}
