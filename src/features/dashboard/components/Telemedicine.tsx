@@ -1,9 +1,111 @@
 import { useState, useEffect } from 'react';
-import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, ShieldCheck, Sparkles } from 'lucide-react';
+import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
-import { normalizeDate } from '@/utils/philippineTime';
+import { normalizeDate, getManilaDate, getManilaTime } from '@/utils/philippineTime';
+
+function parseSingleTime(t: string): number | null {
+  const match = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+  if (!match) return null;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const meridian = match[3] ? match[3].toLowerCase() : null;
+
+  if (meridian === "pm" && hours < 12) hours += 12;
+  if (meridian === "am" && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+function parseTimeSlot(timeStr?: string): { startMinutes: number; endMinutes: number } {
+  if (!timeStr) return { startMinutes: 8 * 60, endMinutes: 17 * 60 };
+  const s = timeStr.trim();
+
+  if (/morning/i.test(s) || /8\s*am\s*-\s*12\s*pm/i.test(s)) {
+    return { startMinutes: 8 * 60, endMinutes: 12 * 60 };
+  }
+  if (/afternoon/i.test(s) || /1\s*pm\s*-\s*5\s*pm/i.test(s)) {
+    return { startMinutes: 13 * 60, endMinutes: 17 * 60 };
+  }
+
+  const rangeMatch = s.match(/(.+?)\s*(?:-|to)\s*(.+)/i);
+  if (rangeMatch) {
+    const startM = parseSingleTime(rangeMatch[1]);
+    const endM = parseSingleTime(rangeMatch[2]);
+    if (startM !== null && endM !== null) {
+      return { startMinutes: startM, endMinutes: endM };
+    }
+  }
+
+  const singleM = parseSingleTime(s);
+  if (singleM !== null) {
+    return { startMinutes: singleM, endMinutes: singleM + 60 };
+  }
+
+  return { startMinutes: 8 * 60, endMinutes: 17 * 60 };
+}
+
+function formatMinutes(m: number): string {
+  let h = Math.floor(m / 60);
+  const min = m % 60;
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(min).padStart(2, "0")} ${ampm}`;
+}
+
+export function getScheduleAccess(scheduledDateRaw?: string, scheduledTimeRaw?: string): { canJoin: boolean; reason: string } {
+  const normDate = normalizeDate(scheduledDateRaw);
+  const today = getManilaDate();
+
+  if (!normDate) {
+    return { canJoin: true, reason: "" };
+  }
+
+  const timeLabel = scheduledTimeRaw ? scheduledTimeRaw.trim() : "";
+
+  if (normDate > today) {
+    return {
+      canJoin: false,
+      reason: `Upcoming consultation scheduled for ${normDate}${timeLabel ? ` at ${timeLabel}` : ""}.`,
+    };
+  }
+
+  if (normDate < today) {
+    return {
+      canJoin: false,
+      reason: `Consultation schedule date has passed (${normDate}).`,
+    };
+  }
+
+  // Today in Manila
+  const timeParts = getManilaTime().split(":").map(Number);
+  const nowMinutes = timeParts[0] * 60 + (timeParts[1] || 0);
+
+  const { startMinutes, endMinutes } = parseTimeSlot(timeLabel);
+  const earlyBuffer = 10;
+  const lateBuffer = 20;
+
+  if (nowMinutes < startMinutes - earlyBuffer) {
+    const minsWait = (startMinutes - earlyBuffer) - nowMinutes;
+    return {
+      canJoin: false,
+      reason: `Call opens at ${formatMinutes(startMinutes)}${minsWait > 0 && minsWait <= 60 ? ` (in ${minsWait} min${minsWait === 1 ? "" : "s"})` : ""}.`,
+    };
+  }
+
+  if (nowMinutes > endMinutes + lateBuffer) {
+    return {
+      canJoin: false,
+      reason: `Scheduled time slot (${timeLabel || `${formatMinutes(startMinutes)} - ${formatMinutes(endMinutes)}`}) has ended.`,
+    };
+  }
+
+  return {
+    canJoin: true,
+    reason: "Consultation is active now.",
+  };
+}
 
 interface TelemedicineProps {
   patients: Patient[];
@@ -29,6 +131,21 @@ export function Telemedicine({ patients }: TelemedicineProps) {
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [, setTimeTick] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setTimeTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleStartCall = (req: TelemedicineRequest) => {
+    const access = getScheduleAccess(req.scheduled_date || req.preferred_date, req.scheduled_time || req.preferred_time);
+    if (!access.canJoin) {
+      alert(access.reason);
+      return;
+    }
+    setActiveCallReq(req);
+  };
 
   useEffect(() => {
     fetchRequests();
@@ -196,6 +313,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
               (req.secondary_link && req.secondary_link.includes('meet.google.com')) ? req.secondary_link :
               (req.meeting_link && req.meeting_link.includes('meet.google.com')) ? req.meeting_link :
               req.secondary_link;
+            const access = getScheduleAccess(req.scheduled_date || req.preferred_date, req.scheduled_time || req.preferred_time);
 
             return (
               <div key={req.id} className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group">
@@ -215,10 +333,17 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                           {req.status}
                         </span>
                         {req.status === 'Approved' && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            In-App Call Ready
-                          </span>
+                          access.canJoin ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Live Now
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                              <Lock size={10} className="text-amber-600" />
+                              Locked
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -277,42 +402,89 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                       <span className="font-bold text-gray-900">{normalizeDate(req.scheduled_date)} at {req.scheduled_time}</span>
                     </div>
 
+                    {!access.canJoin && (
+                      <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 text-xs text-amber-900 flex items-start gap-2">
+                        <Lock size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold">{access.reason}</p>
+                          <p className="text-[11px] text-amber-700 mt-0.5">Video consultation room opens only during the confirmed schedule.</p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Primary Button: Join Embedded In-App Call */}
                     <button
-                      onClick={() => setActiveCallReq(req)}
-                      className="w-full bg-[#1B3A6B] hover:bg-[#142d54] text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 text-xs sm:text-sm group"
+                      disabled={!access.canJoin}
+                      onClick={() => handleStartCall(req)}
+                      className={`w-full font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all text-xs sm:text-sm ${
+                        access.canJoin
+                          ? "bg-[#1B3A6B] hover:bg-[#142d54] text-white shadow-md active:scale-98 group cursor-pointer"
+                          : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                      }`}
+                      title={!access.canJoin ? access.reason : undefined}
                     >
-                      <Video size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-                      <span>Start In-App Video Call</span>
-                      <span className="ml-auto text-[10px] bg-emerald-500/30 text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
-                        Embedded
-                      </span>
+                      {access.canJoin ? (
+                        <>
+                          <Video size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                          <span>Start In-App Video Call</span>
+                          <span className="ml-auto text-[10px] bg-emerald-500/30 text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
+                            Live
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={15} className="text-gray-400" />
+                          <span>Video Call Locked Until Scheduled Time</span>
+                        </>
+                      )}
                     </button>
 
                     {/* Secondary Actions: Google Meet & Copy Link */}
                     <div className="flex items-center gap-2">
                       {hasGoogleMeet && googleMeetUrl ? (
-                        <a 
-                          href={googleMeetUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
-                          title="Open Google Meet in a new tab (Secondary option)"
-                        >
-                          <ExternalLink size={13} />
-                          <span>Google Meet (Backup)</span>
-                        </a>
+                        access.canJoin ? (
+                          <a 
+                            href={googleMeetUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
+                            title="Open Google Meet in a new tab (Secondary option)"
+                          >
+                            <ExternalLink size={13} />
+                            <span>Google Meet (Backup)</span>
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-400 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 cursor-not-allowed text-xs"
+                            title={access.reason}
+                          >
+                            <Lock size={12} className="text-gray-400" />
+                            <span>Google Meet</span>
+                          </button>
+                        )
                       ) : (
-                        <a 
-                          href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
-                          title="Open in external browser window"
-                        >
-                          <ExternalLink size={13} />
-                          <span>Open in Browser</span>
-                        </a>
+                        access.canJoin ? (
+                          <a 
+                            href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
+                            title="Open in external browser window"
+                          >
+                            <ExternalLink size={13} />
+                            <span>Open in Browser</span>
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-400 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 cursor-not-allowed text-xs"
+                            title={access.reason}
+                          >
+                            <Lock size={12} className="text-gray-400" />
+                            <span>Browser Call</span>
+                          </button>
+                        )
                       )}
 
                       <button
