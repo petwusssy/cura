@@ -346,9 +346,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             @keyframes liquidText { 0%,100%{background-position: 0% 0%} 50%{background-position: 0% 100%} }
           `}</style>
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[-30px] left-[15%] w-[160px] h-[160px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] bg-white/50 dark:bg-white/10 animate-[blob1_7s_ease-in-out_infinite]" />
-            <div className="absolute top-[-20px] right-[20%] w-[130px] h-[130px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-white/40 dark:bg-white/5 animate-[blob2_9s_ease-in-out_infinite]" />
-            <div className="absolute top-[-10px] left-[60%] w-[100px] h-[100px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-white/60 dark:bg-white/10 animate-[blob1_11s_ease-in-out_infinite_reverse]" />
+            <div className="absolute top-[-28px] left-[20%] w-[150px] h-[150px] rounded-[42%_58%_68%_32%/42%_48%_58%_52%] bg-white/45 dark:bg-white/10 animate-[blob1_8s_ease-in-out_infinite]" />
+            <div className="absolute top-[-16px] left-[27%] w-[125px] h-[125px] rounded-[58%_42%_32%_68%/58%_32%_68%_42%] bg-white/35 dark:bg-white/5 animate-[blob2_10s_ease-in-out_infinite]" />
           </div>
 
           <button
