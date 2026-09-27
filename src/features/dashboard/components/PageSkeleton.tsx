@@ -77,53 +77,212 @@ export function TablePageSkeleton({ titleWidth = 180 }: { titleWidth?: number })
 }
 
 /**
- * CardGridSkeleton
- * Matches card grid views (Appointments, Telemedicine) — 1:1 match to reference structure
+ * AppointmentCardSkeleton
+ * 1:1 match to Appointment card structure (Header, badges, action buttons, preferred date/time, quote, footer)
  */
-export function CardGridSkeleton({ count = 6 }: { count?: number }) {
+export function AppointmentCardSkeleton({ isPending = false }: { isPending?: boolean }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+      <div>
+        {/* Top Header */}
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            {/* Patient Name */}
+            <div className="skeleton h-5 w-36 rounded-md mb-2" />
+            {/* Badges */}
+            <div className="flex items-center gap-2">
+              <div className="skeleton h-5 w-16 rounded" />
+              <div className="skeleton h-5 w-20 rounded" />
+            </div>
+          </div>
+          {/* Action icon boxes: Calendar & Trash */}
+          <div className="flex gap-2">
+            <div className="skeleton w-8 h-8 rounded-lg" />
+            <div className="skeleton w-8 h-8 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Date / Time Details */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="skeleton w-3.5 h-3.5 rounded" />
+            <div className="skeleton h-4 w-44 rounded" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="skeleton w-3.5 h-3.5 rounded" />
+            <div className="skeleton h-4 w-36 rounded" />
+          </div>
+          {/* Reason Quote Box */}
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="skeleton h-4 w-28 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      {isPending ? (
+        <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
+          <div className="skeleton h-9 flex-1 rounded-lg" />
+          <div className="skeleton h-9 flex-1 rounded-lg" />
+        </div>
+      ) : (
+        <div className="mt-auto pt-4 border-t border-gray-100 space-y-1.5">
+          <div className="skeleton h-3 w-24 rounded" />
+          <div className="skeleton h-4.5 w-56 rounded" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * AppointmentsPageSkeleton
+ * Full page skeleton for Appointments view matching search, filters, and cards
+ */
+export function AppointmentsPageSkeleton({ count = 6 }: { count?: number }) {
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5">
-          <div className="skeleton h-7 w-48 rounded-lg" />
-          <div className="skeleton h-3.5 w-56 rounded-full" />
+          <div className="skeleton h-7 w-40 rounded-lg" />
+          <div className="skeleton h-3.5 w-64 rounded-full" />
         </div>
-        <div className="skeleton h-10 w-full sm:w-72 rounded-xl" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="skeleton h-9 w-44 rounded-xl" />
+          <div className="skeleton h-9 w-full sm:w-64 rounded-xl" />
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <AppointmentCardSkeleton key={i} isPending={i % 3 === 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * TelemedicineCardSkeleton
+ * 1:1 match to Telemedicine card structure (Header, badges, camera & trash buttons,
+ * preferred date/time, reason box, scheduled session box, status box, action button, secondary buttons)
+ */
+export function TelemedicineCardSkeleton({ isPending = false }: { isPending?: boolean }) {
+  return (
+    <div className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+      <div>
+        {/* Top Header */}
+        <div className="flex justify-between items-start mb-3.5">
+          <div>
+            {/* Patient Name */}
+            <div className="skeleton h-5 w-36 rounded-md mb-2" />
+            {/* Badges */}
+            <div className="flex items-center gap-1.5">
+              <div className="skeleton h-5 w-16 rounded-md" />
+              <div className="skeleton h-5 w-16 rounded-md" />
+            </div>
+          </div>
+          {/* Action icon boxes: Video & Trash */}
+          <div className="flex items-center gap-1.5">
+            <div className="skeleton w-8 h-8 rounded-xl" />
+            <div className="skeleton w-8 h-8 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="skeleton w-3.5 h-3.5 rounded" />
+            <div className="skeleton h-3.5 w-44 rounded" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="skeleton w-3.5 h-3.5 rounded" />
+            <div className="skeleton h-3.5 w-52 rounded" />
+          </div>
+          {/* Reason for Consultation Box */}
+          <div className="mt-2.5 p-3 bg-gray-50/80 rounded-xl border border-gray-100 space-y-1.5">
+            <div className="skeleton h-3 w-32 rounded" />
+            <div className="skeleton h-3.5 w-20 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      {isPending ? (
+        <div className="flex gap-2.5 mt-2 pt-3.5 border-t border-gray-100">
+          <div className="skeleton h-9 flex-1 rounded-xl" />
+          <div className="skeleton h-9 w-20 rounded-xl" />
+        </div>
+      ) : (
+        <div className="mt-2 pt-3.5 border-t border-gray-100 space-y-2.5">
+          {/* Scheduled Session Box */}
+          <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+            <div className="skeleton h-3.5 w-28 rounded" />
+            <div className="skeleton h-3.5 w-44 rounded" />
+          </div>
+
+          {/* Time slot status alert */}
+          <div className="bg-amber-50/60 border border-amber-200/60 rounded-xl p-2.5 flex items-start gap-2">
+            <div className="skeleton w-3.5 h-3.5 rounded flex-shrink-0 mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <div className="skeleton h-3.5 w-4/5 rounded" />
+              <div className="skeleton h-2.5 w-3/5 rounded" />
+            </div>
+          </div>
+
+          {/* Video Call Locked / Start Call Button */}
+          <div className="skeleton h-10 w-full rounded-xl" />
+
+          {/* Secondary Actions */}
+          <div className="flex items-center gap-2">
+            <div className="skeleton h-8 flex-1 rounded-lg" />
+            <div className="skeleton h-8 w-20 rounded-lg" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * TelemedicinePageSkeleton
+ * Full page skeleton for Telemedicine view matching header, badges, and card grid
+ */
+export function TelemedicinePageSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="skeleton h-7 w-40 rounded-lg" />
+            <div className="skeleton h-5 w-28 rounded-full" />
+          </div>
+          <div className="skeleton h-3.5 w-64 rounded-full" />
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="skeleton h-9 w-44 rounded-xl" />
+          <div className="skeleton h-9 w-full sm:w-64 rounded-xl" />
+        </div>
       </div>
 
       {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {Array.from({ length: count }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4"
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="skeleton skeleton-circle w-11 h-11 flex-shrink-0" />
-                <div className="space-y-2">
-                  <div className="skeleton h-3.5 w-32 rounded-full" />
-                  <div className="skeleton h-2.5 w-20 rounded-full" />
-                </div>
-              </div>
-              <div className="skeleton h-5 w-16 rounded-md" />
-            </div>
-
-            <div className="space-y-2.5 py-1">
-              <div className="skeleton h-3 w-4/5 rounded-full" />
-              <div className="skeleton h-3 w-1/2 rounded-full" />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <div className="skeleton h-10 flex-1 rounded-xl" />
-              <div className="skeleton h-10 flex-1 rounded-xl" />
-            </div>
-          </div>
+          <TelemedicineCardSkeleton key={i} isPending={i % 3 === 1} />
         ))}
       </div>
     </div>
   );
+}
+
+/**
+ * CardGridSkeleton (Legacy fallback)
+ */
+export function CardGridSkeleton({ count = 6 }: { count?: number }) {
+  return <AppointmentsPageSkeleton count={count} />;
 }
 
 /**
@@ -514,8 +673,9 @@ export function PageSkeleton({ page }: { page: Page }) {
     case 'dashboard':
       return <DashboardSkeleton />;
     case 'appointments':
+      return <AppointmentsPageSkeleton />;
     case 'telemedicine':
-      return <CardGridSkeleton />;
+      return <TelemedicinePageSkeleton />;
     case 'beds':
       return <BedsPageSkeleton />;
     case 'inventory':

@@ -4,6 +4,7 @@ import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
 import { normalizeDate, getManilaDate, getManilaTime, formatTime12 } from '@/utils/philippineTime';
+import { TelemedicineCardSkeleton } from './PageSkeleton';
 
 function parseSingleTime(t: string): number | null {
   const match = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
@@ -281,26 +282,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-in fade-in duration-150">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="skeleton skeleton-circle w-11 h-11 flex-shrink-0" />
-                  <div className="space-y-2">
-                    <div className="skeleton h-3.5 w-32 rounded-full" />
-                    <div className="skeleton h-2.5 w-20 rounded-full" />
-                  </div>
-                </div>
-                <div className="skeleton h-5 w-16 rounded-md" />
-              </div>
-              <div className="space-y-2.5 py-1">
-                <div className="skeleton h-3 w-4/5 rounded-full" />
-                <div className="skeleton h-3 w-1/2 rounded-full" />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <div className="skeleton h-10 flex-1 rounded-xl" />
-                <div className="skeleton h-10 flex-1 rounded-xl" />
-              </div>
-            </div>
+            <TelemedicineCardSkeleton key={i} isPending={i % 3 === 1} />
           ))}
         </div>
       ) : filteredRequests.length === 0 ? (
