@@ -171,6 +171,12 @@ function PhilHealthYakapBanner() {
   );
 }
 
+function formatCertRef(id?: string): string {
+  if (!id) return '';
+  if (id.startsWith('MC-')) return id;
+  return `MC-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+}
+
 export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, onDeleteCert, searchQuery }: MedicalCertificatesProps) {
   const [activeTab, setActiveTab] = useState<'template' | 'archives' | 'requests'>('template');
 
@@ -248,14 +254,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   const handleDeleteCert = async (certId: string, name?: string) => {
     const displayName = name || 'this record';
-    if (!window.confirm(`Are you sure you want to delete medical certificate #${certId} for ${displayName}? This action cannot be undone.`)) {
+    const ref = formatCertRef(certId);
+    if (!window.confirm(`Are you sure you want to delete medical certificate ${ref} for ${displayName}? This action cannot be undone.`)) {
       return;
     }
     try {
       if (onDeleteCert) {
         await onDeleteCert(certId);
       }
-      triggerToast(`🗑️ Medical Certificate #${certId} deleted from archives.`);
+      triggerToast(`🗑️ Medical Certificate ${ref} deleted from archives.`);
       if (selectedCertId === certId) {
         handleCreateNew();
       }
@@ -956,9 +963,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               </div>
 
               {/* Status Badge */}
-              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight inline-flex items-center gap-1.5 shrink-0 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-amber-50 text-amber-700 border border-amber-200/80'}`}>
+              <span
+                title={isCertIssued ? `Certificate ID: ${selectedCertId}` : 'Unsaved Draft'}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight inline-flex items-center gap-1.5 shrink-0 ${isCertIssued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-amber-50 text-amber-700 border border-amber-200/80'}`}
+              >
                 <span className={`w-1.5 h-1.5 rounded-full ${isCertIssued ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-                {isCertIssued ? `Issued #${selectedCertId}` : 'Draft'}
+                {isCertIssued ? 'Issued' : 'Draft'}
               </span>
 
               {/* New Blank Certificate button */}
@@ -1894,7 +1904,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100 mb-4 space-y-2 text-xs">
               <div className="flex justify-between items-center pb-2 border-b border-blue-200/50">
                 <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Certificate No.</span>
-                <span className="font-mono font-bold text-[#1E5AA8] text-sm">{issuedSummary?.id || selectedCertId}</span>
+                <span className="font-mono font-bold text-[#1E5AA8] text-sm" title={issuedSummary?.id || selectedCertId}>
+                  {formatCertRef(issuedSummary?.id || selectedCertId)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Patient:</span>
