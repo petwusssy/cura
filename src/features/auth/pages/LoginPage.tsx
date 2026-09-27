@@ -96,9 +96,14 @@ export default function LoginPage({ onLogin, onBack }: Props) {
           <div className="relative mb-5">
             <div
               className="absolute inset-0 rounded-full blur-2xl"
-              style={{ background: "rgba(27, 108, 168, 0.5)", transform: "scale(1.6)" }}
+              style={{ background: "rgba(56, 189, 248, 0.35)", transform: "scale(1.8)" }}
             />
-            <img src={curaLogo} alt="CURA" className="relative h-16 w-16 object-contain" />
+            <img
+              src={curaLogo}
+              alt="CURA"
+              className="relative h-20 w-20 object-contain transition-transform duration-300 hover:scale-105"
+              style={{ filter: "drop-shadow(0 8px 24px rgba(56, 189, 248, 0.45))" }}
+            />
           </div>
           <h1
             className="text-white text-2xl font-bold mb-1"

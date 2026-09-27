@@ -196,28 +196,25 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
       >
         {/* Brand */}
         <div
-          className={`relative z-10 flex items-center flex-shrink-0 border-b border-blue-200/20 dark:border-sidebar-border ${collapsed ? 'justify-center' : 'px-5 gap-3'}`}
+          className={`relative z-10 flex items-center flex-shrink-0 border-b border-blue-200/20 dark:border-sidebar-border ${collapsed ? 'justify-center' : 'px-5 gap-3.5'}`}
           style={{ height: '72px' }}
         >
-          <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: collapsed ? '38px' : '42px', height: '42px' }}>
+          <div className="relative flex items-center justify-center flex-shrink-0">
             <img
               src={curaLogoMain}
               alt="CURA"
-              className="absolute object-contain transition-transform duration-500"
+              className={`object-contain transition-transform duration-300 hover:scale-105 ${
+                collapsed ? 'w-11 h-11' : 'w-12 h-12'
+              }`}
               style={{
-                height: collapsed ? '68px' : '94px',
-                width: 'auto',
-                maxWidth: 'none',
-                transform: 'translateY(2px)',
+                filter: 'drop-shadow(0 4px 14px rgba(56, 189, 248, 0.4))',
               }}
-              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(2px) scale(1.05)')}
-              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(2px) scale(1)')}
             />
           </div>
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
               <span
-                className="text-[34px] font-black tracking-tighter leading-none"
+                className="text-[34px] font-black tracking-tighter leading-none select-none"
                 style={{
                   background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
                   backgroundSize: '100% 300%',
