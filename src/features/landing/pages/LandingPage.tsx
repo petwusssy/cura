@@ -421,7 +421,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.96 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5 shadow-sm"
+                        className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5 shadow-sm"
                         style={{ fontFamily: "'Inter', sans-serif" }}
                       >
                         <ShieldAlert className="text-amber-600 shrink-0 mt-0.5" size={17} />
@@ -433,7 +433,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             </span>
                           </div>
                           <p className="text-amber-700/90 text-[11px] leading-relaxed">
-                            Exceeded {MAX_LOGIN_ATTEMPTS} failed attempts. Please wait for the lockout timer to expire before trying again.
+                            {errorMessage || `Too many failed login attempts. For your security, this account has been temporarily locked for 15 minutes.`}
                           </p>
                         </div>
                       </motion.div>
@@ -441,9 +441,9 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                        className={`p-3.5 rounded-xl text-xs flex items-start gap-2.5 shadow-sm ${
                           limitState.attemptsRemaining <= 1
-                            ? "bg-red-50 border border-red-200 text-red-700"
+                            ? "bg-red-50 border border-red-200 text-red-800"
                             : "bg-amber-50 border border-amber-200 text-amber-800"
                         }`}
                         style={{ fontFamily: "'Inter', sans-serif" }}
@@ -456,11 +456,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           }
                           size={16}
                         />
-                        <div className="flex-1">
-                          <p className="font-medium text-xs leading-snug">{errorMessage}</p>
+                        <div className="flex-1 space-y-1">
+                          <p className="font-bold text-xs leading-snug">
+                            {limitState.attemptsRemaining <= 1 ? "Authentication Warning" : "Incorrect Credentials"}
+                          </p>
+                          <p className="text-[11px] leading-relaxed text-black/75">
+                            {errorMessage}
+                          </p>
                           {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS && (
-                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-black/10">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-black/50">Attempts left:</span>
+                            <div className="flex items-center justify-between pt-1.5 border-t border-black/10">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-black/50">
+                                Attempts remaining:
+                              </span>
                               <div className="flex gap-1.5 items-center">
                                 {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
                                   <span
@@ -474,10 +481,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                                     }`}
                                   />
                                 ))}
+                                <span className="text-[10px] font-bold text-black/60 ml-1">
+                                  ({limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS})
+                                </span>
                               </div>
-                              <span className="text-[10px] font-bold text-black/60 ml-auto">
-                                {limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS} tries
-                              </span>
                             </div>
                           )}
                         </div>

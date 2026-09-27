@@ -265,7 +265,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                     </span>
                   </div>
                   <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                    Exceeded {MAX_LOGIN_ATTEMPTS} failed attempts. Please wait for the lockout timer to expire before trying again.
+                    {errorMessage || `Too many failed login attempts. For security reasons, this account has been temporarily locked for 15 minutes.`}
                   </p>
                 </div>
               </motion.div>
@@ -273,7 +273,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                className={`p-3.5 rounded-xl text-xs flex items-start gap-3 shadow-lg ${
                   limitState.attemptsRemaining <= 1
                     ? "bg-red-500/15 border border-red-500/30 text-red-200"
                     : "bg-amber-500/15 border border-amber-500/30 text-amber-200"
@@ -285,13 +285,18 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                       ? "text-red-400 shrink-0 mt-0.5"
                       : "text-amber-400 shrink-0 mt-0.5"
                   }
-                  size={16}
+                  size={18}
                 />
-                <div className="flex-1">
-                  <p className="font-medium text-xs leading-snug">{errorMessage}</p>
+                <div className="flex-1 space-y-1">
+                  <p className="font-bold text-xs leading-snug">
+                    {limitState.attemptsRemaining <= 1 ? "Authentication Warning" : "Incorrect Credentials"}
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-white/80">
+                    {errorMessage}
+                  </p>
                   {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS && (
-                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
-                      <span className="text-[10px] uppercase tracking-wider text-white/50">Attempts left:</span>
+                    <div className="flex items-center justify-between pt-1.5 border-t border-white/10">
+                      <span className="text-[10px] uppercase tracking-wider text-white/50">Attempts remaining:</span>
                       <div className="flex gap-1.5 items-center">
                         {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
                           <span
@@ -305,10 +310,10 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                             }`}
                           />
                         ))}
+                        <span className="text-[10px] font-bold text-white/70 ml-1">
+                          ({limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS})
+                        </span>
                       </div>
-                      <span className="text-[10px] font-bold text-white/70 ml-auto">
-                        {limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS} tries
-                      </span>
                     </div>
                   )}
                 </div>

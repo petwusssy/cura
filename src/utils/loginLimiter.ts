@@ -1,4 +1,4 @@
-// Utility to track and enforce the 4-attempt login limit on web clients
+// Utility to track and enforce the 4-attempt login limit on web clients with professional messaging
 
 export const MAX_LOGIN_ATTEMPTS = 4;
 export const DEFAULT_LOCKOUT_SECONDS = 15 * 60; // 15 minutes
@@ -14,6 +14,32 @@ export interface LoginLimitState {
   message?: string | null;
 }
 
+// Clean and sanitize any technical/internal errors into professional medical-grade copy
+const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number): string => {
+  if (remaining <= 0) {
+    return `Too many failed login attempts. For security reasons, this account has been temporarily locked for 15 minutes.`;
+  }
+
+  const text = (rawDetail || '').trim();
+  const lower = text.toLowerCase();
+
+  // Strip out robotic Django/SimpleJWT default strings
+  if (
+    !text ||
+    lower.includes('no active account') ||
+    lower.includes('given credentials') ||
+    lower.includes('access denied') ||
+    lower.includes('invalid token')
+  ) {
+    if (remaining === 1) {
+      return `Incorrect username or password. Warning: You have only 1 attempt remaining before your account is temporarily locked.`;
+    }
+    return `Incorrect username or password. You have ${remaining} attempts remaining.`;
+  }
+
+  return text;
+};
+
 export const loginLimiter = {
   getLimitState: (): LoginLimitState => {
     try {
@@ -28,7 +54,7 @@ export const loginLimiter = {
             lockoutRemainingSeconds: remainingSecs,
             attemptsRemaining: 0,
             maxAttempts: MAX_LOGIN_ATTEMPTS,
-            message: `Account is temporarily locked due to ${MAX_LOGIN_ATTEMPTS} failed attempts.`,
+            message: `Account is temporarily locked due to ${MAX_LOGIN_ATTEMPTS} consecutive failed attempts.`,
           };
         } else {
           // Lockout has expired
@@ -78,9 +104,7 @@ export const loginLimiter = {
           lockoutRemainingSeconds: serverLockoutSeconds,
           attemptsRemaining: 0,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message:
-            serverDetail ||
-            `Too many failed login attempts (${MAX_LOGIN_ATTEMPTS}/${MAX_LOGIN_ATTEMPTS}). Your account has been temporarily locked for 15 minutes.`,
+          message: sanitizeMessage(serverDetail, 0),
         };
       }
 
@@ -93,15 +117,11 @@ export const loginLimiter = {
           lockoutRemainingSeconds: 0,
           attemptsRemaining: serverAttemptsRemaining,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message:
-            serverDetail ||
-            `Invalid username or password. You have ${serverAttemptsRemaining} attempt${
-              serverAttemptsRemaining > 1 ? 's' : ''
-            } remaining.`,
+          message: sanitizeMessage(serverDetail, serverAttemptsRemaining),
         };
       }
 
-      // Fallback if backend returned standard 401 without custom payload
+      // Fallback if backend returned 401 without custom payload (e.g. during deployment)
       const currentCountStr = localStorage.getItem(STORAGE_FAILED_COUNT_KEY);
       const newCount = (currentCountStr ? parseInt(currentCountStr, 10) : 0) + 1;
       localStorage.setItem(STORAGE_FAILED_COUNT_KEY, newCount.toString());
@@ -114,7 +134,7 @@ export const loginLimiter = {
           lockoutRemainingSeconds: DEFAULT_LOCKOUT_SECONDS,
           attemptsRemaining: 0,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message: `Too many failed login attempts (${MAX_LOGIN_ATTEMPTS}/${MAX_LOGIN_ATTEMPTS}). Your account has been temporarily locked for 15 minutes.`,
+          message: sanitizeMessage(serverDetail, 0),
         };
       }
 
@@ -124,11 +144,7 @@ export const loginLimiter = {
         lockoutRemainingSeconds: 0,
         attemptsRemaining: remaining,
         maxAttempts: MAX_LOGIN_ATTEMPTS,
-        message:
-          serverDetail ||
-          `Invalid username or password. You have ${remaining} attempt${
-            remaining > 1 ? 's' : ''
-          } remaining.`,
+        message: sanitizeMessage(serverDetail, remaining),
       };
     } catch {
       return {
@@ -136,7 +152,7 @@ export const loginLimiter = {
         lockoutRemainingSeconds: 0,
         attemptsRemaining: 3,
         maxAttempts: MAX_LOGIN_ATTEMPTS,
-        message: 'Invalid username or password. Access denied.',
+        message: 'Incorrect username or password. Please verify your credentials and try again.',
       };
     }
   },
