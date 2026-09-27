@@ -7,12 +7,15 @@ import {
   EyeOff,
   Lock,
   ArrowLeft,
+  ShieldAlert,
+  AlertTriangle,
 } from "lucide-react"
 import uaLogo from "@/assets/images/ua-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
 import AnimatedMascot from "@/features/landing/components/AnimatedMascot"
 import IdleMascot from "@/features/landing/components/IdleMascot"
 import { authService } from "@/services/authService"
+import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 
 interface Props {
   onLoginClick: () => void
@@ -51,6 +54,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [focusedField, setFocusedField] = useState<'username' | 'password' | null>(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024)
+  const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024)
@@ -58,8 +62,38 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
+  useEffect(() => {
+    if (!limitState.isLocked || limitState.lockoutRemainingSeconds <= 0) return
+
+    const interval = setInterval(() => {
+      setLimitState((prev) => {
+        if (prev.lockoutRemainingSeconds <= 1) {
+          clearInterval(interval)
+          setErrorMessage(null)
+          return loginLimiter.getLimitState()
+        }
+        return {
+          ...prev,
+          lockoutRemainingSeconds: prev.lockoutRemainingSeconds - 1,
+        }
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [limitState.isLocked, limitState.lockoutRemainingSeconds])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (limitState.isLocked) {
+      setErrorMessage(
+        `Account is temporarily locked. Please wait ${loginLimiter.formatTime(
+          limitState.lockoutRemainingSeconds
+        )} before trying again.`
+      )
+      return
+    }
+
     if (!username.trim() || !password) {
       setErrorMessage("Please enter both username and password.")
       return
@@ -68,14 +102,13 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
     setErrorMessage(null)
     try {
       await authService.login(username.trim(), password)
+      loginLimiter.recordSuccess()
       setStage("splitting")
     } catch (err: any) {
       console.error("Login failed:", err)
-      const msg =
-        err?.response?.data?.detail ||
-        err?.response?.data?.error ||
-        "Invalid username or password. Access denied."
-      setErrorMessage(msg)
+      const newLimitState = loginLimiter.recordFailure(err)
+      setLimitState(newLimitState)
+      setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
     } finally {
       setLoading(false)
     }
@@ -297,13 +330,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         </div>
                         <input
                           type="text"
+                          disabled={limitState.isLocked}
                           value={username}
                           onChange={(e) => {
                             setUsername(e.target.value)
                             if (errorMessage) setErrorMessage(null)
                           }}
                           placeholder="Enter your username"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{
                             fontFamily: "'Inter', sans-serif",
                             background: "#FFFFFF",
@@ -312,6 +346,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
+                            if (limitState.isLocked) return
                             e.currentTarget.style.border = "1px solid #1b6ca8"
                             e.currentTarget.style.boxShadow = "0 0 0 3px rgba(27, 108, 168, 0.1)"
                             setFocusedField('username')
@@ -343,13 +378,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         </div>
                         <input
                           type={showPassword ? "text" : "password"}
+                          disabled={limitState.isLocked}
                           value={password}
                           onChange={(e) => {
                             setPassword(e.target.value)
                             if (errorMessage) setErrorMessage(null)
                           }}
                           placeholder="Enter your password"
-                          className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm"
+                          className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{
                             fontFamily: "'Inter', sans-serif",
                             background: "#FFFFFF",
@@ -358,6 +394,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             WebkitTextFillColor: "#001e50",
                           }}
                           onFocus={(e) => {
+                            if (limitState.isLocked) return
                             e.currentTarget.style.border = "1px solid #1b6ca8"
                             e.currentTarget.style.boxShadow = "0 0 0 3px rgba(27, 108, 168, 0.1)"
                             setFocusedField('password')
@@ -370,38 +407,99 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         />
                         <button
                           type="button"
+                          disabled={limitState.isLocked}
                           onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#001e50]/40 hover:text-[#001e50]/70 transition-colors"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#001e50]/40 hover:text-[#001e50]/70 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                       </div>
                     </div>
 
-                    {/* Error message */}
-                    {errorMessage && (
+                    {/* Lockout or Error message */}
+                    {limitState.isLocked ? (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5 shadow-sm"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        <ShieldAlert className="text-amber-600 shrink-0 mt-0.5" size={17} />
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-amber-800">Account Temporarily Locked</span>
+                            <span className="font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[11px]">
+                              {loginLimiter.formatTime(limitState.lockoutRemainingSeconds)}
+                            </span>
+                          </div>
+                          <p className="text-amber-700/90 text-[11px] leading-relaxed">
+                            Exceeded {MAX_LOGIN_ATTEMPTS} failed attempts. Please wait for the lockout timer to expire before trying again.
+                          </p>
+                        </div>
+                      </motion.div>
+                    ) : errorMessage ? (
                       <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-2.5 rounded-xl text-xs font-semibold text-red-600 bg-red-50 border border-red-200 text-center leading-snug"
+                        className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                          limitState.attemptsRemaining <= 1
+                            ? "bg-red-50 border border-red-200 text-red-700"
+                            : "bg-amber-50 border border-amber-200 text-amber-800"
+                        }`}
                         style={{ fontFamily: "'Inter', sans-serif" }}
                       >
-                        {errorMessage}
+                        <AlertTriangle
+                          className={
+                            limitState.attemptsRemaining <= 1
+                              ? "text-red-600 shrink-0 mt-0.5"
+                              : "text-amber-600 shrink-0 mt-0.5"
+                          }
+                          size={16}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-xs leading-snug">{errorMessage}</p>
+                          {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS && (
+                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-black/10">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-black/50">Attempts left:</span>
+                              <div className="flex gap-1.5 items-center">
+                                {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={`w-2 h-2 rounded-full transition-all ${
+                                      idx < limitState.attemptsRemaining
+                                        ? limitState.attemptsRemaining <= 1
+                                          ? "bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]"
+                                          : "bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]"
+                                        : "bg-black/15"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-bold text-black/60 ml-auto">
+                                {limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS} tries
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </motion.div>
-                    )}
+                    ) : null}
 
                     {/* Submit */}
                     <motion.button
                       type="submit"
-                      disabled={loading}
-                      className={`relative mt-2 w-full py-3.5 rounded-xl font-bold text-sm transition-colors duration-300 ${
-                        loading ? "bg-[#1b6ca8]/50 text-white" : "bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50]"
+                      disabled={loading || limitState.isLocked}
+                      className={`relative mt-2 w-full py-3.5 rounded-xl font-bold text-sm transition-colors duration-300 disabled:cursor-not-allowed ${
+                        limitState.isLocked
+                          ? "bg-amber-700/40 text-white cursor-not-allowed"
+                          : loading
+                          ? "bg-[#1b6ca8]/50 text-white"
+                          : "bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50]"
                       }`}
                       style={{
                         fontFamily: "'Inter', sans-serif",
                       }}
-                      whileHover={loading ? {} : { scale: 1.02 }}
-                      whileTap={loading ? {} : { scale: 0.98 }}
+                      whileHover={loading || limitState.isLocked ? {} : { scale: 1.02 }}
+                      whileTap={loading || limitState.isLocked ? {} : { scale: 0.98 }}
                     >
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">
@@ -411,6 +509,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                           />
                           Signing in...
+                        </span>
+                      ) : limitState.isLocked ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Lock size={15} />
+                          Locked ({loginLimiter.formatTime(limitState.lockoutRemainingSeconds)})
                         </span>
                       ) : (
                         "Login"

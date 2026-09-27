@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, ArrowLeft, Lock, User } from "lucide-react"
+import { Eye, EyeOff, ArrowLeft, Lock, User, ShieldAlert, AlertTriangle } from "lucide-react"
 import curaLogo from "@/assets/images/cura-logo.png"
 import { authService } from "@/services/authService"
+import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 
 interface Props {
   onLogin: () => void
@@ -26,9 +27,40 @@ export default function LoginPage({ onLogin, onBack }: Props) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
+
+  useEffect(() => {
+    if (!limitState.isLocked || limitState.lockoutRemainingSeconds <= 0) return
+
+    const interval = setInterval(() => {
+      setLimitState((prev) => {
+        if (prev.lockoutRemainingSeconds <= 1) {
+          clearInterval(interval)
+          setErrorMessage(null)
+          return loginLimiter.getLimitState()
+        }
+        return {
+          ...prev,
+          lockoutRemainingSeconds: prev.lockoutRemainingSeconds - 1,
+        }
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [limitState.isLocked, limitState.lockoutRemainingSeconds])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (limitState.isLocked) {
+      setErrorMessage(
+        `Account is temporarily locked. Please wait ${loginLimiter.formatTime(
+          limitState.lockoutRemainingSeconds
+        )} before trying again.`
+      )
+      return
+    }
+
     if (!username.trim() || !password) {
       setErrorMessage("Please enter both username and password.")
       return
@@ -37,14 +69,13 @@ export default function LoginPage({ onLogin, onBack }: Props) {
     setErrorMessage(null)
     try {
       await authService.login(username.trim(), password)
+      loginLimiter.recordSuccess()
       onLogin()
     } catch (error: any) {
       console.error("Login failed:", error)
-      const msg =
-        error?.response?.data?.detail ||
-        error?.response?.data?.error ||
-        "Invalid username or password. Access denied."
-      setErrorMessage(msg)
+      const newLimitState = loginLimiter.recordFailure(error)
+      setLimitState(newLimitState)
+      setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
     } finally {
       setLoading(false)
     }
@@ -144,19 +175,21 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 </div>
                 <input
                   type="text"
+                  disabled={limitState.isLocked}
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value)
                     if (errorMessage) setErrorMessage(null)
                   }}
                   placeholder="Enter your username"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     fontFamily: "'Inter', sans-serif",
                     background: "rgba(255,255,255,0.05)",
                     border: "1px solid rgba(255,255,255,0.09)",
                   }}
                   onFocus={(e) => {
+                    if (limitState.isLocked) return
                     e.currentTarget.style.border = "1px solid rgba(27,108,168,0.7)"
                     e.currentTarget.style.background = "rgba(27,108,168,0.08)"
                   }}
@@ -182,19 +215,21 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
+                  disabled={limitState.isLocked}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
                     if (errorMessage) setErrorMessage(null)
                   }}
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-11 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all"
+                  className="w-full pl-10 pr-11 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     fontFamily: "'Inter', sans-serif",
                     background: "rgba(255,255,255,0.05)",
                     border: "1px solid rgba(255,255,255,0.09)",
                   }}
                   onFocus={(e) => {
+                    if (limitState.isLocked) return
                     e.currentTarget.style.border = "1px solid rgba(27,108,168,0.7)"
                     e.currentTarget.style.background = "rgba(27,108,168,0.08)"
                   }}
@@ -205,35 +240,100 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 />
                 <button
                   type="button"
+                  disabled={limitState.isLocked}
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
-            {/* Error banner */}
-            {errorMessage && (
-              <div className="p-2.5 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 border border-red-500/20 text-center">
-                {errorMessage}
-              </div>
-            )}
+            {/* Lockout or Error banner */}
+            {limitState.isLocked ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-3 shadow-lg"
+              >
+                <ShieldAlert className="text-amber-400 shrink-0 mt-0.5" size={18} />
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-amber-300">Account Temporarily Locked</span>
+                    <span className="font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded text-[11px]">
+                      {loginLimiter.formatTime(limitState.lockoutRemainingSeconds)}
+                    </span>
+                  </div>
+                  <p className="text-amber-200/80 text-[11px] leading-relaxed">
+                    Exceeded {MAX_LOGIN_ATTEMPTS} failed attempts. Please wait for the lockout timer to expire before trying again.
+                  </p>
+                </div>
+              </motion.div>
+            ) : errorMessage ? (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                  limitState.attemptsRemaining <= 1
+                    ? "bg-red-500/15 border border-red-500/30 text-red-200"
+                    : "bg-amber-500/15 border border-amber-500/30 text-amber-200"
+                }`}
+              >
+                <AlertTriangle
+                  className={
+                    limitState.attemptsRemaining <= 1
+                      ? "text-red-400 shrink-0 mt-0.5"
+                      : "text-amber-400 shrink-0 mt-0.5"
+                  }
+                  size={16}
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-xs leading-snug">{errorMessage}</p>
+                  {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS && (
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                      <span className="text-[10px] uppercase tracking-wider text-white/50">Attempts left:</span>
+                      <div className="flex gap-1.5 items-center">
+                        {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
+                          <span
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              idx < limitState.attemptsRemaining
+                                ? limitState.attemptsRemaining <= 1
+                                  ? "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]"
+                                  : "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]"
+                                : "bg-white/15"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[10px] font-bold text-white/70 ml-auto">
+                        {limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS} tries
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : null}
 
             {/* Submit */}
             <motion.button
               type="submit"
-              disabled={loading}
-              className="relative mt-1 w-full py-3.5 rounded-xl text-white font-semibold text-sm overflow-hidden"
+              disabled={loading || limitState.isLocked}
+              className="relative mt-1 w-full py-3.5 rounded-xl text-white font-semibold text-sm overflow-hidden disabled:cursor-not-allowed"
               style={{
                 fontFamily: "'Inter', sans-serif",
-                background: loading
+                background: limitState.isLocked
+                  ? "rgba(180, 83, 9, 0.4)"
+                  : loading
                   ? "rgba(27,108,168,0.5)"
                   : "linear-gradient(135deg, #1b6ca8 0%, #2d84cc 100%)",
-                boxShadow: loading ? "none" : "0 4px 24px rgba(27, 108, 168, 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+                boxShadow:
+                  loading || limitState.isLocked
+                    ? "none"
+                    : "0 4px 24px rgba(27, 108, 168, 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
               }}
-              whileHover={loading ? {} : { scale: 1.02 }}
-              whileTap={loading ? {} : { scale: 0.98 }}
+              whileHover={loading || limitState.isLocked ? {} : { scale: 1.02 }}
+              whileTap={loading || limitState.isLocked ? {} : { scale: 0.98 }}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -243,6 +343,11 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                     transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                   />
                   Signing in...
+                </span>
+              ) : limitState.isLocked ? (
+                <span className="flex items-center justify-center gap-2 text-amber-200">
+                  <Lock size={15} />
+                  Locked ({loginLimiter.formatTime(limitState.lockoutRemainingSeconds)})
                 </span>
               ) : (
                 "Login"
