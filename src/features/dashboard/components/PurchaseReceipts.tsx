@@ -287,9 +287,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
         <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
           <button
             onClick={() => setViewMode('template')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               viewMode === 'template'
-                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -297,9 +297,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           </button>
           <button
             onClick={() => setViewMode('tracker')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               viewMode === 'tracker'
-                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -807,9 +807,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     statusFilter === s
-                      ? 'bg-[#1B3A6B] text-white shadow-sm'
+                      ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
@@ -818,7 +818,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               ))}
               <button
                 onClick={() => setShowNewForm(true)}
-                className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white font-medium text-xs transition-all shadow-sm hover:opacity-90 bg-[#1B3A6B]"
+                className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white font-semibold text-xs transition-all shadow-sm hover:opacity-90 bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7]"
               >
                 <Plus size={14} strokeWidth={2.5} /> Log Item
               </button>

@@ -111,9 +111,9 @@ export function Appointments({ patients }: AppointmentsProps) {
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   statusFilter === s
-                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >

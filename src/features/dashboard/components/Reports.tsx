@@ -1288,9 +1288,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                           setFilter(f);
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all capitalize whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all capitalize whitespace-nowrap cursor-pointer ${
                         filter === f
-                          ? 'bg-[#1B3A6B] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                     >
@@ -1537,9 +1537,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm no-export print:hidden">
                   <button
                     onClick={() => setInventoryTab('medicines')}
-                    className={`px-4 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer ${
                       inventoryTab === 'medicines'
-                        ? 'bg-[#1B3A6B] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
@@ -1547,9 +1547,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </button>
                   <button
                     onClick={() => setInventoryTab('supplies')}
-                    className={`px-4 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer ${
                       inventoryTab === 'supplies'
-                        ? 'bg-[#1B3A6B] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >

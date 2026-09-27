@@ -124,10 +124,10 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`flex-1 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer text-center ${
+            className={`flex-1 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all cursor-pointer text-center ${
               filter === f.id
-                ? 'bg-[#1B3A6B] text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
             }`}
           >
             {f.label}

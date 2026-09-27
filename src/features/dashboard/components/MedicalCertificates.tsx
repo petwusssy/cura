@@ -868,8 +868,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
             <button
               onClick={() => setActiveTab('template')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'template' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'template' ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <FileText size={14} />
@@ -880,8 +880,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 syncToArchives();
                 setActiveTab('archives');
               }}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'archives' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'archives' ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <BookmarkCheck size={14} />
@@ -892,8 +892,8 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             </button>
             <button
               onClick={() => setActiveTab('requests')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'requests' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'requests' ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <Clock size={14} />

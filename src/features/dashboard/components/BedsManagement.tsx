@@ -259,9 +259,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   setGridFilter(f);
                 }
               }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all text-center whitespace-nowrap cursor-pointer ${
                 gridFilter === f
-                  ? 'bg-[#1B3A6B] text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
@@ -409,9 +409,9 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                           setTrackerFilter(f);
                         }
                       }}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all text-center whitespace-nowrap cursor-pointer ${
                         trackerFilter === f
-                          ? 'bg-[#1B3A6B] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                     >

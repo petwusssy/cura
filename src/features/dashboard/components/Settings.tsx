@@ -263,15 +263,15 @@ export function Settings() {
               <div className="space-y-4">
                 <div>
                   <label className={labelCls}>Status</label>
-                  <div className="flex gap-2">
+                  <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm">
                     {['Open', 'Closed', 'Half Day'].map((status) => (
                       <button
                         key={status}
                         onClick={() => setBroadcastStatus(status as any)}
-                        className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${
+                        className={`px-4 py-1.5 rounded-full text-sm transition-all cursor-pointer whitespace-nowrap ${
                           broadcastStatus === status 
-                            ? 'border-[#1E5AA8] bg-[#1E5AA8]/10 text-[#1E5AA8]' 
-                            : 'border-border text-muted-foreground hover:bg-accent'
+                            ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25 font-semibold' 
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
                         }`}
                       >
                         {status}

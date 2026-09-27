@@ -124,8 +124,8 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                     setDatePreset(p);
                   }
                 }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
-                  datePreset === p ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  datePreset === p ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 {p === 'custom' && datePreset === 'custom' && (customFrom || customTo)

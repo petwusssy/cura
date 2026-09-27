@@ -78,9 +78,9 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
             <button
               key={cat}
               onClick={() => { setCategoryFilter(cat); setStudentCategoryFilter('All'); setPage(1); }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 categoryFilter === cat
-                  ? 'bg-[#1B3A6B] text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
@@ -100,9 +100,9 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
               <button
                 key={sc}
                 onClick={() => { setStudentCategoryFilter(sc); setPage(1); }}
-                className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   studentCategoryFilter === sc
-                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >

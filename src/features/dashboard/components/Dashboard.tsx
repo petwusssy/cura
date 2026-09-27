@@ -119,9 +119,9 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                     setDateFilter(f);
                   }
                 }}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize cursor-pointer whitespace-nowrap ${
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all capitalize cursor-pointer whitespace-nowrap ${
                   dateFilter === f
-                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
