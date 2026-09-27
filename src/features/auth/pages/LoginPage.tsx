@@ -265,7 +265,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                     </span>
                   </div>
                   <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                    {errorMessage || `Too many failed login attempts. For security reasons, this account has been temporarily locked for 15 minutes.`}
+                    {errorMessage || `Too many failed login attempts. For security reasons, this account has been temporarily locked for 1 minute.`}
                   </p>
                 </div>
               </motion.div>

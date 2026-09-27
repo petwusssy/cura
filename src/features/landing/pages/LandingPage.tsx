@@ -433,7 +433,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             </span>
                           </div>
                           <p className="text-amber-700/90 text-[11px] leading-relaxed">
-                            {errorMessage || `Too many failed login attempts. For your security, this account has been temporarily locked for 15 minutes.`}
+                            {errorMessage || `Too many failed login attempts. For your security, this account has been temporarily locked for 1 minute.`}
                           </p>
                         </div>
                       </motion.div>

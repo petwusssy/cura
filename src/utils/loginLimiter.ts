@@ -1,7 +1,7 @@
 // Utility to track and enforce the 4-attempt login limit on web clients with professional messaging
 
-export const MAX_LOGIN_ATTEMPTS = 4;
-export const DEFAULT_LOCKOUT_SECONDS = 15 * 60; // 15 minutes
+export const MAX_LOGIN_ATTEMPTS = 5;
+export const DEFAULT_LOCKOUT_SECONDS = 60; // 1 minute
 
 const STORAGE_LOCKOUT_KEY = 'cura_web_login_lockout_until';
 const STORAGE_FAILED_COUNT_KEY = 'cura_web_login_failed_count';
@@ -17,7 +17,7 @@ export interface LoginLimitState {
 // Clean and sanitize any technical/internal errors into professional medical-grade copy
 const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number): string => {
   if (remaining <= 0) {
-    return `Too many failed login attempts. For security reasons, this account has been temporarily locked for 15 minutes.`;
+    return `Too many failed login attempts. For security reasons, this account has been temporarily locked for 1 minute.`;
   }
 
   const text = (rawDetail || '').trim();
@@ -150,7 +150,7 @@ export const loginLimiter = {
       return {
         isLocked: false,
         lockoutRemainingSeconds: 0,
-        attemptsRemaining: 3,
+        attemptsRemaining: 4,
         maxAttempts: MAX_LOGIN_ATTEMPTS,
         message: 'Incorrect username or password. Please verify your credentials and try again.',
       };
