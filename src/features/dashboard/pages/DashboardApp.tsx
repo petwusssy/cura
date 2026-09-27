@@ -693,11 +693,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         );
       case 'appointments':
         return (
-          <Appointments patients={patients} onNavigate={navigate} />
+          <Appointments patients={patients} searchQuery={searchQuery} onNavigate={navigate} />
         );
       case 'telemedicine':
         return (
-          <Telemedicine patients={patients} onNavigate={navigate} />
+          <Telemedicine patients={patients} searchQuery={searchQuery} onNavigate={navigate} />
         );
       case 'patient-form':
         return (

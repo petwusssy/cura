@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Search, Check, X, Clock, CalendarDays, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Clock, CalendarDays, Trash2 } from 'lucide-react';
 import { Patient } from '../types';
 import { appointmentService, AppointmentRequest } from '../../../services/appointmentService';
 import { normalizeDate, formatTime12 } from '@/utils/philippineTime';
@@ -7,15 +7,15 @@ import { AppointmentCardSkeleton } from './PageSkeleton';
 
 interface AppointmentsProps {
   patients: Patient[];
+  searchQuery?: string;
   onNavigate?: (page: string) => void;
 }
 
 const PRIMARY = '#1B3A6B';
 
-export function Appointments({ patients }: AppointmentsProps) {
+export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) {
   const [requests, setRequests] = useState<AppointmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   
   // Modal State
@@ -92,10 +92,13 @@ export function Appointments({ patients }: AppointmentsProps) {
 
   const filteredRequests = requests.filter(r => {
     const matchesStatus = statusFilter === 'All' || r.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesSearch =
-      getPatientName(r.patient).toLowerCase().includes(search.toLowerCase()) ||
-      r.status.toLowerCase().includes(search.toLowerCase()) ||
-      r.visit_type.toLowerCase().includes(search.toLowerCase());
+    const term = searchQuery.trim().toLowerCase();
+    const matchesSearch = !term ||
+      getPatientName(r.patient).toLowerCase().includes(term) ||
+      (r.status || '').toLowerCase().includes(term) ||
+      (r.visit_type || '').toLowerCase().includes(term) ||
+      (r.reason || '').toLowerCase().includes(term) ||
+      (r.preferred_date || '').toLowerCase().includes(term);
     return matchesStatus && matchesSearch;
   });
 
@@ -106,32 +109,20 @@ export function Appointments({ patients }: AppointmentsProps) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">In-Person Appointments</h1>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
-            {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  statusFilter === s
-                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <div className="relative flex-1 sm:w-64">
-            <input
-              type="text"
-              placeholder="Search by patient..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] transition-colors"
-            />
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
+          {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                statusFilter === s
+                  ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 

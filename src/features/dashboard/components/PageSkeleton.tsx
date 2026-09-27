@@ -144,14 +144,10 @@ export function AppointmentsPageSkeleton({ count = 6 }: { count?: number }) {
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="skeleton h-7 w-40 rounded-lg" />
-          <div className="skeleton h-3.5 w-64 rounded-full" />
+        <div>
+          <div className="skeleton h-7 w-60 rounded-lg" />
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="skeleton h-9 w-44 rounded-xl" />
-          <div className="skeleton h-9 w-full sm:w-64 rounded-xl" />
-        </div>
+        <div className="skeleton h-9 w-64 rounded-full" />
       </div>
 
       {/* Cards Grid */}
@@ -255,17 +251,10 @@ export function TelemedicinePageSkeleton({ count = 6 }: { count?: number }) {
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className="skeleton h-7 w-40 rounded-lg" />
-            <div className="skeleton h-5 w-28 rounded-full" />
-          </div>
-          <div className="skeleton h-3.5 w-64 rounded-full" />
+        <div>
+          <div className="skeleton h-7 w-48 rounded-lg" />
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="skeleton h-9 w-44 rounded-xl" />
-          <div className="skeleton h-9 w-full sm:w-64 rounded-xl" />
-        </div>
+        <div className="skeleton h-9 w-64 rounded-full" />
       </div>
 
       {/* Cards Grid */}

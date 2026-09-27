@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock } from 'lucide-react';
+import { Video, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
@@ -110,15 +110,15 @@ export function getScheduleAccess(scheduledDateRaw?: string, scheduledTimeRaw?: 
 
 interface TelemedicineProps {
   patients: Patient[];
+  searchQuery?: string;
   onNavigate?: (page: string) => void;
 }
 
 const PRIMARY = '#1B3A6B';
 
-export function Telemedicine({ patients }: TelemedicineProps) {
+export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) {
   const [requests, setRequests] = useState<TelemedicineRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   
   // Embedded Video Call State
@@ -227,9 +227,13 @@ export function Telemedicine({ patients }: TelemedicineProps) {
 
   const filteredRequests = requests.filter(r => {
     const matchesStatus = statusFilter === 'All' || r.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesSearch =
-      getPatientName(r.patient).toLowerCase().includes(search.toLowerCase()) ||
-      r.status.toLowerCase().includes(search.toLowerCase());
+    const term = searchQuery.trim().toLowerCase();
+    const matchesSearch = !term ||
+      getPatientName(r.patient).toLowerCase().includes(term) ||
+      (r.status || '').toLowerCase().includes(term) ||
+      (r.reason || '').toLowerCase().includes(term) ||
+      (r.preferred_date || '').toLowerCase().includes(term) ||
+      (r.scheduled_date || '').toLowerCase().includes(term);
     return matchesStatus && matchesSearch;
   });
 
@@ -249,32 +253,20 @@ export function Telemedicine({ patients }: TelemedicineProps) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
-            {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  statusFilter === s
-                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <div className="relative flex-1 sm:w-72">
-            <input
-              type="text"
-              placeholder="Search by patient..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] transition-colors shadow-sm"
-            />
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
+          {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                statusFilter === s
+                  ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
