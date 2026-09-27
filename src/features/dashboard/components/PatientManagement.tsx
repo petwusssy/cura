@@ -31,7 +31,7 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
   const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
-  const ROWS = 10;
+  const ROWS = 20;
 
   const seenPatientIds = new Set<string>();
   const filtered = patients.filter(p => {
