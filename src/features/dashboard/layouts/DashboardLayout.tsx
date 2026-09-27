@@ -241,15 +241,26 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         style={{ width: collapsed ? 64 : 248 }}
       >
         {/* Brand */}
-        <div
-          className={`relative z-10 flex items-center flex-shrink-0 border-b border-blue-200/20 dark:border-sidebar-border ${collapsed ? 'justify-center' : 'px-5 gap-3.5'}`}
+        <button
+          type="button"
+          onClick={() => {
+            if (currentPage === 'dashboard') {
+              window.location.reload();
+            } else {
+              window.location.href = '/dashboard';
+            }
+          }}
+          title="Refresh Dashboard"
+          className={`relative z-10 flex items-center flex-shrink-0 border-b border-blue-200/20 dark:border-sidebar-border cursor-pointer group text-left w-full transition-colors hover:bg-white/5 active:opacity-80 focus:outline-none ${
+            collapsed ? 'justify-center' : 'px-5 gap-3.5'
+          }`}
           style={{ height: '72px' }}
         >
           <div className="relative flex items-center justify-center flex-shrink-0">
             <img
               src={curaLogoMain}
               alt="CURA"
-              className={`object-contain transition-transform duration-300 hover:scale-105 ${
+              className={`object-contain transition-transform duration-300 group-hover:scale-105 group-active:scale-95 ${
                 collapsed ? 'w-11 h-11' : 'w-12 h-12'
               }`}
               style={{
@@ -260,7 +271,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {!collapsed && (
             <div className="overflow-hidden min-w-0 flex flex-col justify-center">
               <span
-                className="text-[34px] font-black tracking-tighter leading-none select-none"
+                className="text-[34px] font-black tracking-tighter leading-none select-none transition-opacity group-hover:opacity-90"
                 style={{
                   background: 'linear-gradient(180deg, #ffffff 0%, #93c5fd 45%, #ffffff 55%, #bfdbfe 100%)',
                   backgroundSize: '100% 300%',
@@ -274,7 +285,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               </span>
             </div>
           )}
-        </div>
+        </button>
 
         {/* Subtle Ambient Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 dark:hidden">
@@ -333,22 +344,15 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.25, delay: 0.15, ease: 'easeOut' }}
-          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 h-[72px] flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground border-b border-border/40"
+          className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 h-[72px] flex-shrink-0 relative overflow-hidden transition-colors duration-300 text-card-foreground border-b border-gray-200/80 dark:border-border/40"
           style={{
             background: 'var(--header-bg)',
-            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
           }}
         >
-          {/* Animated blobs */}
           <style>{`
-            @keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(20px,-10px) scale(1.1)} 66%{transform:translate(-10px,15px) scale(0.95)} }
-            @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,10px) scale(0.9)} 66%{transform:translate(15px,-15px) scale(1.1)} }
             @keyframes liquidText { 0%,100%{background-position: 0% 0%} 50%{background-position: 0% 100%} }
           `}</style>
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[-28px] left-[15%] w-[150px] h-[150px] rounded-[42%_58%_68%_32%/42%_48%_58%_52%] bg-white/45 dark:bg-white/10 animate-[blob1_8s_ease-in-out_infinite]" />
-            <div className="absolute top-[-20px] right-[18%] w-[130px] h-[130px] rounded-[58%_42%_32%_68%/58%_32%_68%_42%] bg-white/35 dark:bg-white/5 animate-[blob2_10s_ease-in-out_infinite]" />
-          </div>
 
           <button
             onClick={() => setCollapsed(!collapsed)}

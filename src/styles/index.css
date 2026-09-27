@@ -49,8 +49,8 @@
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: rgba(255, 255, 255, 0.5);
   
-  --header-bg: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  --header-border: rgba(147, 197, 253, 0.5);
+  --header-bg: linear-gradient(180deg, #e3effe 0%, #edf5fe 45%, #ffffff 100%);
+  --header-border: rgba(226, 232, 240, 0.8);
 }
 
 .dark {
