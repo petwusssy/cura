@@ -354,62 +354,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             @keyframes liquidText { 0%,100%{background-position: 0% 0%} 50%{background-position: 0% 100%} }
           `}</style>
 
-          {/* Minimalist Abstract Medical Graphics (ECG Heartbeat line & subtle health telemetry motifs) */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
-            {/* Ambient Medical Pulse Wave SVG */}
-            <svg
-              className="absolute inset-0 w-full h-full opacity-[0.24] dark:opacity-[0.12]"
-              preserveAspectRatio="none"
-              viewBox="0 0 1200 72"
-              fill="none"
-            >
-              <defs>
-                <linearGradient id="medEcgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#1E5AA8" stopOpacity="0" />
-                  <stop offset="25%" stopColor="#1E5AA8" stopOpacity="0.2" />
-                  <stop offset="48%" stopColor="#0EA5E9" stopOpacity="0.75" />
-                  <stop offset="58%" stopColor="#38BDF8" stopOpacity="0.85" />
-                  <stop offset="70%" stopColor="#1E5AA8" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#1E5AA8" stopOpacity="0" />
-                </linearGradient>
-              </defs>
 
-              {/* Minimalist ECG Wave Path */}
-              <path
-                d="M 0,38 L 440,38 L 452,38 Q 458,38 462,32 Q 466,26 470,38 L 477,38 L 483,16 L 491,62 L 499,22 L 505,44 L 511,38 L 524,38 Q 532,38 538,31 Q 544,24 550,38 L 780,38 L 792,38 Q 798,38 802,33 Q 806,28 810,38 L 817,38 L 823,18 L 831,60 L 839,24 L 845,43 L 851,38 L 864,38 Q 872,38 878,32 Q 884,26 890,38 L 1200,38"
-                stroke="url(#medEcgGradient)"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-
-            {/* Subtle Minimalist Floating Medical Crosses & Health Nodes */}
-            <div className="absolute right-[22%] top-1/2 -translate-y-1/2 hidden md:flex items-center gap-10 opacity-[0.22] dark:opacity-[0.12]">
-              {/* Minimalist Cross 1 */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E5AA8" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M12 5v14m-7-7h14" />
-              </svg>
-              {/* Subtle Circled Pulse Node */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.75" strokeLinecap="round">
-                <circle cx="12" cy="12" r="9" strokeDasharray="3 3" opacity="0.6" />
-                <path d="M12 8v8m-4-4h8" />
-              </svg>
-              {/* Minimalist Cross 2 */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M12 6v12m-6-6h12" />
-              </svg>
-            </div>
-
-            {/* Micro subtle grid pattern for medical chart feel */}
-            <div
-              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]"
-              style={{
-                backgroundImage: 'radial-gradient(#1E5AA8 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-              }}
-            />
-          </div>
 
           <button
             onClick={() => setCollapsed(!collapsed)}
