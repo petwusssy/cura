@@ -173,7 +173,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <h3 className="text-gray-900 font-bold">Live Patient Queue</h3>
-                  <span className="text-[11px] text-gray-400 font-normal hidden sm:inline">(Strict FIFO: 1st patient only)</span>
                 </div>
                 <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-full">{activeQueues.length} Waiting</span>
               </div>
@@ -293,8 +292,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
               <Clock size={16} />
             </div>
             <div>
-              <h3 className="text-gray-800 text-sm">Medication Reminders</h3>
-              <p className="text-xs text-gray-400">Upcoming doses</p>
+              <h3 className="text-gray-800 text-sm font-semibold">Medication Reminders</h3>
             </div>
           </div>
           {medicationReminders.length === 0 ? (

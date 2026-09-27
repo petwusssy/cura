@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
@@ -242,14 +242,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200/60 hidden sm:inline-flex items-center gap-1">
-              <ShieldCheck size={12} className="text-blue-600" />
-              In-App Jitsi + GMeet Ready
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mt-0.5">Manage virtual consultations and launch live encrypted video rooms</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-72">

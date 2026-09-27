@@ -100,7 +100,6 @@ export function Appointments({ patients }: AppointmentsProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">In-Person Appointments</h1>
-          <p className="text-sm text-gray-500">Manage clinic visits and bookings</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">

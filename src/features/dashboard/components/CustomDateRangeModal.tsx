@@ -21,7 +21,7 @@ export function CustomDateRangeModal({
   initialFrom = '',
   initialTo = '',
   title = 'Select Custom Date Range',
-  description = 'Choose the start and end dates to filter records.',
+  description,
 }: CustomDateRangeModalProps) {
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
@@ -90,7 +90,7 @@ export function CustomDateRangeModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 leading-snug">{title}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+              {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
             </div>
           </div>
           <button

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2 } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
 import uaSeal from '@/assets/images/ua-seal.png';
@@ -838,8 +838,31 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                             {req.status} ({progress}%)
                           </span>
                         </div>
-                        <div className="text-xs text-gray-400 font-medium mt-1">
-                          Ref #{req.prfNo || 'PRF-2026-001'} • Request ID: {req.id} • Date Initiated: {normalizeDate(req.date)} • Unit: <strong>{req.unit || 'Tablet'}</strong>
+                        <div className="flex items-center gap-2 text-xs flex-wrap mt-2">
+                          <span className="inline-flex items-center gap-1 font-mono font-bold text-[11px] text-blue-700 bg-blue-50 border border-blue-200/70 px-2.5 py-0.5 rounded-md shadow-2xs">
+                            <FileText size={11} className="text-blue-600" />
+                            Ref #{req.prfNo || 'PRF-2026-001'}
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-md cursor-pointer hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            title={`Click to copy Request ID: ${req.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(req.id);
+                            }}
+                          >
+                            <span className="text-gray-400 font-normal">ID:</span>
+                            <span className="font-semibold">{req.id.length > 10 ? `${req.id.slice(0, 8)}…` : req.id}</span>
+                            <Copy size={10} className="text-gray-400 hover:text-gray-600" />
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
+                            <Calendar size={11} className="text-gray-400" />
+                            <span>{normalizeDate(req.date)}</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
+                            <span className="text-gray-400">Unit:</span>
+                            <span className="font-semibold text-gray-800">{req.unit || 'Tablet'}</span>
+                          </span>
                         </div>
 
                         {/* Delivery Stock Progress Bar */}
