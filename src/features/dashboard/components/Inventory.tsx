@@ -239,38 +239,38 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
 
         {/* Filters */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
-          <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto shadow-xs">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Status</span>
-            <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
-            <div className="flex gap-1 overflow-x-auto hide-scrollbar">
-              {(['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const).map(s => (
-                <button key={s} onClick={() => setStatusFilter(s)}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
-                  style={{
-                    background: statusFilter === s ? PRIMARY : 'transparent',
-                    color: statusFilter === s ? 'white' : '#6b7280',
-                  }}>
-                  {s}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 pl-3 pr-1.5 whitespace-nowrap">Status:</span>
+            {(['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  statusFilter === s
+                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
           </div>
 
-          <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2 w-full sm:w-auto shadow-xs">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Type</span>
-            <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
-            <div className="flex gap-1 overflow-x-auto hide-scrollbar">
-              {(['All', 'Medicine', 'Supply'] as const).map(t => (
-                <button key={t} onClick={() => setTypeFilter(t)}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
-                  style={{
-                    background: typeFilter === t ? PRIMARY : 'transparent',
-                    color: typeFilter === t ? 'white' : '#6b7280',
-                  }}>
-                  {t}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 pl-3 pr-1.5 whitespace-nowrap">Type:</span>
+            {(['All', 'Medicine', 'Supply'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  typeFilter === t
+                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
         </div>
       </div>

@@ -118,6 +118,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
   const [requests, setRequests] = useState<TelemedicineRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   
   // Embedded Video Call State
   const [activeCallReq, setActiveCallReq] = useState<TelemedicineRequest | null>(null);
@@ -223,10 +224,13 @@ export function Telemedicine({ patients }: TelemedicineProps) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const filteredRequests = requests.filter(r => 
-    getPatientName(r.patient).toLowerCase().includes(search.toLowerCase()) ||
-    r.status.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredRequests = requests.filter(r => {
+    const matchesStatus = statusFilter === 'All' || r.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesSearch =
+      getPatientName(r.patient).toLowerCase().includes(search.toLowerCase()) ||
+      r.status.toLowerCase().includes(search.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
@@ -244,11 +248,26 @@ export function Telemedicine({ patients }: TelemedicineProps) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
+            {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  statusFilter === s
+                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
           <div className="relative flex-1 sm:w-72">
             <input
               type="text"
-              placeholder="Search by patient or status..."
+              placeholder="Search by patient..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] transition-colors shadow-sm"

@@ -108,7 +108,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         </div>
         {/* Date filter */}
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-          <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl border border-gray-200 p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
             {(['all', 'today', 'yesterday', 'week', 'custom'] as DateFilter[]).map(f => (
               <button
                 key={f}
@@ -119,9 +119,11 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                     setDateFilter(f);
                   }
                 }}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize cursor-pointer
-                  ${dateFilter === f ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                style={{ background: dateFilter === f ? PRIMARY : 'transparent' }}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize cursor-pointer whitespace-nowrap ${
+                  dateFilter === f
+                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 {f === 'custom' && dateFilter === 'custom' && (customFrom || customTo)
                   ? `Custom (${customFrom || '...'} to ${customTo || '...'})`

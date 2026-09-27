@@ -284,19 +284,29 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-200/60 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
           <button
             onClick={() => setViewMode('template')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'template' ? 'bg-white text-[#1E5AA8] shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              viewMode === 'template'
+                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           >
-            <FileText size={16} /> Official PRF Template
+            <FileText size={15} /> Official PRF Template
           </button>
           <button
             onClick={() => setViewMode('tracker')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'tracker' ? 'bg-[#1E5AA8] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              viewMode === 'tracker'
+                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           >
-            <PackageCheck size={16} /> Delivery Tracker
-            <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-white text-[#1E5AA8] font-black">
+            <PackageCheck size={15} /> Delivery Tracker
+            <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+              viewMode === 'tracker' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}>
               {purchaseRequests.length}
             </span>
           </button>
@@ -792,22 +802,25 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto justify-start sm:justify-end overflow-x-auto hide-scrollbar">
+            <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto justify-start sm:justify-end overflow-x-auto hide-scrollbar shadow-sm">
               {(['All', 'Pending', 'Partial', 'Complete'] as const).map(s => (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === s ? 'bg-white text-[#1E5AA8] shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                    statusFilter === s
+                      ? 'bg-[#1B3A6B] text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
                 >
                   {s}
                 </button>
               ))}
               <button
                 onClick={() => setShowNewForm(true)}
-                className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-white font-bold text-xs transition-all shadow-sm hover:opacity-90"
-                style={{ background: PRIMARY }}
+                className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white font-medium text-xs transition-all shadow-sm hover:opacity-90 bg-[#1B3A6B]"
               >
-                <Plus size={15} strokeWidth={2.5} /> Log Item
+                <Plus size={14} strokeWidth={2.5} /> Log Item
               </button>
             </div>
           </div>

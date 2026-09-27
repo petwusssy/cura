@@ -248,7 +248,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Beds Management</h1>
         </div>
         {/* Grid date filter */}
-        <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
           {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
             <button
               key={f}
@@ -259,12 +259,11 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   setGridFilter(f);
                 }
               }}
-              className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-center whitespace-nowrap cursor-pointer"
-              style={{
-                background: gridFilter === f ? 'white' : 'transparent',
-                color: gridFilter === f ? PRIMARY : '#6b7280',
-                boxShadow: gridFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+                gridFilter === f
+                  ? 'bg-[#1B3A6B] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
             >
               {f === 'custom' && gridFilter === 'custom' && (customFrom || customTo)
                 ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
@@ -399,7 +398,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
                 {/* Tracker date filter */}
-                <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
+                <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
                   {(['today', 'week', 'month', 'custom'] as DateFilterType[]).map(f => (
                     <button
                       key={f}
@@ -410,12 +409,11 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                           setTrackerFilter(f);
                         }
                       }}
-                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer"
-                      style={{
-                        background: trackerFilter === f ? 'white' : 'transparent',
-                        color: trackerFilter === f ? PRIMARY : '#6b7280',
-                        boxShadow: trackerFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+                        trackerFilter === f
+                          ? 'bg-[#1B3A6B] text-white shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`}
                     >
                       {f === 'custom' && trackerFilter === 'custom' && (trackerCustomFrom || trackerCustomTo)
                         ? `Custom (${trackerCustomFrom || '...'} to ${trackerCustomTo || '...'})`

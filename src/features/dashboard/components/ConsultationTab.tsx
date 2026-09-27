@@ -197,7 +197,7 @@ export function ConsultationTab({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
+      <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-fit overflow-x-auto hide-scrollbar shadow-sm">
         {([
           { id: 'consultations', label: 'Consultations' },
           { id: 'transfers', label: `Transfers (${transfers.length})` },
@@ -205,12 +205,11 @@ export function ConsultationTab({
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{
-              background: activeTab === t.id ? 'white' : 'transparent',
-              color: activeTab === t.id ? PRIMARY : '#6b7280',
-              boxShadow: activeTab === t.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === t.id
+                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           >
             {t.label}
           </button>
@@ -235,7 +234,7 @@ export function ConsultationTab({
                   }
                 }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
-                  datePreset === p ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-[#1B3A6B] hover:bg-blue-50'
+                  datePreset === p ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 {p === 'custom' && datePreset === 'custom' && (customFrom || customTo)

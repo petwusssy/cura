@@ -865,14 +865,14 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
         {/* Tab switcher and actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto hide-scrollbar">
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
             <button
               onClick={() => setActiveTab('template')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'template' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'template' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <FileText size={15} />
+              <FileText size={14} />
               <span>Official Template</span>
             </button>
             <button
@@ -880,30 +880,30 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 syncToArchives();
                 setActiveTab('archives');
               }}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'archives' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'archives' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <BookmarkCheck size={15} />
+              <BookmarkCheck size={14} />
               <span>Archives</span>
-              <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-semibold ${activeTab === 'archives' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-600'}`}>
+              <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${activeTab === 'archives' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
                 {medicalCerts.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('requests')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'requests' ? 'bg-white text-[#1E5AA8] shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'requests' ? 'bg-[#1B3A6B] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Clock size={15} />
+              <Clock size={14} />
               <span>Issuance Requests</span>
               {requests.filter(r => r.status === 'Pending').length > 0 ? (
-                <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-bold bg-amber-500 text-white animate-pulse">
+                <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold bg-amber-500 text-white animate-pulse">
                   {requests.filter(r => r.status === 'Pending').length}
                 </span>
               ) : (
-                <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-semibold ${activeTab === 'requests' ? 'bg-blue-100 text-[#1E5AA8]' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${activeTab === 'requests' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
                   {requests.length}
                 </span>
               )}

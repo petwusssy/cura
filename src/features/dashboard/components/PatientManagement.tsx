@@ -73,17 +73,16 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
 
         {/* Category tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar">
+        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm">
           {(['All', ...CATEGORIES] as (PatientCategory | 'All')[]).map(cat => (
             <button
               key={cat}
               onClick={() => { setCategoryFilter(cat); setStudentCategoryFilter('All'); setPage(1); }}
-              className="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
-              style={{
-                background: categoryFilter === cat ? 'white' : 'transparent',
-                color: categoryFilter === cat ? PRIMARY : '#6b7280',
-                boxShadow: categoryFilter === cat ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+                categoryFilter === cat
+                  ? 'bg-[#1B3A6B] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
             >
               {cat}
             </button>
@@ -93,20 +92,19 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
 
       {/* Student sub-category filter */}
       {categoryFilter === 'Student' && (
-        <div className="bg-white rounded-xl px-4 py-3 flex items-center gap-2"
+        <div className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap"
           style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">Level:</span>
-          <div className="flex gap-1 flex-wrap">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Level:</span>
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
             {(['All', ...STUDENT_CATEGORIES] as (StudentCategory | 'All')[]).map(sc => (
               <button
                 key={sc}
                 onClick={() => { setStudentCategoryFilter(sc); setPage(1); }}
-                className="px-3 py-1 rounded-full text-xs font-semibold transition-all border"
-                style={{
-                  background: studentCategoryFilter === sc ? PRIMARY : 'transparent',
-                  color: studentCategoryFilter === sc ? 'white' : '#6b7280',
-                  borderColor: studentCategoryFilter === sc ? PRIMARY : '#e5e7eb',
-                }}
+                className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  studentCategoryFilter === sc
+                    ? 'bg-[#1B3A6B] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 {sc}
               </button>

@@ -113,7 +113,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+      <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
         {([
           { id: 'all', label: 'All' },
           { id: 'unread', label: `Unread (${unreadCount})` },
@@ -121,9 +121,15 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
           { id: 'bed', label: 'Beds' },
           { id: 'request', label: 'Requests' },
         ] as { id: typeof filter; label: string }[]).map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{ background: filter === f.id ? 'white' : 'transparent', color: filter === f.id ? PRIMARY : '#6b7280', boxShadow: filter === f.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`flex-1 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer text-center ${
+              filter === f.id
+                ? 'bg-[#1B3A6B] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
             {f.label}
           </button>
         ))}

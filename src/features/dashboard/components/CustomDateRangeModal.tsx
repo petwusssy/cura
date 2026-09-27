@@ -109,33 +109,35 @@ export function CustomDateRangeModal({
             <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Quick Shortcuts
             </span>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('today')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('last7')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-              >
-                Last 7 Days
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('month')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-              >
-                This Month
-              </button>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => handleQuickPreset('today')}
+                  className="px-3.5 py-1 text-xs font-medium rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickPreset('last7')}
+                  className="px-3.5 py-1 text-xs font-medium rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  Last 7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickPreset('month')}
+                  className="px-3.5 py-1 text-xs font-medium rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  This Month
+                </button>
+              </div>
               {(from || to) && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-2.5 py-1 text-xs font-medium rounded-lg text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1 ml-auto"
+                  className="px-3 py-1 text-xs font-medium rounded-full text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw size={11} /> Reset
                 </button>

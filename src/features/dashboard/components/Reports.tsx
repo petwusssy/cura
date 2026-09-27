@@ -1277,7 +1277,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
             <div className="flex items-center gap-2">
               <div className="flex flex-col">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Date Range Filter</label>
-                <div className="flex items-center gap-1 bg-gray-100/90 border border-gray-200 rounded-lg p-1 shadow-xs">
+                <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm overflow-x-auto hide-scrollbar">
                   {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
                     <button
                       key={f}
@@ -1288,10 +1288,10 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                           setFilter(f);
                         }
                       }}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all capitalize whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all capitalize whitespace-nowrap cursor-pointer ${
                         filter === f
-                          ? 'bg-white text-[#1B3A6B] shadow-xs'
-                          : 'text-gray-500 hover:text-gray-800 bg-transparent'
+                          ? 'bg-[#1B3A6B] text-white shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                     >
                       {f === 'custom' && filter === 'custom' && (customFrom || customTo)
@@ -1534,12 +1534,26 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
               <PrintBar title="MONTHLY INVENTORY OF MEDICINES & SUPPLIES" />
               <div className="p-5 space-y-4">
                 {/* Sub-tab switcher between attached Medicines template and Supplies template */}
-                <div className="flex items-center gap-2 pb-3 border-b border-gray-200 no-export print:hidden">
-                  <button onClick={() => setInventoryTab('medicines')} className={`px-4 py-2 rounded-xl font-black text-xs transition-all flex items-center gap-2 ${inventoryTab === 'medicines' ? 'bg-[#1B3A6B] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <span>💊 Monthly Inventory of Medicines</span>
+                <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto overflow-x-auto hide-scrollbar shadow-sm no-export print:hidden">
+                  <button
+                    onClick={() => setInventoryTab('medicines')}
+                    className={`px-4 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                      inventoryTab === 'medicines'
+                        ? 'bg-[#1B3A6B] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>Monthly Inventory of Medicines</span>
                   </button>
-                  <button onClick={() => setInventoryTab('supplies')} className={`px-4 py-2 rounded-xl font-black text-xs transition-all flex items-center gap-2 ${inventoryTab === 'supplies' ? 'bg-[#1B3A6B] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <span>🩹 Monthly Inventory of Supplies</span>
+                  <button
+                    onClick={() => setInventoryTab('supplies')}
+                    className={`px-4 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                      inventoryTab === 'supplies'
+                        ? 'bg-[#1B3A6B] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>Monthly Inventory of Supplies</span>
                   </button>
                 </div>
 
