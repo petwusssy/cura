@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
-import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12, formatTimeRange12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1B3A6B';
@@ -285,7 +285,7 @@ export function ConsultationTab({
                         </td>
                         <td className="px-5 py-3.5 hidden md:table-cell">
                           <div className="text-sm text-gray-700">{normalizeDate(c.date)}</div>
-                          <div className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</div>
+                          <div className="text-xs text-gray-400">{formatTimeRange12(c.timeIn, c.timeOut)}</div>
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[180px]">
                           <div className="truncate">{c.complaint}</div>
@@ -398,7 +398,7 @@ export function ConsultationTab({
                         </td>
                         <td className="px-5 py-3.5 hidden md:table-cell">
                           <div className="text-sm text-gray-700">{normalizeDate(t.date)}</div>
-                          <div className="text-xs text-gray-400">{t.time}</div>
+                          <div className="text-xs text-gray-400">{formatTime12(t.time)}</div>
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-700 max-w-[200px]">
                           <div className="truncate font-medium">{t.receivingHospital}</div>
@@ -426,7 +426,7 @@ export function ConsultationTab({
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-bold text-gray-900 uppercase">{patient?.name}</div>
-                      <div className="text-xs text-gray-500">{normalizeDate(t.date)} • {t.time}</div>
+                      <div className="text-xs text-gray-500">{normalizeDate(t.date)} • {formatTime12(t.time)}</div>
                     </div>
                     <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide bg-orange-50 text-orange-700">
                       {t.transportMode}
@@ -565,7 +565,7 @@ export function ConsultationTab({
                   <h3 className="text-lg font-bold text-gray-900">
                     Consultation Record: <span className="uppercase">{patient?.name}</span>
                   </h3>
-                  <p className="text-sm text-gray-500">{normalizeDate(viewDetail.date)} • {viewDetail.timeIn} - {viewDetail.timeOut || 'Present'}</p>
+                  <p className="text-sm text-gray-500">{normalizeDate(viewDetail.date)} • {formatTimeRange12(viewDetail.timeIn, viewDetail.timeOut, 'Present')}</p>
                 </div>
                 <button
                   onClick={() => setViewDetail(null)}
@@ -676,7 +676,7 @@ export function ConsultationTab({
                                  </div>
                                  <div>
                                    <div className="text-sm font-bold text-gray-800">{t.medicineName}</div>
-                                   <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {t.timeGiven}</div>
+                                   <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {formatTime12(t.timeGiven)}</div>
                                  </div>
                                </div>
                              </div>

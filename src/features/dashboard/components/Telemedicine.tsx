@@ -3,7 +3,7 @@ import { Video, Search, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, Ext
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
-import { normalizeDate, getManilaDate, getManilaTime } from '@/utils/philippineTime';
+import { normalizeDate, getManilaDate, getManilaTime, formatTime12 } from '@/utils/philippineTime';
 
 function parseSingleTime(t: string): number | null {
   const match = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
@@ -361,7 +361,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                     </div>
                     <div className="flex items-center text-xs font-medium text-gray-600">
                       <Clock size={13} className="mr-1.5 text-gray-400" />
-                      Preferred Time: <span className="ml-1 text-gray-800 font-semibold">{req.preferred_time}</span>
+                      Preferred Time: <span className="ml-1 text-gray-800 font-semibold">{formatTime12(req.preferred_time)}</span>
                     </div>
                     <div className="mt-2.5 p-3 bg-gray-50/80 rounded-xl text-xs text-gray-700 leading-relaxed border border-gray-100">
                       <span className="font-semibold text-gray-500 block mb-0.5">Reason for Consultation:</span>
@@ -392,7 +392,7 @@ export function Telemedicine({ patients }: TelemedicineProps) {
                   <div className="mt-2 pt-3.5 border-t border-gray-100 space-y-2.5">
                     <div className="flex items-center justify-between text-xs bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                       <span className="text-gray-500">Scheduled Session:</span>
-                      <span className="font-bold text-gray-900">{normalizeDate(req.scheduled_date)} at {req.scheduled_time}</span>
+                      <span className="font-bold text-gray-900">{normalizeDate(req.scheduled_date)} at {formatTime12(req.scheduled_time)}</span>
                     </div>
 
                     {!access.canJoin && (

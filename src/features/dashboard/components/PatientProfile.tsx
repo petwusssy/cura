@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, Stethoscope, FileText, Plus, Eye, Clock, Pill, User, Phone, Mail, AlertCircle, X } from 'lucide-react';
 import { Patient, Consultation, MedicalCertificate, Page } from '../types';
-import { normalizeDate } from '@/utils/philippineTime';
+import { normalizeDate, formatTime12, formatTimeRange12 } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -208,7 +208,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     {patientConsultations.map((c, i) => (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
-                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{formatTime12(c.timeIn)}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
                           <div className="truncate">{formatComplaint(c.complaint)}</div>
                         </td>
@@ -256,7 +256,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
-                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {c.timeIn}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {formatTime12(c.timeIn)}</div>
                       </div>
                     </div>
                     
@@ -319,7 +319,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     {patientNonConsultations.map((c, i) => (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-2.5 pr-3 text-sm text-gray-500">{i + 1}</td>
-                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{c.timeIn}</span></td>
+                        <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{normalizeDate(c.date)}<br/><span className="text-xs text-gray-400">{formatTime12(c.timeIn)}</span></td>
                         <td className="py-2.5 pr-3 text-sm text-gray-700 max-w-[140px]">
                           <div className="truncate">{formatComplaint(c.complaint)}</div>
                         </td>
@@ -367,7 +367,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-bold text-gray-900">{formatComplaint(c.complaint)}</div>
-                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {c.timeIn}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">{normalizeDate(c.date)} • {formatTime12(c.timeIn)}</div>
                       </div>
                     </div>
                     
@@ -422,7 +422,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                     <div className="flex-1 pb-4">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-gray-800">{normalizeDate(c.date)}</span>
-                        <span className="text-xs text-gray-400">{c.timeIn} – {c.timeOut || '—'}</span>
+                        <span className="text-xs text-gray-400">{formatTimeRange12(c.timeIn, c.timeOut)}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === 'Consultation' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
                           {c.status}
                         </span>
@@ -538,7 +538,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                 <h3 className="text-lg font-bold text-gray-900">
                   {selectedConsultation.status === 'Consultation' ? 'Consultation Record' : 'Non-Consultation Record'}
                 </h3>
-                <p className="text-sm text-gray-500">{normalizeDate(selectedConsultation.date)} • {selectedConsultation.timeIn} - {selectedConsultation.timeOut || 'Present'}</p>
+                <p className="text-sm text-gray-500">{normalizeDate(selectedConsultation.date)} • {formatTimeRange12(selectedConsultation.timeIn, selectedConsultation.timeOut, 'Present')}</p>
               </div>
               <button
                 onClick={() => setSelectedConsultation(null)}
@@ -666,7 +666,7 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
                                </div>
                                <div>
                                  <div className="text-sm font-bold text-gray-800">{t.medicineName}</div>
-                                 <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {t.timeGiven}</div>
+                                 <div className="text-xs text-gray-500">{t.quantity} {t.unit} • Given {formatTime12(t.timeGiven)}</div>
                                </div>
                              </div>
                            </div>

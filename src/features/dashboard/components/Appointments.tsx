@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Search, Check, X, Clock, CalendarDays, Trash2 } from 'lucide-react';
 import { Patient } from '../types';
 import { appointmentService, AppointmentRequest } from '../../../services/appointmentService';
-import { normalizeDate } from '@/utils/philippineTime';
+import { normalizeDate, formatTime12 } from '@/utils/philippineTime';
 
 interface AppointmentsProps {
   patients: Patient[];
@@ -195,7 +195,7 @@ export function Appointments({ patients }: AppointmentsProps) {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Clock size={14} className="mr-2" />
-                  {req.preferred_time}
+                  {formatTime12(req.preferred_time)}
                 </div>
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-700 italic border border-gray-100">
                   "{req.reason}"
@@ -223,7 +223,7 @@ export function Appointments({ patients }: AppointmentsProps) {
                 <div className="mt-auto pt-4 border-t border-gray-100">
                   <p className="text-xs text-gray-500 mb-1">Scheduled for:</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {normalizeDate(req.scheduled_date)} at {req.scheduled_time}
+                    {normalizeDate(req.scheduled_date)} at {formatTime12(req.scheduled_time)}
                   </p>
                 </div>
               )}

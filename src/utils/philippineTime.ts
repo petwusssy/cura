@@ -169,4 +169,55 @@ export const formatManilaDateTime = (raw?: string | Date | number | null): strin
   return `${datePart} • ${timePart}`;
 };
 
+/**
+ * Converts any time string (e.g., "22:08:00", "22:08", "08:30:00", "14:15")
+ * or Date or timestamp into standard 12-hour format with AM/PM (e.g. "10:08 PM", "8:30 AM").
+ */
+export const formatTime12 = (raw?: string | Date | number | null): string => {
+  if (raw === undefined || raw === null) return '';
+  if (typeof raw === 'object' && raw instanceof Date) {
+    return formatManilaDisplayTime(raw);
+  }
+  const str = String(raw).trim();
+  if (!str || str === '—' || str === '-' || str === '(current)' || str === 'Ongoing' || str === 'Present') {
+    return str;
+  }
+  // Check if already 12-hour format: e.g. "10:08 PM" or "8:30 AM" or "10:08:00 PM"
+  const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i);
+  if (ampmMatch) {
+    const h = parseInt(ampmMatch[1], 10);
+    const m = ampmMatch[2];
+    const period = ampmMatch[3].toUpperCase();
+    return `${h}:${m} ${period}`;
+  }
+  // Check if "HH:mm" or "HH:mm:ss" (24-hour)
+  const time24Match = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (time24Match) {
+    let hours = parseInt(time24Match[1], 10);
+    const minutes = time24Match[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+  // Check if it's an ISO string or datetime
+  const dateObj = new Date(str);
+  if (!isNaN(dateObj.getTime())) {
+    return formatManilaDisplayTime(dateObj);
+  }
+  return str;
+};
+
+/**
+ * Formats a start and end time range in 12-hour format
+ * e.g., "10:08 PM – 10:11 PM" or "10:08 PM – Present"
+ */
+export const formatTimeRange12 = (start?: string | null, end?: string | null, fallback = '—'): string => {
+  const startFmt = formatTime12(start);
+  const endFmt = end ? formatTime12(end) : fallback;
+  if (!startFmt && !endFmt) return fallback;
+  if (!startFmt) return endFmt;
+  return `${startFmt} – ${endFmt}`;
+};
+
 

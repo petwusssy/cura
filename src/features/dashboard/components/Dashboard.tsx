@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
-import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1E5AA8';
@@ -67,7 +67,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const timelineData = hours.map(hour => {
     const hourPrefix = hour.substring(0, 2);
     const count = filteredConsultations.filter(c => c.timeIn && c.timeIn.startsWith(hourPrefix)).length;
-    return { time: hour, consultations: count };
+    return { time: formatTime12(hour), consultations: count };
   });
 
   const todayConsultations = filteredConsultations.filter(c => c.status === 'Consultation');
@@ -309,7 +309,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">Next dose: {n.nextDose}</div>
+                  <div className="text-xs text-gray-500">Next dose: {formatTime12(n.nextDose)}</div>
                   {/* Countdown bar */}
                   <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                     <div
@@ -398,7 +398,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                         </span>
                       </td>
                       <td className="py-2.5 pr-4 text-sm text-gray-600 truncate max-w-[150px]">{c.complaint}</td>
-                      <td className="py-2.5 pr-4 text-sm text-gray-500 hidden md:table-cell">{c.timeIn}</td>
+                      <td className="py-2.5 pr-4 text-sm text-gray-500 hidden md:table-cell">{formatTime12(c.timeIn)}</td>
                       <td className="py-2.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === 'Consultation' ? 'text-blue-700 bg-blue-50' : 'text-gray-600 bg-gray-100'}`}>
                           {c.status}
@@ -433,7 +433,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                                 }}>
                                 {patient?.category}
                             </span>
-                            <span className="text-xs text-gray-400">{c.timeIn}</span>
+                            <span className="text-xs text-gray-400">{formatTime12(c.timeIn)}</span>
                           </div>
                         </div>
                       </div>

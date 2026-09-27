@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Clock, BedDouble, AlertTriangle, CheckCheck, X, Calendar, Video, Trash2 } from 'lucide-react';
 import { AppNotification } from '../types';
+import { formatTime12 } from '@/utils/philippineTime';
 
 const PRIMARY = '#185a9d';
 const RED = '#D64545';
@@ -178,7 +179,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                       {n.patientName && n.type === 'medication' && (
                         <div className="mt-1">
                           <span className="text-xs font-medium text-gray-500">Patient: <span className="uppercase font-semibold">{n.patientName}</span></span>
-                          {n.nextDose && <span className="text-xs text-gray-400 ml-2">• Next dose: {n.nextDose}</span>}
+                          {n.nextDose && <span className="text-xs text-gray-400 ml-2">• Next dose: {formatTime12(n.nextDose)}</span>}
                         </div>
                       )}
                     </div>

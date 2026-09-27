@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { BedDouble, Clock, X, UserCheck, History, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Bed, Patient, BedHistory } from '../types';
-import { getManilaDate, getManilaTime, getManilaDaysAgo, normalizeDate } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1B3A6B';
@@ -467,13 +467,13 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                           </div>
                         </td>
                         <td className="px-5 py-4 text-sm text-gray-600">{normalizeDate(h.date)}</td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{h.timeIn}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">{formatTime12(h.timeIn)}</td>
                         <td className="px-5 py-4 text-sm text-gray-600">
                           {h.timeOut === '(current)' ? (
                             <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: `${RED}15`, color: RED }}>
                               Current / Occupied
                             </span>
-                          ) : h.timeOut}
+                          ) : formatTime12(h.timeOut)}
                         </td>
                         <td className="px-5 py-4">
                           <span className="text-xs px-3 py-1 rounded-full font-medium"
@@ -512,7 +512,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                     <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-2">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time In</span>
-                        <span className="text-xs text-gray-700">{normalizeDate(h.date)} <br/> <span className="text-gray-500 font-medium">{h.timeIn}</span></span>
+                        <span className="text-xs text-gray-700">{normalizeDate(h.date)} <br/> <span className="text-gray-500 font-medium">{formatTime12(h.timeIn)}</span></span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time Out</span>
@@ -522,7 +522,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                               Current / Occupied
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-700">{h.timeOut}</span>
+                            <span className="text-xs text-gray-700">{formatTime12(h.timeOut)}</span>
                           )}
                         </div>
                       </div>
@@ -565,12 +565,12 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                   <td className="px-5 py-3 text-sm font-medium text-gray-700">Bed {h._bedNumber}</td>
                   <td className="px-5 py-3 text-sm text-gray-700 uppercase">{h.patientName}</td>
                   <td className="px-5 py-3 text-sm text-gray-500">{normalizeDate(h.date)}</td>
-                  <td className="px-5 py-3 text-sm text-gray-500">{h.timeIn}</td>
+                  <td className="px-5 py-3 text-sm text-gray-500">{formatTime12(h.timeIn)}</td>
                   <td className="px-5 py-3">
                     {h.timeOut === '(current)' ? (
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${RED}15`, color: RED }}>Current</span>
                     ) : (
-                      <span className="text-sm text-gray-500">{h.timeOut}</span>
+                      <span className="text-sm text-gray-500">{formatTime12(h.timeOut)}</span>
                     )}
                   </td>
                   <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 font-medium" style={{ color: PRIMARY }}>{h.duration}</span></td>
@@ -605,7 +605,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
             <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100 mt-2">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date & Time In</span>
-                <span className="text-xs text-gray-700">{normalizeDate(h.date)} <br/> <span className="text-gray-500 font-medium">{h.timeIn}</span></span>
+                <span className="text-xs text-gray-700">{normalizeDate(h.date)} <br/> <span className="text-gray-500 font-medium">{formatTime12(h.timeIn)}</span></span>
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time Out</span>
@@ -615,7 +615,7 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                       Current
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-700">{h.timeOut}</span>
+                    <span className="text-xs text-gray-700">{formatTime12(h.timeOut)}</span>
                   )}
                 </div>
               </div>
