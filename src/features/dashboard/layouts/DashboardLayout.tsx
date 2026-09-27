@@ -14,34 +14,54 @@ type NavLeaf  = { kind: 'leaf';  id: Page;   label: string; icon: React.ReactNod
 type NavGroup = { kind: 'group'; id: string; label: string; icon: React.ReactNode; children: NavLeaf[] };
 type NavItem  = NavLeaf | NavGroup;
 
-const navItems: NavItem[] = [
-  { kind: 'leaf',  id: 'dashboard',  label: 'Dashboard',       icon: <LayoutDashboard size={18} /> },
-  { kind: 'leaf',  id: 'patients',   label: 'Patients',        icon: <Users size={18} /> },
-  { kind: 'leaf',  id: 'beds',       label: 'Beds Management', icon: <BedDouble size={18} /> },
+type NavSection = {
+  title?: string;
+  items: NavItem[];
+};
+
+const navSections: NavSection[] = [
   {
-    kind: 'group', id: 'appointments-group', label: 'Appointments', icon: <Calendar size={18} />,
-    children: [
-      { kind: 'leaf', id: 'appointments',         label: 'Appointments',         icon: <Calendar size={16} /> },
-      { kind: 'leaf', id: 'medical-certificates', label: 'Medical Certificates', icon: <FileText size={16} /> },
+    title: 'Overview',
+    items: [
+      { kind: 'leaf',  id: 'dashboard',  label: 'Dashboard',       icon: <LayoutDashboard size={20} /> },
+      { kind: 'leaf',  id: 'patients',   label: 'Patients',        icon: <Users size={20} /> },
+      { kind: 'leaf',  id: 'beds',       label: 'Beds Management', icon: <BedDouble size={20} /> },
     ],
   },
   {
-    kind: 'group', id: 'consultations-group', label: 'Consultations', icon: <Stethoscope size={18} />,
-    children: [
-      { kind: 'leaf', id: 'consultations',     label: 'Consultations',    icon: <Stethoscope size={16} /> },
-      { kind: 'leaf', id: 'non-consultations', label: 'Non-Consultation', icon: <ClipboardList size={16} /> },
-      { kind: 'leaf', id: 'telemedicine',      label: 'Telemedicine',     icon: <Video size={16} /> },
+    title: 'Clinical Services',
+    items: [
+      {
+        kind: 'group', id: 'appointments-group', label: 'Appointments', icon: <Calendar size={20} />,
+        children: [
+          { kind: 'leaf', id: 'appointments',         label: 'Appointments',         icon: <Calendar size={16} /> },
+          { kind: 'leaf', id: 'medical-certificates', label: 'Medical Certificates', icon: <FileText size={16} /> },
+        ],
+      },
+      {
+        kind: 'group', id: 'consultations-group', label: 'Consultations', icon: <Stethoscope size={20} />,
+        children: [
+          { kind: 'leaf', id: 'consultations',     label: 'Consultations',    icon: <Stethoscope size={16} /> },
+          { kind: 'leaf', id: 'non-consultations', label: 'Non-Consultation', icon: <ClipboardList size={16} /> },
+          { kind: 'leaf', id: 'telemedicine',      label: 'Telemedicine',     icon: <Video size={16} /> },
+        ],
+      },
+      {
+        kind: 'group', id: 'inventory-group', label: 'Inventory', icon: <Package size={20} />,
+        children: [
+          { kind: 'leaf', id: 'inventory',         label: 'Inventory',         icon: <Package size={16} /> },
+          { kind: 'leaf', id: 'purchase-receipts', label: 'Purchase Receipts', icon: <ShoppingCart size={16} /> },
+        ],
+      },
     ],
   },
   {
-    kind: 'group', id: 'inventory-group', label: 'Inventory', icon: <Package size={18} />,
-    children: [
-      { kind: 'leaf', id: 'inventory',         label: 'Inventory',         icon: <Package size={16} /> },
-      { kind: 'leaf', id: 'purchase-receipts', label: 'Purchase Receipts', icon: <ShoppingCart size={16} /> },
+    title: 'System & Reports',
+    items: [
+      { kind: 'leaf',  id: 'reports',    label: 'Reports',         icon: <BarChart2 size={20} /> },
+      { kind: 'leaf',  id: 'settings',   label: 'Settings',        icon: <Settings size={20} /> },
     ],
   },
-  { kind: 'leaf',  id: 'reports',    label: 'Reports',         icon: <BarChart2 size={18} /> },
-  { kind: 'leaf',  id: 'settings',   label: 'Settings',        icon: <Settings size={18} /> },
 ];
 
 // Child pages that belong to each group (for active-parent detection)
@@ -104,17 +124,31 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           if (window.innerWidth < 768) setCollapsed(true);
         }}
         title={collapsed ? item.label : undefined}
-        className={`w-full flex items-center gap-3 text-left relative transition-all group ${indent && !collapsed ? 'pl-10 pr-4 py-2' : 'px-4 py-2.5'}`}
-        style={{ color: active ? '#fff' : 'rgba(255,255,255,0.6)' }}
+        className={`w-full flex items-center text-left relative transition-all duration-200 rounded-xl group ${
+          collapsed
+            ? 'justify-center w-11 h-11 mx-auto my-1 p-0'
+            : indent
+              ? 'gap-3 pl-8 pr-3.5 py-2.5 my-0.5 text-xs'
+              : 'gap-3.5 px-3.5 py-3 my-0.5 text-sm font-medium'
+        } ${active ? 'text-white' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
       >
         {active && (
-          <span
-            className="absolute inset-0"
-            style={{ background: 'rgba(255,255,255,0.12)', borderRight: '3px solid #F4C542' }}
-          />
+          <>
+            <span
+              className="absolute inset-0 rounded-xl pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.06) 100%)',
+                boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)',
+              }}
+            />
+            <span
+              className="absolute left-1.5 top-2.5 bottom-2.5 w-1 rounded-full"
+              style={{ backgroundColor: '#F4C542', boxShadow: '0 0 8px rgba(244,197,66,0.6)' }}
+            />
+          </>
         )}
-        <span className="relative flex-shrink-0">{item.icon}</span>
-        {!collapsed && <span className="relative text-sm font-medium truncate flex-1">{item.label}</span>}
+        <span className="relative flex-shrink-0 flex items-center justify-center">{item.icon}</span>
+        {!collapsed && <span className="relative truncate flex-1 tracking-tight">{item.label}</span>}
       </button>
     );
   };
@@ -123,30 +157,42 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
     const gActive = isGroupActive(item.id);
     const isOpen  = openGroup === item.id;
     return (
-      <div key={item.id}>
+      <div key={item.id} className="w-full">
         <button
           onClick={() => {
             if (collapsed) { setCollapsed(false); setOpenGroup(item.id); }
             else toggleGroup(item.id);
           }}
           title={collapsed ? item.label : undefined}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-left relative transition-all group"
-          style={{ color: gActive ? '#fff' : 'rgba(255,255,255,0.6)' }}
+          className={`w-full flex items-center text-left relative transition-all duration-200 rounded-xl group ${
+            collapsed
+              ? 'justify-center w-11 h-11 mx-auto my-1 p-0'
+              : 'gap-3.5 px-3.5 py-3 my-0.5 text-sm font-medium'
+          } ${gActive ? 'text-white' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
         >
           {gActive && !isOpen && (
-            <span
-              className="absolute inset-0"
-              style={{ background: 'rgba(255,255,255,0.12)', borderRight: '3px solid #F4C542' }}
-            />
+            <>
+              <span
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{
+                  background: 'linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.12)',
+                }}
+              />
+              <span
+                className="absolute left-1.5 top-2.5 bottom-2.5 w-1 rounded-full"
+                style={{ backgroundColor: '#F4C542', boxShadow: '0 0 8px rgba(244,197,66,0.6)' }}
+              />
+            </>
           )}
-          <span className="relative flex-shrink-0">{item.icon}</span>
+          <span className="relative flex-shrink-0 flex items-center justify-center">{item.icon}</span>
           {!collapsed && (
             <>
-              <span className="relative text-sm font-medium truncate flex-1">{item.label}</span>
+              <span className="relative truncate flex-1 tracking-tight">{item.label}</span>
               <ChevronDown
-                size={14}
-                className="relative flex-shrink-0 transition-transform duration-200"
-                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', opacity: 0.7 }}
+                size={15}
+                className="relative flex-shrink-0 transition-transform duration-200 text-white/60 group-hover:text-white"
+                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </>
           )}
@@ -161,7 +207,7 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               transition={{ duration: 0.2, ease: 'easeInOut' }}
               style={{ overflow: 'hidden' }}
             >
-              <div className="border-l border-white/10 ml-6 my-0.5">
+              <div className="border-l-2 border-white/15 ml-5 pl-2 my-1 space-y-1">
                 {item.children.map(child => renderLeaf(child, true))}
               </div>
             </motion.div>
@@ -237,10 +283,24 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         </div>
 
         {/* Nav */}
-        <nav className="relative z-10 flex-1 py-3 overflow-y-auto hide-scrollbar space-y-0.5">
-          {navItems.map(item =>
-            item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)
-          )}
+        <nav className="relative z-10 flex-1 px-3 py-4 overflow-y-auto hide-scrollbar space-y-4 flex flex-col">
+          {navSections.map((section, idx) => (
+            <div key={section.title || idx} className="space-y-1">
+              {!collapsed && section.title && (
+                <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-blue-200/50 select-none">
+                  {section.title}
+                </div>
+              )}
+              {collapsed && idx > 0 && (
+                <div className="border-t border-white/10 my-2 mx-1.5" />
+              )}
+              <div className="space-y-1">
+                {section.items.map(item =>
+                  item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)
+                )}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* UA Seal + Sign Out */}
