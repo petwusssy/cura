@@ -41,93 +41,19 @@ export function Settings() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const [openTime, setOpenTime] = useState('08:00');
-  const [closeTime, setCloseTime] = useState('17:00');
   const [broadcastStatus, setBroadcastStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
   const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
-  const [autoSchedule, setAutoSchedule] = useState(true);
-
-  const formatTime12 = (timeStr: string) => {
-    if (!timeStr) return '';
-    const [hStr, mStr] = timeStr.split(':');
-    let h = parseInt(hStr, 10);
-    const m = mStr ? mStr.slice(0, 2) : '00';
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    if (h === 0) h = 12;
-    return `${h}:${m} ${ampm}`;
-  };
-
-  const getGeneratedMessage = (status: 'Open' | 'Closed' | 'Half Day', oTime: string, cTime: string) => {
-    const formattedOpen = formatTime12(oTime);
-    const formattedClose = formatTime12(cTime);
-    const isHalf = cTime <= '13:00' || status === 'Half Day';
-
-    if (status === 'Closed') {
-      if (isHalf) {
-        return `The University Clinic is currently CLOSED. Operating hours today were ${formattedOpen} to ${formattedClose}.`;
-      }
-      return `The University Clinic is currently CLOSED. Standard operating hours are ${formattedOpen} to ${formattedClose}.`;
-    } else if (status === 'Half Day') {
-      return `Welcome to the University Clinic! The clinic is OPEN today until ${formattedClose} (Half Day).`;
-    } else {
-      if (isHalf) {
-        return `Welcome to the University Clinic! The clinic is OPEN today until ${formattedClose} (Half Day).`;
-      }
-      return `Welcome to the University Clinic! The clinic is OPEN. Standard operating hours are ${formattedOpen} to ${formattedClose}.`;
-    }
-  };
-
-  const computeCurrentStatus = (oTime: string, cTime: string): 'Open' | 'Closed' | 'Half Day' => {
-    const now = new Date();
-    const currentHours = String(now.getHours()).padStart(2, '0');
-    const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-    const currentTime = `${currentHours}:${currentMinutes}`;
-
-    if (currentTime >= oTime && currentTime < cTime) {
-      return cTime <= '13:00' ? 'Half Day' : 'Open';
-    }
-    return 'Closed';
-  };
 
   useEffect(() => {
     api.get('/advisory/')
       .then(res => {
         if (res.data) {
-          const o = res.data.open_time ? res.data.open_time.slice(0, 5) : '08:00';
-          const c = res.data.close_time ? res.data.close_time.slice(0, 5) : '17:00';
-          if (res.data.open_time) setOpenTime(o);
-          if (res.data.close_time) setCloseTime(c);
           if (res.data.status) setBroadcastStatus(res.data.status);
           if (res.data.message) setBroadcastMessage(res.data.message);
-          if (res.data.auto_schedule !== undefined) setAutoSchedule(res.data.auto_schedule);
         }
       })
       .catch(() => {});
   }, []);
-
-  const handleOpenTimeChange = (newOpen: string) => {
-    setOpenTime(newOpen);
-    if (autoSchedule) {
-      const newStatus = computeCurrentStatus(newOpen, closeTime);
-      setBroadcastStatus(newStatus);
-      setBroadcastMessage(getGeneratedMessage(newStatus, newOpen, closeTime));
-    }
-  };
-
-  const handleCloseTimeChange = (newClose: string) => {
-    setCloseTime(newClose);
-    if (autoSchedule) {
-      const newStatus = computeCurrentStatus(openTime, newClose);
-      setBroadcastStatus(newStatus);
-      setBroadcastMessage(getGeneratedMessage(newStatus, openTime, newClose));
-    }
-  };
-
-  const handleStatusClick = (status: 'Open' | 'Closed' | 'Half Day') => {
-    setBroadcastStatus(status);
-    setBroadcastMessage(getGeneratedMessage(status, openTime, closeTime));
-  };
 
   const handlePushAdvisory = async () => {
     setSaved(true);
@@ -135,36 +61,10 @@ export function Settings() {
       await api.post('/advisory/', {
         status: broadcastStatus,
         message: broadcastMessage,
-        open_time: openTime,
-        close_time: closeTime,
-        auto_schedule: autoSchedule,
       });
     } catch (e) {}
     setTimeout(() => setSaved(false), 2000);
   };
-
-  useEffect(() => {
-    if (!autoSchedule) return;
-
-    const checkSchedule = () => {
-      const currentStatus = computeCurrentStatus(openTime, closeTime);
-      if (currentStatus !== broadcastStatus) {
-        setBroadcastStatus(currentStatus);
-        const newMsg = getGeneratedMessage(currentStatus, openTime, closeTime);
-        setBroadcastMessage(newMsg);
-        api.post('/advisory/', {
-          status: currentStatus,
-          message: newMsg,
-          open_time: openTime,
-          close_time: closeTime,
-          auto_schedule: true,
-        }).catch(() => {});
-      }
-    };
-
-    const timer = setInterval(checkSchedule, 10000);
-    return () => clearInterval(timer);
-  }, [openTime, closeTime, broadcastStatus, autoSchedule]);
 
 
   const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-background text-foreground';
@@ -358,53 +258,16 @@ export function Settings() {
 
           {activeSection === 'advisory' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <div className="flex items-center justify-between pb-4 border-b border-border">
-                <h3 className="text-foreground font-semibold">Clinic Status Broadcast</h3>
-                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${broadcastStatus === 'Open' ? 'bg-emerald-500 animate-pulse' : broadcastStatus === 'Half Day' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500'}`} />
-                  Auto Daily Schedule
-                </span>
-              </div>
+              <h3 className="text-foreground pb-4 border-b border-border">Clinic Status Broadcast</h3>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Daily Opening Time</label>
-                    <input
-                      type="time"
-                      value={openTime}
-                      onChange={(e) => handleOpenTimeChange(e.target.value)}
-                      className={inputCls}
-                    />
-                    <p className="text-[11px] text-muted-foreground mt-1">Automatic OPEN broadcast starts at this time (e.g. 8:00 AM)</p>
-                  </div>
-
-                  <div>
-                    <label className={labelCls}>Daily Closing Time</label>
-                    <input
-                      type="time"
-                      value={closeTime}
-                      onChange={(e) => handleCloseTimeChange(e.target.value)}
-                      className={inputCls}
-                    />
-                    <p className="text-[11px] text-muted-foreground mt-1">For half-day, set this to your early closing time (e.g. 12:00 PM)</p>
-                  </div>
-                </div>
-
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className={labelCls}>Clinic Status</label>
-                    <span className="text-xs text-muted-foreground">
-                      {broadcastStatus === 'Open' && <span className="text-emerald-600 font-semibold">🟢 Active: Open</span>}
-                      {broadcastStatus === 'Half Day' && <span className="text-amber-600 font-semibold">🟡 Active: Half Day</span>}
-                      {broadcastStatus === 'Closed' && <span className="text-rose-600 font-semibold">🔴 Active: Closed</span>}
-                    </span>
-                  </div>
+                  <label className={labelCls}>Status</label>
                   <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm">
-                    {(['Open', 'Closed', 'Half Day'] as const).map((status) => (
+                    {['Open', 'Closed', 'Half Day'].map((status) => (
                       <button
                         key={status}
-                        onClick={() => handleStatusClick(status)}
+                        onClick={() => setBroadcastStatus(status as any)}
                         className={`px-4 py-1.5 rounded-full text-sm transition-all cursor-pointer whitespace-nowrap ${
                           broadcastStatus === status 
                             ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25 font-semibold' 
@@ -418,17 +281,14 @@ export function Settings() {
                 </div>
 
                 <div>
-                  <label className={labelCls}>Announcement Broadcast Message</label>
-                  <textarea
-                    rows={2}
+                  <label className={labelCls}>Message</label>
+                  <input
+                    type="text"
                     value={broadcastMessage}
                     onChange={(e) => setBroadcastMessage(e.target.value)}
                     className={inputCls}
-                    placeholder="Enter broadcast announcement message..."
+                    placeholder="Enter message..."
                   />
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    This announcement automatically updates on mobile app screens.
-                  </p>
                 </div>
               </div>
 
