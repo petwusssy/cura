@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Users, Stethoscope, Package, AlertTriangle, Activity, ChevronRight,
   Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill,
-  Calendar, Video
+  Calendar, Video, Check
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts';
@@ -24,13 +25,14 @@ interface DashboardProps {
   queues?: PatientQueue[];
   onNotifyQueue?: (id: string) => void;
   onCompleteQueue?: (id: string) => void;
+  onMarkDoseIntaked?: (keys: string[]) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'custom';
 
-export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onNavigate, onSelectPatient }: DashboardProps) {
+export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onMarkDoseIntaked, onNavigate, onSelectPatient }: DashboardProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -40,6 +42,44 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     const [h, m] = getManilaTime().split(':');
     return parseInt(h, 10) * 60 + parseInt(m, 10);
   });
+
+  const [intakedDoseIds, setIntakedDoseIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('cura_intaked_med_doses');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const handleMarkIntaked = (item: {
+    id: string;
+    consultationId: string;
+    medicineName: string;
+    nextDose: string;
+    timeGiven: string;
+    patientName: string;
+  }) => {
+    const keys = [
+      item.id,
+      `${item.consultationId}-${item.medicineName}-${item.nextDose}`,
+      `${item.consultationId}-${item.medicineName}-${item.timeGiven}`,
+      `med-due-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
+      `med-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
+    ];
+
+    setIntakedDoseIds(prev => {
+      const next = new Set(prev);
+      keys.forEach(k => next.add(k));
+      try {
+        localStorage.setItem('cura_intaked_med_doses', JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+
+    onMarkDoseIntaked?.(keys);
+    toast.success(`Medication marked as intaked for ${item.patientName}`);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -123,6 +163,14 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       const isVisitToday = normalizeDate(c.date) === today;
 
       c.treatments.forEach((t, idx) => {
+        const itemId = `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`;
+        const semKey1 = `${c.id}-${t.medicineName}-${t.nextDose}`;
+        const semKey2 = `${c.id}-${t.medicineName}-${t.timeGiven}`;
+
+        if (intakedDoseIds.has(itemId) || intakedDoseIds.has(semKey1) || intakedDoseIds.has(semKey2)) {
+          return;
+        }
+
         let diffMinutes: number | null = null;
         let isDue = false;
         let isUpcoming = false;
@@ -490,6 +538,20 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                       />
                     </div>
                   ) : null}
+
+                  {/* Check / Intaked Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkIntaked(item);
+                    }}
+                    className="mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[0.98] transition-all shadow-sm cursor-pointer select-none"
+                    title="Mark as intaked and remove from reminders"
+                  >
+                    <Check size={14} className="stroke-[2.5]" />
+                    <span>Intaked</span>
+                  </button>
                 </div>
               ))}
             </div>

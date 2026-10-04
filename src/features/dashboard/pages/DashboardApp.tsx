@@ -114,10 +114,21 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       readNotifIdsRef.current = new Set(readStored);
       const dismissedStored = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
       dismissedNotifIdsRef.current = new Set(dismissedStored);
+      const intakedStored = JSON.parse(localStorage.getItem('cura_intaked_med_doses') || '[]');
+      if (Array.isArray(intakedStored)) {
+        intakedStored.forEach((id: string) => dismissedNotifIdsRef.current.add(id));
+      }
     } catch (e) {
       console.error(e);
     }
   }, []);
+
+  const handleMarkDoseIntaked = (keys: string[]) => {
+    keys.forEach(k => {
+      dismissedNotifIdsRef.current.add(k);
+    });
+    setNotifications(prev => prev.filter(n => !keys.includes(n.id)));
+  };
 
   const navigate = (page: Page) => {
     routerNavigate(`/dashboard/${page === 'dashboard' ? '' : page}`);
@@ -739,6 +750,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                 fetchQueues();
               }
             }}
+            onMarkDoseIntaked={handleMarkDoseIntaked}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
         );
