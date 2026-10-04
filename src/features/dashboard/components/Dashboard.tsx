@@ -25,7 +25,7 @@ interface DashboardProps {
   queues?: PatientQueue[];
   onNotifyQueue?: (id: string) => void;
   onCompleteQueue?: (id: string) => void;
-  onMarkDoseIntaked?: (item: any, keys: string[]) => void;
+  onMarkDoseIntaked?: (keys: string[]) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
@@ -54,22 +54,19 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
   const handleMarkIntaked = (item: {
     id: string;
-    treatmentId?: string;
     consultationId: string;
     medicineName: string;
     nextDose: string;
     timeGiven: string;
     patientName: string;
-    rawRemarks?: string;
   }) => {
     const keys = [
       item.id,
-      item.treatmentId ? `treatment-${item.treatmentId}` : '',
       `${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `${item.consultationId}-${item.medicineName}-${item.timeGiven}`,
       `med-due-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `med-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
-    ].filter(Boolean) as string[];
+    ];
 
     setIntakedDoseIds(prev => {
       const next = new Set(prev);
@@ -80,7 +77,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       return next;
     });
 
-    onMarkDoseIntaked?.(item, keys);
+    onMarkDoseIntaked?.(keys);
     toast.success(`Medication marked as intaked for ${item.patientName}`);
   };
 
@@ -136,7 +133,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const medicationReminders = useMemo(() => {
     const items: {
       id: string;
-      treatmentId?: string;
       consultationId: string;
       patientId: string;
       patientName: string;
@@ -148,7 +144,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       timeGiven: string;
       nextDose: string;
       remarks: string;
-      rawRemarks: string;
       diffMinutes: number | null;
       isDue: boolean;
       isUpcoming: boolean;
@@ -168,16 +163,11 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       const isVisitToday = normalizeDate(c.date) === today;
 
       c.treatments.forEach((t, idx) => {
-        if (t.remarks && t.remarks.includes('[INTAKED]')) {
-          return;
-        }
-
         const itemId = `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`;
         const semKey1 = `${c.id}-${t.medicineName}-${t.nextDose}`;
         const semKey2 = `${c.id}-${t.medicineName}-${t.timeGiven}`;
-        const semKey3 = t.id ? `treatment-${t.id}` : '';
 
-        if (intakedDoseIds.has(itemId) || intakedDoseIds.has(semKey1) || intakedDoseIds.has(semKey2) || (semKey3 && intakedDoseIds.has(semKey3))) {
+        if (intakedDoseIds.has(itemId) || intakedDoseIds.has(semKey1) || intakedDoseIds.has(semKey2)) {
           return;
         }
 
@@ -198,11 +188,8 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
           }
         }
 
-        const cleanRemarks = (t.remarks || '').replace('[INTAKED]', '').trim();
-
         items.push({
-          id: itemId,
-          treatmentId: t.id,
+          id: `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`,
           consultationId: c.id,
           patientId: c.patientId,
           patientName,
@@ -213,8 +200,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
           unit: t.unit,
           timeGiven: t.timeGiven || '',
           nextDose: t.nextDose || '',
-          remarks: cleanRemarks,
-          rawRemarks: t.remarks || '',
+          remarks: t.remarks || '',
           diffMinutes,
           isDue,
           isUpcoming,
