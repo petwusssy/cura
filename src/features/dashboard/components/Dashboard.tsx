@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Users, Stethoscope, Package, AlertTriangle, Activity, ChevronRight,
   Search, UserPlus, ShoppingCart, FileText, BarChart2, BedDouble, Clock, Pill,
@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueue } from '../types';
 
-import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 
 const PRIMARY = '#1E5AA8';
@@ -35,6 +35,19 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
+  const [currentTimeNow, setCurrentTimeNow] = useState(() => {
+    const [h, m] = getManilaTime().split(':');
+    return parseInt(h, 10) * 60 + parseInt(m, 10);
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const [h, m] = getManilaTime().split(':');
+      setCurrentTimeNow(parseInt(h, 10) * 60 + parseInt(m, 10));
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const today = getManilaDate();
   const yesterday = getManilaYesterday();
@@ -77,7 +90,89 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const dispensed = filteredConsultations.reduce((sum, c) => sum + (c.treatments?.length || 0), 0);
   const lowStock = medicines.filter(m => m.status === 'Low Stock').length;
 
-  const medicationReminders = notifications.filter(n => n.type === 'medication' && !n.read);
+  const medicationReminders = useMemo(() => {
+    const items: {
+      id: string;
+      consultationId: string;
+      patientId: string;
+      patientName: string;
+      caseName: string;
+      visitType: 'Consultation' | 'Non-Consultation';
+      medicineName: string;
+      quantity: number;
+      unit: string;
+      timeGiven: string;
+      nextDose: string;
+      remarks: string;
+      diffMinutes: number | null;
+      isDue: boolean;
+      isUpcoming: boolean;
+    }[] = [];
+
+    // Prioritize today's visits or current filtered range
+    const targetConsultations = (dateFilter === 'today' || dateFilter === 'all')
+      ? consultations.filter(c => normalizeDate(c.date) === today || dateFilter === 'all')
+      : filteredConsultations;
+
+    targetConsultations.forEach(c => {
+      if (!c.treatments || c.treatments.length === 0) return;
+      const patient = patients.find(p => p.id === c.patientId);
+      const patientName = patient?.name || 'Unknown Patient';
+      const rawCase = c.complaint || c.purposeOfVisit || (c.categories && c.categories.length > 0 ? c.categories.join(', ') : '');
+      const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
+      const isVisitToday = normalizeDate(c.date) === today;
+
+      c.treatments.forEach((t, idx) => {
+        let diffMinutes: number | null = null;
+        let isDue = false;
+        let isUpcoming = false;
+
+        if (t.nextDose) {
+          const [dH, dM] = t.nextDose.split(':').map(Number);
+          if (!isNaN(dH) && !isNaN(dM)) {
+            const doseMins = dH * 60 + dM;
+            diffMinutes = doseMins - currentTimeNow;
+            if (isVisitToday && diffMinutes <= 0 && diffMinutes >= -180) {
+              isDue = true;
+            } else if (isVisitToday && diffMinutes > 0 && diffMinutes <= 30) {
+              isUpcoming = true;
+            }
+          }
+        }
+
+        items.push({
+          id: `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`,
+          consultationId: c.id,
+          patientId: c.patientId,
+          patientName,
+          caseName,
+          visitType: c.status,
+          medicineName: t.medicineName,
+          quantity: t.quantity,
+          unit: t.unit,
+          timeGiven: t.timeGiven || '',
+          nextDose: t.nextDose || '',
+          remarks: t.remarks || '',
+          diffMinutes,
+          isDue,
+          isUpcoming,
+        });
+      });
+    });
+
+    return items.sort((a, b) => {
+      if (a.isDue && !b.isDue) return -1;
+      if (!a.isDue && b.isDue) return 1;
+      if (a.isUpcoming && !b.isUpcoming) return -1;
+      if (!a.isUpcoming && b.isUpcoming) return 1;
+      if (a.diffMinutes !== null && b.diffMinutes !== null && a.diffMinutes > 0 && b.diffMinutes > 0) {
+        return a.diffMinutes - b.diffMinutes;
+      }
+      if (a.nextDose && !b.nextDose) return -1;
+      if (!a.nextDose && b.nextDose) return 1;
+      return 0;
+    });
+  }, [consultations, filteredConsultations, dateFilter, today, patients, currentTimeNow]);
 
   const statCards = [
     { label: 'Total Consultations', value: filteredConsultations.length, color: PRIMARY, icon: <Stethoscope size={22} />, sub: `${todayConsultations.length} with doctor` },
@@ -289,39 +384,112 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
         {/* Medication Reminders */}
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${YELLOW}20`, color: '#c49b00' }}>
-              <Clock size={16} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${YELLOW}20`, color: '#c49b00' }}>
+                <Clock size={16} />
+              </div>
+              <div>
+                <h3 className="text-gray-800 text-sm font-semibold">Medication Reminders</h3>
+              </div>
             </div>
-            <div>
-              <h3 className="text-gray-800 text-sm font-semibold">Medication Reminders</h3>
-            </div>
+            {medicationReminders.length > 0 && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                {medicationReminders.length}
+              </span>
+            )}
           </div>
           {medicationReminders.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">No upcoming medication reminders</div>
+            <div className="text-center py-8 text-gray-400 text-sm">No medication reminders recorded today</div>
           ) : (
-            <div className="space-y-3">
-              {medicationReminders.map(n => (
-                <div key={n.id} className="rounded-lg p-3" style={{ background: n.minutesLeft && n.minutesLeft <= 10 ? `${RED}08` : `${YELLOW}10`, border: `1px solid ${n.minutesLeft && n.minutesLeft <= 10 ? RED : YELLOW}30` }}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-gray-800 uppercase">{n.patientName}</span>
-                    {n.minutesLeft && n.minutesLeft <= 10 && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: RED, color: 'white' }}>
-                        {n.minutesLeft}m
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+              {medicationReminders.map(item => (
+                <div
+                  key={item.id}
+                  onClick={() => item.patientId && onSelectPatient(item.patientId)}
+                  className="rounded-lg p-3 transition-all cursor-pointer hover:shadow-sm"
+                  style={{
+                    background: item.isDue ? `${RED}0a` : item.isUpcoming ? `${YELLOW}10` : '#F9FAFB',
+                    border: `1px solid ${item.isDue ? RED : item.isUpcoming ? YELLOW : '#E5E7EB'}`,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-bold text-gray-900 uppercase truncate">
+                        {item.patientName}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-gray-100 text-gray-600 shrink-0">
+                        {item.visitType === 'Non-Consultation' ? 'Non-Consult' : 'Consult'}
+                      </span>
+                    </div>
+                    {item.isDue ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white animate-pulse shrink-0">
+                        DUE NOW
+                      </span>
+                    ) : item.isUpcoming && item.diffMinutes !== null ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shrink-0">
+                        {item.diffMinutes}m left
+                      </span>
+                    ) : item.nextDose ? (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 shrink-0">
+                        Scheduled
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">
+                        Given
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">Next dose: {formatTime12(n.nextDose)}</div>
-                  {/* Countdown bar */}
-                  <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: n.minutesLeft ? `${Math.min(100, (1 - n.minutesLeft / 30) * 100)}%` : '50%',
-                        background: n.minutesLeft && n.minutesLeft <= 10 ? RED : YELLOW,
-                      }}
-                    />
+
+                  {item.medicineName && (
+                    <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <Pill size={12} className="text-blue-600 shrink-0" />
+                      <span className="truncate">{item.medicineName} {item.quantity ? `(${item.quantity} ${item.unit || ''})` : ''}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 text-xs pt-1.5 border-t border-gray-100">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-gray-500 shrink-0 font-medium">Case:</span>
+                      <span className="text-gray-800 font-medium text-right truncate" title={item.caseName}>
+                        {item.caseName || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-gray-500 shrink-0 font-medium">Remarks:</span>
+                      <span className="text-gray-700 text-right truncate max-w-[180px]" title={item.remarks}>
+                        {item.remarks || 'None'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-gray-500 font-medium">Time Given:</span>
+                      <span className="text-gray-800 font-medium">
+                        {item.timeGiven ? formatTime12(item.timeGiven) : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-gray-500 font-medium">Next Dose:</span>
+                      <span className={`font-bold ${item.isDue ? 'text-red-600' : 'text-blue-700'}`}>
+                        {item.nextDose ? formatTime12(item.nextDose) : 'N/A'}
+                      </span>
+                    </div>
                   </div>
+
+                  {item.isDue ? (
+                    <div className="mt-2 text-center py-1 rounded bg-red-100 text-red-700 font-bold text-[10px] tracking-wide uppercase">
+                      🔔 Time for Next Intake!
+                    </div>
+                  ) : item.isUpcoming && item.diffMinutes !== null ? (
+                    <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, Math.max(5, (1 - item.diffMinutes / 30) * 100))}%`,
+                          background: item.diffMinutes <= 10 ? RED : YELLOW,
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

@@ -20,7 +20,8 @@ import { bedService } from '@/services/bedService';
 import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
 import { queueService } from '@/services/queueService';
-import { getManilaDate, getManilaTime } from '@/utils/philippineTime';
+import { getManilaDate, getManilaTime, normalizeDate, formatTime12 } from '@/utils/philippineTime';
+import { toast } from 'sonner';
 
 
 interface DashboardAppProps {
@@ -101,6 +102,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   }, [isLoading, hasExistingData]);
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
+  const alertedDosesRef = useRef<Set<string>>(new Set());
   const completedQueueIdsRef = useRef<Set<string>>(new Set());
   const notifiedQueueIdsRef = useRef<Set<string>>(new Set());
   const savingConsultationRef = useRef<boolean>(false);
@@ -217,19 +219,29 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Check for upcoming medication doses
+  // Check for upcoming and due medication doses
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
     const checkUpcomingDoses = () => {
       const [currHStr, currMStr] = getManilaTime().split(':');
       const currentHours = parseInt(currHStr, 10);
       const currentMinutes = parseInt(currMStr, 10);
       const today = getManilaDate();
+      const currentTimeInMins = currentHours * 60 + currentMinutes;
 
       setNotifications(prev => {
         const newNotifs: AppNotification[] = [];
         
         consultations.forEach(c => {
-          if (c.date !== today || !c.treatments) return;
+          if (normalizeDate(c.date) !== today || !c.treatments) return;
+
+          const patient = patients.find(p => p.id === c.patientId);
+          const patientName = patient?.name || 'Unknown Patient';
+          const rawCase = c.complaint || c.purposeOfVisit || (c.categories && c.categories.length > 0 ? c.categories.join(', ') : '');
+          const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
           
           c.treatments.forEach(t => {
             if (t.nextDose) {
@@ -240,26 +252,73 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               if (isNaN(doseHour) || isNaN(doseMinute)) return;
               
               const doseTimeInMins = doseHour * 60 + doseMinute;
-              const currentTimeInMins = currentHours * 60 + currentMinutes;
               const diff = doseTimeInMins - currentTimeInMins;
               
-              // If dose is within 30 minutes (0 to 30 mins)
-              if (diff >= 0 && diff <= 30) {
-                const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+              // Condition A: Time for next intake has arrived or passed recently (within 3 hours)
+              if (diff <= 0 && diff >= -180) {
+                const notifId = `med-due-${c.id}-${t.medicineName}-${t.nextDose}`;
                 if (dismissedNotifIdsRef.current.has(notifId)) return;
-                // Check if we already have this notification
+
+                // Fire toast & desktop alert once per dose when due
+                if (!alertedDosesRef.current.has(notifId)) {
+                  alertedDosesRef.current.add(notifId);
+                  toast.warning(`🔔 Time for Next Intake: ${patientName} is due for ${t.medicineName} (${formatTime12(t.nextDose)})!`, {
+                    description: `Case: ${caseName} • Remarks: ${t.remarks || 'Take as prescribed'}`,
+                    duration: 10000,
+                  });
+
+                  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                    try {
+                      new Notification('Medication Reminder - CURA', {
+                        body: `Time for ${patientName}'s next dose of ${t.medicineName} (${formatTime12(t.nextDose)})`,
+                        icon: '/favicon.ico',
+                      });
+                    } catch {}
+                  }
+                }
+
                 if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
-                  const patientName = patients.find(p => p.id === c.patientId)?.name || 'Unknown Patient';
                   const isRead = readNotifIdsRef.current.has(notifId);
                   newNotifs.push({
                     id: notifId,
                     type: 'medication',
-                    message: `Medication (${t.medicineName}) due for ${patientName} in ${diff === 0 ? 'less than a minute' : `${diff} mins`}`,
-                    time: now.toISOString(),
+                    message: `Time for next intake: Medication (${t.medicineName}) is DUE NOW for ${patientName}`,
+                    time: new Date().toISOString(),
                     read: isRead,
                     patientName,
+                    patient_id: c.patientId,
                     nextDose: t.nextDose,
                     minutesLeft: diff,
+                    caseName,
+                    remarks: t.remarks || 'Take as prescribed',
+                    timeGiven: t.timeGiven,
+                    medicineName: t.medicineName,
+                    isDue: true,
+                  });
+                }
+              }
+              // Condition B: Dose is approaching within 30 minutes (diff > 0 && diff <= 30)
+              else if (diff > 0 && diff <= 30) {
+                const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+                if (dismissedNotifIdsRef.current.has(notifId)) return;
+
+                if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
+                  const isRead = readNotifIdsRef.current.has(notifId);
+                  newNotifs.push({
+                    id: notifId,
+                    type: 'medication',
+                    message: `Medication (${t.medicineName}) due for ${patientName} in ${diff} mins (${formatTime12(t.nextDose)})`,
+                    time: new Date().toISOString(),
+                    read: isRead,
+                    patientName,
+                    patient_id: c.patientId,
+                    nextDose: t.nextDose,
+                    minutesLeft: diff,
+                    caseName,
+                    remarks: t.remarks || 'Take as prescribed',
+                    timeGiven: t.timeGiven,
+                    medicineName: t.medicineName,
+                    isDue: false,
                   });
                 }
               }
@@ -274,9 +333,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       });
     };
 
-    // Run immediately, then every minute
+    // Run immediately, then every 10 seconds for real-time dose checks
     checkUpcomingDoses();
-    const interval = setInterval(checkUpcomingDoses, 60000);
+    const interval = setInterval(checkUpcomingDoses, 10000);
     return () => clearInterval(interval);
   }, [consultations, patients]);
 

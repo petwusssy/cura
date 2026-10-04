@@ -201,6 +201,11 @@ export interface AppNotification {
   patient_id?: string;
   nextDose?: string;
   minutesLeft?: number;
+  caseName?: string;
+  remarks?: string;
+  timeGiven?: string;
+  medicineName?: string;
+  isDue?: boolean;
 }
 
 export interface PatientQueue {
