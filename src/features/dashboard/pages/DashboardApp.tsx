@@ -123,11 +123,43 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   }, []);
 
-  const handleMarkDoseIntaked = (keys: string[]) => {
+  const handleMarkDoseIntaked = async (item: any, keys: string[]) => {
     keys.forEach(k => {
       dismissedNotifIdsRef.current.add(k);
     });
     setNotifications(prev => prev.filter(n => !keys.includes(n.id)));
+    try {
+      localStorage.setItem('cura_dismissed_notifs', JSON.stringify(Array.from(dismissedNotifIdsRef.current)));
+    } catch {}
+
+    if (item && (item.treatmentId || item.id)) {
+      const treatmentId = item.treatmentId;
+      const currentRemarks = item.rawRemarks || item.remarks || '';
+      const updatedRemarks = currentRemarks.includes('[INTAKED]')
+        ? currentRemarks
+        : (currentRemarks ? `${currentRemarks} [INTAKED]` : '[INTAKED]');
+
+      setConsultations(prev => prev.map(c => {
+        if (c.id !== item.consultationId) return c;
+        return {
+          ...c,
+          treatments: (c.treatments || []).map(t => {
+            if ((treatmentId && t.id === treatmentId) || (t.medicineName === item.medicineName && t.nextDose === item.nextDose)) {
+              return { ...t, remarks: updatedRemarks };
+            }
+            return t;
+          })
+        };
+      }));
+
+      if (treatmentId) {
+        try {
+          await consultationService.updateTreatment(treatmentId, { remarks: updatedRemarks });
+        } catch (err) {
+          console.error('Failed to sync intaked treatment to server:', err);
+        }
+      }
+    }
   };
 
   const navigate = (page: Page) => {
@@ -219,13 +251,30 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }).catch(console.error);
     };
 
+    const fetchConsultations = () => {
+      consultationService.getConsultations().then(d => {
+        if (d !== undefined) {
+          const seen = new Set<string>();
+          const unique = d.filter(c => {
+            const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setConsultations(unique);
+        }
+      }).catch(console.error);
+    };
+
     fetchAndMergeNotifications();
     fetchQueues();
+    fetchConsultations();
 
-    // Polling for new notifications and queues (1.5s for near-instant sync)
+    // Polling for new notifications, queues, and consultations (1.5s for near-instant sync)
     const interval = setInterval(() => {
       fetchAndMergeNotifications();
       fetchQueues();
+      fetchConsultations();
     }, 1500);
     return () => clearInterval(interval);
   }, []);
@@ -255,6 +304,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
           
           c.treatments.forEach(t => {
+            if (t.remarks && t.remarks.includes('[INTAKED]')) return;
             if (t.nextDose) {
               const [doseHourStr, doseMinuteStr] = t.nextDose.split(':');
               const doseHour = parseInt(doseHourStr, 10);
