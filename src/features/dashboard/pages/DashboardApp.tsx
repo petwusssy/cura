@@ -219,13 +219,25 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }).catch(console.error);
     };
 
+    const fetchConsultations = () => {
+      consultationService.getConsultations()
+        .then(res => {
+          if (Array.isArray(res)) {
+            setConsultations(res);
+          }
+        })
+        .catch(() => {});
+    };
+
     fetchAndMergeNotifications();
     fetchQueues();
+    fetchConsultations();
 
-    // Polling for new notifications and queues (1.5s for near-instant sync)
+    // Polling for new notifications, queues, and consultations (1.5s for near-instant sync)
     const interval = setInterval(() => {
       fetchAndMergeNotifications();
       fetchQueues();
+      fetchConsultations();
     }, 1500);
     return () => clearInterval(interval);
   }, []);
@@ -255,6 +267,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
           
           c.treatments.forEach(t => {
+            if (t.remarks && t.remarks.includes('[INTAKED]')) return;
             if (t.nextDose) {
               const [doseHourStr, doseMinuteStr] = t.nextDose.split(':');
               const doseHour = parseInt(doseHourStr, 10);
