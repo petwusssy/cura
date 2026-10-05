@@ -12,7 +12,6 @@ import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueu
 
 import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
-import api from '@/services/api';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -55,22 +54,19 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
   const handleMarkIntaked = (item: {
     id: string;
-    treatmentId?: string;
     consultationId: string;
     medicineName: string;
     nextDose: string;
     timeGiven: string;
     patientName: string;
-    remarks?: string;
   }) => {
     const keys = [
       item.id,
-      item.treatmentId,
       `${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `${item.consultationId}-${item.medicineName}-${item.timeGiven}`,
       `med-due-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `med-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
-    ].filter(Boolean) as string[];
+    ];
 
     setIntakedDoseIds(prev => {
       const next = new Set(prev);
@@ -80,16 +76,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       } catch {}
       return next;
     });
-
-    if (item.treatmentId) {
-      const currentRemarks = item.remarks || '';
-      const updatedRemarks = currentRemarks.includes('[INTAKED]')
-        ? currentRemarks
-        : (currentRemarks ? `${currentRemarks} [INTAKED]` : '[INTAKED]');
-
-      api.patch(`/treatments/${item.treatmentId}/`, { remarks: updatedRemarks })
-        .catch(err => console.error('Failed to patch treatment intaked on web:', err));
-    }
 
     onMarkDoseIntaked?.(keys);
     toast.success(`Medication marked as intaked for ${item.patientName}`);
@@ -147,7 +133,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const medicationReminders = useMemo(() => {
     const items: {
       id: string;
-      treatmentId?: string;
       consultationId: string;
       patientId: string;
       patientName: string;
@@ -182,15 +167,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         const semKey1 = `${c.id}-${t.medicineName}-${t.nextDose}`;
         const semKey2 = `${c.id}-${t.medicineName}-${t.timeGiven}`;
 
-        const isRemarksIntaked = Boolean(t.remarks && t.remarks.includes('[INTAKED]'));
-
-        if (
-          isRemarksIntaked ||
-          intakedDoseIds.has(itemId) ||
-          intakedDoseIds.has(semKey1) ||
-          intakedDoseIds.has(semKey2) ||
-          (t.id && intakedDoseIds.has(String(t.id)))
-        ) {
+        if (intakedDoseIds.has(itemId) || intakedDoseIds.has(semKey1) || intakedDoseIds.has(semKey2)) {
           return;
         }
 
@@ -213,7 +190,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
         items.push({
           id: `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`,
-          treatmentId: t.id ? String(t.id) : undefined,
           consultationId: c.id,
           patientId: c.patientId,
           patientName,
