@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2, Clock, Check, Inbox } from 'lucide-react';
 import { medcertRequestService, MedicalCertificateRequest } from '@/services/medcertRequestService';
 import { MedicalCertificate, Patient } from '../types';
-import { uaSealBase64, uaLogoBase64 } from '@/assets/images/medCertAssets';
+import { uaSealBase64, uaLogoBase64, bagongPilipinasBase64 } from '@/assets/images/medCertAssets';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { normalizeDate } from '@/utils/philippineTime';
@@ -72,28 +72,15 @@ export function formatMedCertFilename(rawName?: string, rawDate?: string): strin
   return `${namePart} - ${dateStr} - MEDCERT.pdf`;
 }
 
-// High-fidelity Bagong Pilipinas Emblem rendering with pure solid hex colors (100% html2canvas compatible)
+// Official Bagong Pilipinas Emblem (100% html2canvas compatible)
 function BagongPilipinasLogo() {
   return (
-    <div className="flex flex-col items-center justify-center select-none w-32 flex-shrink-0">
-      <div className="flex flex-col items-center justify-center w-full">
-        <div className="relative w-[76px] h-[76px] mb-0.5">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <path d="M50 6 L52.5 11.5 L58 11.5 L53.5 15 L55 20 L50 17 L45 20 L46.5 15 L42 11.5 L47.5 11.5 Z" fill="#F5B300"/>
-            <path d="M30 14 L32 18 L37 18 L33 21 L35 25 L30 22 L25 25 L27 21 L23 18 L28 18 Z" fill="#F5B300"/>
-            <path d="M70 14 L72 18 L77 18 L73 21 L75 25 L70 22 L65 25 L67 21 L63 18 L68 18 Z" fill="#F5B300"/>
-            <path d="M50 22 L55 33 L66 28 L60 39 L72 41 L63 49 L72 59 L50 59 L28 59 L37 49 L28 41 L40 39 L34 28 L45 33 Z" fill="#F5B300"/>
-            <circle cx="50" cy="51" r="16" fill="#F5B300"/>
-            <path d="M12 44 C12 68 28 88 50 92 C36 84 26 68 26 50 C26 48 26 45 12 44 Z" fill="#0038A8"/>
-            <path d="M88 44 C88 68 72 88 50 92 C64 84 74 68 74 50 C74 48 74 45 88 44 Z" fill="#D21034"/>
-            <path d="M16 56 C24 78 54 94 84 62 C68 84 38 82 18 64 C16 62 16 58 16 56 Z" fill="#D21034"/>
-            <path d="M84 56 C76 78 46 94 16 62 C32 84 62 82 82 64 C84 62 84 58 84 56 Z" fill="#0038A8"/>
-          </svg>
-        </div>
-        <span className="text-[11px] font-black text-[#002060] uppercase tracking-tight leading-none font-sans italic mt-1 text-center select-all">
-          BAGONG PILIPINAS
-        </span>
-      </div>
+    <div className="flex flex-col items-center justify-center select-none w-28 flex-shrink-0">
+      <img
+        src={bagongPilipinasBase64}
+        alt="Bagong Pilipinas"
+        className="w-[100px] h-[93px] object-contain"
+      />
     </div>
   );
 }
