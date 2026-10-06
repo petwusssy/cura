@@ -215,12 +215,18 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   // Active document fields initialized with reference document data matching user image
   const [date, setDate] = useState('June 17, 2026');
+  const [certPrefix, setCertPrefix] = useState('This is to certify that');
   const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
+  const [certAgeSeparator, setCertAgeSeparator] = useState(',');
   const [age, setAge] = useState<number | string>(23);
+  const [certAgeSuffix, setCertAgeSuffix] = useState('years old,');
   const [sex, setSex] = useState('FEMALE');
+  const [certSexSuffix, setCertSexSuffix] = useState(', a');
   const [yearLevel, setYearLevel] = useState('4');
   const [yearSuffix, setYearSuffix] = useState('th');
+  const [certYearLevelLabel, setCertYearLevelLabel] = useState('year level of');
   const [courseAndSchool, setCourseAndSchool] = useState('BS Arc student of University of the Assumption');
+  const [certExaminedPrefix, setCertExaminedPrefix] = useState('has been seen and examined due to');
   const [examinedDueTo, setExaminedDueTo] = useState('skin allergies and difficulty on breathing.');
   const [diagnosis, setDiagnosis] = useState('Allergic reaction secondary to food intake with allergens.');
   const [treatment, setTreatment] = useState('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
@@ -471,11 +477,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       if (parts) {
         setYearLevel(parts[1]);
         setYearSuffix(parts[2]);
-        setCourseAndSchool(parts[3]);
+        setCourseAndSchool(parts[3].replace(/^year level of\s+/i, ''));
       } else {
         setYearLevel('');
         setYearSuffix('');
-        setCourseAndSchool(cert.statusDesignation);
+        setCourseAndSchool(cert.statusDesignation.replace(/^year level of\s+/i, ''));
       }
     }
     
@@ -504,7 +510,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       const yr = p.yearLevel?.replace(/\D/g, '') || '4';
       setYearLevel(yr);
       setYearSuffix(yr === '1' ? 'st' : yr === '2' ? 'nd' : yr === '3' ? 'rd' : 'th');
-      setCourseAndSchool(`year level of ${p.course || 'BS Arc'} student of University of the Assumption`);
+      setCourseAndSchool(`${p.course || 'BS Arc'} student of University of the Assumption`);
     } else if (p.category === 'Employee') {
       setYearLevel('');
       setYearSuffix('');
@@ -540,6 +546,12 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setYearSuffix('');
     setCourseAndSchool('');
     setExaminedDueTo('');
+    setCertPrefix('This is to certify that');
+    setCertAgeSeparator(',');
+    setCertAgeSuffix('years old,');
+    setCertSexSuffix(', a');
+    setCertYearLevelLabel('year level of');
+    setCertExaminedPrefix('has been seen and examined due to');
     setDiagnosis('');
     setTreatment('');
     setRecommendations('');
@@ -584,7 +596,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setSex(gender.toUpperCase());
     setYearLevel(ylNum);
     setYearSuffix(suffix);
-    setCourseAndSchool(ylNum ? `year level of ${courseOrDepartment}` : courseOrDepartment);
+    setCourseAndSchool(courseOrDepartment.replace(/^year level of\s+/i, ''));
     setExaminedDueTo(complaint);
     setDiagnosis(fDiag);
     setTreatment(fTreat);
@@ -1093,28 +1105,28 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
-                  <span>This is to certify that </span>
+                  <AutoResizeInput value={certPrefix} onChange={(e: any) => setCertPrefix(e.target.value)} readOnly={!editMode} />{' '}
                   <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
-                  <span>, </span>
-                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />
-                  <span> years old, </span>
+                  <AutoResizeInput value={certAgeSeparator} onChange={(e: any) => setCertAgeSeparator(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={certAgeSuffix} onChange={(e: any) => setCertAgeSuffix(e.target.value)} readOnly={!editMode} />{' '}
                   <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} />
-                  <span>, a </span>
+                  <AutoResizeInput value={certSexSuffix} onChange={(e: any) => setCertSexSuffix(e.target.value)} readOnly={!editMode} />{' '}
                   
-                  {yearLevel && (
+                  {(yearLevel || editMode) && (
                     <>
                       <span className="inline-flex items-baseline">
-                        <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} />
+                        <AutoResizeInput value={yearLevel} onChange={(e: any) => setYearLevel(e.target.value)} readOnly={!editMode} placeholder="Yr" />
                         <sup className="text-[11px] font-bold">
-                          <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} />
+                          <AutoResizeInput value={yearSuffix} onChange={(e: any) => setYearSuffix(e.target.value)} readOnly={!editMode} placeholder="th" />
                         </sup>
-                      </span>
-                      <span> year level of </span>
+                      </span>{' '}
+                      <AutoResizeInput value={certYearLevelLabel} onChange={(e: any) => setCertYearLevelLabel(e.target.value)} readOnly={!editMode} />{' '}
                     </>
                   )}
                   
-                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />
-                  <span> has been seen and examined due to </span>
+                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={certExaminedPrefix} onChange={(e: any) => setCertExaminedPrefix(e.target.value)} readOnly={!editMode} />{' '}
                   <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} />
                 </div>
 
