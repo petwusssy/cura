@@ -813,7 +813,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
           .watermark-seal {
             filter: grayscale(100%) !important;
             -webkit-filter: grayscale(100%) !important;
-            opacity: 0.22 !important;
+            opacity: 0.30 !important;
           }
           input, textarea, select {
             background: transparent !important;
@@ -1018,9 +1018,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               <img
                 src={uaLogoBase64}
                 alt="University Seal Watermark"
-                className="watermark-seal w-[680px] h-[680px] object-contain opacity-25 grayscale select-none pointer-events-none"
+                className="watermark-seal w-[780px] h-[780px] object-contain grayscale select-none pointer-events-none"
                 style={{
-                  opacity: 0.22,
+                  opacity: 0.30,
                   filter: 'grayscale(100%)',
                   WebkitFilter: 'grayscale(100%)',
                 }}
