@@ -67,7 +67,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         if (prev.lockoutRemainingSeconds <= 1) {
           clearInterval(interval)
           setErrorMessage(null)
-          return loginLimiter.getLimitState()
+          return loginLimiter.getLimitState(username.trim())
         }
         return {
           ...prev,
@@ -77,7 +77,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [limitState.isLocked, limitState.lockoutRemainingSeconds])
+  }, [limitState.isLocked, limitState.lockoutRemainingSeconds, username])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,11 +99,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
     setErrorMessage(null)
     try {
       await authService.login(username.trim(), password)
-      loginLimiter.recordSuccess()
+      loginLimiter.recordSuccess(username.trim())
       setStage("splitting")
     } catch (err: any) {
       console.error("Login failed:", err)
-      const newLimitState = loginLimiter.recordFailure(err)
+      const newLimitState = loginLimiter.recordFailure(err, username.trim())
       setLimitState(newLimitState)
       setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
     } finally {
@@ -322,11 +322,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                         </div>
                         <input
                           type="text"
-                          disabled={limitState.isLocked}
                           value={username}
                           onChange={(e) => {
-                            setUsername(e.target.value)
+                            const val = e.target.value
+                            setUsername(val)
                             if (errorMessage) setErrorMessage(null)
+                            setLimitState(loginLimiter.getLimitState(val.trim()))
                           }}
                           placeholder="Enter your username"
                           className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm placeholder-[#001e50]/30 outline-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"

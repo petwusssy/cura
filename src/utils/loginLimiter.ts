@@ -1,10 +1,12 @@
-// Utility to track and enforce the 4-attempt login limit on web clients with professional messaging
+// Utility to track and enforce the 5-attempt login limit on web clients with professional messaging
 
 export const MAX_LOGIN_ATTEMPTS = 5;
 export const DEFAULT_LOCKOUT_SECONDS = 60; // 1 minute
+const INACTIVITY_WINDOW_MS = 15 * 60 * 1000; // 15 minutes window
 
 const STORAGE_LOCKOUT_KEY = 'cura_web_login_lockout_until';
 const STORAGE_FAILED_COUNT_KEY = 'cura_web_login_failed_count';
+const STORAGE_TIMESTAMP_KEY = 'cura_web_login_last_attempt';
 
 export interface LoginLimitState {
   isLocked: boolean;
@@ -13,6 +15,11 @@ export interface LoginLimitState {
   maxAttempts: number;
   message?: string | null;
 }
+
+const getScopedKey = (base: string, id?: string | null) => {
+  const clean = (id || '').trim().toLowerCase();
+  return clean ? `${base}_${clean}` : base;
+};
 
 // Clean and sanitize any technical/internal errors into professional medical-grade copy
 const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number): string => {
@@ -41,9 +48,13 @@ const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number
 };
 
 export const loginLimiter = {
-  getLimitState: (): LoginLimitState => {
+  getLimitState: (identifier?: string | null): LoginLimitState => {
     try {
-      const storedUntil = localStorage.getItem(STORAGE_LOCKOUT_KEY);
+      const lockKey = getScopedKey(STORAGE_LOCKOUT_KEY, identifier);
+      const countKey = getScopedKey(STORAGE_FAILED_COUNT_KEY, identifier);
+      const timeKey = getScopedKey(STORAGE_TIMESTAMP_KEY, identifier);
+
+      const storedUntil = localStorage.getItem(lockKey) || localStorage.getItem(STORAGE_LOCKOUT_KEY);
       if (storedUntil) {
         const lockoutUntil = parseInt(storedUntil, 10);
         const now = Date.now();
@@ -58,12 +69,26 @@ export const loginLimiter = {
           };
         } else {
           // Lockout has expired
+          localStorage.removeItem(lockKey);
+          localStorage.removeItem(countKey);
+          localStorage.removeItem(timeKey);
           localStorage.removeItem(STORAGE_LOCKOUT_KEY);
           localStorage.removeItem(STORAGE_FAILED_COUNT_KEY);
+          localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
         }
       }
 
-      const failedCountStr = localStorage.getItem(STORAGE_FAILED_COUNT_KEY);
+      // Check inactivity expiry (15 mins)
+      const lastTimeStr = localStorage.getItem(timeKey);
+      if (lastTimeStr) {
+        const lastTime = parseInt(lastTimeStr, 10);
+        if (Date.now() - lastTime > INACTIVITY_WINDOW_MS) {
+          localStorage.removeItem(countKey);
+          localStorage.removeItem(timeKey);
+        }
+      }
+
+      const failedCountStr = localStorage.getItem(countKey);
       const failedCount = failedCountStr ? parseInt(failedCountStr, 10) : 0;
       const attemptsRemaining = Math.max(0, MAX_LOGIN_ATTEMPTS - failedCount);
 
@@ -83,8 +108,12 @@ export const loginLimiter = {
     }
   },
 
-  recordFailure: (error: any): LoginLimitState => {
+  recordFailure: (error: any, identifier?: string | null): LoginLimitState => {
     try {
+      const lockKey = getScopedKey(STORAGE_LOCKOUT_KEY, identifier);
+      const countKey = getScopedKey(STORAGE_FAILED_COUNT_KEY, identifier);
+      const timeKey = getScopedKey(STORAGE_TIMESTAMP_KEY, identifier);
+
       const resData = error?.response?.data;
       const isLockedFromServer = !!resData?.is_locked || error?.response?.status === 429;
       const serverLockoutSeconds = resData?.lockout_seconds || DEFAULT_LOCKOUT_SECONDS;
@@ -94,23 +123,14 @@ export const loginLimiter = {
         resData?.error ||
         (typeof resData === 'string' ? resData : null);
 
-      if (isLockedFromServer || serverAttemptsRemaining === 0) {
-        const lockoutUntil = Date.now() + serverLockoutSeconds * 1000;
-        localStorage.setItem(STORAGE_LOCKOUT_KEY, lockoutUntil.toString());
-        localStorage.setItem(STORAGE_FAILED_COUNT_KEY, MAX_LOGIN_ATTEMPTS.toString());
-
-        return {
-          isLocked: true,
-          lockoutRemainingSeconds: serverLockoutSeconds,
-          attemptsRemaining: 0,
-          maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message: sanitizeMessage(serverDetail, 0),
-        };
-      }
-
-      if (typeof serverAttemptsRemaining === 'number') {
-        const failedCount = MAX_LOGIN_ATTEMPTS - serverAttemptsRemaining;
-        localStorage.setItem(STORAGE_FAILED_COUNT_KEY, failedCount.toString());
+      // Server is explicit source of truth:
+      // If server explicitly says remaining > 0, NEVER lock out!
+      if (typeof serverAttemptsRemaining === 'number' && serverAttemptsRemaining > 0 && !isLockedFromServer) {
+        const failedCount = Math.max(0, MAX_LOGIN_ATTEMPTS - serverAttemptsRemaining);
+        localStorage.setItem(countKey, failedCount.toString());
+        localStorage.setItem(timeKey, Date.now().toString());
+        localStorage.removeItem(lockKey);
+        localStorage.removeItem(STORAGE_LOCKOUT_KEY);
 
         return {
           isLocked: false,
@@ -121,14 +141,37 @@ export const loginLimiter = {
         };
       }
 
-      // Fallback if backend returned 401 without custom payload (e.g. during deployment)
-      const currentCountStr = localStorage.getItem(STORAGE_FAILED_COUNT_KEY);
-      const newCount = (currentCountStr ? parseInt(currentCountStr, 10) : 0) + 1;
-      localStorage.setItem(STORAGE_FAILED_COUNT_KEY, newCount.toString());
+      // If server explicitly reports locked or 0 attempts remaining:
+      if (isLockedFromServer || serverAttemptsRemaining === 0) {
+        const lockoutUntil = Date.now() + serverLockoutSeconds * 1000;
+        localStorage.setItem(lockKey, lockoutUntil.toString());
+        localStorage.setItem(countKey, MAX_LOGIN_ATTEMPTS.toString());
+        localStorage.setItem(timeKey, Date.now().toString());
+
+        return {
+          isLocked: true,
+          lockoutRemainingSeconds: serverLockoutSeconds,
+          attemptsRemaining: 0,
+          maxAttempts: MAX_LOGIN_ATTEMPTS,
+          message: sanitizeMessage(serverDetail, 0),
+        };
+      }
+
+      // Fallback client tracking: guarantee full 5 attempts before locking
+      const lastTimeStr = localStorage.getItem(timeKey);
+      let currentCount = 0;
+      if (lastTimeStr && Date.now() - parseInt(lastTimeStr, 10) <= INACTIVITY_WINDOW_MS) {
+        const currentCountStr = localStorage.getItem(countKey);
+        currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
+      }
+
+      const newCount = currentCount + 1;
+      localStorage.setItem(countKey, newCount.toString());
+      localStorage.setItem(timeKey, Date.now().toString());
 
       if (newCount >= MAX_LOGIN_ATTEMPTS) {
         const lockoutUntil = Date.now() + DEFAULT_LOCKOUT_SECONDS * 1000;
-        localStorage.setItem(STORAGE_LOCKOUT_KEY, lockoutUntil.toString());
+        localStorage.setItem(lockKey, lockoutUntil.toString());
         return {
           isLocked: true,
           lockoutRemainingSeconds: DEFAULT_LOCKOUT_SECONDS,
@@ -138,7 +181,7 @@ export const loginLimiter = {
         };
       }
 
-      const remaining = MAX_LOGIN_ATTEMPTS - newCount;
+      const remaining = Math.max(1, MAX_LOGIN_ATTEMPTS - newCount);
       return {
         isLocked: false,
         lockoutRemainingSeconds: 0,
@@ -157,10 +200,17 @@ export const loginLimiter = {
     }
   },
 
-  recordSuccess: (): void => {
+  recordSuccess: (identifier?: string | null): void => {
     try {
+      const lockKey = getScopedKey(STORAGE_LOCKOUT_KEY, identifier);
+      const countKey = getScopedKey(STORAGE_FAILED_COUNT_KEY, identifier);
+      const timeKey = getScopedKey(STORAGE_TIMESTAMP_KEY, identifier);
+      localStorage.removeItem(lockKey);
+      localStorage.removeItem(countKey);
+      localStorage.removeItem(timeKey);
       localStorage.removeItem(STORAGE_LOCKOUT_KEY);
       localStorage.removeItem(STORAGE_FAILED_COUNT_KEY);
+      localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
     } catch {
       // ignore storage errors
     }

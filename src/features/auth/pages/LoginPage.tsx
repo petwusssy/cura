@@ -37,7 +37,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
         if (prev.lockoutRemainingSeconds <= 1) {
           clearInterval(interval)
           setErrorMessage(null)
-          return loginLimiter.getLimitState()
+          return loginLimiter.getLimitState(username.trim())
         }
         return {
           ...prev,
@@ -47,7 +47,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [limitState.isLocked, limitState.lockoutRemainingSeconds])
+  }, [limitState.isLocked, limitState.lockoutRemainingSeconds, username])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,11 +69,11 @@ export default function LoginPage({ onLogin, onBack }: Props) {
     setErrorMessage(null)
     try {
       await authService.login(username.trim(), password)
-      loginLimiter.recordSuccess()
+      loginLimiter.recordSuccess(username.trim())
       onLogin()
     } catch (error: any) {
       console.error("Login failed:", error)
-      const newLimitState = loginLimiter.recordFailure(error)
+      const newLimitState = loginLimiter.recordFailure(error, username.trim())
       setLimitState(newLimitState)
       setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
     } finally {
@@ -175,11 +175,12 @@ export default function LoginPage({ onLogin, onBack }: Props) {
                 </div>
                 <input
                   type="text"
-                  disabled={limitState.isLocked}
                   value={username}
                   onChange={(e) => {
-                    setUsername(e.target.value)
+                    const val = e.target.value
+                    setUsername(val)
                     if (errorMessage) setErrorMessage(null)
+                    setLimitState(loginLimiter.getLimitState(val.trim()))
                   }}
                   placeholder="Enter your username"
                   className="w-full pl-10 pr-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
