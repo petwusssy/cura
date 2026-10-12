@@ -115,18 +115,27 @@ export const loginLimiter = {
       const timeKey = getScopedKey(STORAGE_TIMESTAMP_KEY, identifier);
 
       const resData = error?.response?.data;
-      const isLockedFromServer = !!resData?.is_locked || error?.response?.status === 429;
-      const serverLockoutSeconds = resData?.lockout_seconds || DEFAULT_LOCKOUT_SECONDS;
-      const serverAttemptsRemaining = resData?.attempts_remaining;
+      const rawLocked = resData?.is_locked;
+      const explicitLockedBool =
+        rawLocked === true ||
+        String(rawLocked).toLowerCase() === 'true';
+
+      const rawRemaining = resData?.attempts_remaining;
+      const parsedRemaining =
+        rawRemaining !== undefined && rawRemaining !== null && !isNaN(Number(rawRemaining))
+          ? Number(rawRemaining)
+          : undefined;
+
+      const serverLockoutSeconds = Number(resData?.lockout_seconds) || DEFAULT_LOCKOUT_SECONDS;
       const serverDetail =
         resData?.detail ||
         resData?.error ||
         (typeof resData === 'string' ? resData : null);
 
       // Server is explicit source of truth:
-      // If server explicitly says remaining > 0, NEVER lock out!
-      if (typeof serverAttemptsRemaining === 'number' && serverAttemptsRemaining > 0 && !isLockedFromServer) {
-        const failedCount = Math.max(0, MAX_LOGIN_ATTEMPTS - serverAttemptsRemaining);
+      // If server explicitly says remaining > 0 and not locked, NEVER lock out!
+      if (typeof parsedRemaining === 'number' && parsedRemaining > 0 && !explicitLockedBool) {
+        const failedCount = Math.max(0, MAX_LOGIN_ATTEMPTS - parsedRemaining);
         localStorage.setItem(countKey, failedCount.toString());
         localStorage.setItem(timeKey, Date.now().toString());
         localStorage.removeItem(lockKey);
@@ -135,14 +144,15 @@ export const loginLimiter = {
         return {
           isLocked: false,
           lockoutRemainingSeconds: 0,
-          attemptsRemaining: serverAttemptsRemaining,
+          attemptsRemaining: parsedRemaining,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message: sanitizeMessage(serverDetail, serverAttemptsRemaining),
+          message: sanitizeMessage(serverDetail, parsedRemaining),
         };
       }
 
       // If server explicitly reports locked or 0 attempts remaining:
-      if (isLockedFromServer || serverAttemptsRemaining === 0) {
+      const isLocked = explicitLockedBool || parsedRemaining === 0 || (error?.response?.status === 429 && parsedRemaining === undefined);
+      if (isLocked) {
         const lockoutUntil = Date.now() + serverLockoutSeconds * 1000;
         localStorage.setItem(lockKey, lockoutUntil.toString());
         localStorage.setItem(countKey, MAX_LOGIN_ATTEMPTS.toString());
