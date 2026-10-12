@@ -12,8 +12,6 @@ import {
 } from "lucide-react"
 import uaLogo from "@/assets/images/ua-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
-import AnimatedMascot from "@/features/landing/components/AnimatedMascot"
-import IdleMascot from "@/features/landing/components/IdleMascot"
 import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 
@@ -52,7 +50,6 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [focusedField, setFocusedField] = useState<'username' | 'password' | null>(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024)
   const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
 
@@ -273,7 +270,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 exit={{ opacity: 0, x: -20, transition: { duration: 0.3 } }}
                 className="w-full h-full flex flex-col items-center justify-center px-6 lg:px-0 lg:pl-[20%]"
               >
-                {/* Unified Mascot + Form Container */}
+                {/* Form Container */}
                 <div className="relative flex flex-col items-center w-full max-w-[340px]">
                   
                   {/* Welcome Back Heading */}
@@ -297,11 +294,6 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   </div>
 
                   <div className="relative w-full">
-                    {/* Mascot perched on the top-right edge of the card */}
-                    <div className="absolute bottom-full -right-4 sm:-right-6 translate-y-5 sm:translate-y-6 z-20 pointer-events-none -rotate-[4deg]">
-                      <AnimatedMascot focusedField={focusedField} className="w-[120px] sm:w-[140px] h-auto drop-shadow-[0_10px_10px_rgba(0,30,80,0.2)]" />
-                    </div>
-
                     {/* Form card */}
                     <div
                       className="w-full rounded-2xl p-6 relative z-10"
@@ -349,12 +341,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             if (limitState.isLocked) return
                             e.currentTarget.style.border = "1px solid #1b6ca8"
                             e.currentTarget.style.boxShadow = "0 0 0 3px rgba(27, 108, 168, 0.1)"
-                            setFocusedField('username')
                           }}
                           onBlur={(e) => {
                             e.currentTarget.style.border = "1px solid #a8cde5"
                             e.currentTarget.style.boxShadow = "none"
-                            setFocusedField(null)
                           }}
                         />
                       </div>
@@ -397,12 +387,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                             if (limitState.isLocked) return
                             e.currentTarget.style.border = "1px solid #1b6ca8"
                             e.currentTarget.style.boxShadow = "0 0 0 3px rgba(27, 108, 168, 0.1)"
-                            setFocusedField('password')
                           }}
                           onBlur={(e) => {
                             e.currentTarget.style.border = "1px solid #a8cde5"
                             e.currentTarget.style.boxShadow = "none"
-                            setFocusedField(null)
                           }}
                         />
                         <button
