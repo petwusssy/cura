@@ -30,18 +30,17 @@ const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number
   const text = (rawDetail || '').trim();
   const lower = text.toLowerCase();
 
-  // Strip out robotic Django/SimpleJWT default strings
+  // Strip out robotic Django/SimpleJWT default strings and repetitive attempts text
   if (
     !text ||
     lower.includes('no active account') ||
     lower.includes('given credentials') ||
     lower.includes('access denied') ||
-    lower.includes('invalid token')
+    lower.includes('invalid token') ||
+    lower.includes('attempts remaining') ||
+    lower.includes('incorrect username or password')
   ) {
-    if (remaining === 1) {
-      return `Incorrect username or password. Warning: You have only 1 attempt remaining before your account is temporarily locked.`;
-    }
-    return `Incorrect username or password. You have ${remaining} attempts remaining.`;
+    return `Incorrect username or password. Please verify your credentials and try again.`;
   }
 
   return text;
