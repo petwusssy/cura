@@ -53,11 +53,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
     e.preventDefault()
 
     if (limitState.isLocked) {
-      setErrorMessage(
-        `Account is temporarily locked. Please wait ${loginLimiter.formatTime(
-          limitState.lockoutRemainingSeconds
-        )} before trying again.`
-      )
+      setErrorMessage(null)
       return
     }
 
@@ -75,7 +71,11 @@ export default function LoginPage({ onLogin, onBack }: Props) {
       console.error("Login failed:", error)
       const newLimitState = loginLimiter.recordFailure(error, username.trim())
       setLimitState(newLimitState)
-      setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
+      if (newLimitState.isLocked) {
+        setErrorMessage(null)
+      } else {
+        setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
+      }
     } finally {
       setLoading(false)
     }
@@ -255,20 +255,15 @@ export default function LoginPage({ onLogin, onBack }: Props) {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-3 shadow-lg"
+                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between shadow-lg"
               >
-                <ShieldAlert className="text-amber-400 shrink-0 mt-0.5" size={18} />
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-amber-300">Account Temporarily Locked</span>
-                    <span className="font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded text-[11px]">
-                      {loginLimiter.formatTime(limitState.lockoutRemainingSeconds)}
-                    </span>
-                  </div>
-                  <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                    {errorMessage || `Too many failed login attempts. For security reasons, this account has been temporarily locked for 1 minute.`}
-                  </p>
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="text-amber-400 shrink-0" size={18} />
+                  <span className="font-semibold text-amber-300">Account Temporarily Locked</span>
                 </div>
+                <span className="font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded text-[11px]">
+                  {loginLimiter.formatTime(limitState.lockoutRemainingSeconds)}
+                </span>
               </motion.div>
             ) : errorMessage ? (
               <motion.div

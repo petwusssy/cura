@@ -24,7 +24,7 @@ const getScopedKey = (base: string, id?: string | null) => {
 // Clean and sanitize any technical/internal errors into professional medical-grade copy
 const sanitizeMessage = (rawDetail: string | null | undefined, remaining: number): string => {
   if (remaining <= 0) {
-    return `Too many failed login attempts. For security reasons, this account has been temporarily locked for 1 minute.`;
+    return "";
   }
 
   const text = (rawDetail || '').trim();
@@ -64,7 +64,7 @@ export const loginLimiter = {
             lockoutRemainingSeconds: remainingSecs,
             attemptsRemaining: 0,
             maxAttempts: MAX_LOGIN_ATTEMPTS,
-            message: `Account is temporarily locked due to ${MAX_LOGIN_ATTEMPTS} consecutive failed attempts.`,
+            message: null,
           };
         } else {
           // Lockout has expired
@@ -162,7 +162,7 @@ export const loginLimiter = {
           lockoutRemainingSeconds: serverLockoutSeconds,
           attemptsRemaining: 0,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message: sanitizeMessage(serverDetail, 0),
+          message: null,
         };
       }
 
@@ -186,7 +186,7 @@ export const loginLimiter = {
           lockoutRemainingSeconds: DEFAULT_LOCKOUT_SECONDS,
           attemptsRemaining: 0,
           maxAttempts: MAX_LOGIN_ATTEMPTS,
-          message: sanitizeMessage(serverDetail, 0),
+          message: null,
         };
       }
 
