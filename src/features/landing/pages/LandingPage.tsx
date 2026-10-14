@@ -245,40 +245,40 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 35 }}
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  className="w-full max-w-[360px] mx-auto"
+                  className="w-full max-w-[420px] mx-auto"
                 >
 
-                  <div className="mb-5 text-center">
+                  <div className="mb-6 text-center">
                     <h2
-                      className="text-[#001e50] font-bold text-2xl mb-1.5"
+                      className="text-[#001e50] font-bold text-[28px] sm:text-[30px] mb-2"
                       style={{
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        letterSpacing: "-0.01em",
+                        letterSpacing: "-0.015em",
                       }}
                     >
                       Welcome Back
                     </h2>
                     <p
-                      className="text-[#001e50]/70 text-xs sm:text-sm"
+                      className="text-[#001e50]/70 text-sm sm:text-base"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       Sign in to your CURA account.
                     </p>
                   </div>
 
-                  <div className="w-full rounded-2xl p-5 sm:p-6 bg-[#F0F7FA] border border-[#a8cde5]/50 shadow-sm">
-                    <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                  <div className="w-full rounded-2xl p-6 sm:p-7 bg-[#F0F7FA] border border-[#a8cde5]/50 shadow-sm">
+                    <form onSubmit={handleLogin} className="flex flex-col gap-4 sm:gap-5">
                       {/* Username */}
                       <div>
                         <label
-                          className="block text-[#001e50]/80 font-bold mb-1.5 uppercase text-[10px] tracking-wider"
+                          className="block text-[#001e50]/80 font-bold mb-1.5 uppercase text-[11.5px] tracking-wider"
                           style={{ fontFamily: "'Inter', sans-serif" }}
                         >
                           Username
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
-                            <User size={15} />
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
+                            <User size={18} />
                           </div>
                           <input
                             type="text"
@@ -290,7 +290,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                               setLimitState(loginLimiter.getLimitState(val.trim()))
                             }}
                             placeholder="Enter your username"
-                            className="w-full pl-10 pr-4 py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm"
+                            className="w-full pl-11 pr-4 py-3.5 rounded-xl text-[#001e50] text-base bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm"
                             style={{ fontFamily: "'Inter', sans-serif" }}
                           />
                         </div>
@@ -299,14 +299,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       {/* Password */}
                       <div>
                         <label
-                          className="block text-[#001e50]/80 font-bold mb-1.5 uppercase text-[10px] tracking-wider"
+                          className="block text-[#001e50]/80 font-bold mb-1.5 uppercase text-[11.5px] tracking-wider"
                           style={{ fontFamily: "'Inter', sans-serif" }}
                         >
                           Password
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
-                            <Lock size={15} />
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
+                            <Lock size={18} />
                           </div>
                           <input
                             type={showPassword ? "text" : "password"}
@@ -317,16 +317,16 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                               if (errorMessage) setErrorMessage(null)
                             }}
                             placeholder="Enter your password"
-                            className="w-full pl-10 pr-10 py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full pl-11 pr-11 py-3.5 rounded-xl text-[#001e50] text-base bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ fontFamily: "'Inter', sans-serif" }}
                           />
                           <button
                             type="button"
                             disabled={limitState.isLocked}
                             onClick={() => setShowPassword((v) => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#001e50]/40 hover:text-[#001e50]/80 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#001e50]/40 hover:text-[#001e50]/80 transition-colors"
                           >
-                            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
                         </div>
                       </div>
@@ -405,7 +405,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       <motion.button
                         type="submit"
                         disabled={loading || limitState.isLocked}
-                        className={`mt-2 w-full py-3.5 rounded-xl font-bold text-sm transition-colors duration-300 disabled:cursor-not-allowed shadow-md ${
+                        className={`mt-2 w-full py-4 rounded-xl font-bold text-base transition-colors duration-300 disabled:cursor-not-allowed shadow-md ${
                           limitState.isLocked
                             ? "bg-amber-700/40 text-white cursor-not-allowed"
                             : loading
@@ -427,7 +427,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                           </span>
                         ) : limitState.isLocked ? (
                           <span className="flex items-center justify-center gap-2">
-                            <Lock size={15} />
+                            <Lock size={16} />
                             Locked ({loginLimiter.formatTime(limitState.lockoutRemainingSeconds)})
                           </span>
                         ) : (
@@ -443,11 +443,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       setStage("idle")
                       setErrorMessage(null)
                     }}
-                    className="inline-flex items-center gap-2 text-[#001e50]/60 hover:text-[#001e50] transition-colors text-xs font-semibold mt-4 px-1"
+                    className="inline-flex items-center gap-2 text-[#001e50]/60 hover:text-[#001e50] transition-colors text-sm font-semibold mt-4 px-1"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                     whileHover={{ x: -2 }}
                   >
-                    <ArrowLeft size={14} />
+                    <ArrowLeft size={16} />
                     <span>Back to Home</span>
                   </motion.button>
                 </motion.div>
