@@ -113,27 +113,27 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           }}
         />
 
-        {/* Dynamic Color-Cycling Overlay: Active ONLY when mouse hovers over the right section in idle mode */}
+        {/* Light Blue Overlay: Active when Login to CURA is opened, and returns when not hovering */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
-            isRightPanelHovered && stage === "idle" ? "opacity-100" : "opacity-0"
+            stage !== "idle" && !isRightPanelHovered ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            background:
+              "linear-gradient(105deg, rgba(12, 100, 160, 0.92) 0%, rgba(14, 116, 178, 0.88) 48%, rgba(2, 132, 199, 0.76) 60%, rgba(56, 189, 248, 0.45) 74%, rgba(56, 189, 248, 0.12) 85%, transparent 92%)",
+          }}
+        />
+
+        {/* Dynamic Color-Cycling Overlay: Active whenever mouse hovers over the right section (both idle and login modes) */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
+            isRightPanelHovered ? "opacity-100" : "opacity-0"
           }`}
         >
           <div className="absolute inset-0 overlay-cycle-blue" />
           <div className="absolute inset-0 overlay-cycle-red" />
           <div className="absolute inset-0 overlay-cycle-yellow" />
         </div>
-
-        {/* Light Blue Overlay: Activates smoothly when user clicks "Login to CURA" */}
-        <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
-            stage !== "idle" ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            background:
-              "linear-gradient(105deg, rgba(14, 116, 178, 0.84) 0%, rgba(2, 132, 199, 0.72) 52%, rgba(56, 189, 248, 0.50) 80%, rgba(56, 189, 248, 0.18) 94%, transparent 100%), linear-gradient(to bottom, rgba(56, 189, 248, 0.28) 0%, transparent 40%, rgba(2, 132, 199, 0.35) 100%)",
-          }}
-        />
 
         {/* Ambient Vignette & Contrast Depth Gradients */}
         <div
