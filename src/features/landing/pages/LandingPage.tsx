@@ -150,8 +150,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
       {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
       <div className="relative z-10 flex w-full h-full min-h-screen">
-        {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes 65% width) ── */}
-        <div className="w-full lg:w-[65%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between items-center px-6 sm:px-10 lg:px-14 xl:px-20 py-4 sm:py-6 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
+        {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes 55% width) ── */}
+        <div className="w-full lg:w-[55%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-4 sm:py-6 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
           {/* Top Section: Clean minimal spacer on desktop; interactive title on mobile */}
           <div className="w-full flex items-center justify-center lg:justify-start shrink-0">
             {/* Mobile-only University title that reveals small UA logo on tap/hover */}
@@ -545,24 +545,24 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           </div>
         </div>
 
-        {/* ── RIGHT OVERLAY SECTION (Takes 35% width) ── */}
+        {/* ── RIGHT OVERLAY SECTION (Takes 45% width) ── */}
         <div
           onMouseEnter={() => setIsRightPanelHovered(true)}
           onMouseLeave={() => setIsRightPanelHovered(false)}
-          className="hidden lg:flex lg:w-[35%] h-full min-h-screen relative flex-col justify-between pl-6 lg:pl-7 xl:pl-9 pr-6 lg:pr-7 xl:pr-9 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-auto cursor-default"
+          className="hidden lg:flex lg:w-[45%] h-full min-h-screen relative flex-col justify-between pl-7 lg:pl-8 xl:pl-11 pr-7 lg:pr-8 xl:pr-14 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-auto cursor-default"
         >
           {/* Top Bar: UNIVERSITY OF THE ASSUMPTION (Left) & UA Logo (Top Right Corner) */}
-          <div className="w-full flex items-center justify-between text-white pointer-events-auto h-[128px] lg:h-[154px] gap-2 lg:gap-3 xl:gap-4">
+          <div className="w-full flex items-center justify-between text-white pointer-events-auto h-[128px] lg:h-[154px] gap-3 lg:gap-4 xl:gap-6">
             {/* Left: UNIVERSITY OF THE ASSUMPTION */}
             <div className="flex flex-col items-start justify-center text-left select-none min-w-0">
               <span
-                className="font-extrabold text-[16px] sm:text-[18px] lg:text-[19px] xl:text-[23px] 2xl:text-[26px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md"
+                className="font-extrabold text-[18px] sm:text-[20px] lg:text-[22px] xl:text-[26px] 2xl:text-[29px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[16px] sm:text-[18px] lg:text-[19px] xl:text-[23px] 2xl:text-[26px] tracking-wider leading-tight mt-1.5 whitespace-nowrap text-white drop-shadow-md"
+                className="font-extrabold text-[18px] sm:text-[20px] lg:text-[22px] xl:text-[26px] 2xl:text-[29px] tracking-wider leading-tight mt-1.5 whitespace-nowrap text-white drop-shadow-md"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
@@ -580,7 +580,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               <img
                 src={uaLogo}
                 alt="University of the Assumption Logo"
-                className="object-contain w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] lg:w-[86px] lg:h-[86px] xl:w-[98px] xl:h-[98px] 2xl:w-[110px] 2xl:h-[110px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
+                className="object-contain w-[80px] h-[80px] sm:w-[90px] sm:h-[90px] lg:w-[98px] lg:h-[98px] xl:w-[112px] xl:h-[112px] 2xl:w-[122px] 2xl:h-[122px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
                 draggable={false}
               />
             </a>
@@ -589,7 +589,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           {/* Bottom: UA Tagline */}
           <div className="max-w-md pointer-events-auto">
             <p
-              className="text-white font-bold text-xs sm:text-[13px] lg:text-[14px] xl:text-[15.5px] leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+              className="text-white font-bold text-xs sm:text-[13.5px] lg:text-[15px] xl:text-[16.5px] leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               The First Catholic Archdiocesan <br />
