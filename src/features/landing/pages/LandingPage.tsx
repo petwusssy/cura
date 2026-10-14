@@ -580,7 +580,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               <img
                 src={uaLogo}
                 alt="University of the Assumption Logo"
-                className="object-contain w-[80px] h-[80px] sm:w-[90px] sm:h-[90px] lg:w-[98px] lg:h-[98px] xl:w-[112px] xl:h-[112px] 2xl:w-[122px] 2xl:h-[122px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
+                className="object-contain w-[92px] h-[92px] sm:w-[104px] sm:h-[104px] lg:w-[113px] lg:h-[113px] xl:w-[129px] xl:h-[129px] 2xl:w-[140px] 2xl:h-[140px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
                 draggable={false}
               />
             </a>
