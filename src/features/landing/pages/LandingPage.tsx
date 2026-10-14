@@ -116,19 +116,19 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
         <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
-          {/* Top: 2 Logos Centered in White Half */}
-          <div className="w-full flex flex-col items-center">
-            <div className="flex items-center justify-center gap-4 sm:gap-5 shrink-0">
+          {/* Top: 2 Logos Positioned Near Center Seam / Next to University Text */}
+          <div className="w-full flex flex-col items-center lg:items-end">
+            <div className="flex items-center justify-center lg:justify-end gap-4 sm:gap-6 shrink-0 lg:pr-6 xl:pr-8">
               <img
                 src={curaLogo}
                 alt="CURA"
-                className="object-contain w-16 h-16 sm:w-20 sm:h-20 lg:w-[92px] lg:h-[92px]"
+                className="object-contain w-20 h-20 sm:w-28 sm:h-28 lg:w-[128px] lg:h-[128px]"
                 style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
               />
               <img
                 src={uaLogo}
                 alt="University of the Assumption"
-                className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[110px] lg:h-[110px]"
+                className="object-contain w-24 h-24 sm:w-32 sm:h-32 lg:w-[154px] lg:h-[154px]"
                 style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
               />
             </div>
@@ -433,17 +433,17 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         </div>
 
         {/* ── RIGHT OVERLAY SECTION (Takes half width 50%) ── */}
-        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between px-8 lg:px-12 xl:px-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
-          {/* Top: UNIVERSITY OF THE ASSUMPTION in White */}
-          <div className="flex flex-col text-white pointer-events-auto">
+        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-6 xl:pl-8 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
+          {/* Top: UNIVERSITY OF THE ASSUMPTION in White (Aligned vertically with logos) */}
+          <div className="flex flex-col justify-center text-white pointer-events-auto h-[128px] lg:h-[154px]">
             <span
-              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[30px] xl:text-[34px] tracking-wider leading-none whitespace-nowrap drop-shadow-md"
+              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap drop-shadow-md"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               UNIVERSITY OF THE
             </span>
             <span
-              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[30px] xl:text-[34px] tracking-wider leading-tight mt-1.5 whitespace-nowrap drop-shadow-md"
+              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap drop-shadow-md"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               ASSUMPTION
