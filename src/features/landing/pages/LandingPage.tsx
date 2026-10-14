@@ -287,7 +287,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 >
 
                   <div className="mb-4 sm:mb-4.5 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 sm:w-[74px] sm:h-[74px] mb-2.5 flex items-center justify-center relative select-none">
+                    <div className="w-[71px] h-[71px] sm:w-[82px] sm:h-[82px] mb-2.5 flex items-center justify-center relative select-none">
                       <img
                         src={curaLogo}
                         alt="CURA Logo"
