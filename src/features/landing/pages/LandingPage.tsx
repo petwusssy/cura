@@ -32,6 +32,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
   const [isUaHovered, setIsUaHovered] = useState(false)
+  const [isRightPanelHovered, setIsRightPanelHovered] = useState(false)
 
   useEffect(() => {
     if (stage === "splitting") {
@@ -103,17 +104,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           alt="University of the Assumption campus"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Animated Color-shifting Overlay Layers (Blue -> Red -> Yellow) */}
-        <div className="absolute inset-0 overlay-cycle-blue" />
-        <div className="absolute inset-0 overlay-cycle-red" />
-        <div className="absolute inset-0 overlay-cycle-yellow" />
+        {/* Base Static Navy Blue Overlay (Maintains transparent right edge) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 60%, rgba(0, 30, 80, 0.5) 82%, rgba(0, 30, 80, 0.15) 94%, transparent 100%)",
+          }}
+        />
+
+        {/* Dynamic Color-Cycling Overlay: Active ONLY when mouse hovers over the right section */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
+            isRightPanelHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="absolute inset-0 overlay-cycle-blue" />
+          <div className="absolute inset-0 overlay-cycle-red" />
+          <div className="absolute inset-0 overlay-cycle-yellow" />
+        </div>
 
         {/* Ambient Vignette & Contrast Depth Gradients */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%)",
+              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 65%, transparent 100%)",
           }}
         />
       </div>
@@ -456,7 +472,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         </div>
 
         {/* ── RIGHT OVERLAY SECTION (Takes half width 50%) ── */}
-        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-8 xl:pl-12 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
+        <div
+          onMouseEnter={() => setIsRightPanelHovered(true)}
+          onMouseLeave={() => setIsRightPanelHovered(false)}
+          className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-8 xl:pl-12 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-auto cursor-default"
+        >
           {/* Top: UNIVERSITY OF THE ASSUMPTION in White with hover to reveal small UA logo */}
           <div className="flex items-center text-white pointer-events-auto h-[128px] lg:h-[154px]">
             <div

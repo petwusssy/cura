@@ -468,33 +468,39 @@ html {
 .overlay-cycle-blue {
   background: linear-gradient(
     105deg,
-    rgba(0, 24, 68, 0.96) 0%,
-    rgba(0, 32, 85, 0.88) 65%,
-    rgba(0, 48, 125, 0.65) 100%
+    rgba(0, 24, 68, 0.92) 0%,
+    rgba(0, 32, 85, 0.85) 60%,
+    rgba(0, 45, 120, 0.50) 82%,
+    rgba(0, 45, 120, 0.15) 94%,
+    transparent 100%
   );
-  animation: cycleOverlayBlue 15s ease-in-out infinite;
+  animation: cycleOverlayBlue 12s ease-in-out infinite;
   will-change: opacity;
 }
 
 .overlay-cycle-red {
   background: linear-gradient(
     105deg,
-    rgba(72, 8, 20, 0.96) 0%,
-    rgba(98, 14, 28, 0.88) 65%,
-    rgba(145, 22, 42, 0.65) 100%
+    rgba(78, 10, 24, 0.92) 0%,
+    rgba(105, 16, 32, 0.85) 60%,
+    rgba(155, 25, 45, 0.50) 82%,
+    rgba(155, 25, 45, 0.15) 94%,
+    transparent 100%
   );
-  animation: cycleOverlayRed 15s ease-in-out infinite;
+  animation: cycleOverlayRed 12s ease-in-out infinite;
   will-change: opacity;
 }
 
 .overlay-cycle-yellow {
   background: linear-gradient(
     105deg,
-    rgba(78, 48, 6, 0.96) 0%,
-    rgba(105, 65, 10, 0.88) 65%,
-    rgba(160, 102, 14, 0.65) 100%
+    rgba(82, 50, 6, 0.92) 0%,
+    rgba(110, 68, 10, 0.85) 60%,
+    rgba(165, 105, 15, 0.50) 82%,
+    rgba(165, 105, 15, 0.15) 94%,
+    transparent 100%
   );
-  animation: cycleOverlayYellow 15s ease-in-out infinite;
+  animation: cycleOverlayYellow 12s ease-in-out infinite;
   will-change: opacity;
 }
 
