@@ -107,7 +107,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 68%, rgba(0, 30, 80, 0.5) 85%, rgba(0, 30, 80, 0.15) 95%, transparent 100%)",
+              "linear-gradient(to bottom, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 68%, rgba(0, 30, 80, 0.5) 85%, rgba(0, 30, 80, 0.15) 95%, transparent 100%)",
           }}
         />
       </div>
@@ -115,10 +115,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
-        <div className="w-full lg:w-[58%] xl:w-[56%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
-          {/* Top Logo */}
-          <div className="flex items-center gap-4 sm:gap-6 flex-wrap sm:flex-nowrap">
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
+          {/* Top: 2 Logos Centered in White Half */}
+          <div className="w-full flex flex-col items-center">
+            <div className="flex items-center justify-center gap-4 sm:gap-5 shrink-0">
               <img
                 src={curaLogo}
                 alt="CURA"
@@ -132,15 +132,16 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
               />
             </div>
-            <div className="flex flex-col justify-center text-[#001e50] shrink-0">
+            {/* Mobile-only University text */}
+            <div className="flex flex-col items-center justify-center text-[#001e50] mt-3 lg:hidden text-center">
               <span
-                className="font-extrabold text-[18px] sm:text-[23px] lg:text-[26px] tracking-wider leading-none whitespace-nowrap"
+                className="font-extrabold text-[16px] sm:text-[20px] tracking-wider leading-none whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[18px] sm:text-[23px] lg:text-[26px] tracking-wider leading-tight mt-1.5 whitespace-nowrap"
+                className="font-extrabold text-[16px] sm:text-[20px] tracking-wider leading-tight mt-1 whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
@@ -431,8 +432,25 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           </div>
         </div>
 
-        {/* ── RIGHT OVERLAY SECTION (Takes remaining ~42% width) ── */}
-        <div className="hidden lg:flex flex-1 relative flex-col justify-end p-8 lg:p-12 xl:p-16 z-10 pointer-events-none">
+        {/* ── RIGHT OVERLAY SECTION (Takes half width 50%) ── */}
+        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between px-8 lg:px-12 xl:px-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
+          {/* Top: UNIVERSITY OF THE ASSUMPTION in White */}
+          <div className="flex flex-col text-white pointer-events-auto">
+            <span
+              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[30px] xl:text-[34px] tracking-wider leading-none whitespace-nowrap drop-shadow-md"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              UNIVERSITY OF THE
+            </span>
+            <span
+              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[30px] xl:text-[34px] tracking-wider leading-tight mt-1.5 whitespace-nowrap drop-shadow-md"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              ASSUMPTION
+            </span>
+          </div>
+
+          {/* Bottom: UA Tagline */}
           <div className="max-w-md pointer-events-auto">
             <p
               className="text-white font-bold text-sm sm:text-base lg:text-lg leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
