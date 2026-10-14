@@ -553,8 +553,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         >
           {/* Top Bar: UNIVERSITY OF THE ASSUMPTION (Left) & UA Logo (Top Right Corner) */}
           <div className="w-full flex items-center justify-between text-white pointer-events-auto h-[128px] lg:h-[154px] gap-3 lg:gap-4 xl:gap-6">
-            {/* Left: UNIVERSITY OF THE ASSUMPTION */}
-            <div className="flex flex-col items-start justify-center text-left select-none min-w-0">
+            {/* Left: UNIVERSITY OF THE ASSUMPTION (Centered) */}
+            <div className="flex flex-col items-center justify-center text-center select-none">
               <span
                 className="font-extrabold text-[18px] sm:text-[20px] lg:text-[22px] xl:text-[26px] 2xl:text-[29px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
