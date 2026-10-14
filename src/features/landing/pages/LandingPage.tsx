@@ -116,32 +116,24 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
         <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
-          {/* Top: 2 Logos Positioned Near Center Seam / Next to University Text */}
-          <div className="w-full flex flex-col items-center lg:items-end">
-            <div className="flex items-center justify-center lg:justify-end gap-4 sm:gap-6 shrink-0 lg:pr-6 xl:pr-8">
-              <img
-                src={curaLogo}
-                alt="CURA"
-                className="object-contain w-20 h-20 sm:w-28 sm:h-28 lg:w-[128px] lg:h-[128px]"
-                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
-              />
-              <img
-                src={uaLogo}
-                alt="University of the Assumption"
-                className="object-contain w-24 h-24 sm:w-32 sm:h-32 lg:w-[154px] lg:h-[154px]"
-                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
-              />
-            </div>
+          {/* Top: UA Logo Aligned near Center Seam with University text */}
+          <div className="w-full flex items-center justify-center lg:justify-end lg:pr-6 xl:pr-8">
+            <img
+              src={uaLogo}
+              alt="University of the Assumption"
+              className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[130px] lg:h-[130px]"
+              style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
+            />
             {/* Mobile-only University text */}
-            <div className="flex flex-col items-center justify-center text-[#001e50] mt-3 lg:hidden text-center">
+            <div className="flex flex-col text-[#001e50] ml-3 lg:hidden text-left">
               <span
-                className="font-extrabold text-[16px] sm:text-[20px] tracking-wider leading-none whitespace-nowrap"
+                className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[16px] sm:text-[20px] tracking-wider leading-tight mt-1 whitespace-nowrap"
+                className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
@@ -159,22 +151,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -35 }}
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  className="flex flex-col items-start"
+                  className="flex flex-col items-center text-center mx-auto"
                 >
+                  {/* Centered CURA Logo above CURA text */}
+                  <img
+                    src={curaLogo}
+                    alt="CURA"
+                    className="object-contain w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mb-4"
+                    style={{ filter: "drop-shadow(0 6px 18px rgba(27, 108, 168, 0.22))" }}
+                  />
+
                   <h1
-                    className="leading-none mb-3 font-black text-[#001e50]"
+                    className="leading-none mb-4 text-[#001e50]"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
-                      fontSize: "clamp(4.25rem, 9.5vw, 8.25rem)",
-                      fontWeight: 900,
-                      letterSpacing: "-0.03em",
+                      fontSize: "clamp(4.5rem, 10vw, 8.5rem)",
+                      fontWeight: 800,
+                      transform: "scaleY(1.18)",
+                      transformOrigin: "center",
+                      letterSpacing: "-0.01em",
                     }}
                   >
                     CURA
                   </h1>
 
                   <p
-                    className="text-[10px] sm:text-[12px] font-semibold tracking-widest uppercase mb-4 text-[#001e50]/75"
+                    className="text-[10px] sm:text-[12px] font-semibold tracking-widest uppercase mb-4 text-[#001e50]/75 max-w-md"
                     style={{
                       fontFamily: "'Inter', sans-serif",
                       letterSpacing: "0.12em",
