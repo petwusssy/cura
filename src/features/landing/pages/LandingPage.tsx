@@ -106,21 +106,34 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         />
         {/* Base Static Navy Blue Overlay (Maintains transparent right edge) */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
+            stage !== "idle" && !isRightPanelHovered ? "opacity-40" : "opacity-100"
+          }`}
           style={{
             background:
               "linear-gradient(to bottom, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 60%, rgba(0, 30, 80, 0.5) 82%, rgba(0, 30, 80, 0.15) 94%, transparent 100%)",
           }}
         />
 
-        {/* Light Blue Overlay: Active when Login to CURA is opened, and returns when not hovering */}
+        {/* Ambient Vignette & Contrast Depth Gradients (Underneath color overlays) */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
+            stage !== "idle" && !isRightPanelHovered ? "opacity-30" : "opacity-100"
+          }`}
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 65%, transparent 100%)",
+          }}
+        />
+
+        {/* Light Blue Overlay: Ultra-smooth 10-stop eased horizontal fade with zero harsh lines */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
             stage !== "idle" && !isRightPanelHovered ? "opacity-100" : "opacity-0"
           }`}
           style={{
             background:
-              "linear-gradient(105deg, rgba(12, 100, 160, 0.92) 0%, rgba(14, 116, 178, 0.88) 48%, rgba(2, 132, 199, 0.76) 60%, rgba(56, 189, 248, 0.45) 74%, rgba(56, 189, 248, 0.12) 85%, transparent 92%)",
+              "linear-gradient(to right, rgba(14, 95, 155, 0.90) 0%, rgba(16, 105, 170, 0.86) 48%, rgba(18, 115, 182, 0.80) 55%, rgba(24, 128, 196, 0.70) 62%, rgba(30, 140, 210, 0.56) 69%, rgba(40, 155, 222, 0.40) 76%, rgba(50, 170, 232, 0.25) 83%, rgba(56, 180, 240, 0.12) 89%, rgba(56, 180, 240, 0.04) 94%, rgba(56, 180, 240, 0) 100%)",
           }}
         />
 
@@ -134,15 +147,6 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           <div className="absolute inset-0 overlay-cycle-red" />
           <div className="absolute inset-0 overlay-cycle-yellow" />
         </div>
-
-        {/* Ambient Vignette & Contrast Depth Gradients */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 65%, transparent 100%)",
-          }}
-        />
       </div>
 
       {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
