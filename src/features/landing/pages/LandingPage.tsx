@@ -115,14 +115,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           }}
         />
 
-        {/* Light Blue Overlay: Identical 3-part composition & stops to Dark Blue overlay */}
+        {/* Light Blue Overlay: Identical 3-part composition & stops to Dark Blue overlay with +15% boosted opacity */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
             stage !== "idle" && !isRightPanelHovered ? "opacity-100" : "opacity-0"
           }`}
           style={{
             background:
-              "linear-gradient(to bottom, rgba(14, 116, 178, 0.85) 0%, rgba(14, 116, 178, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(14, 116, 178, 0.9) 0%, rgba(14, 116, 178, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(14, 116, 178, 0.88) 0%, rgba(14, 116, 178, 0.85) 60%, rgba(2, 132, 199, 0.5) 82%, rgba(56, 189, 248, 0.15) 94%, transparent 100%)",
+              "linear-gradient(to bottom, rgba(14, 116, 178, 0.95) 0%, rgba(14, 116, 178, 0.45) 25%, transparent 50%), linear-gradient(to top, rgba(14, 116, 178, 0.96) 0%, rgba(14, 116, 178, 0.60) 30%, transparent 60%), linear-gradient(105deg, rgba(14, 116, 178, 0.96) 0%, rgba(14, 116, 178, 0.94) 60%, rgba(2, 132, 199, 0.62) 82%, rgba(56, 189, 248, 0.22) 94%, transparent 100%)",
           }}
         />
 
