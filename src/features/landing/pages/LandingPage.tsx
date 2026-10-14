@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import uaLogo from "@/assets/images/ua-logo.png"
+import curaLogo from "@/assets/images/cura-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
 import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
@@ -116,22 +117,30 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
         <div className="w-full lg:w-[58%] xl:w-[56%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between p-6 sm:p-12 lg:p-16 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
           {/* Top Logo */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <img
-              src={uaLogo}
-              alt="University of the Assumption"
-              className="object-contain w-20 h-20 sm:w-24 sm:h-24"
-              style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
-            />
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <img
+                src={uaLogo}
+                alt="University of the Assumption"
+                className="object-contain w-24 h-24 sm:w-[115px] sm:h-[115px]"
+                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
+              />
+              <img
+                src={curaLogo}
+                alt="CURA"
+                className="object-contain w-24 h-24 sm:w-[115px] sm:h-[115px]"
+                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
+              />
+            </div>
             <div className="flex flex-col justify-center text-[#001e50]">
               <span
-                className="font-extrabold text-[19px] sm:text-[26px] tracking-widest leading-none"
+                className="font-extrabold text-[23px] sm:text-[31px] tracking-widest leading-none"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[19px] sm:text-[26px] tracking-widest leading-tight mt-1.5"
+                className="font-extrabold text-[23px] sm:text-[31px] tracking-widest leading-tight mt-1.5"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
