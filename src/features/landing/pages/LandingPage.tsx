@@ -120,15 +120,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap sm:flex-nowrap">
             <div className="flex items-center gap-3 sm:gap-4 shrink-0">
               <img
-                src={uaLogo}
-                alt="University of the Assumption"
-                className="object-contain w-24 h-24 sm:w-[115px] sm:h-[115px]"
+                src={curaLogo}
+                alt="CURA"
+                className="object-contain w-20 h-20 sm:w-[100px] sm:h-[100px]"
                 style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
               />
               <img
-                src={curaLogo}
-                alt="CURA"
-                className="object-contain w-24 h-24 sm:w-[115px] sm:h-[115px]"
+                src={uaLogo}
+                alt="University of the Assumption"
+                className="object-contain w-24 h-24 sm:w-[120px] sm:h-[120px]"
                 style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
               />
             </div>
