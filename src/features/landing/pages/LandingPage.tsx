@@ -477,46 +477,33 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           onMouseLeave={() => setIsRightPanelHovered(false)}
           className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-8 xl:pl-12 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-auto cursor-default"
         >
-          {/* Top: UNIVERSITY OF THE ASSUMPTION in White with hover to reveal small UA logo */}
-          <div className="flex items-center text-white pointer-events-auto h-[128px] lg:h-[154px]">
-            <div
-              className="relative inline-flex items-center gap-4 cursor-pointer select-none group py-2 px-3 -mx-3 rounded-2xl hover:bg-white/5 transition-all duration-200"
-              onMouseEnter={() => setIsUaHovered(true)}
-              onMouseLeave={() => setIsUaHovered(false)}
-            >
-              <div className="flex flex-col justify-center">
-                <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md group-hover:text-amber-200/90 transition-colors duration-200"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                >
-                  UNIVERSITY OF THE
-                </span>
-                <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap text-white drop-shadow-md group-hover:text-amber-200/90 transition-colors duration-200"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                >
-                  ASSUMPTION
-                </span>
-              </div>
+          {/* Top Bar: UNIVERSITY OF THE ASSUMPTION (Left) & UA Logo (Top Right Corner) */}
+          <div className="w-full flex items-center justify-between text-white pointer-events-auto h-[128px] lg:h-[154px]">
+            {/* Left: UNIVERSITY OF THE ASSUMPTION */}
+            <div className="flex flex-col justify-center select-none">
+              <span
+                className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                UNIVERSITY OF THE
+              </span>
+              <span
+                className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap text-white drop-shadow-md"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                ASSUMPTION
+              </span>
+            </div>
 
-              {/* Small UA Logo revealed when pointing/hovering on University text */}
-              <AnimatePresence>
-                {isUaHovered && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.35, x: -10, rotate: -8 }}
-                    animate={{ opacity: 1, scale: 1, x: 0, rotate: 0 }}
-                    exit={{ opacity: 0, scale: 0.35, x: -8, rotate: 8 }}
-                    transition={{ type: "spring", stiffness: 420, damping: 24 }}
-                    className="shrink-0 flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
-                  >
-                    <img
-                      src={uaLogo}
-                      alt="University of the Assumption Logo"
-                      className="w-11 h-11 lg:w-13 lg:h-13 xl:w-14 xl:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* Right: UA Logo in Top Right Corner (Katapat ng text) */}
+            <div className="shrink-0 pl-4">
+              <motion.img
+                src={uaLogo}
+                alt="University of the Assumption Logo"
+                className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[100px] lg:h-[100px] xl:w-[110px] xl:h-[110px] drop-shadow-[0_6px_22px_rgba(0,0,0,0.5)] cursor-pointer"
+                whileHover={{ scale: 1.08 }}
+                transition={{ type: "spring", stiffness: 350, damping: 22 }}
+              />
             </div>
           </div>
 
