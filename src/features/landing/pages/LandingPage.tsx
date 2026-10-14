@@ -127,7 +127,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         {/* Navy Blue Overlay */}
         <div
           className="absolute inset-0"
-          style={{ background: "rgba(0, 30, 80, 0.6)" }}
+          style={{ background: "rgba(0, 30, 80, 0.8)" }}
         />
       </div>
 
