@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import uaLogo from "@/assets/images/ua-logo.png"
 import curaLogo from "@/assets/images/cura-logo.png"
+import anthropeakLogo from "@/assets/images/anthropeak-logo.png"
 import campusBg from "@/features/landing/assets/uafacade.jpg"
 import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
@@ -480,10 +481,18 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
             <span>CURA System</span>
             <div className="text-right flex flex-col items-end leading-tight">
-              <span className="font-semibold text-[10px] sm:text-[10.5px] uppercase tracking-wider text-[#001e50]/60">
-                DEVELOPED BY : ANTHROPEAK
-              </span>
-              <span className="text-[9.5px] sm:text-[10px] text-[#001e50]/45 tracking-wider mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#001e50]/55">
+                  DEVELOPED BY :
+                </span>
+                <img
+                  src={anthropeakLogo}
+                  alt="ANTHROPEAK"
+                  className="h-3 sm:h-3.5 w-auto object-contain select-none opacity-85 hover:opacity-100 transition-opacity"
+                  draggable={false}
+                />
+              </div>
+              <span className="text-[9px] sm:text-[9.5px] text-[#001e50]/45 tracking-wider mt-0.5">
                 GIRADO, NATIVIDAD, SALAC
               </span>
             </div>
