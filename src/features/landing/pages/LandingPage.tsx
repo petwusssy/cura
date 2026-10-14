@@ -103,12 +103,17 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           alt="University of the Assumption campus"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Navy Blue Gradient to Transparent Overlay */}
+        {/* Animated Color-shifting Overlay Layers (Blue -> Red -> Yellow) */}
+        <div className="absolute inset-0 overlay-cycle-blue" />
+        <div className="absolute inset-0 overlay-cycle-red" />
+        <div className="absolute inset-0 overlay-cycle-yellow" />
+
+        {/* Ambient Vignette & Contrast Depth Gradients */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 68%, rgba(0, 30, 80, 0.5) 85%, rgba(0, 30, 80, 0.15) 95%, transparent 100%)",
+              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%)",
           }}
         />
       </div>
@@ -159,7 +164,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           </div>
 
           {/* Middle: Content Board (Slides smoothly between Idle and Form, Dead-center) */}
-          <div className="my-auto py-6 w-full max-w-lg mx-auto flex flex-col items-center justify-center">
+          <div className="my-auto py-6 w-full max-w-xl mx-auto flex flex-col items-center justify-center">
             <AnimatePresence mode="wait">
               {stage === "idle" && (
                 <motion.div
@@ -179,16 +184,17 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   />
 
                   <h1
-                    className="leading-none mb-3 text-[#001e50]"
+                    className="leading-none mb-4 text-[#001e50]"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
-                      fontSize: "clamp(3.2rem, 6.2vw, 4.8rem)",
-                      fontWeight: 700,
-                      letterSpacing: "-0.01em",
+                      fontSize: "clamp(5rem, 10vw, 7.8rem)",
+                      fontWeight: 900,
+                      letterSpacing: "-0.02em",
                     }}
                   >
                     CURA
                   </h1>
+
 
                   <p
                     className="text-[10px] sm:text-[11.5px] font-semibold tracking-widest uppercase mb-3.5 text-[#001e50]/75 max-w-md mx-auto leading-relaxed"
