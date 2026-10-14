@@ -116,22 +116,22 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
         <div className="w-full lg:w-[58%] xl:w-[56%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between p-6 sm:p-12 lg:p-16 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
           {/* Top Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 sm:gap-5">
             <img
               src={uaLogo}
               alt="University of the Assumption"
-              className="object-contain w-14 h-14 sm:w-16 sm:h-16"
-              style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.12))" }}
+              className="object-contain w-20 h-20 sm:w-24 sm:h-24"
+              style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
             />
             <div className="flex flex-col justify-center text-[#001e50]">
               <span
-                className="font-extrabold text-[13px] sm:text-[17px] tracking-widest leading-none"
+                className="font-extrabold text-[19px] sm:text-[26px] tracking-widest leading-none"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[13px] sm:text-[17px] tracking-widest leading-tight mt-1"
+                className="font-extrabold text-[19px] sm:text-[26px] tracking-widest leading-tight mt-1.5"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
