@@ -116,7 +116,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
-        <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
+        <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between items-center px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
           {/* Top Section: Clean minimal spacer on desktop; interactive title on mobile */}
           <div className="w-full flex items-center justify-center lg:justify-start">
             {/* Mobile-only University title that reveals small UA logo on tap/hover */}
@@ -154,12 +154,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 )}
               </AnimatePresence>
             </div>
-            {/* Desktop spacer to keep top clean */}
-            <div className="hidden lg:block h-8" />
+            {/* Desktop spacer to keep top clean and balanced with footer */}
+            <div className="hidden lg:block h-10" />
           </div>
 
-          {/* Middle: Content Board (Slides smoothly between Idle and Form) */}
-          <div className="my-auto py-8 w-full max-w-xl">
+          {/* Middle: Content Board (Slides smoothly between Idle and Form, Dead-center) */}
+          <div className="my-auto py-6 w-full max-w-lg mx-auto flex flex-col items-center justify-center">
             <AnimatePresence mode="wait">
               {stage === "idle" && (
                 <motion.div
@@ -168,32 +168,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -35 }}
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  className="flex flex-col items-center text-center mx-auto"
+                  className="flex flex-col items-center text-center mx-auto w-full"
                 >
                   {/* Centered CURA Logo above CURA text */}
                   <img
                     src={curaLogo}
                     alt="CURA"
-                    className="object-contain w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mb-4"
-                    style={{ filter: "drop-shadow(0 6px 18px rgba(27, 108, 168, 0.22))" }}
+                    className="object-contain w-24 h-24 sm:w-28 sm:h-28 lg:w-[124px] lg:h-[124px] mb-3"
+                    style={{ filter: "drop-shadow(0 8px 22px rgba(27, 108, 168, 0.22))" }}
                   />
 
                   <h1
-                    className="leading-none mb-4 text-[#001e50]"
+                    className="leading-none mb-3.5 text-[#001e50]"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
-                      fontSize: "clamp(4.5rem, 10vw, 8.5rem)",
+                      fontSize: "clamp(4.2rem, 8.5vw, 6.8rem)",
                       fontWeight: 800,
-                      transform: "scaleY(1.18)",
+                      transform: "scaleY(1.05)",
                       transformOrigin: "center",
-                      letterSpacing: "-0.01em",
+                      letterSpacing: "-0.015em",
                     }}
                   >
                     CURA
                   </h1>
 
                   <p
-                    className="text-[10px] sm:text-[12px] font-semibold tracking-widest uppercase mb-4 text-[#001e50]/75 max-w-md"
+                    className="text-[10px] sm:text-[11.5px] font-semibold tracking-widest uppercase mb-3.5 text-[#001e50]/75 max-w-md mx-auto leading-relaxed"
                     style={{
                       fontFamily: "'Inter', sans-serif",
                       letterSpacing: "0.12em",
@@ -203,10 +203,9 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   </p>
 
                   <p
-                    className="font-bold mb-10 text-[#001e50]/90 text-sm sm:text-base"
+                    className="font-bold mb-8 text-[#001e50]/90 text-sm sm:text-base tracking-wide"
                     style={{
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      letterSpacing: "0.01em",
                     }}
                   >
                     Compassion. Care. Connected.
@@ -235,8 +234,9 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 35 }}
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  className="w-full max-w-md"
+                  className="w-full max-w-md mx-auto"
                 >
+
                   <div className="mb-6 text-center">
                     <h2
                       className="text-[#001e50] font-bold text-2xl mb-1.5"
@@ -445,7 +445,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           </div>
 
           {/* Footer inside White Panel */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
+          <div className="w-full pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
             <span>CURA System</span>
             <span>University of the Assumption</span>
           </div>
