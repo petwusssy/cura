@@ -206,29 +206,20 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                       fontSize: "clamp(4.5rem, 9.5vw, 7.5rem)",
                       fontWeight: 800,
                       letterSpacing: "-0.035em",
+                      WebkitTextStroke: "1px #001e50",
                     }}
                   >
                     CURA
                   </h1>
 
-
                   <p
-                    className="text-[10px] sm:text-[11.5px] font-semibold tracking-widest uppercase mb-3.5 text-[#001e50]/75 max-w-md mx-auto leading-relaxed"
+                    className="text-[10px] sm:text-[11.5px] font-semibold tracking-widest uppercase mb-8 text-[#001e50]/75 max-w-md mx-auto leading-relaxed"
                     style={{
                       fontFamily: "'Inter', sans-serif",
                       letterSpacing: "0.12em",
                     }}
                   >
                     Centralized University Healthcare Records and Administration
-                  </p>
-
-                  <p
-                    className="font-bold mb-8 text-[#001e50]/90 text-sm sm:text-base tracking-wide"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}
-                  >
-                    Compassion. Care. Connected.
                   </p>
 
                   <motion.button
