@@ -107,7 +107,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         {/* Base Static Navy Blue Overlay (Maintains transparent right edge) */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
-            stage !== "idle" && !isRightPanelHovered ? "opacity-40" : "opacity-100"
+            stage !== "idle" && !isRightPanelHovered ? "opacity-0" : "opacity-100"
           }`}
           style={{
             background:
@@ -115,25 +115,23 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           }}
         />
 
-        {/* Ambient Vignette & Contrast Depth Gradients (Underneath color overlays) */}
-        <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
-            stage !== "idle" && !isRightPanelHovered ? "opacity-30" : "opacity-100"
-          }`}
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 65%, transparent 100%)",
-          }}
-        />
-
-        {/* Light Blue Overlay: 85/15 ratio (85% rich coverage, 15% smooth fade at right edge) */}
+        {/* Light Blue Overlay: Identical 3-part composition & stops to Dark Blue overlay */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
             stage !== "idle" && !isRightPanelHovered ? "opacity-100" : "opacity-0"
           }`}
           style={{
             background:
-              "linear-gradient(to right, rgba(14, 95, 155, 0.90) 0%, rgba(16, 105, 170, 0.88) 50%, rgba(18, 115, 182, 0.85) 65%, rgba(22, 122, 192, 0.82) 75%, rgba(26, 130, 202, 0.75) 82%, rgba(32, 142, 215, 0.62) 88%, rgba(42, 158, 228, 0.42) 92%, rgba(50, 170, 236, 0.22) 95%, rgba(56, 180, 240, 0.08) 97.5%, rgba(56, 180, 240, 0) 100%)",
+              "linear-gradient(to bottom, rgba(14, 116, 178, 0.85) 0%, rgba(14, 116, 178, 0.35) 25%, transparent 50%), linear-gradient(to top, rgba(14, 116, 178, 0.9) 0%, rgba(14, 116, 178, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(14, 116, 178, 0.88) 0%, rgba(14, 116, 178, 0.85) 60%, rgba(2, 132, 199, 0.5) 82%, rgba(56, 189, 248, 0.15) 94%, transparent 100%)",
+          }}
+        />
+
+        {/* Ambient Vignette & Contrast Depth Gradients */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(105deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 65%, transparent 100%)",
           }}
         />
 
