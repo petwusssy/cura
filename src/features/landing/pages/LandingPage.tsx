@@ -479,8 +479,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         >
           {/* Top Bar: UNIVERSITY OF THE ASSUMPTION (Left) & UA Logo (Top Right Corner) */}
           <div className="w-full flex items-center justify-between text-white pointer-events-auto h-[128px] lg:h-[154px]">
-            {/* Left: UNIVERSITY OF THE ASSUMPTION */}
-            <div className="flex flex-col justify-center select-none">
+            {/* Left: UNIVERSITY OF THE ASSUMPTION (Centered) */}
+            <div className="flex flex-col items-center justify-center text-center select-none">
               <span
                 className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
@@ -495,16 +495,23 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               </span>
             </div>
 
-            {/* Right: UA Logo in Top Right Corner (Katapat ng text) */}
-            <div className="shrink-0 pl-4">
+            {/* Right: UA Logo in Top Right Corner (+10% size, redirect to UA web) */}
+            <a
+              href="https://web.ua.edu.ph/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 pl-4 block group"
+              title="Visit University of the Assumption website"
+            >
               <motion.img
                 src={uaLogo}
                 alt="University of the Assumption Logo"
-                className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[100px] lg:h-[100px] xl:w-[110px] xl:h-[110px] drop-shadow-[0_6px_22px_rgba(0,0,0,0.5)] cursor-pointer"
+                className="object-contain w-[88px] h-[88px] sm:w-[98px] sm:h-[98px] lg:w-[110px] lg:h-[110px] xl:w-[122px] xl:h-[122px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] cursor-pointer"
                 whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 350, damping: 22 }}
               />
-            </div>
+            </a>
           </div>
 
           {/* Bottom: UA Tagline */}
