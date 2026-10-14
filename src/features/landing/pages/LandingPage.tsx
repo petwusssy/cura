@@ -115,32 +115,32 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
-        <div className="w-full lg:w-[58%] xl:w-[56%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between p-6 sm:p-12 lg:p-16 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
+        <div className="w-full lg:w-[58%] xl:w-[56%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
           {/* Top Logo */}
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap sm:flex-nowrap">
             <div className="flex items-center gap-3 sm:gap-4 shrink-0">
               <img
                 src={curaLogo}
                 alt="CURA"
-                className="object-contain w-20 h-20 sm:w-[100px] sm:h-[100px]"
-                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
+                className="object-contain w-16 h-16 sm:w-20 sm:h-20 lg:w-[92px] lg:h-[92px]"
+                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
               />
               <img
                 src={uaLogo}
                 alt="University of the Assumption"
-                className="object-contain w-24 h-24 sm:w-[120px] sm:h-[120px]"
-                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
+                className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[110px] lg:h-[110px]"
+                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
               />
             </div>
-            <div className="flex flex-col justify-center text-[#001e50]">
+            <div className="flex flex-col justify-center text-[#001e50] shrink-0">
               <span
-                className="font-extrabold text-[23px] sm:text-[31px] tracking-widest leading-none"
+                className="font-extrabold text-[18px] sm:text-[23px] lg:text-[26px] tracking-wider leading-none whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE
               </span>
               <span
-                className="font-extrabold text-[23px] sm:text-[31px] tracking-widest leading-tight mt-1.5"
+                className="font-extrabold text-[18px] sm:text-[23px] lg:text-[26px] tracking-wider leading-tight mt-1.5 whitespace-nowrap"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 ASSUMPTION
