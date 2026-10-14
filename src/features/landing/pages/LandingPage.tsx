@@ -204,11 +204,11 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                   className="flex flex-col items-center text-center mx-auto w-full"
                 >
-                  {/* Centered CURA Logo above CURA text */}
+                  {/* Centered CURA Logo above CURA text (+10%) */}
                   <img
                     src={curaLogo}
                     alt="CURA"
-                    className="object-contain w-24 h-24 sm:w-28 sm:h-28 lg:w-[124px] lg:h-[124px] mb-3"
+                    className="object-contain w-[106px] h-[106px] sm:w-[124px] sm:h-[124px] lg:w-[138px] lg:h-[138px] mb-3.5"
                     style={{ filter: "drop-shadow(0 8px 22px rgba(27, 108, 168, 0.22))" }}
                   />
 
@@ -216,7 +216,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     className="leading-none mb-4 text-[#001e50]"
                     style={{
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: "clamp(4.5rem, 9.5vw, 7.5rem)",
+                      fontSize: "clamp(5rem, 10.5vw, 8.25rem)",
                       fontWeight: 800,
                       letterSpacing: "-0.035em",
                       WebkitTextStroke: "1px #001e50",
@@ -226,7 +226,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   </h1>
 
                   <p
-                    className="text-[10px] sm:text-[11.5px] font-semibold tracking-widest uppercase mb-8 text-[#001e50]/75 max-w-md mx-auto leading-relaxed"
+                    className="text-[11px] sm:text-[12.5px] font-semibold tracking-widest uppercase mb-8 sm:mb-9 text-[#001e50]/75 max-w-lg mx-auto leading-relaxed"
                     style={{
                       fontFamily: "'Inter', sans-serif",
                       letterSpacing: "0.12em",
@@ -237,14 +237,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
 
                   <motion.button
                     onClick={() => setStage("form")}
-                    className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-xl font-semibold text-sm bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50] transition-colors duration-300 shadow-md hover:shadow-lg"
+                    className="group inline-flex items-center gap-3 px-9 py-4 rounded-xl font-semibold text-base bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50] transition-colors duration-300 shadow-md hover:shadow-lg"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <span>Login to CURA</span>
                     <ChevronRight
-                      size={16}
+                      size={18}
                       className="group-hover:translate-x-1 transition-transform"
                     />
                   </motion.button>
