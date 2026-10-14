@@ -106,7 +106,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.4) 30%, transparent 60%), linear-gradient(110deg, rgba(0, 30, 80, 0.95) 0%, rgba(0, 30, 80, 0.7) 45%, rgba(0, 30, 80, 0.1) 85%, transparent 100%)",
+              "linear-gradient(to top, rgba(0, 20, 60, 0.9) 0%, rgba(0, 20, 60, 0.5) 30%, transparent 60%), linear-gradient(105deg, rgba(0, 30, 80, 0.88) 0%, rgba(0, 30, 80, 0.85) 68%, rgba(0, 30, 80, 0.5) 85%, rgba(0, 30, 80, 0.15) 95%, transparent 100%)",
           }}
         />
       </div>
