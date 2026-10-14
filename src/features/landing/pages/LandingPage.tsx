@@ -248,7 +248,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   className="w-full max-w-[420px] mx-auto"
                 >
 
-                  <div className="mb-6 text-center">
+                  <div className="mb-6 text-center flex flex-col items-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 mb-3.5 flex items-center justify-center">
+                      <img
+                        src={curaLogo}
+                        alt="CURA Logo"
+                        className="w-full h-full object-contain drop-shadow-sm select-none"
+                        draggable={false}
+                      />
+                    </div>
                     <h2
                       className="text-[#001e50] font-bold text-[28px] sm:text-[30px] mb-2"
                       style={{
