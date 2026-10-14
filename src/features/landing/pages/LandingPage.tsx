@@ -205,13 +205,37 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                   className="flex flex-col items-center text-center mx-auto w-full"
                 >
-                  {/* Centered CURA Logo above CURA text (+10%) */}
-                  <img
-                    src={curaLogo}
-                    alt="CURA"
-                    className="object-contain w-[106px] h-[106px] sm:w-[124px] sm:h-[124px] lg:w-[138px] lg:h-[138px] mb-3.5"
-                    style={{ filter: "drop-shadow(0 8px 22px rgba(27, 108, 168, 0.22))" }}
-                  />
+                  {/* Centered CURA Logo above CURA text (+10%) with mobile-style shine & pulse glow */}
+                  <div className="relative flex items-center justify-center w-[106px] h-[106px] sm:w-[124px] sm:h-[124px] lg:w-[138px] lg:h-[138px] mb-3.5 cura-logo-pulse-glow select-none">
+                    <img
+                      src={curaLogo}
+                      alt="CURA"
+                      className="w-full h-full object-contain select-none"
+                      draggable={false}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none overflow-hidden"
+                      style={{
+                        WebkitMaskImage: `url(${curaLogo})`,
+                        WebkitMaskSize: "contain",
+                        WebkitMaskRepeat: "no-repeat",
+                        WebkitMaskPosition: "center",
+                        maskImage: `url(${curaLogo})`,
+                        maskSize: "contain",
+                        maskRepeat: "no-repeat",
+                        maskPosition: "center",
+                      }}
+                    >
+                      <div
+                        className="absolute left-0 right-0 h-[45%] pointer-events-none cura-logo-shine-bar"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(186,230,253,0.5) 30%, rgba(255,255,255,0.95) 50%, rgba(186,230,253,0.5) 70%, rgba(255,255,255,0) 100%)",
+                          mixBlendMode: "screen",
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   <h1
                     className="leading-none mb-4 text-[#001e50]"
@@ -263,13 +287,35 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 >
 
                   <div className="mb-4 sm:mb-4.5 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 sm:w-[74px] sm:h-[74px] mb-2.5 flex items-center justify-center">
+                    <div className="w-16 h-16 sm:w-[74px] sm:h-[74px] mb-2.5 flex items-center justify-center relative cura-logo-pulse-glow select-none">
                       <img
                         src={curaLogo}
                         alt="CURA Logo"
-                        className="w-full h-full object-contain drop-shadow-sm select-none"
+                        className="w-full h-full object-contain select-none"
                         draggable={false}
                       />
+                      <div
+                        className="absolute inset-0 pointer-events-none overflow-hidden"
+                        style={{
+                          WebkitMaskImage: `url(${curaLogo})`,
+                          WebkitMaskSize: "contain",
+                          WebkitMaskRepeat: "no-repeat",
+                          WebkitMaskPosition: "center",
+                          maskImage: `url(${curaLogo})`,
+                          maskSize: "contain",
+                          maskRepeat: "no-repeat",
+                          maskPosition: "center",
+                        }}
+                      >
+                        <div
+                          className="absolute left-0 right-0 h-[45%] pointer-events-none cura-logo-shine-bar"
+                          style={{
+                            background:
+                              "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(186,230,253,0.5) 30%, rgba(255,255,255,0.95) 50%, rgba(186,230,253,0.5) 70%, rgba(255,255,255,0) 100%)",
+                            mixBlendMode: "screen",
+                          }}
+                        />
+                      </div>
                     </div>
                     <h2
                       className="text-[#001e50] font-bold text-[24px] sm:text-[26px] mb-1"

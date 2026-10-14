@@ -504,3 +504,32 @@ html {
   will-change: opacity;
 }
 
+/* CURA Logo Mobile-style Masked Shine Sweep and Ambient Glow */
+@keyframes curaLogoShineSweep {
+  0%, 100% {
+    transform: translateY(-110%);
+  }
+  50% {
+    transform: translateY(220%);
+  }
+}
+
+@keyframes curaLogoPulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 8px 20px rgba(27, 108, 168, 0.22)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.20));
+  }
+  50% {
+    filter: drop-shadow(0 10px 28px rgba(27, 108, 168, 0.40)) drop-shadow(0 0 22px rgba(56, 189, 248, 0.50));
+  }
+}
+
+.cura-logo-pulse-glow {
+  animation: curaLogoPulseGlow 4s ease-in-out infinite;
+  will-change: filter;
+}
+
+.cura-logo-shine-bar {
+  animation: curaLogoShineSweep 5s ease-in-out infinite;
+  will-change: transform;
+}
+
