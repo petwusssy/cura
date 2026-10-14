@@ -186,10 +186,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   <h1
                     className="leading-none mb-4 text-[#001e50]"
                     style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: "clamp(5rem, 10vw, 7.8rem)",
-                      fontWeight: 900,
-                      letterSpacing: "-0.02em",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontSize: "clamp(4.5rem, 9.5vw, 7.5rem)",
+                      fontWeight: 800,
+                      letterSpacing: "-0.035em",
                     }}
                   >
                     CURA
