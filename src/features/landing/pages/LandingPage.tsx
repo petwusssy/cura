@@ -31,6 +31,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
+  const [isUaHovered, setIsUaHovered] = useState(false)
 
   useEffect(() => {
     if (stage === "splitting") {
@@ -116,29 +117,45 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
       <div className="relative z-10 flex w-full h-full min-h-screen">
         {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes ~58% width) ── */}
         <div className="w-full lg:w-1/2 h-full min-h-screen bg-white relative z-20 flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-8 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
-          {/* Top: UA Logo Aligned near Center Seam with University text */}
-          <div className="w-full flex items-center justify-center lg:justify-end lg:pr-6 xl:pr-8">
-            <img
-              src={uaLogo}
-              alt="University of the Assumption"
-              className="object-contain w-20 h-20 sm:w-24 sm:h-24 lg:w-[130px] lg:h-[130px]"
-              style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))" }}
-            />
-            {/* Mobile-only University text */}
-            <div className="flex flex-col text-[#001e50] ml-3 lg:hidden text-left">
-              <span
-                className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                UNIVERSITY OF THE
-              </span>
-              <span
-                className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                ASSUMPTION
-              </span>
+          {/* Top Section: Clean minimal spacer on desktop; interactive title on mobile */}
+          <div className="w-full flex items-center justify-center lg:justify-start">
+            {/* Mobile-only University title that reveals small UA logo on tap/hover */}
+            <div
+              className="inline-flex items-center gap-2.5 cursor-pointer select-none py-1.5 px-3 rounded-xl active:bg-slate-100 lg:hidden"
+              onClick={() => setIsUaHovered((prev) => !prev)}
+              onMouseEnter={() => setIsUaHovered(true)}
+              onMouseLeave={() => setIsUaHovered(false)}
+            >
+              <div className="flex flex-col text-[#001e50] text-center">
+                <span
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  UNIVERSITY OF THE
+                </span>
+                <span
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  ASSUMPTION
+                </span>
+              </div>
+              <AnimatePresence>
+                {isUaHovered && (
+                  <motion.img
+                    src={uaLogo}
+                    alt="UA Logo"
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.4 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="w-9 h-9 object-contain drop-shadow-sm ml-1"
+                  />
+                )}
+              </AnimatePresence>
             </div>
+            {/* Desktop spacer to keep top clean */}
+            <div className="hidden lg:block h-8" />
           </div>
 
           {/* Middle: Content Board (Slides smoothly between Idle and Form) */}
@@ -435,21 +452,48 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         </div>
 
         {/* ── RIGHT OVERLAY SECTION (Takes half width 50%) ── */}
-        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-6 xl:pl-8 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
-          {/* Top: UNIVERSITY OF THE ASSUMPTION in White (Aligned vertically with logos) */}
-          <div className="flex flex-col justify-center text-white pointer-events-auto h-[128px] lg:h-[154px]">
-            <span
-              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap drop-shadow-md"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        <div className="hidden lg:flex w-1/2 h-full min-h-screen relative flex-col justify-between pl-8 xl:pl-12 pr-8 lg:pr-12 xl:pr-16 pt-6 sm:pt-8 lg:pt-10 pb-8 lg:pb-12 xl:pb-16 z-10 pointer-events-none">
+          {/* Top: UNIVERSITY OF THE ASSUMPTION in White with hover to reveal small UA logo */}
+          <div className="flex items-center text-white pointer-events-auto h-[128px] lg:h-[154px]">
+            <div
+              className="relative inline-flex items-center gap-4 cursor-pointer select-none group py-2 px-3 -mx-3 rounded-2xl hover:bg-white/5 transition-all duration-200"
+              onMouseEnter={() => setIsUaHovered(true)}
+              onMouseLeave={() => setIsUaHovered(false)}
             >
-              UNIVERSITY OF THE
-            </span>
-            <span
-              className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap drop-shadow-md"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              ASSUMPTION
-            </span>
+              <div className="flex flex-col justify-center">
+                <span
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap drop-shadow-md group-hover:text-amber-200/95 transition-colors duration-200"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  UNIVERSITY OF THE
+                </span>
+                <span
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap drop-shadow-md group-hover:text-amber-200/95 transition-colors duration-200"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  ASSUMPTION
+                </span>
+              </div>
+
+              {/* Small UA Logo revealed when pointing/hovering on University text */}
+              <AnimatePresence>
+                {isUaHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.35, x: -10, rotate: -8 }}
+                    animate={{ opacity: 1, scale: 1, x: 0, rotate: 0 }}
+                    exit={{ opacity: 0, scale: 0.35, x: -8, rotate: 8 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 24 }}
+                    className="shrink-0 flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+                  >
+                    <img
+                      src={uaLogo}
+                      alt="University of the Assumption Logo"
+                      className="w-11 h-11 lg:w-13 lg:h-13 xl:w-14 xl:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Bottom: UA Tagline */}
