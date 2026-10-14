@@ -217,7 +217,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                   className="w-full max-w-md"
                 >
-                  <div className="mb-6">
+                  <div className="mb-6 text-center">
                     <h2
                       className="text-[#001e50] font-bold text-2xl mb-1.5"
                       style={{
