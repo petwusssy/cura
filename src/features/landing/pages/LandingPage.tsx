@@ -205,8 +205,8 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                   className="flex flex-col items-center text-center mx-auto w-full"
                 >
-                  {/* Centered CURA Logo above CURA text (+10%) with mobile-style shine & pulse glow */}
-                  <div className="relative flex items-center justify-center w-[106px] h-[106px] sm:w-[124px] sm:h-[124px] lg:w-[138px] lg:h-[138px] mb-3.5 cura-logo-pulse-glow select-none">
+                  {/* Centered CURA Logo above CURA text (+10%) with mobile-style shine */}
+                  <div className="relative flex items-center justify-center w-[106px] h-[106px] sm:w-[124px] sm:h-[124px] lg:w-[138px] lg:h-[138px] mb-3.5 select-none">
                     <img
                       src={curaLogo}
                       alt="CURA"
@@ -287,7 +287,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                 >
 
                   <div className="mb-4 sm:mb-4.5 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 sm:w-[74px] sm:h-[74px] mb-2.5 flex items-center justify-center relative cura-logo-pulse-glow select-none">
+                    <div className="w-16 h-16 sm:w-[74px] sm:h-[74px] mb-2.5 flex items-center justify-center relative select-none">
                       <img
                         src={curaLogo}
                         alt="CURA Logo"
