@@ -131,15 +131,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               onMouseEnter={() => setIsUaHovered(true)}
               onMouseLeave={() => setIsUaHovered(false)}
             >
-              <div className="flex flex-col text-center filter drop-shadow-sm">
+              <div className="flex flex-col text-[#001e50] text-center">
                 <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap animated-gradient-text-ryb"
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   UNIVERSITY OF THE
                 </span>
                 <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap animated-gradient-text-ryb"
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   ASSUMPTION
@@ -464,15 +464,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               onMouseEnter={() => setIsUaHovered(true)}
               onMouseLeave={() => setIsUaHovered(false)}
             >
-              <div className="flex flex-col justify-center filter drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+              <div className="flex flex-col justify-center">
                 <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap animated-gradient-text-ryb"
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap text-white drop-shadow-md group-hover:text-amber-200/90 transition-colors duration-200"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   UNIVERSITY OF THE
                 </span>
                 <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap animated-gradient-text-ryb"
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap text-white drop-shadow-md group-hover:text-amber-200/90 transition-colors duration-200"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   ASSUMPTION
