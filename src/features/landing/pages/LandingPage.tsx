@@ -101,10 +101,13 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           alt="University of the Assumption campus"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Navy Blue Overlay */}
+        {/* Navy Blue Gradient to Transparent Overlay */}
         <div
           className="absolute inset-0"
-          style={{ background: "rgba(0, 30, 80, 0.8)" }}
+          style={{
+            background:
+              "linear-gradient(to top, rgba(0, 20, 60, 0.85) 0%, rgba(0, 20, 60, 0.4) 30%, transparent 60%), linear-gradient(110deg, rgba(0, 30, 80, 0.95) 0%, rgba(0, 30, 80, 0.7) 45%, rgba(0, 30, 80, 0.1) 85%, transparent 100%)",
+          }}
         />
       </div>
 
@@ -423,7 +426,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
         <div className="hidden lg:flex flex-1 relative flex-col justify-end p-8 lg:p-12 xl:p-16 z-10 pointer-events-none">
           <div className="max-w-md pointer-events-auto">
             <p
-              className="text-white/95 font-bold text-sm sm:text-base lg:text-lg leading-relaxed drop-shadow-md"
+              className="text-white font-bold text-sm sm:text-base lg:text-lg leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               The First Catholic Archdiocesan <br />
