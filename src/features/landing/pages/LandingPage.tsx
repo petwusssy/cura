@@ -126,15 +126,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               onMouseEnter={() => setIsUaHovered(true)}
               onMouseLeave={() => setIsUaHovered(false)}
             >
-              <div className="flex flex-col text-[#001e50] text-center">
+              <div className="flex flex-col text-center filter drop-shadow-sm">
                 <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap animated-gradient-text-ryb"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   UNIVERSITY OF THE
                 </span>
                 <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
+                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap animated-gradient-text-ryb"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   ASSUMPTION
@@ -179,14 +179,12 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   />
 
                   <h1
-                    className="leading-none mb-3.5 text-[#001e50]"
+                    className="leading-none mb-3 text-[#001e50]"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
-                      fontSize: "clamp(4.2rem, 8.5vw, 6.8rem)",
-                      fontWeight: 800,
-                      transform: "scaleY(1.05)",
-                      transformOrigin: "center",
-                      letterSpacing: "-0.015em",
+                      fontSize: "clamp(3.2rem, 6.2vw, 4.8rem)",
+                      fontWeight: 700,
+                      letterSpacing: "-0.01em",
                     }}
                   >
                     CURA
@@ -460,15 +458,15 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               onMouseEnter={() => setIsUaHovered(true)}
               onMouseLeave={() => setIsUaHovered(false)}
             >
-              <div className="flex flex-col justify-center">
+              <div className="flex flex-col justify-center filter drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap drop-shadow-md group-hover:text-amber-200/95 transition-colors duration-200"
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-none whitespace-nowrap animated-gradient-text-ryb"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   UNIVERSITY OF THE
                 </span>
                 <span
-                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap drop-shadow-md group-hover:text-amber-200/95 transition-colors duration-200"
+                  className="font-extrabold text-[22px] sm:text-[26px] lg:text-[28px] xl:text-[32px] tracking-wider leading-tight mt-2 whitespace-nowrap animated-gradient-text-ryb"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
                   ASSUMPTION
