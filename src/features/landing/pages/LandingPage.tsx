@@ -477,9 +477,16 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           </div>
 
           {/* Footer inside White Panel */}
-          <div className="w-full pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
+          <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
             <span>CURA System</span>
-            <span>University of the Assumption</span>
+            <div className="text-right flex flex-col items-end leading-tight">
+              <span className="font-semibold text-[10px] sm:text-[10.5px] uppercase tracking-wider text-[#001e50]/60">
+                DEVELOPED BY : ANTHROPEAK
+              </span>
+              <span className="text-[9.5px] sm:text-[10px] text-[#001e50]/45 tracking-wider mt-0.5">
+                GIRADO, NATIVIDAD, SALAC
+              </span>
+            </div>
           </div>
         </div>
 
