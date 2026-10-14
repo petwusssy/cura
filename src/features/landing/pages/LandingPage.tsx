@@ -245,10 +245,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 35 }}
                   transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  className="w-full max-w-md mx-auto"
+                  className="w-full max-w-[360px] mx-auto"
                 >
 
-                  <div className="mb-6 text-center">
+                  <div className="mb-5 text-center">
                     <h2
                       className="text-[#001e50] font-bold text-2xl mb-1.5"
                       style={{
@@ -266,7 +266,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     </p>
                   </div>
 
-                  <div className="w-full rounded-2xl p-6 sm:p-7 bg-[#F0F7FA] border border-[#a8cde5]/50 shadow-sm">
+                  <div className="w-full rounded-2xl p-5 sm:p-6 bg-[#F0F7FA] border border-[#a8cde5]/50 shadow-sm">
                     <form onSubmit={handleLogin} className="flex flex-col gap-4">
                       {/* Username */}
                       <div>
