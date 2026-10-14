@@ -514,21 +514,19 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
               </span>
             </div>
 
-            {/* Right: UA Logo in Top Right Corner (+10% size, redirect to UA web) */}
+            {/* Right: UA Logo in Top Right Corner (Redirect to UA web, clickable without hover animation) */}
             <a
               href="https://web.ua.edu.ph/"
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 pl-4 block group"
+              className="shrink-0 pl-4 block cursor-pointer select-none"
               title="Visit University of the Assumption website"
             >
-              <motion.img
+              <img
                 src={uaLogo}
                 alt="University of the Assumption Logo"
-                className="object-contain w-[88px] h-[88px] sm:w-[98px] sm:h-[98px] lg:w-[110px] lg:h-[110px] xl:w-[122px] xl:h-[122px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] cursor-pointer"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 350, damping: 22 }}
+                className="object-contain w-[88px] h-[88px] sm:w-[98px] sm:h-[98px] lg:w-[110px] lg:h-[110px] xl:w-[122px] xl:h-[122px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
+                draggable={false}
               />
             </a>
           </div>
