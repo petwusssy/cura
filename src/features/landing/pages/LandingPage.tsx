@@ -126,14 +126,14 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
           }}
         />
 
-        {/* Light Blue Overlay: Ultra-smooth 10-stop eased horizontal fade with zero harsh lines */}
+        {/* Light Blue Overlay: 85/15 ratio (85% rich coverage, 15% smooth fade at right edge) */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out ${
             stage !== "idle" && !isRightPanelHovered ? "opacity-100" : "opacity-0"
           }`}
           style={{
             background:
-              "linear-gradient(to right, rgba(14, 95, 155, 0.90) 0%, rgba(16, 105, 170, 0.86) 48%, rgba(18, 115, 182, 0.80) 55%, rgba(24, 128, 196, 0.70) 62%, rgba(30, 140, 210, 0.56) 69%, rgba(40, 155, 222, 0.40) 76%, rgba(50, 170, 232, 0.25) 83%, rgba(56, 180, 240, 0.12) 89%, rgba(56, 180, 240, 0.04) 94%, rgba(56, 180, 240, 0) 100%)",
+              "linear-gradient(to right, rgba(14, 95, 155, 0.90) 0%, rgba(16, 105, 170, 0.88) 50%, rgba(18, 115, 182, 0.85) 65%, rgba(22, 122, 192, 0.82) 75%, rgba(26, 130, 202, 0.75) 82%, rgba(32, 142, 215, 0.62) 88%, rgba(42, 158, 228, 0.42) 92%, rgba(50, 170, 236, 0.22) 95%, rgba(56, 180, 240, 0.08) 97.5%, rgba(56, 180, 240, 0) 100%)",
           }}
         />
 
