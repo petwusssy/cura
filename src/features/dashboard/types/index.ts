@@ -44,6 +44,7 @@ export interface Patient {
   guardianName?: string;
   gradeLevel?: string;
   isClaimed?: boolean;
+  avatar?: string;
 }
 
 export interface Treatment {

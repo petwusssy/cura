@@ -121,10 +121,19 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
           {/* Avatar + Name */}
           <div className="flex flex-col items-center text-center pb-5 border-b border-gray-100 mb-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold mb-3"
-              style={{ background: PRIMARY }}>
-              {patient.name.toUpperCase().split(' ').map(n => n[0]).join('').slice(0, 2)}
-            </div>
+            {patient.avatar ? (
+              <img
+                src={patient.avatar}
+                alt={patient.name}
+                className="w-16 h-16 rounded-2xl object-cover mb-3 border-2 shadow-sm"
+                style={{ borderColor: PRIMARY }}
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold mb-3"
+                style={{ background: PRIMARY }}>
+                {patient.name.toUpperCase().split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </div>
+            )}
             <div className="flex items-center gap-2 justify-center">
               <h2 className="text-gray-900 text-lg font-bold uppercase">{patient.name}</h2>
               {patient.isClaimed && (
