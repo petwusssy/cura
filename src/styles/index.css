@@ -94,31 +94,31 @@
 }
 
 /* ═══════════════════════════════════════════════
-   Dark Mode Corrections for Hardcoded Colors
+   Dark Mode Corrections for Hardcoded Colors (Dashboard only)
    ═══════════════════════════════════════════════ */
-:is(.dark, .ocean) .bg-white:not([class*="dark:bg-"]) {
+:is(.dark, .ocean) .dashboard-scope .bg-white:not([class*="dark:bg-"]) {
   background-color: var(--card) !important;
 }
-:is(.dark, .ocean) .bg-gray-50:not([class*="dark:bg-"]),
-:is(.dark, .ocean) .bg-gray-100:not([class*="dark:bg-"]) {
+:is(.dark, .ocean) .dashboard-scope .bg-gray-50:not([class*="dark:bg-"]),
+:is(.dark, .ocean) .dashboard-scope .bg-gray-100:not([class*="dark:bg-"]) {
   background-color: var(--background) !important;
 }
-:is(.dark, .ocean) .text-black:not([class*="dark:text-"]),
-:is(.dark, .ocean) .text-gray-900:not([class*="dark:text-"]),
-:is(.dark, .ocean) .text-gray-800:not([class*="dark:text-"]) {
+:is(.dark, .ocean) .dashboard-scope .text-black:not([class*="dark:text-"]),
+:is(.dark, .ocean) .dashboard-scope .text-gray-900:not([class*="dark:text-"]),
+:is(.dark, .ocean) .dashboard-scope .text-gray-800:not([class*="dark:text-"]) {
   color: var(--foreground) !important;
 }
-:is(.dark, .ocean) .text-gray-700:not([class*="dark:text-"]),
-:is(.dark, .ocean) .text-gray-600:not([class*="dark:text-"]),
-:is(.dark, .ocean) .text-gray-500:not([class*="dark:text-"]) {
+:is(.dark, .ocean) .dashboard-scope .text-gray-700:not([class*="dark:text-"]),
+:is(.dark, .ocean) .dashboard-scope .text-gray-600:not([class*="dark:text-"]),
+:is(.dark, .ocean) .dashboard-scope .text-gray-500:not([class*="dark:text-"]) {
   color: var(--muted-foreground) !important;
 }
-:is(.dark, .ocean) .border-gray-100:not([class*="dark:border-"]),
-:is(.dark, .ocean) .border-gray-200:not([class*="dark:border-"]),
-:is(.dark, .ocean) .border-gray-300:not([class*="dark:border-"]) {
+:is(.dark, .ocean) .dashboard-scope .border-gray-100:not([class*="dark:border-"]),
+:is(.dark, .ocean) .dashboard-scope .border-gray-200:not([class*="dark:border-"]),
+:is(.dark, .ocean) .dashboard-scope .border-gray-300:not([class*="dark:border-"]) {
   border-color: var(--border) !important;
 }
-:is(.dark, .ocean) .shadow-sm, :is(.dark, .ocean) .shadow-md, :is(.dark, .ocean) .shadow-lg {
+:is(.dark, .ocean) .dashboard-scope .shadow-sm, :is(.dark, .ocean) .dashboard-scope .shadow-md, :is(.dark, .ocean) .dashboard-scope .shadow-lg {
   box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
 }
 
