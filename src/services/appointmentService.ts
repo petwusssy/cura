@@ -46,5 +46,26 @@ export const appointmentService = {
       console.error(`Failed to delete request ${id}:`, error);
       return false;
     }
+  },
+
+  getAvailability: async (): Promise<string[]> => {
+    try {
+      const response = await api.get('/appointments/availability/');
+      return response.data?.unavailable_dates || [];
+    } catch (error) {
+      console.error('Failed to fetch appointment availability:', error);
+      return [];
+    }
+  },
+
+  saveAvailability: async (unavailable_dates: string[]): Promise<boolean> => {
+    try {
+      await api.post('/appointments/availability/', { unavailable_dates });
+      return true;
+    } catch (error) {
+      console.error('Failed to save appointment availability:', error);
+      return false;
+    }
   }
 };
+
