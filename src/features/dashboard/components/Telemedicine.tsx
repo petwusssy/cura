@@ -138,6 +138,7 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
   // Date Availability State
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
+  const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
   const [availSaving, setAvailSaving] = useState(false);
   const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
 
@@ -149,13 +150,20 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
 
   const openAvailabilityModal = async () => {
     setShowAvailabilityModal(true);
-    const dates = await telemedicineService.getAvailability();
-    setUnavailableDates(dates);
+    const data = await telemedicineService.getAvailability();
+    setUnavailableDates(data.unavailable_dates || []);
+    setUnavailableTimes(data.unavailable_times || []);
   };
 
   const toggleDate = (dateStr: string) => {
     setUnavailableDates(prev =>
       prev.includes(dateStr) ? prev.filter(d => d !== dateStr) : [...prev, dateStr]
+    );
+  };
+
+  const toggleTime = (timeKey: string) => {
+    setUnavailableTimes(prev =>
+      prev.includes(timeKey) ? prev.filter(t => t !== timeKey) : [...prev, timeKey]
     );
   };
 
@@ -179,7 +187,7 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
 
   const handleSaveAvailability = async () => {
     setAvailSaving(true);
-    const success = await telemedicineService.saveAvailability(unavailableDates);
+    const success = await telemedicineService.saveAvailability(unavailableDates, unavailableTimes);
     setAvailSaving(false);
     if (success) {
       setShowAvailabilityModal(false);
@@ -187,6 +195,7 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
       alert("Failed to save telemedicine availability. Please try again.");
     }
   };
+
 
   useEffect(() => {
     const t = setInterval(() => setTimeTick(Date.now()), 30000);
@@ -709,6 +718,68 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
                 </div>
               </div>
 
+              {/* Consultation Time Slots Available */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Consultation Time Slots
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Click to toggle available vs closed
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleTime('morning')}
+                    className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                      unavailableTimes.includes('morning')
+                        ? 'bg-rose-50 border-rose-300 text-rose-700 shadow-sm'
+                        : 'bg-white border-gray-200 text-gray-800 hover:border-sky-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-xs font-bold flex items-center gap-1.5">
+                        <span>🌅</span> Morning
+                      </div>
+                      <div className="text-[10px] text-gray-500 mt-0.5">8:00 AM - 12:00 PM</div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      unavailableTimes.includes('morning')
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {unavailableTimes.includes('morning') ? 'Closed' : 'Available'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleTime('afternoon')}
+                    className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                      unavailableTimes.includes('afternoon')
+                        ? 'bg-rose-50 border-rose-300 text-rose-700 shadow-sm'
+                        : 'bg-white border-gray-200 text-gray-800 hover:border-sky-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-xs font-bold flex items-center gap-1.5">
+                        <span>☀️</span> Afternoon
+                      </div>
+                      <div className="text-[10px] text-gray-500 mt-0.5">1:00 PM - 5:00 PM</div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      unavailableTimes.includes('afternoon')
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {unavailableTimes.includes('afternoon') ? 'Closed' : 'Available'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+
               {/* Month Selector */}
               <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2">
                 <button
@@ -789,8 +860,9 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
             {/* Modal Footer */}
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
               <span className="text-xs text-gray-500">
-                {unavailableDates.length} date{unavailableDates.length === 1 ? '' : 's'} unavailable
+                {unavailableDates.length} date{unavailableDates.length === 1 ? '' : 's'} · {unavailableTimes.length} slot{unavailableTimes.length === 1 ? '' : 's'} unavailable
               </span>
+
               <div className="flex gap-2">
                 <button
                   type="button"

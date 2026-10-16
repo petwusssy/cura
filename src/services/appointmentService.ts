@@ -48,19 +48,22 @@ export const appointmentService = {
     }
   },
 
-  getAvailability: async (): Promise<string[]> => {
+  getAvailability: async (): Promise<{ unavailable_dates: string[]; unavailable_times: string[] }> => {
     try {
       const response = await api.get('/appointments/availability/');
-      return response.data?.unavailable_dates || [];
+      return {
+        unavailable_dates: response.data?.unavailable_dates || [],
+        unavailable_times: response.data?.unavailable_times || [],
+      };
     } catch (error) {
       console.error('Failed to fetch appointment availability:', error);
-      return [];
+      return { unavailable_dates: [], unavailable_times: [] };
     }
   },
 
-  saveAvailability: async (unavailable_dates: string[]): Promise<boolean> => {
+  saveAvailability: async (unavailable_dates: string[], unavailable_times: string[] = []): Promise<boolean> => {
     try {
-      await api.post('/appointments/availability/', { unavailable_dates });
+      await api.post('/appointments/availability/', { unavailable_dates, unavailable_times });
       return true;
     } catch (error) {
       console.error('Failed to save appointment availability:', error);
@@ -68,4 +71,5 @@ export const appointmentService = {
     }
   }
 };
+
 
