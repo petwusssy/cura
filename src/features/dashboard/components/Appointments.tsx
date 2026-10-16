@@ -13,6 +13,23 @@ interface AppointmentsProps {
 
 const PRIMARY = '#1B3A6B';
 
+const APPOINTMENT_TIME_SLOTS = [
+  '8:00 AM - 9:00 AM',
+  '9:00 AM - 10:00 AM',
+  '10:00 AM - 11:00 AM',
+  '11:00 AM - 12:00 PM',
+  '12:00 PM - 1:00 PM',
+  '1:00 PM - 2:00 PM',
+  '2:00 PM - 3:00 PM',
+  '3:00 PM - 4:00 PM',
+  '4:00 PM - 5:00 PM',
+  '5:00 PM - 6:00 PM',
+  '6:00 PM - 7:00 PM',
+  '7:00 PM - 8:00 PM',
+  '8:00 PM - 9:00 PM',
+  '9:00 PM - 10:00 PM',
+];
+
 export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) {
   const [requests, setRequests] = useState<AppointmentRequest[]>(() => {
     try {
@@ -41,8 +58,9 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Date Availability State
+  // Date & Time Availability State
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [availTab, setAvailTab] = useState<'dates' | 'times'>('dates');
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
   const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
   const [availSaving, setAvailSaving] = useState(false);
@@ -55,6 +73,7 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
   const todayStr = getManilaDate();
 
   const openAvailabilityModal = async () => {
+    setAvailTab('dates');
     setShowAvailabilityModal(true);
     const data = await appointmentService.getAvailability();
     setUnavailableDates(data.unavailable_dates || []);
@@ -71,6 +90,14 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
     setUnavailableTimes(prev =>
       prev.includes(timeKey) ? prev.filter(t => t !== timeKey) : [...prev, timeKey]
     );
+  };
+
+  const blockAllTimes = () => {
+    setUnavailableTimes([...APPOINTMENT_TIME_SLOTS]);
+  };
+
+  const clearAllTimes = () => {
+    setUnavailableTimes([]);
   };
 
   const blockVisibleWeekends = () => {
@@ -204,7 +231,7 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-slate-700 hover:text-sky-600 hover:border-sky-300 shadow-sm transition-all cursor-pointer"
           >
             <CalendarIcon size={14} className="text-sky-500" />
-            <span>Manage Available Dates</span>
+            <span>Manage Availability</span>
           </button>
           <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
             {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
@@ -398,8 +425,8 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
                   <CalendarIcon size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">Manage Appointment Dates</h3>
-                  <p className="text-xs text-gray-500">Pick which dates patients can request in-person appointments</p>
+                  <h3 className="text-base font-bold text-gray-900">Manage Appointment Availability</h3>
+                  <p className="text-xs text-gray-500">Pick which dates and time slots patients can request for appointments</p>
                 </div>
               </div>
               <button
@@ -411,114 +438,215 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
               </button>
             </div>
 
+            {/* Availability Mode Tabs */}
+            <div className="flex border-b border-gray-200 bg-gray-50/50 px-6 pt-2">
+              <button
+                type="button"
+                onClick={() => setAvailTab('dates')}
+                className={`flex items-center gap-2 py-2.5 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                  availTab === 'dates'
+                    ? 'border-sky-500 text-sky-600 bg-white rounded-t-lg shadow-sm'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <CalendarIcon size={14} />
+                <span>Dates ({unavailableDates.length} Closed)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvailTab('times')}
+                className={`flex items-center gap-2 py-2.5 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                  availTab === 'times'
+                    ? 'border-sky-500 text-sky-600 bg-white rounded-t-lg shadow-sm'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Clock size={14} />
+                <span>Time Slots ({unavailableTimes.length} Closed)</span>
+              </button>
+            </div>
+
             {/* Modal Body */}
             <div className="p-6 space-y-4">
-              {/* Instructions and Quick Actions */}
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5 text-gray-600 font-medium">
-                    <span className="w-3 h-3 rounded border border-gray-300 bg-white inline-block"></span>
-                    Available
-                  </span>
-                  <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
-                    <span className="w-3 h-3 rounded border border-rose-300 bg-rose-50 inline-block"></span>
-                    Unavailable (Red)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={blockVisibleWeekends}
-                    className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-                  >
-                    Block Weekends
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearVisibleBlocked}
-                    className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-                  >
-                    Clear Month
-                  </button>
-                </div>
-              </div>
-
-
-              {/* Month Selector */}
-              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                  className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <span className="text-sm font-bold text-gray-800">
-                  {currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                  className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-
-              {/* Calendar Grid */}
-              <div className="space-y-1">
-                {/* Days of week header */}
-                <div className="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider py-1">
-                  <span>Sun</span>
-                  <span>Mon</span>
-                  <span>Tue</span>
-                  <span>Wed</span>
-                  <span>Thu</span>
-                  <span>Fri</span>
-                  <span>Sat</span>
-                </div>
-
-                {/* Day cells */}
-                <div className="grid grid-cols-7 gap-1">
-                  {/* Empty cells before 1st of month */}
-                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                    <div key={`empty-${i}`} className="h-10" />
-                  ))}
-
-                  {/* Month days */}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const dayNum = i + 1;
-                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    const isPast = dateStr < todayStr;
-                    const isUnavailable = unavailableDates.includes(dateStr);
-
-                    return (
+              {/* DATES TAB */}
+              {availTab === 'dates' && (
+                <div className="space-y-4 animate-in fade-in-50 duration-150">
+                  {/* Instructions and Quick Actions */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1.5 text-gray-600 font-medium">
+                        <span className="w-3 h-3 rounded border border-gray-300 bg-white inline-block"></span>
+                        Available
+                      </span>
+                      <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                        <span className="w-3 h-3 rounded border border-rose-300 bg-rose-50 inline-block"></span>
+                        Unavailable (Red)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <button
-                        key={dateStr}
                         type="button"
-                        disabled={isPast}
-                        onClick={() => toggleDate(dateStr)}
-                        className={`h-10 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center cursor-pointer ${
-                          isPast
-                            ? 'opacity-30 cursor-not-allowed text-gray-400 bg-gray-50 border border-transparent'
-                            : isUnavailable
-                            ? 'bg-rose-50 border border-rose-300 text-rose-700 shadow-sm hover:bg-rose-100'
-                            : 'bg-white border border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50/50'
-                        }`}
+                        onClick={blockVisibleWeekends}
+                        className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
                       >
-                        <span>{dayNum}</span>
-                        {isUnavailable && !isPast && (
-                          <span className="text-[9px] font-bold text-rose-500 leading-none">Closed</span>
-                        )}
+                        Block Weekends
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
+                      <button
+                        type="button"
+                        onClick={clearVisibleBlocked}
+                        className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Clear Month
+                      </button>
+                    </div>
+                  </div>
 
-              <p className="text-xs text-gray-500 italic">
-                Click any date to toggle: red dates are closed/unavailable for booking; uncolored dates are open.
-              </p>
+                  {/* Month Selector */}
+                  <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                      className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <span className="text-sm font-bold text-gray-800">
+                      {currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                      className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="space-y-1">
+                    {/* Days of week header */}
+                    <div className="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider py-1">
+                      <span>Sun</span>
+                      <span>Mon</span>
+                      <span>Tue</span>
+                      <span>Wed</span>
+                      <span>Thu</span>
+                      <span>Fri</span>
+                      <span>Sat</span>
+                    </div>
+
+                    {/* Day cells */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {/* Empty cells before 1st of month */}
+                      {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                        <div key={`empty-${i}`} className="h-10" />
+                      ))}
+
+                      {/* Month days */}
+                      {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const dayNum = i + 1;
+                        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                        const isPast = dateStr < todayStr;
+                        const isUnavailable = unavailableDates.includes(dateStr);
+
+                        return (
+                          <button
+                            key={dateStr}
+                            type="button"
+                            disabled={isPast}
+                            onClick={() => toggleDate(dateStr)}
+                            className={`h-10 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center cursor-pointer ${
+                              isPast
+                                ? 'opacity-30 cursor-not-allowed text-gray-400 bg-gray-50 border border-transparent'
+                                : isUnavailable
+                                ? 'bg-rose-50 border border-rose-300 text-rose-700 shadow-sm hover:bg-rose-100'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50/50'
+                            }`}
+                          >
+                            <span>{dayNum}</span>
+                            {isUnavailable && !isPast && (
+                              <span className="text-[9px] font-bold text-rose-500 leading-none">Closed</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500 italic">
+                    Click any date to toggle: red dates are closed/unavailable for booking; uncolored dates are open.
+                  </p>
+                </div>
+              )}
+
+              {/* TIME SLOTS TAB */}
+              {availTab === 'times' && (
+                <div className="space-y-3 animate-in fade-in-50 duration-150">
+                  {/* Instructions and Quick Actions */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1.5 text-gray-600 font-medium">
+                        <span className="w-3 h-3 rounded border border-gray-300 bg-white inline-block"></span>
+                        Available
+                      </span>
+                      <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                        <span className="w-3 h-3 rounded border border-rose-300 bg-rose-50 inline-block"></span>
+                        Closed (Red)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={blockAllTimes}
+                        className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Close All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearAllTimes}
+                        className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Open All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Time Slots Grid */}
+                  <div className="grid grid-cols-2 gap-2 max-h-[290px] overflow-y-auto pr-1">
+                    {APPOINTMENT_TIME_SLOTS.map((slot) => {
+                      const isUnavailable = unavailableTimes.includes(slot);
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => toggleTime(slot)}
+                          className={`p-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer border ${
+                            isUnavailable
+                              ? 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100 shadow-sm'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50/50'
+                          }`}
+                        >
+                          <span className="font-bold">{slot}</span>
+                          {isUnavailable ? (
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-600 text-white leading-none">
+                              Closed
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-sky-600 px-1.5 py-0.5 rounded bg-sky-50 border border-sky-100 leading-none">
+                              Open
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-gray-500 italic">
+                    Click any time slot to toggle: slots marked in Red (Closed) will be locked and cannot be selected by patients on mobile.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
