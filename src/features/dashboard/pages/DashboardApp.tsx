@@ -373,6 +373,66 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     return () => clearInterval(interval);
   }, [consultations, patients]);
 
+  // Check for low stock medicines daily (resets next day, stays dismissed for today if cleared)
+  useEffect(() => {
+    if (!medicines || medicines.length === 0) return;
+    const today = getManilaDate();
+
+    const lowStockMeds = medicines.filter(m => {
+      const threshold = m.threshold ?? 10;
+      return Number(m.stock) <= threshold;
+    });
+
+    if (lowStockMeds.length === 0) return;
+
+    setNotifications(prev => {
+      const newStockNotifs: AppNotification[] = [];
+
+      lowStockMeds.forEach(m => {
+        const notifId = `stock-low-${m.id}-${today}`;
+        // If cleared or dismissed today, do NOT show again today
+        if (dismissedNotifIdsRef.current.has(notifId)) return;
+        if (prev.some(n => n.id === notifId) || newStockNotifs.some(n => n.id === notifId)) return;
+
+        const isOut = Number(m.stock) === 0;
+        const msg = isOut
+          ? `Out of Stock: ${m.name} has 0 stock remaining!`
+          : `Low Stock Alert: ${m.name} is running low (${m.stock} ${m.unit || 'units'} left, threshold: ${m.threshold ?? 10})`;
+
+        if (!alertedDosesRef.current.has(notifId)) {
+          alertedDosesRef.current.add(notifId);
+          toast.warning(msg, {
+            description: `Check Inventory to restock or record a purchase request.`,
+            duration: 8000,
+          });
+
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('Low Stock Warning - CURA', {
+                body: msg,
+                icon: '/favicon.ico',
+              });
+            } catch {}
+          }
+        }
+
+        newStockNotifs.push({
+          id: notifId,
+          type: 'stock',
+          message: msg,
+          time: new Date().toISOString(),
+          read: readNotifIdsRef.current.has(notifId),
+          medicineName: m.name,
+        });
+      });
+
+      if (newStockNotifs.length > 0) {
+        return [...newStockNotifs, ...prev];
+      }
+      return prev;
+    });
+  }, [medicines]);
+
   const handleSavePatient = async (patient: Patient) => {
     const formattedPatient = {
       ...patient,
@@ -675,7 +735,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     } catch (e) {
       console.error(e);
     }
-    if (!id.startsWith('med-')) {
+    if (!id.startsWith('med-') && !id.startsWith('stock-')) {
       try {
         await notificationService.updateNotification(id, { read: true });
       } catch (error) {
@@ -698,7 +758,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
     try {
       await notificationService.markAllRead();
-      const backendUnread = notifications.filter(n => !n.read && !n.id.startsWith('med-'));
+      const backendUnread = notifications.filter(n => !n.read && !n.id.startsWith('med-') && !n.id.startsWith('stock-'));
       await Promise.allSettled(backendUnread.map(n => notificationService.updateNotification(n.id, { read: true })));
     } catch (error) {
       console.error('Failed to mark all notifications read on server:', error);
@@ -716,7 +776,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     } catch (e) {
       console.error(e);
     }
-    if (!id.startsWith('med-')) {
+    if (!id.startsWith('med-') && !id.startsWith('stock-')) {
       try {
         await notificationService.deleteNotification(id);
       } catch (error) {

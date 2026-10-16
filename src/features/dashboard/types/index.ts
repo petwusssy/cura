@@ -194,7 +194,7 @@ export interface Bed {
 
 export interface AppNotification {
   id: string;
-  type: 'medication' | 'bed' | 'general' | 'telemedicine_request' | 'appointment_request' | 'telemedicine_update' | 'appointment_update';
+  type: 'medication' | 'bed' | 'stock' | 'general' | 'telemedicine_request' | 'appointment_request' | 'telemedicine_update' | 'appointment_update';
   message: string;
   time: string;
   read: boolean;

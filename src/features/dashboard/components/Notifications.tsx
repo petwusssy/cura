@@ -18,7 +18,7 @@ interface NotificationsProps {
 }
 
 export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDismiss, onClearAll, onNavigate }: NotificationsProps) {
-  const [filter, setFilter] = useState<'all' | 'unread' | 'medication' | 'bed' | 'request'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'stock' | 'medication' | 'bed' | 'request'>('all');
   const [localCountdowns, setLocalCountdowns] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
 
   const filtered = notifications.filter(n => {
     if (filter === 'unread') return !n.read;
+    if (filter === 'stock') return n.type === 'stock';
     if (filter === 'medication') return n.type === 'medication';
     if (filter === 'bed') return n.type === 'bed';
     if (filter === 'request') return n.type === 'telemedicine_request' || n.type === 'appointment_request' || n.type === 'telemedicine_update' || n.type === 'appointment_update';
@@ -52,6 +53,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const getIcon = (type: AppNotification['type']) => {
+    if (type === 'stock') return <AlertTriangle size={18} />;
     if (type === 'medication') return <Clock size={18} />;
     if (type === 'bed') return <BedDouble size={18} />;
     if (type === 'telemedicine_request' || type === 'telemedicine_update') return <Video size={18} />;
@@ -60,9 +62,10 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   };
 
   const getColor = (n: AppNotification) => {
+    if (n.type === 'stock') return RED;
     if (n.type === 'medication') {
       const mins = localCountdowns[n.id] ?? n.minutesLeft ?? 99;
-      return mins <= 10 ? RED : YELLOW;
+      return mins <= 10 ? RED : '#D97706';
     }
     if (n.type === 'bed') return '#FF9800';
     if (n.type.includes('request') || n.type.includes('update')) return GREEN;
@@ -84,7 +87,8 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
 
   const handleNotificationClick = (n: AppNotification) => {
     if (!onNavigate) return;
-    if (n.type === 'medication') onNavigate('patients');
+    if (n.type === 'stock') onNavigate('inventory');
+    else if (n.type === 'medication') onNavigate('patients');
     else if (n.type === 'bed') onNavigate('beds');
     else if (n.type.includes('telemedicine')) onNavigate('telemedicine');
     else if (n.type.includes('appointment')) onNavigate('appointments');
@@ -117,6 +121,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
         {([
           { id: 'all', label: 'All' },
           { id: 'unread', label: `Unread (${unreadCount})` },
+          { id: 'stock', label: 'Stocks' },
           { id: 'medication', label: 'Medication' },
           { id: 'bed', label: 'Beds' },
           { id: 'request', label: 'Requests' },
