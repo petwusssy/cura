@@ -37,10 +37,29 @@ function reqToPrfRow(req: PurchaseRequest): PrfItemRow {
   };
 }
 
+function getNextPrfNo(currentPrf: string): string {
+  const match = currentPrf.match(/PRF-(\d{4})-(\d+)/i) || currentPrf.match(/PRF-(\d+)/i);
+  if (match) {
+    const year = match.length === 3 ? match[1] : String(new Date().getFullYear());
+    const seq = parseInt(match[match.length - 1], 10) + 1;
+    return `PRF-${year}-${String(seq).padStart(3, '0')}`;
+  }
+  return `PRF-${new Date().getFullYear()}-002`;
+}
+
+function getPrfDisplayTitle(prf: string): string {
+  const match = prf.match(/PRF-(\d{4})-(\d+)/i);
+  if (match) {
+    return `Purchase Requisition Form (PRF) - ${match[1]} - ${match[2]}`;
+  }
+  return `Purchase Requisition Form (PRF) - ${prf}`;
+}
+
 export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, searchQuery }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
+  const [openPrfs, setOpenPrfs] = useState<Record<string, boolean>>({});
 
   // Delivery Receive Modal state
   const [receiveModal, setReceiveModal] = useState<PurchaseRequest | null>(null);
@@ -53,26 +72,34 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Editable PRF Document state (so users can type immediately and print)
-  const [prfNo, setPrfNo] = useState('PRF-2026-001');
+  const [prfNo, setPrfNo] = useState<string>(() => {
+    return localStorage.getItem('cura_current_prf_no') || 'PRF-2026-001';
+  });
   const [department, setDepartment] = useState('Medical-Dental Clinic');
 
   // prfItems is derived from purchaseRequests that match the current prfNo
-  const [prfItems, setPrfItems] = useState<PrfItemRow[]>(() =>
-    purchaseRequests
-      .filter(r => r.prfNo === 'PRF-2026-001')
-      .map(reqToPrfRow)
-  );
+  const [prfItems, setPrfItems] = useState<PrfItemRow[]>(() => {
+    const initialPrf = localStorage.getItem('cura_current_prf_no') || 'PRF-2026-001';
+    const matched = purchaseRequests.filter(r => r.prfNo === initialPrf).map(reqToPrfRow);
+    return matched.length > 0
+      ? matched
+      : [{ id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }];
+  });
 
-  // Keep prfItems in sync whenever purchaseRequests changes (e.g. after a new Log Item is saved)
+  // Keep prfItems in sync whenever prfNo changes
   useEffect(() => {
     const matched = purchaseRequests.filter(r => r.prfNo === prfNo).map(reqToPrfRow);
     if (matched.length > 0) {
       setPrfItems(matched);
-    } else if (prfNo) {
-      setPrfItems([]);
+    } else {
+      setPrfItems(prev => {
+        if (prev.length > 0 && prev.some(r => r.item.trim())) {
+          return prev;
+        }
+        return [{ id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }];
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [purchaseRequests, prfNo]);
+  }, [prfNo]);
   const [purpose, setPurpose] = useState('Medical-Dental Clinic Routine Requisition & Replenishment');
   const [dateNeeded, setDateNeeded] = useState('To follow lead time in Purchasing');
 
@@ -146,6 +173,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const currentPrf = prfNo.trim() || 'PRF-2026-001';
       let addedCount = 0;
       for (const row of prfItems) {
         const qty = typeof row.qty === 'string' ? parseInt(row.qty) : row.qty;
@@ -163,6 +191,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 description: row.description || undefined,
                 unitPrice: unitPrice,
               });
+              addedCount++;
             }
           } else {
             // New request
@@ -170,14 +199,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
               medicine: row.item,
               description: row.description || undefined,
-              unit: row.unit || 'pc',
-              prfNo: prfNo,
+              unit: row.unit || 'Tablet',
+              prfNo: currentPrf,
               unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
               requestedQty: qty,
               receivedQty: 0,
               date: getManilaDate(),
               status: 'Pending',
-              history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${prfNo}` }],
+              history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
             };
             await onAddRequest(req);
             addedCount++;
@@ -185,6 +214,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
         }
       }
       if (addedCount > 0) {
+        const nextPrf = getNextPrfNo(currentPrf);
+        setPrfNo(nextPrf);
+        localStorage.setItem('cura_current_prf_no', nextPrf);
+        setNewReq(n => ({ ...n, prfNo: nextPrf }));
+        setPrfItems([
+          { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
+        ]);
+        setOpenPrfs(prev => ({ ...prev, [currentPrf]: true }));
         setViewMode('tracker');
       }
     } catch (e) {
@@ -226,6 +263,34 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     if (key) seenPrKeys.add(key);
     seenPrKeys.add(semanticKey);
     return true;
+  });
+
+  // Group filteredRequests by PRF No.
+  const prfGroups: Record<string, { prfNo: string; date: string; items: PurchaseRequest[] }> = {};
+  for (const req of filteredRequests) {
+    const key = req.prfNo?.trim() || 'PRF-2026-001';
+    if (!prfGroups[key]) {
+      prfGroups[key] = {
+        prfNo: key,
+        date: req.date || getManilaDate(),
+        items: [],
+      };
+    }
+    prfGroups[key].items.push(req);
+  }
+
+  const sortedPrfKeys = Object.keys(prfGroups).sort((a, b) => {
+    const ma = a.match(/PRF-(\d{4})-(\d+)/i) || a.match(/PRF-(\d+)/i);
+    const mb = b.match(/PRF-(\d{4})-(\d+)/i) || b.match(/PRF-(\d+)/i);
+    if (ma && mb) {
+      const ya = ma.length === 3 ? parseInt(ma[1], 10) : 0;
+      const yb = mb.length === 3 ? parseInt(mb[1], 10) : 0;
+      if (ya !== yb) return yb - ya;
+      const na = parseInt(ma[ma.length - 1], 10);
+      const nb = parseInt(mb[mb.length - 1], 10);
+      return nb - na;
+    }
+    return b.localeCompare(a);
   });
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -329,39 +394,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 onClick={handleRegisterAllToTracker}
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488] w-full sm:w-auto"
               >
-                <BookmarkCheck size={15} /> Save to Delivery Tracker
-              </button>
-              <button
-                onClick={() => {
-                  setPrfNo('');
-                  setDepartment('');
-                  setPrfItems([
-                    { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
-                  ]);
-                  setPurpose('');
-                  setDateNeeded('');
-                  setPreparedBy('');
-                  setEvalRemarks('');
-                  setRecommendedBy('');
-                  setSupplier1('');
-                  setSupplier2('');
-                  setSupplier3('');
-                  setForCashAdvance(false);
-                  setForPurchaseOrder(false);
-                  setRevSupplier('');
-                  setRevTerms('');
-                  setBudgetAmount('');
-                  setCapexNo('');
-                  setVerifiedBy('');
-                  setSourceOfFunds('');
-                  setEndorsedBy('');
-                  setRecFinance('');
-                  setApprovedBy('');
-                }}
-                className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors w-full sm:w-auto"
-                title="Reset to saved tracker data"
-              >
-                <RefreshCw size={14} /> Reset
+                <BookmarkCheck size={15} /> Submit Delivery Tracker
               </button>
               <button
                 onClick={() => window.print()}
@@ -398,8 +431,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input
                     type="text"
                     value={prfNo}
-                    onChange={e => setPrfNo(e.target.value)}
-                    className="border-b border-black w-24 text-right font-bold bg-transparent text-black focus:outline-none focus:bg-yellow-50 px-1"
+                    onChange={e => {
+                      const val = e.target.value;
+                      setPrfNo(val);
+                      localStorage.setItem('cura_current_prf_no', val);
+                    }}
+                    className="border-b border-black w-28 text-right font-bold bg-transparent text-black focus:outline-none focus:bg-yellow-50 px-1"
                   />
                 </div>
               </div>
@@ -825,122 +862,168 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             </div>
           </div>
 
-          {/* Requests Tracking List */}
+          {/* Requests Tracking List Grouped by PRF */}
           <div className="space-y-4">
-            {filteredRequests.length === 0 ? (
+            {sortedPrfKeys.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400 font-medium">
                 No requisition orders match the current filter or search criteria.
               </div>
             ) : (
-              filteredRequests.map(req => {
-                const sc = statusColors[req.status];
-                const progress = Math.min(100, Math.round((req.receivedQty / req.requestedQty) * 100));
-                const isExpanded = expanded === req.id;
+              sortedPrfKeys.map(prfKey => {
+                const group = prfGroups[prfKey];
+                const isOpen = openPrfs[prfKey] !== undefined ? openPrfs[prfKey] : true;
+                const prfTitle = getPrfDisplayTitle(group.prfNo);
+                const purchaseDate = group.date ? normalizeDate(group.date) : getManilaDate();
+
                 return (
-                  <div key={req.id} className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden hover:border-gray-300 transition-all">
-                    <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-base font-extrabold text-gray-900">{req.medicine}</span>
-                          {req.description && (
-                            <span className="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium">
-                              {req.description}
-                            </span>
-                          )}
-                          <span className="text-xs px-3 py-1 rounded-full font-bold border" style={{ background: sc.bg, color: sc.text, borderColor: sc.border }}>
-                            {req.status} ({progress}%)
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs flex-wrap mt-2">
-                          <span className="inline-flex items-center gap-1 font-mono font-bold text-[11px] text-blue-700 bg-blue-50 border border-blue-200/70 px-2.5 py-0.5 rounded-md shadow-2xs">
-                            <FileText size={11} className="text-blue-600" />
-                            Ref #{req.prfNo || 'PRF-2026-001'}
-                          </span>
-                          <span
-                            className="inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-md cursor-pointer hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                            title={`Click to copy Request ID: ${req.id}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(req.id);
-                            }}
-                          >
-                            <span className="text-gray-400 font-normal">ID:</span>
-                            <span className="font-semibold">{req.id.length > 10 ? `${req.id.slice(0, 8)}…` : req.id}</span>
-                            <Copy size={10} className="text-gray-400 hover:text-gray-600" />
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
-                            <Calendar size={11} className="text-gray-400" />
-                            <span>{normalizeDate(req.date)}</span>
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
-                            <span className="text-gray-400">Unit:</span>
-                            <span className="font-semibold text-gray-800">{req.unit || 'Tablet'}</span>
-                          </span>
-                        </div>
-
-                        {/* Delivery Stock Progress Bar */}
-                        <div className="mt-3.5 max-w-xl flex items-center gap-4">
-                          <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${progress}%`,
-                                background: req.status === 'Complete' ? '#10B981' : req.status === 'Partial' ? PRIMARY : '#D1D5DB',
-                              }}
-                            />
+                  <div key={prfKey} className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all">
+                    {/* PRF Container Header / Dropdown Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setOpenPrfs(prev => ({ ...prev, [prfKey]: !isOpen }))}
+                      className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors cursor-pointer select-none"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0 pr-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1E5AA8] flex items-center justify-center flex-shrink-0">
+                            <FileText size={16} />
                           </div>
-                          <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
-                            <span className="text-gray-900 font-black">{req.receivedQty}</span> / {req.requestedQty} {req.unit || 'units'} arrived
-                          </div>
+                          <span className="font-extrabold text-gray-900 text-sm sm:text-base tracking-tight">
+                            {prfTitle}
+                          </span>
                         </div>
+                        <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
+                          Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate}</strong>
+                        </span>
                       </div>
 
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto mt-4 lg:mt-0">
-                        {req.status !== 'Complete' && (
-                          <button
-                            onClick={() => { setReceiveModal(req); setReceiveQty(''); setReceiveNote(''); }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 bg-[#1E5AA8]"
-                          >
-                            <CheckCircle size={15} /> Receive Shipment
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setExpanded(isExpanded ? null : req.id)}
-                          className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors"
-                        >
-                          <span>Delivery Log ({req.history.length})</span>
-                          {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                        </button>
-                        <button
-                          onClick={() => onDeleteRequest(req.id)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors"
-                          title="Remove this item"
-                        >
-                          <Trash2 size={14} /> Remove
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Expandable Delivery Log Timeline */}
-                    {isExpanded && (
-                      <div className="border-t border-gray-100 bg-gray-50/70 px-6 py-4 animate-in fade-in duration-200">
-                        <div className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-3">
-                          Timestamped Delivery & Requisition History
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold hidden xs:inline-block">
+                          {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
+                        </span>
+                        <div className={`w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                          <ChevronDown size={16} />
                         </div>
-                        <div className="space-y-3">
-                          {req.history.map((h, i) => (
-                            <div key={i} className="flex items-start gap-3 text-xs">
-                              <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${h.qty > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                              <div className="flex-1 overflow-hidden">
-                                <span className="font-bold text-gray-800 break-words">{h.note}</span>
-                                <div className="text-gray-400 mt-0.5 font-medium">
-                                  {formatManilaDateTime(h.date)} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
+                      </div>
+                    </button>
+
+                    {/* Dropdown Content: Medicines inside this PRF container */}
+                    {isOpen && (
+                      <div className="p-4 sm:p-5 pt-1 border-t border-gray-100 bg-gray-50/40 space-y-3 animate-in fade-in duration-200">
+                        {group.items.map(req => {
+                          const sc = statusColors[req.status];
+                          const progress = Math.min(100, Math.round((req.receivedQty / req.requestedQty) * 100));
+                          const isExpanded = expanded === req.id;
+                          return (
+                            <div key={req.id} className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden hover:border-gray-300 transition-all">
+                              <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 flex-wrap">
+                                    <span className="text-base font-extrabold text-gray-900">{req.medicine}</span>
+                                    {req.description && (
+                                      <span className="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium">
+                                        {req.description}
+                                      </span>
+                                    )}
+                                    <span className="text-xs px-3 py-1 rounded-full font-bold border" style={{ background: sc.bg, color: sc.text, borderColor: sc.border }}>
+                                      {req.status} ({progress}%)
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs flex-wrap mt-2">
+                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-[11px] text-blue-700 bg-blue-50 border border-blue-200/70 px-2.5 py-0.5 rounded-md shadow-2xs">
+                                      <FileText size={11} className="text-blue-600" />
+                                      Ref #{req.prfNo || 'PRF-2026-001'}
+                                    </span>
+                                    <span
+                                      className="inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-md cursor-pointer hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                                      title={`Click to copy Request ID: ${req.id}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(req.id);
+                                      }}
+                                    >
+                                      <span className="text-gray-400 font-normal">ID:</span>
+                                      <span className="font-semibold">{req.id.length > 10 ? `${req.id.slice(0, 8)}…` : req.id}</span>
+                                      <Copy size={10} className="text-gray-400 hover:text-gray-600" />
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
+                                      <Calendar size={11} className="text-gray-400" />
+                                      <span>{normalizeDate(req.date)}</span>
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
+                                      <span className="text-gray-400">Unit:</span>
+                                      <span className="font-semibold text-gray-800">{req.unit || 'Tablet'}</span>
+                                    </span>
+                                  </div>
+
+                                  {/* Delivery Stock Progress Bar */}
+                                  <div className="mt-3.5 max-w-xl flex items-center gap-4">
+                                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{
+                                          width: `${progress}%`,
+                                          background: req.status === 'Complete' ? '#10B981' : req.status === 'Partial' ? PRIMARY : '#D1D5DB',
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
+                                      <span className="text-gray-900 font-black">{req.receivedQty}</span> / {req.requestedQty} {req.unit || 'units'} arrived
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Action buttons */}
+                                <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto mt-4 lg:mt-0">
+                                  {req.status !== 'Complete' && (
+                                    <button
+                                      onClick={() => { setReceiveModal(req); setReceiveQty(''); setReceiveNote(''); }}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 bg-[#1E5AA8]"
+                                    >
+                                      <CheckCircle size={15} /> Receive Shipment
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => setExpanded(isExpanded ? null : req.id)}
+                                    className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs transition-colors"
+                                  >
+                                    <span>Delivery Log ({req.history.length})</span>
+                                    {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                                  </button>
+                                  <button
+                                    onClick={() => onDeleteRequest(req.id)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors"
+                                    title="Remove this item"
+                                  >
+                                    <Trash2 size={14} /> Remove
+                                  </button>
                                 </div>
                               </div>
+
+                              {/* Expandable Delivery Log Timeline */}
+                              {isExpanded && (
+                                <div className="border-t border-gray-100 bg-gray-50/70 px-6 py-4 animate-in fade-in duration-200">
+                                  <div className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-3">
+                                    Timestamped Delivery & Requisition History
+                                  </div>
+                                  <div className="space-y-3">
+                                    {req.history.map((h, i) => (
+                                      <div key={i} className="flex items-start gap-3 text-xs">
+                                        <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${h.qty > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                                        <div className="flex-1 overflow-hidden">
+                                          <span className="font-bold text-gray-800 break-words">{h.note}</span>
+                                          <div className="text-gray-400 mt-0.5 font-medium">
+                                            {formatManilaDateTime(h.date)} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
