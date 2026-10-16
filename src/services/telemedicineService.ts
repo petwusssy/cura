@@ -47,5 +47,26 @@ export const telemedicineService = {
       console.error(`Failed to delete request ${id}:`, error);
       return false;
     }
+  },
+
+  getAvailability: async (): Promise<string[]> => {
+    try {
+      const response = await api.get('/telemedicine/availability/');
+      return response.data?.unavailable_dates || [];
+    } catch (error) {
+      console.error('Failed to fetch telemedicine availability:', error);
+      return [];
+    }
+  },
+
+  saveAvailability: async (unavailable_dates: string[]): Promise<boolean> => {
+    try {
+      await api.post('/telemedicine/availability/', { unavailable_dates });
+      return true;
+    } catch (error) {
+      console.error('Failed to save telemedicine availability:', error);
+      return false;
+    }
   }
 };
+

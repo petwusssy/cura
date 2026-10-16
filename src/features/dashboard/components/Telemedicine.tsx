@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Video, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock } from 'lucide-react';
+import { Video, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
@@ -135,10 +135,64 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [, setTimeTick] = useState(Date.now());
 
+  // Date Availability State
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
+  const [availSaving, setAvailSaving] = useState(false);
+  const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
+
+  const currentYear = currentMonthDate.getFullYear();
+  const currentMonth = currentMonthDate.getMonth();
+  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const todayStr = getManilaDate();
+
+  const openAvailabilityModal = async () => {
+    setShowAvailabilityModal(true);
+    const dates = await telemedicineService.getAvailability();
+    setUnavailableDates(dates);
+  };
+
+  const toggleDate = (dateStr: string) => {
+    setUnavailableDates(prev =>
+      prev.includes(dateStr) ? prev.filter(d => d !== dateStr) : [...prev, dateStr]
+    );
+  };
+
+  const blockVisibleWeekends = () => {
+    const weekendDates: string[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(currentYear, currentMonth, d);
+      const day = dt.getDay();
+      if (day === 0 || day === 6) {
+        const iso = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        weekendDates.push(iso);
+      }
+    }
+    setUnavailableDates(prev => Array.from(new Set([...prev, ...weekendDates])));
+  };
+
+  const clearVisibleBlocked = () => {
+    const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`;
+    setUnavailableDates(prev => prev.filter(d => !d.startsWith(prefix)));
+  };
+
+  const handleSaveAvailability = async () => {
+    setAvailSaving(true);
+    const success = await telemedicineService.saveAvailability(unavailableDates);
+    setAvailSaving(false);
+    if (success) {
+      setShowAvailabilityModal(false);
+    } else {
+      alert("Failed to save telemedicine availability. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const t = setInterval(() => setTimeTick(Date.now()), 30000);
     return () => clearInterval(t);
   }, []);
+
 
   const handleStartCall = (req: TelemedicineRequest) => {
     const access = getScheduleAccess(req.scheduled_date || req.preferred_date, req.scheduled_time || req.preferred_time);
@@ -253,22 +307,33 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
         </div>
-        <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
-          {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                statusFilter === s
-                  ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={openAvailabilityModal}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-slate-700 hover:text-sky-600 hover:border-sky-300 shadow-sm transition-all cursor-pointer"
+          >
+            <Calendar size={14} className="text-sky-500" />
+            <span>Manage Available Dates</span>
+          </button>
+          <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 overflow-x-auto hide-scrollbar shadow-sm">
+            {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  statusFilter === s
+                    ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
 
       {/* Main Content Area */}
       {loading ? (
@@ -587,6 +652,168 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
           </div>
         </div>
       )}
+
+      {/* Date Availability Modal */}
+      {showAvailabilityModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100">
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Manage Consultation Dates</h3>
+                  <p className="text-xs text-gray-500">Pick which dates patients can request telemedicine</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAvailabilityModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              {/* Instructions and Quick Actions */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1.5 text-gray-600 font-medium">
+                    <span className="w-3 h-3 rounded border border-gray-300 bg-white inline-block"></span>
+                    Available
+                  </span>
+                  <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                    <span className="w-3 h-3 rounded border border-rose-300 bg-rose-50 inline-block"></span>
+                    Unavailable (Red)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={blockVisibleWeekends}
+                    className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Block Weekends
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearVisibleBlocked}
+                    className="text-xs font-semibold px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Clear Month
+                  </button>
+                </div>
+              </div>
+
+              {/* Month Selector */}
+              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                  className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <span className="text-sm font-bold text-gray-800">
+                  {currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                  className="p-1 text-gray-500 hover:text-gray-900 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="space-y-1">
+                {/* Days of week header */}
+                <div className="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider py-1">
+                  <span>Sun</span>
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                </div>
+
+                {/* Day cells */}
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Empty cells before 1st of month */}
+                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-10" />
+                  ))}
+
+                  {/* Month days */}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                    const isPast = dateStr < todayStr;
+                    const isUnavailable = unavailableDates.includes(dateStr);
+
+                    return (
+                      <button
+                        key={dateStr}
+                        type="button"
+                        disabled={isPast}
+                        onClick={() => toggleDate(dateStr)}
+                        className={`h-10 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center cursor-pointer ${
+                          isPast
+                            ? 'opacity-30 cursor-not-allowed text-gray-400 bg-gray-50 border border-transparent'
+                            : isUnavailable
+                            ? 'bg-rose-50 border border-rose-300 text-rose-700 shadow-sm hover:bg-rose-100'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50/50'
+                        }`}
+                      >
+                        <span>{dayNum}</span>
+                        {isUnavailable && !isPast && (
+                          <span className="text-[9px] font-bold text-rose-500 leading-none">Closed</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500 italic">
+                Click any date to toggle: red dates are closed/unavailable for booking; uncolored dates are open.
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <span className="text-xs text-gray-500">
+                {unavailableDates.length} date{unavailableDates.length === 1 ? '' : 's'} unavailable
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAvailabilityModal(false)}
+                  className="px-4 py-2 text-gray-600 font-semibold text-xs hover:bg-gray-200/60 rounded-xl transition-colors cursor-pointer"
+                  disabled={availSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAvailability}
+                  disabled={availSaving}
+                  className="px-5 py-2 font-bold text-xs rounded-xl text-white bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] hover:opacity-95 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  {availSaving ? 'Saving...' : 'Save Availability'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
