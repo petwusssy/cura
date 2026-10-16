@@ -135,6 +135,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     setSearchQuery(''); // clear search when changing pages
   };
 
+  const fetchQueues = useCallback(() => {
+    queueService.getQueues().then(d => {
+      if (d !== undefined && Array.isArray(d)) {
+        setQueues(() => {
+          return d
+            .filter(q => !completedQueueIdsRef.current.has(q.id))
+            .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     // ─── Parallel initial fetch ────────────────────────────────────────────
     // allSettled so a single failing endpoint doesn't block the rest.
@@ -195,7 +207,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
-        if (d !== undefined) {
+        if (d !== undefined && Array.isArray(d)) {
           setNotifications(prev => {
             const localMeds = prev.filter(p => p.id.startsWith('med-') && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = d
@@ -204,29 +216,40 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             return [...localMeds, ...backendNotifs];
           });
         }
-      }).catch(console.error);
-    };
-
-    const fetchQueues = () => {
-      queueService.getQueues().then(d => {
-        if (d !== undefined) {
-          setQueues(() => {
-            return d
-              .filter(q => !completedQueueIdsRef.current.has(q.id))
-              .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
-          });
-        }
-      }).catch(console.error);
+      }).catch(() => {});
     };
 
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications and queues (1.5s for near-instant sync)
+    // Polling for new notifications and queues with non-overlapping guard (6s interval)
+    let isPolling = false;
     const interval = setInterval(() => {
-      fetchAndMergeNotifications();
-      fetchQueues();
-    }, 1500);
+      if (isPolling) return;
+      isPolling = true;
+      Promise.allSettled([
+        notificationService.getNotifications(),
+        queueService.getQueues()
+      ]).then(([nRes, qRes]) => {
+        if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
+          setNotifications(prev => {
+            const localMeds = prev.filter(p => p.id.startsWith('med-') && !dismissedNotifIdsRef.current.has(p.id));
+            const backendNotifs = nRes.value!
+              .filter(n => !dismissedNotifIdsRef.current.has(n.id))
+              .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
+            return [...localMeds, ...backendNotifs];
+          });
+        }
+        if (qRes.status === 'fulfilled' && qRes.value && Array.isArray(qRes.value)) {
+          setQueues(qRes.value
+            .filter(q => !completedQueueIdsRef.current.has(q.id))
+            .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q)
+          );
+        }
+      }).catch(() => {}).finally(() => {
+        isPolling = false;
+      });
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 

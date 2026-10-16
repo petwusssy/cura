@@ -19,9 +19,17 @@ export const telemedicineService = {
   getRequests: async (): Promise<TelemedicineRequest[]> => {
     try {
       const response = await api.get('/telemedicine/');
-      return response.data;
+      if (Array.isArray(response.data)) {
+        try { localStorage.setItem('cura_telemedicine_requests_cache', JSON.stringify(response.data)); } catch {}
+        return response.data;
+      }
+      return [];
     } catch (error) {
-      console.error('Failed to fetch telemedicine requests:', error);
+      console.warn('Network issue fetching telemedicine requests, using cached data if available.');
+      try {
+        const cached = localStorage.getItem('cura_telemedicine_requests_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
       return [];
     }
   },

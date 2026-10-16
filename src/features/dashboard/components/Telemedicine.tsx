@@ -117,8 +117,22 @@ interface TelemedicineProps {
 const PRIMARY = '#1B3A6B';
 
 export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) {
-  const [requests, setRequests] = useState<TelemedicineRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<TelemedicineRequest[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_telemedicine_requests_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cura_telemedicine_requests_cache');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   
   // Embedded Video Call State
@@ -214,19 +228,30 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
 
   useEffect(() => {
     fetchRequests();
+    let isFetching = false;
     const interval = setInterval(() => {
+      if (isFetching) return;
+      isFetching = true;
       telemedicineService.getRequests().then(data => {
-        setRequests(data);
-      }).catch(console.error);
-    }, 3000);
+        if (data && Array.isArray(data) && data.length > 0) {
+          setRequests(data);
+        }
+      }).catch(() => {}).finally(() => {
+        isFetching = false;
+      });
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {
-    setLoading(true);
-    const data = await telemedicineService.getRequests();
-    setRequests(data);
-    setLoading(false);
+    try {
+      const data = await telemedicineService.getRequests();
+      if (data && Array.isArray(data) && data.length > 0) {
+        setRequests(data);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPatientName = (id: string) => {

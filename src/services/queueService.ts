@@ -15,9 +15,16 @@ export const queueService = {
     try {
       const res = await fetch(`${API_URL}/queue/`, { headers: getHeaders() });
       if (!res.ok) throw new Error('Failed to fetch queues');
-      return await res.json();
-    } catch (error) {
-      console.error(error);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        try { localStorage.setItem('cura_queues_cache', JSON.stringify(data)); } catch {}
+      }
+      return data;
+    } catch {
+      try {
+        const cached = localStorage.getItem('cura_queues_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
       return undefined;
     }
   },

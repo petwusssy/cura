@@ -18,9 +18,17 @@ export const appointmentService = {
   getRequests: async (): Promise<AppointmentRequest[]> => {
     try {
       const response = await api.get('/appointments/');
-      return response.data;
+      if (Array.isArray(response.data)) {
+        try { localStorage.setItem('cura_appointment_requests_cache', JSON.stringify(response.data)); } catch {}
+        return response.data;
+      }
+      return [];
     } catch (error) {
-      console.error('Failed to fetch appointment requests:', error);
+      console.warn('Network issue fetching appointment requests, using cached data if available.');
+      try {
+        const cached = localStorage.getItem('cura_appointment_requests_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
       return [];
     }
   },

@@ -276,7 +276,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   useEffect(() => {
     fetchMedCertRequests();
-    const interval = setInterval(fetchMedCertRequests, 4000);
+    const interval = setInterval(fetchMedCertRequests, 8000);
     return () => clearInterval(interval);
   }, [fetchMedCertRequests]);
 

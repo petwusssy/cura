@@ -3,8 +3,12 @@ import { AppNotification } from '@/types';
 
 export const notificationService = {
   getNotifications: async (): Promise<AppNotification[]> => {
-    const response = await api.get<AppNotification[]>('/notifications/');
-    return response.data;
+    try {
+      const response = await api.get<AppNotification[]>('/notifications/');
+      return response.data || [];
+    } catch {
+      return [];
+    }
   },
 
   updateNotification: async (id: string, data: Partial<AppNotification>): Promise<AppNotification> => {
