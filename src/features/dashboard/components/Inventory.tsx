@@ -197,21 +197,44 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Healthy Stock', value: healthyCount, color: '#2E7D32', bg: '#E8F5E9', icon: <CheckCircle2 size={20} /> },
-          { label: 'Low Stock', value: lowStockCount, color: YELLOW, bg: `${YELLOW}15`, icon: <AlertTriangle size={20} /> },
-          { label: 'Out of Stock', value: outOfStockCount, color: RED, bg: `${RED}15`, icon: <X size={20} /> },
-          { label: 'Total Items', value: displayMedicines.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <CheckCircle2 size={20} /> },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl p-4 flex items-center gap-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
-              {s.icon}
-            </div>
-            <div>
-              <div className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs text-gray-400">{s.label}</div>
-            </div>
-          </div>
-        ))}
+          { label: 'Healthy Stock', filter: 'Healthy' as const, value: healthyCount, color: '#2E7D32', bg: '#E8F5E9', icon: <CheckCircle2 size={20} /> },
+          { label: 'Low Stock', filter: 'Low Stock' as const, value: lowStockCount, color: YELLOW, bg: `${YELLOW}15`, icon: <AlertTriangle size={20} /> },
+          { label: 'Out of Stock', filter: 'Out of Stock' as const, value: outOfStockCount, color: RED, bg: `${RED}15`, icon: <X size={20} /> },
+          { label: 'Total Items', filter: 'All' as const, value: displayMedicines.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <CheckCircle2 size={20} /> },
+        ].map(s => {
+          const isActive = statusFilter === s.filter;
+          return (
+            <button
+              key={s.label}
+              type="button"
+              onClick={() => {
+                if (s.filter === 'All') {
+                  setStatusFilter('All');
+                } else {
+                  setStatusFilter(prev => prev === s.filter ? 'All' : s.filter);
+                }
+              }}
+              aria-pressed={isActive}
+              title={isActive ? `Clear ${s.label} filter` : `Filter by ${s.label}`}
+              className={`bg-white rounded-xl p-4 flex items-center gap-3 text-left transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 ${
+                isActive ? 'ring-2' : 'hover:border-gray-300'
+              }`}
+              style={{
+                boxShadow: isActive ? `0 4px 14px ${s.color}25` : '0 2px 12px rgba(0,0,0,0.06)',
+                border: isActive ? `2px solid ${s.color}` : '1px solid #f0f0f0',
+                outline: 'none',
+              }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
+                {s.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-2xl font-bold leading-tight" style={{ color: s.color }}>{s.value}</div>
+                <div className="text-xs text-gray-500 font-medium truncate">{s.label}</div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search & Filters */}
