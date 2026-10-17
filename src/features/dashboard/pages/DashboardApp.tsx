@@ -205,15 +205,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       setIsLoading(false);
     });
 
+    const isLocalNotif = (id: string, type?: string) =>
+      id.startsWith('med-') || id.startsWith('stock-') || type === 'stock' || id.startsWith('N');
+
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
         if (d !== undefined && Array.isArray(d)) {
           setNotifications(prev => {
-            const localMeds = prev.filter(p => p.id.startsWith('med-') && !dismissedNotifIdsRef.current.has(p.id));
+            const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = d
               .filter(n => !dismissedNotifIdsRef.current.has(n.id))
               .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
-            return [...localMeds, ...backendNotifs];
+            return [...localNotifs, ...backendNotifs];
           });
         }
       }).catch(() => {});
@@ -233,11 +236,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       ]).then(([nRes, qRes]) => {
         if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           setNotifications(prev => {
-            const localMeds = prev.filter(p => p.id.startsWith('med-') && !dismissedNotifIdsRef.current.has(p.id));
+            const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = nRes.value!
               .filter(n => !dismissedNotifIdsRef.current.has(n.id))
               .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
-            return [...localMeds, ...backendNotifs];
+            return [...localNotifs, ...backendNotifs];
           });
         }
         if (qRes.status === 'fulfilled' && qRes.value && Array.isArray(qRes.value)) {
@@ -373,7 +376,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     return () => clearInterval(interval);
   }, [consultations, patients]);
 
-  // Check for low stock medicines daily (resets next day, stays dismissed for today if cleared)
+  // Check for low stock medicines daily (auto-resolves when restocked, stays dismissed for today if cleared)
   useEffect(() => {
     if (!medicines || medicines.length === 0) return;
     const today = getManilaDate();
@@ -383,16 +386,28 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       return Number(m.stock) <= threshold;
     });
 
-    if (lowStockMeds.length === 0) return;
+    const healthyMedIds = new Set(
+      medicines
+        .filter(m => Number(m.stock) > (m.threshold ?? 10))
+        .map(m => String(m.id))
+    );
 
     setNotifications(prev => {
+      // 1. Auto-resolve: remove alerts for medicines that are now restocked
+      const pruned = prev.filter(n => {
+        if (n.type !== 'stock') return true;
+        return !Array.from(healthyMedIds).some(id => n.id.startsWith(`stock-low-${id}-`));
+      });
+
+      if (lowStockMeds.length === 0) return pruned;
+
       const newStockNotifs: AppNotification[] = [];
 
       lowStockMeds.forEach(m => {
         const notifId = `stock-low-${m.id}-${today}`;
         // If cleared or dismissed today, do NOT show again today
         if (dismissedNotifIdsRef.current.has(notifId)) return;
-        if (prev.some(n => n.id === notifId) || newStockNotifs.some(n => n.id === notifId)) return;
+        if (pruned.some(n => n.id === notifId) || newStockNotifs.some(n => n.id === notifId)) return;
 
         const isOut = Number(m.stock) === 0;
         const msg = isOut
@@ -427,9 +442,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       });
 
       if (newStockNotifs.length > 0) {
-        return [...newStockNotifs, ...prev];
+        return [...newStockNotifs, ...pruned];
       }
-      return prev;
+      return pruned;
     });
   }, [medicines]);
 

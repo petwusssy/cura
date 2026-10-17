@@ -62,7 +62,8 @@ export function isCaseMatch(targetCase: string, catOrComplaint: string): boolean
   if (a.includes('rashes') && (b.includes('rashes') || b.includes('rash'))) return true;
   if (a.includes('headache') && b.includes('headache')) return true;
   if (a.includes('dizziness') && (b.includes('dizziness') || b.includes('dizzy'))) return true;
-  if (a.includes('fever') && (b.includes('fever') || b.includes('febrile') || b.includes('lagnat'))) return true;
+  if (a === 'dengue fever') return b === 'dengue fever' || b.includes('dengue');
+  if (a === 'fever') return b === 'fever';
   if (a.includes('cough') && (b.includes('cough') || b.includes('ubo'))) return true;
   if (a.includes('colds') && (b.includes('colds') || b.includes('sipon'))) return true;
   if (a.includes('sore throat') && (b.includes('sore throat') || b.includes('throat pain'))) return true;
@@ -373,6 +374,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         : (p ? (p.category === 'Employee' || p.category === 'Outsider') : true);
 
       if (!isTargetPatient) return false;
+
+      const isFeverTarget = cat.toLowerCase().trim() === 'fever';
+
+      // For Fever: ONLY count if explicitly selected in the options (c.categories)
+      if (isFeverTarget) {
+        return Array.isArray(c.categories) && c.categories.some(catName => (catName || '').toLowerCase().trim() === 'fever');
+      }
 
       // 1. Check in c.categories
       if (Array.isArray(c.categories) && c.categories.some(catName => isCaseMatch(cat, catName))) {
