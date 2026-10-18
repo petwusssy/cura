@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page } from '../types';
 
 const PRIMARY = '#1B3A6B';
@@ -82,6 +82,14 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   const [caseCategoriesList, setCaseCategoriesList] = useState(DEFAULT_CASE_CATEGORIES);
   const [categories, setCategories] = useState<string[]>(initialData?.categories || []);
   const [newCategory, setNewCategory] = useState('');
+  const [caseSearch, setCaseSearch] = useState('');
+  const caseSearchInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredCaseCategories = caseCategoriesList.filter(cat => {
+    const q = caseSearch.trim().toLowerCase();
+    if (!q) return true;
+    return categories.includes(cat) || cat.toLowerCase().includes(q);
+  });
 
   const [doctorName, setDoctorName] = useState(initialData?.doctorName || '');
   const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'UA CLINIC ADMIN');
@@ -357,24 +365,94 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
               />
             </div>
             <div>
-              <label className={labelCls}>Case Categories</label>
-              <div className="flex flex-wrap gap-2 mt-1 mb-3">
-                {caseCategoriesList.map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => toggleCategory(cat)}
-                    className="text-xs px-3 py-1.5 rounded-xl border transition-all font-medium cursor-pointer"
-                    style={{
-                      background: categories.includes(cat) ? PRIMARY : 'white',
-                      color: categories.includes(cat) ? 'white' : '#4b5563',
-                      borderColor: categories.includes(cat) ? PRIMARY : '#e5e7eb',
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <label className={labelCls + ' mb-0'}>Case Categories</label>
+                  {categories.length > 0 && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#1B3A6B] border border-blue-200">
+                      {categories.length} selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Small Search Button & Bar intended specifically for Cases */}
+                <div className="relative flex items-center">
+                  <Search size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                  <input
+                    ref={caseSearchInputRef}
+                    type="text"
+                    value={caseSearch}
+                    onChange={e => setCaseSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (filteredCaseCategories.length > 0) {
+                          const target = filteredCaseCategories.find(c => !categories.includes(c)) || filteredCaseCategories[0];
+                          if (target) toggleCategory(target);
+                        } else if (caseSearch.trim()) {
+                          const trimmed = caseSearch.trim();
+                          if (!caseCategoriesList.includes(trimmed)) setCaseCategoriesList(prev => [trimmed, ...prev]);
+                          if (!categories.includes(trimmed)) setCategories(prev => [...prev, trimmed]);
+                          setCaseSearch('');
+                        }
+                      }
                     }}
-                  >
-                    {cat}
-                  </button>
-                ))}
+                    placeholder="Search cases..."
+                    className="pl-8 pr-7 py-1 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-[#1B3A6B] bg-gray-50 focus:bg-white w-44 sm:w-56 transition-all text-gray-900 placeholder:text-gray-400 shadow-2xs"
+                  />
+                  {caseSearch && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCaseSearch('');
+                        caseSearchInputRef.current?.focus();
+                      }}
+                      className="absolute right-1.5 p-0.5 text-gray-400 hover:text-gray-600 rounded cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {filteredCaseCategories.length === 0 ? (
+                <div className="w-full py-2.5 px-3.5 rounded-xl bg-gray-50 border border-dashed border-gray-300 text-xs text-gray-600 flex items-center justify-between gap-2 mt-1 mb-3">
+                  <span>No case matching "<strong>{caseSearch}</strong>"</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = caseSearch.trim();
+                      if (!trimmed) return;
+                      if (!caseCategoriesList.includes(trimmed)) setCaseCategoriesList(prev => [trimmed, ...prev]);
+                      if (!categories.includes(trimmed)) setCategories(prev => [...prev, trimmed]);
+                      setCaseSearch('');
+                    }}
+                    className="px-3 py-1 rounded-lg text-white font-semibold text-xs cursor-pointer shadow-2xs transition-opacity hover:opacity-90"
+                    style={{ background: PRIMARY }}
+                  >
+                    + Add as Case
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 mt-1 mb-3">
+                  {filteredCaseCategories.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => toggleCategory(cat)}
+                      className="text-xs px-3 py-1.5 rounded-xl border transition-all font-medium cursor-pointer"
+                      style={{
+                        background: categories.includes(cat) ? PRIMARY : 'white',
+                        color: categories.includes(cat) ? 'white' : '#4b5563',
+                        borderColor: categories.includes(cat) ? PRIMARY : '#e5e7eb',
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <input 
                   type="text" 
