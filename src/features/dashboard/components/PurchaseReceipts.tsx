@@ -1025,11 +1025,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <div>
                     <div className="text-xs font-extrabold uppercase tracking-wider text-gray-500">{s} Deliveries</div>
                     <div className="text-2xl font-black mt-1 text-gray-800">{count}</div>
-                    <div className="text-[11px] text-gray-500 mt-0.5">
-                      {s === 'Pending' && 'Awaiting supplier processing'}
-                      {s === 'Partial' && 'Shipment partially arrived'}
-                      {s === 'Complete' && 'Fully fulfilled and stocked'}
-                    </div>
                   </div>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm" style={{ background: sc.bg, color: sc.text }}>
                     {count}
