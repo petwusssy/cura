@@ -18,14 +18,27 @@ import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 
 interface Props {
-  onLoginClick: () => void
+  onLoginClick?: () => void
   onSplitComplete: () => void
+  initialStage?: Stage
+  onBackToHome?: () => void
 }
 
 type Stage = "idle" | "form" | "splitting"
 
-export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
-  const [stage, setStage] = useState<Stage>("idle")
+export default function LandingPage({
+  onLoginClick,
+  onSplitComplete,
+  initialStage = "idle",
+  onBackToHome,
+}: Props) {
+  const [stage, setStage] = useState<Stage>(initialStage)
+
+  useEffect(() => {
+    if (initialStage) {
+      setStage(initialStage)
+    }
+  }, [initialStage])
   const [showPassword, setShowPassword] = useState(false)
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -261,7 +274,10 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                   </p>
 
                   <motion.button
-                    onClick={() => setStage("form")}
+                    onClick={() => {
+                      setStage("form")
+                      if (onLoginClick) onLoginClick()
+                    }}
                     className="group inline-flex items-center gap-3 px-9 py-4 rounded-xl font-semibold text-base bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50] transition-colors duration-300 shadow-md hover:shadow-lg"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                     whileHover={{ scale: 1.02 }}
@@ -510,6 +526,7 @@ export default function LandingPage({ onLoginClick, onSplitComplete }: Props) {
                     onClick={() => {
                       setStage("idle")
                       setErrorMessage(null)
+                      if (onBackToHome) onBackToHome()
                     }}
                     className="inline-flex items-center gap-2 text-[#001e50]/60 hover:text-[#001e50] transition-colors text-xs sm:text-[13px] font-semibold mt-3 px-1"
                     style={{ fontFamily: "'Inter', sans-serif" }}

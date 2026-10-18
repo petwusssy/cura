@@ -1,13 +1,12 @@
 import { Routes, Route, useNavigate, Navigate } from "react-router"
 import LandingPage from "@/features/landing/pages/LandingPage"
-import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardApp from "@/features/dashboard/pages/DashboardApp"
 import { CallPage } from "@/features/telemedicine/CallPage"
 import { authService } from "@/services/authService"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!authService.isAuthenticated()) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
   return <>{children}</>
 }
@@ -31,6 +30,7 @@ export function AppRouter() {
         path="/"
         element={
           <LandingPage
+            initialStage="idle"
             onLoginClick={() => navigate("/login")}
             onSplitComplete={() => navigate("/dashboard")}
           />
@@ -39,9 +39,10 @@ export function AppRouter() {
       <Route
         path="/login"
         element={
-          <LoginPage
-            onLogin={() => navigate("/dashboard")}
-            onBack={() => navigate("/")}
+          <LandingPage
+            initialStage="form"
+            onBackToHome={() => navigate("/")}
+            onSplitComplete={() => navigate("/dashboard")}
           />
         }
       />
