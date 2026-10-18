@@ -12,6 +12,7 @@ import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueu
 
 import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
+import { consultationService } from '@/services/consultationService';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -25,7 +26,7 @@ interface DashboardProps {
   queues?: PatientQueue[];
   onNotifyQueue?: (id: string) => void;
   onCompleteQueue?: (id: string) => void;
-  onMarkDoseIntaked?: (keys: string[]) => void;
+  onMarkDoseIntaked?: (keys: string[], consultationId?: string, treatmentId?: string, updatedRemarks?: string) => void;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
@@ -54,11 +55,13 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
   const handleMarkIntaked = (item: {
     id: string;
+    treatmentId?: string;
     consultationId: string;
     medicineName: string;
     nextDose: string;
     timeGiven: string;
     patientName: string;
+    remarks?: string;
   }) => {
     const keys = [
       item.id,
@@ -77,7 +80,27 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       return next;
     });
 
-    onMarkDoseIntaked?.(keys);
+    // Find the treatment to patch on backend
+    const targetConsultation = consultations.find(c => c.id === item.consultationId);
+    const targetTreatment = targetConsultation?.treatments?.find(t =>
+      (item.treatmentId && String(t.id) === String(item.treatmentId)) ||
+      (t.medicineName === item.medicineName && (t.nextDose === item.nextDose || t.timeGiven === item.timeGiven))
+    );
+    const resolvedTreatmentId = item.treatmentId || (targetTreatment?.id ? String(targetTreatment.id) : null);
+    const currentRemarks = targetTreatment?.remarks || item.remarks || '';
+    const cleanRemarks = currentRemarks.replace(/\[INTAKED\]/g, '').trim();
+    const updatedRemarks = cleanRemarks ? `${cleanRemarks} [INTAKED]` : '[INTAKED]';
+
+    if (resolvedTreatmentId) {
+      const uuidMatch = resolvedTreatmentId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+      if (uuidMatch) {
+        consultationService.updateTreatment(uuidMatch[0], updatedRemarks).catch(err => {
+          console.error('Failed to update treatment intake on backend:', err);
+        });
+      }
+    }
+
+    onMarkDoseIntaked?.(keys, item.consultationId, resolvedTreatmentId || undefined, updatedRemarks);
     toast.success(`Medication marked as intaked for ${item.patientName}`);
   };
 
@@ -133,6 +156,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const medicationReminders = useMemo(() => {
     const items: {
       id: string;
+      treatmentId?: string;
       consultationId: string;
       patientId: string;
       patientName: string;
@@ -163,6 +187,11 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       const isVisitToday = normalizeDate(c.date) === today;
 
       c.treatments.forEach((t, idx) => {
+        // Skip if marked intaked on server (synced from mobile or web)
+        if (t.remarks && t.remarks.includes('[INTAKED]')) {
+          return;
+        }
+
         const itemId = `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`;
         const semKey1 = `${c.id}-${t.medicineName}-${t.nextDose}`;
         const semKey2 = `${c.id}-${t.medicineName}-${t.timeGiven}`;
@@ -190,6 +219,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
         items.push({
           id: `${c.id}-t-${idx}-${t.medicineName}-${t.nextDose || t.timeGiven || idx}`,
+          treatmentId: t.id ? String(t.id) : undefined,
           consultationId: c.id,
           patientId: c.patientId,
           patientName,

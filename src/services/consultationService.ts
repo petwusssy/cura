@@ -23,5 +23,10 @@ export const consultationService = {
     const payload = patientId ? { ...rest, patient: patientId } : rest;
     const response = await api.patch<any>(`/consultations/${id}/`, payload);
     return { ...response.data, patientId: response.data.patient };
+  },
+
+  updateTreatment: async (treatmentId: string, remarks: string): Promise<any> => {
+    const response = await api.patch(`/treatments/${treatmentId}/`, { remarks });
+    return response.data;
   }
 };

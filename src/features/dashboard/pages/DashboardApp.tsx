@@ -128,11 +128,27 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   }, []);
 
-  const handleMarkDoseIntaked = (keys: string[]) => {
+  const handleMarkDoseIntaked = (keys: string[], consultationId?: string, treatmentId?: string, updatedRemarks?: string) => {
     keys.forEach(k => {
       dismissedNotifIdsRef.current.add(k);
     });
     setNotifications(prev => prev.filter(n => !keys.includes(n.id)));
+
+    if (consultationId && updatedRemarks) {
+      setConsultations(prev => prev.map(c => {
+        if (c.id !== consultationId) return c;
+        return {
+          ...c,
+          treatments: (c.treatments || []).map(t => {
+            if ((treatmentId && String(t.id) === String(treatmentId)) ||
+                keys.some(k => k.includes(t.medicineName) && (k.includes(String(t.nextDose)) || k.includes(String(t.timeGiven))))) {
+              return { ...t, remarks: updatedRemarks };
+            }
+            return t;
+          })
+        };
+      }));
+    }
   };
 
   const navigate = (page: Page) => {
@@ -231,15 +247,16 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications and queues with non-overlapping guard (6s interval)
+    // Polling for new notifications, queues, and consultations with non-overlapping guard (6s interval)
     let isPolling = false;
     const interval = setInterval(() => {
       if (isPolling) return;
       isPolling = true;
       Promise.allSettled([
         notificationService.getNotifications(),
-        queueService.getQueues()
-      ]).then(([nRes, qRes]) => {
+        queueService.getQueues(),
+        consultationService.getConsultations()
+      ]).then(([nRes, qRes, cRes]) => {
         if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
@@ -254,6 +271,16 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             .filter(q => !completedQueueIdsRef.current.has(q.id))
             .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q)
           );
+        }
+        if (cRes.status === 'fulfilled' && cRes.value && Array.isArray(cRes.value)) {
+          const seen = new Set<string>();
+          const unique = cRes.value.filter(c => {
+            const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setConsultations(unique);
         }
       }).catch(() => {}).finally(() => {
         isPolling = false;
@@ -295,6 +322,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
           
           c.treatments.forEach(t => {
+            if (t.remarks && t.remarks.includes('[INTAKED]')) {
+              const notifDueId = `med-due-${c.id}-${t.medicineName}-${t.nextDose}`;
+              const notifUpcomingId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+              dismissedNotifIdsRef.current.add(notifDueId);
+              dismissedNotifIdsRef.current.add(notifUpcomingId);
+              return;
+            }
+
             if (t.nextDose) {
               const [doseHourStr, doseMinuteStr] = t.nextDose.split(':');
               const doseHour = parseInt(doseHourStr, 10);
@@ -377,10 +412,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
         });
 
+        const cleanedPrev = prev.filter(n => !dismissedNotifIdsRef.current.has(n.id));
         if (newNotifs.length > 0) {
-          return [...newNotifs, ...prev];
+          return [...newNotifs, ...cleanedPrev];
         }
-        return prev;
+        return cleanedPrev;
       });
     };
 
