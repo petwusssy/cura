@@ -565,9 +565,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               </thead>
               <tbody>
                 {prfItems.map(row => {
-                  const numQty = typeof row.qty === 'string' ? parseFloat(row.qty) || 0 : row.qty;
-                  const numPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
-                  const amt = (numQty * numPrice).toFixed(2);
                   return (
                     <tr key={row.id} className="border border-black hover:bg-gray-50/50 transition-colors">
                       <td className="border border-black p-1 text-center">
@@ -614,9 +611,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           className="w-full text-center bg-transparent font-medium focus:outline-none focus:bg-yellow-50 px-1"
                         />
                       </td>
-                      <td className="border border-black p-1 text-right font-bold pr-2">
-                        {numPrice > 0 ? amt : ''}
-                      </td>
+                      <td className="border border-black p-1 text-right font-bold pr-2"></td>
                       <td className="no-print border border-black p-1 text-center">
                         <button
                           onClick={() => handleRemovePrfRow(row.id)}
