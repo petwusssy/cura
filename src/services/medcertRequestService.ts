@@ -56,7 +56,10 @@ export const medcertRequestService = {
     try {
       await api.delete(`/medcert-requests/${id}/`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return true;
+      }
       console.error(`Failed to delete medcert request ${id}:`, error);
       return false;
     }

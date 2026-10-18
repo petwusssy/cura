@@ -338,6 +338,8 @@ const TELEMEDICINE_TIME_SLOTS = [
     if (!success) {
       setRequests(prevRequests);
       alert("Failed to delete request on server.");
+    } else {
+      alert("Telemedicine request successfully deleted!");
     }
   };
 

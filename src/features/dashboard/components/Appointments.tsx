@@ -210,6 +210,8 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
     if (!success) {
       setRequests(prevRequests);
       alert("Failed to delete request on server.");
+    } else {
+      alert("Appointment request successfully deleted!");
     }
   };
 

@@ -48,10 +48,28 @@ export const telemedicineService = {
   },
 
   deleteRequest: async (id: string): Promise<boolean> => {
+    const cleanCache = () => {
+      try {
+        const cached = localStorage.getItem('cura_telemedicine_requests_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            localStorage.setItem('cura_telemedicine_requests_cache', JSON.stringify(parsed.filter((r: any) => r.id !== id)));
+          }
+        }
+      } catch {}
+    };
+
     try {
       await api.delete(`/telemedicine/${id}/`);
+      cleanCache();
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        // Item is already deleted from server; treat as idempotent success
+        cleanCache();
+        return true;
+      }
       console.error(`Failed to delete request ${id}:`, error);
       return false;
     }
