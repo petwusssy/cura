@@ -47,6 +47,33 @@ function getNextPrfNo(currentPrf: string): string {
   return `PRF-${new Date().getFullYear()}-002`;
 }
 
+function getLatestContinuousPrfNo(requests: PurchaseRequest[]): string {
+  const currentYear = new Date().getFullYear();
+  let maxSeq = 0;
+  let targetYear = currentYear;
+
+  for (const req of requests) {
+    if (!req.prfNo) continue;
+    const match = req.prfNo.match(/PRF-(\d{4})-(\d+)/i) || req.prfNo.match(/PRF-(\d+)/i);
+    if (match) {
+      const year = match.length === 3 ? parseInt(match[1], 10) : currentYear;
+      const seq = parseInt(match[match.length - 1], 10);
+      if (year === currentYear) {
+        if (seq > maxSeq) {
+          maxSeq = seq;
+          targetYear = year;
+        }
+      } else if (maxSeq === 0 && year > targetYear) {
+        targetYear = year;
+        maxSeq = seq;
+      }
+    }
+  }
+
+  const nextSeq = maxSeq + 1;
+  return `PRF-${targetYear}-${String(nextSeq).padStart(3, '0')}`;
+}
+
 function getPrfDisplayTitle(prf: string): string {
   const match = prf.match(/PRF-(\d{4})-(\d+)/i);
   if (match) {
@@ -60,6 +87,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
   const [openPrfs, setOpenPrfs] = useState<Record<string, boolean>>({});
+  const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
 
   // Delivery Receive Modal state
   const [receiveModal, setReceiveModal] = useState<PurchaseRequest | null>(null);
@@ -73,18 +101,32 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
   // Editable PRF Document state (so users can type immediately and print)
   const [prfNo, setPrfNo] = useState<string>(() => {
-    return localStorage.getItem('cura_current_prf_no') || 'PRF-2026-001';
+    const stored = localStorage.getItem('cura_current_prf_no');
+    if (stored) return stored;
+    return getLatestContinuousPrfNo(purchaseRequests);
   });
   const [department, setDepartment] = useState('Medical-Dental Clinic');
 
   // prfItems is derived from purchaseRequests that match the current prfNo
   const [prfItems, setPrfItems] = useState<PrfItemRow[]>(() => {
-    const initialPrf = localStorage.getItem('cura_current_prf_no') || 'PRF-2026-001';
+    const initialPrf = localStorage.getItem('cura_current_prf_no') || getLatestContinuousPrfNo(purchaseRequests);
     const matched = purchaseRequests.filter(r => r.prfNo === initialPrf).map(reqToPrfRow);
     return matched.length > 0
       ? matched
       : [{ id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }];
   });
+
+  // Automatically advance to latest continuous PRF if current prfNo was already submitted
+  useEffect(() => {
+    if (purchaseRequests.length === 0) return;
+    const submittedPrfs = new Set(purchaseRequests.map(r => r.prfNo?.trim().toUpperCase()).filter(Boolean));
+    if (submittedPrfs.has(prfNo.trim().toUpperCase()) || !prfNo) {
+      const nextContinuous = getLatestContinuousPrfNo(purchaseRequests);
+      setPrfNo(nextContinuous);
+      localStorage.setItem('cura_current_prf_no', nextContinuous);
+      setNewReq(n => ({ ...n, prfNo: nextContinuous }));
+    }
+  }, [purchaseRequests, prfNo]);
 
   // Keep prfItems in sync whenever prfNo changes
   useEffect(() => {
@@ -92,12 +134,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     if (matched.length > 0) {
       setPrfItems(matched);
     } else {
-      setPrfItems(prev => {
-        if (prev.length > 0 && prev.some(r => r.item.trim())) {
-          return prev;
-        }
-        return [{ id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }];
-      });
+      setPrfItems([
+        { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
+      ]);
     }
   }, [prfNo]);
   const [purpose, setPurpose] = useState('Medical-Dental Clinic Routine Requisition & Replenishment');
@@ -140,28 +179,59 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     } catch (e) { console.error(e); }
   };
 
+  const resetPrfForm = (nextNumber: string) => {
+    setPrfNo(nextNumber);
+    localStorage.setItem('cura_current_prf_no', nextNumber);
+    setNewReq(n => ({ ...n, prfNo: nextNumber }));
+    setPrfItems([
+      { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
+    ]);
+    setDepartment('Medical-Dental Clinic');
+    setPurpose('Medical-Dental Clinic Routine Requisition & Replenishment');
+    setDateNeeded('To follow lead time in Purchasing');
+    setPreparedBy('Abigael C. Landingin');
+    setEvalRemarks('');
+    setRecommendedBy('');
+    setSupplier1('');
+    setSupplier2('');
+    setSupplier3('');
+    setForCashAdvance(false);
+    setForPurchaseOrder(true);
+    setRevSupplier('');
+    setRevTerms('30 Days');
+    setBudgetAmount('');
+    setCapexNo('');
+    setVerifiedBy('');
+    setSourceOfFunds('');
+    setEndorsedBy('');
+    setRecFinance('');
+    setApprovedBy('');
+  };
+
   const handleNewRequest = async () => {
     if (isSubmitting) return;
     if (!newReq.medicine || !newReq.requestedQty) return;
     setIsSubmitting(true);
     const tempId = `PR-${Date.now()}`;
+    const targetPrf = newReq.prfNo?.trim() || prfNo;
     const req: PurchaseRequest = {
       id: tempId,
       medicine: newReq.medicine,
       description: newReq.description || undefined,
       unit: newReq.unit || 'Tablet',
-      prfNo: newReq.prfNo || prfNo,
+      prfNo: targetPrf,
       unitPrice: parseFloat(newReq.unitPrice) || 0,
-      requestedQty: parseInt(newReq.requestedQty) || 1,
+      requestedQty: parseInt(newReq.requestedQty, 10) || 1,
       receivedQty: 0,
       date: getManilaDate(),
       status: 'Pending',
-      history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${newReq.prfNo || prfNo}` }],
+      history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${targetPrf}` }],
     };
     try {
       await onAddRequest(req);
       setShowNewForm(false);
-      setNewReq({ medicine: '', description: '', unit: 'Tablet', requestedQty: '', unitPrice: '', prfNo: prfNo });
+      const nextPrf = getNextPrfNo(targetPrf);
+      resetPrfForm(nextPrf);
     } catch (e) {
       console.error(e);
     } finally {
@@ -171,61 +241,64 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
   const handleRegisterAllToTracker = async () => {
     if (isSubmitting) return;
+    const currentPrf = prfNo.trim() || 'PRF-2026-001';
+    const validRows = prfItems.filter(row => {
+      const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
+      return row.item.trim() && qty && qty > 0;
+    });
+
+    if (validRows.length === 0) {
+      alert('Please enter at least one medicine/item with a quantity before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const currentPrf = prfNo.trim() || 'PRF-2026-001';
       let addedCount = 0;
-      for (const row of prfItems) {
-        const qty = typeof row.qty === 'string' ? parseInt(row.qty) : row.qty;
-        if (qty && qty > 0 && row.item.trim()) {
-          const isExisting = purchaseRequests.find(r => r.id === row.id);
-          
-          if (isExisting) {
-            // If it exists, update it if changed
-            const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
-            if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
-              await onUpdateRequest({
-                ...isExisting,
-                requestedQty: qty,
-                medicine: row.item,
-                description: row.description || undefined,
-                unitPrice: unitPrice,
-              });
-              addedCount++;
-            }
-          } else {
-            // New request
-            const req: PurchaseRequest = {
-              id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
+      for (const row of validRows) {
+        const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
+        const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
+        const isExisting = purchaseRequests.find(r => r.id === row.id);
+        
+        if (isExisting) {
+          // If it exists, update it if changed
+          if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
+            await onUpdateRequest({
+              ...isExisting,
+              requestedQty: qty,
               medicine: row.item,
               description: row.description || undefined,
-              unit: row.unit || 'Tablet',
-              prfNo: currentPrf,
-              unitPrice: typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice,
-              requestedQty: qty,
-              receivedQty: 0,
-              date: getManilaDate(),
-              status: 'Pending',
-              history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
-            };
-            await onAddRequest(req);
+              unitPrice: unitPrice,
+            });
             addedCount++;
           }
+        } else {
+          // New request
+          const req: PurchaseRequest = {
+            id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
+            medicine: row.item,
+            description: row.description || undefined,
+            unit: row.unit || 'Tablet',
+            prfNo: currentPrf,
+            unitPrice: unitPrice,
+            requestedQty: qty,
+            receivedQty: 0,
+            date: getManilaDate(),
+            status: 'Pending',
+            history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
+          };
+          await onAddRequest(req);
+          addedCount++;
         }
       }
-      if (addedCount > 0) {
-        const nextPrf = getNextPrfNo(currentPrf);
-        setPrfNo(nextPrf);
-        localStorage.setItem('cura_current_prf_no', nextPrf);
-        setNewReq(n => ({ ...n, prfNo: nextPrf }));
-        setPrfItems([
-          { id: String(Date.now()), qty: 1, unit: 'Tablet', item: '', description: '', unitPrice: 0 }
-        ]);
-        setOpenPrfs(prev => ({ ...prev, [currentPrf]: true }));
-        setViewMode('tracker');
-      }
+      const nextPrf = getNextPrfNo(currentPrf);
+      resetPrfForm(nextPrf);
+      setOpenPrfs(prev => ({ ...prev, [currentPrf]: true }));
+      setSubmitSuccessMsg(`${currentPrf} successfully submitted! Form auto-reset for ${nextPrf}.`);
+      setTimeout(() => setSubmitSuccessMsg(null), 6000);
     } catch (e) {
       console.error(e);
+      alert('Failed to submit requisition.');
     } finally {
       setIsSubmitting(false);
     }
@@ -383,6 +456,21 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       {/* ========================================================================================= */}
       {viewMode === 'template' && (
         <div className="space-y-6 animate-in fade-in duration-300">
+          {submitSuccessMsg && (
+            <div className="no-print bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle size={17} className="text-emerald-600 flex-shrink-0" />
+                <span>{submitSuccessMsg}</span>
+              </div>
+              <button
+                onClick={() => setSubmitSuccessMsg(null)}
+                className="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
           {/* Action Toolbar */}
           <div className="no-print flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
@@ -435,6 +523,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                       const val = e.target.value;
                       setPrfNo(val);
                       localStorage.setItem('cura_current_prf_no', val);
+                      setNewReq(n => ({ ...n, prfNo: val }));
                     }}
                     className="border-b border-black w-28 text-right font-bold bg-transparent text-black focus:outline-none focus:bg-yellow-50 px-1"
                   />
