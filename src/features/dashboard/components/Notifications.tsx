@@ -6,6 +6,7 @@ import { formatTime12 } from '@/utils/philippineTime';
 const PRIMARY = '#185a9d';
 const RED = '#D64545';
 const AMBER = '#D97706';
+const YELLOW = '#F59E0B';
 const GREEN = '#16A34A';
 
 interface NotificationsProps {
@@ -24,7 +25,9 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   useEffect(() => {
     const init: Record<string, number> = {};
     notifications.forEach(n => {
-      if (n.type === 'medication' && n.minutesLeft) init[n.id] = n.minutesLeft;
+      if ((n.type === 'medication' || n.type === 'bed') && n.minutesLeft !== undefined) {
+        init[n.id] = n.minutesLeft;
+      }
     });
     setLocalCountdowns(init);
 
@@ -65,9 +68,12 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
     if (n.type === 'stock') return RED;
     if (n.type === 'medication') {
       const mins = localCountdowns[n.id] ?? n.minutesLeft ?? 99;
-      return mins <= 10 ? RED : '#D97706';
+      return mins <= 10 ? RED : AMBER;
     }
-    if (n.type === 'bed') return '#FF9800';
+    if (n.type === 'bed') {
+      const mins = localCountdowns[n.id] ?? n.minutesLeft;
+      return (mins !== undefined && mins <= 0) || n.message.toLowerCase().includes('expired') || n.message.toLowerCase().includes("time's up") ? RED : AMBER;
+    }
     if (n.type.includes('request') || n.type.includes('update')) return GREEN;
     return PRIMARY;
   };
@@ -88,7 +94,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
   const handleNotificationClick = (n: AppNotification) => {
     if (!onNavigate) return;
     if (n.type === 'stock') onNavigate('inventory');
-    else if (n.type === 'medication') onNavigate('patients');
+    else if (n.type === 'medication') onNavigate('dashboard');
     else if (n.type === 'bed') onNavigate('beds');
     else if (n.type.includes('telemedicine')) onNavigate('telemedicine');
     else if (n.type.includes('appointment')) onNavigate('appointments');
@@ -187,7 +193,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                       <p className={`text-sm ${!n.read ? 'font-semibold text-gray-900 dark:text-foreground' : 'font-normal text-gray-600 dark:text-gray-400'}`}>
                         {n.message}
                       </p>
-                      {n.patientName && n.type === 'medication' && (
+                      {n.patientName && (
                         <div className="mt-1">
                           <span className="text-xs font-medium text-gray-500">Patient: <span className="uppercase font-semibold">{n.patientName}</span></span>
                           {n.nextDose && <span className="text-xs text-gray-400 ml-2">• Next dose: {formatTime12(n.nextDose)}</span>}
@@ -225,6 +231,28 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
                         <div className="h-full rounded-full transition-all" style={{
                           width: `${Math.max(0, Math.min(100, ((30 - (mins || 0)) / 30) * 100))}%`,
                           background: isUrgent ? RED : YELLOW,
+                        }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Countdown for bed */}
+                  {n.type === 'bed' && mins !== undefined && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium" style={{ color }}>
+                          {mins > 0 ? `⏳ ${mins} minute${mins !== 1 ? 's' : ''} remaining` : '🚨 ALLOTTED TIME EXPIRED'}
+                        </span>
+                        {mins <= 5 && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white animate-pulse" style={{ background: RED }}>
+                            {mins <= 0 ? 'EXPIRED' : 'ENDING SOON'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{
+                          width: `${Math.max(0, Math.min(100, mins <= 0 ? 100 : ((30 - Math.min(30, mins)) / 30) * 100))}%`,
+                          background: mins <= 0 ? RED : AMBER,
                         }} />
                       </div>
                     </div>

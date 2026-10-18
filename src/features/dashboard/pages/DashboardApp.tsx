@@ -108,6 +108,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const readNotifIdsRef = useRef<Set<string>>(new Set());
   const dismissedNotifIdsRef = useRef<Set<string>>(new Set());
   const alertedDosesRef = useRef<Set<string>>(new Set());
+  const alertedUpcomingDosesRef = useRef<Set<string>>(new Set());
+  const alertedBedsRef = useRef<Set<string>>(new Set());
+  const alertedUpcomingBedsRef = useRef<Set<string>>(new Set());
   const completedQueueIdsRef = useRef<Set<string>>(new Set());
   const notifiedQueueIdsRef = useRef<Set<string>>(new Set());
   const savingConsultationRef = useRef<boolean>(false);
@@ -255,8 +258,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       Promise.allSettled([
         notificationService.getNotifications(),
         queueService.getQueues(),
-        consultationService.getConsultations()
-      ]).then(([nRes, qRes, cRes]) => {
+        consultationService.getConsultations(),
+        bedService.getBeds()
+      ]).then(([nRes, qRes, cRes, bRes]) => {
         if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
@@ -282,6 +286,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           setConsultations(unique);
         }
+        if (bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
+          setBeds(bRes.value);
+        }
       }).catch(() => {}).finally(() => {
         isPolling = false;
       });
@@ -297,13 +304,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   }, [purchaseRequests]);
 
-  // Check for upcoming and due medication doses
+  // Check for upcoming and due medication doses, as well as bed timers
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {});
     }
 
-    const checkUpcomingDoses = () => {
+    const checkAlertsAndTimers = () => {
       const [currHStr, currMStr] = getManilaTime().split(':');
       const currentHours = parseInt(currHStr, 10);
       const currentMinutes = parseInt(currMStr, 10);
@@ -313,6 +320,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       setNotifications(prev => {
         const newNotifs: AppNotification[] = [];
         
+        // ─── 1. MEDICATION INTAKE REMINDERS ─────────────────────────────────
         consultations.forEach(c => {
           if (normalizeDate(c.date) !== today || !c.treatments) return;
 
@@ -343,20 +351,125 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               // Condition A: Time for next intake has arrived or passed recently (within 3 hours)
               if (diff <= 0 && diff >= -180) {
                 const notifId = `med-due-${c.id}-${t.medicineName}-${t.nextDose}`;
-                if (dismissedNotifIdsRef.current.has(notifId)) return;
+                const upcomingNotifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+                dismissedNotifIdsRef.current.add(upcomingNotifId);
 
-                // Fire toast & desktop alert once per dose when due
-                if (!alertedDosesRef.current.has(notifId)) {
-                  alertedDosesRef.current.add(notifId);
-                  toast.warning(`🔔 Time for Next Intake: ${patientName} is due for ${t.medicineName} (${formatTime12(t.nextDose)})!`, {
-                    description: `Case: ${caseName} • Remarks: ${t.remarks || 'Take as prescribed'}`,
+                if (!dismissedNotifIdsRef.current.has(notifId)) {
+                  // Fire toast & desktop alert once per dose when due
+                  if (!alertedDosesRef.current.has(notifId)) {
+                    alertedDosesRef.current.add(notifId);
+                    toast.error(`🔔 Time for Next Intake: ${patientName} is due for ${t.medicineName} (${formatTime12(t.nextDose)})!`, {
+                      description: `Case: ${caseName} • Remarks: ${t.remarks || 'Take as prescribed'}`,
+                      duration: 10000,
+                    });
+
+                    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                      try {
+                        new Notification('Medication Reminder - CURA', {
+                          body: `Time for ${patientName}'s next dose of ${t.medicineName} (${formatTime12(t.nextDose)})`,
+                          icon: '/favicon.ico',
+                        });
+                      } catch {}
+                    }
+                  }
+
+                  if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
+                    const isRead = readNotifIdsRef.current.has(notifId);
+                    newNotifs.push({
+                      id: notifId,
+                      type: 'medication',
+                      message: `Time for next intake: Medication (${t.medicineName}) is DUE NOW for ${patientName}`,
+                      time: new Date().toISOString(),
+                      read: isRead,
+                      patientName,
+                      patient_id: c.patientId,
+                      nextDose: t.nextDose,
+                      minutesLeft: 0,
+                      caseName,
+                      remarks: t.remarks || 'Take as prescribed',
+                      timeGiven: t.timeGiven,
+                      medicineName: t.medicineName,
+                      isDue: true,
+                    });
+                  }
+                }
+              }
+              // Condition B: Dose is approaching within 30 minutes (diff > 0 && diff <= 30)
+              else if (diff > 0 && diff <= 30) {
+                const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
+                if (!dismissedNotifIdsRef.current.has(notifId)) {
+                  const alertKey = `${c.id}-${t.medicineName}-${t.nextDose}-upcoming`;
+                  if (!alertedUpcomingDosesRef.current.has(alertKey)) {
+                    alertedUpcomingDosesRef.current.add(alertKey);
+                    toast.warning(`⏰ Upcoming Intake: ${patientName} is scheduled for ${t.medicineName} in ${diff} mins (${formatTime12(t.nextDose)})`, {
+                      description: `Case: ${caseName} • Instructions: ${t.remarks || 'Take as prescribed'}`,
+                      duration: 8000,
+                    });
+
+                    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                      try {
+                        new Notification('Upcoming Medication - CURA', {
+                          body: `${patientName} is due for ${t.medicineName} in ${diff} mins (${formatTime12(t.nextDose)})`,
+                          icon: '/favicon.ico',
+                        });
+                      } catch {}
+                    }
+                  }
+
+                  if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
+                    const isRead = readNotifIdsRef.current.has(notifId);
+                    newNotifs.push({
+                      id: notifId,
+                      type: 'medication',
+                      message: `Medication (${t.medicineName}) due for ${patientName} in ${diff} mins (${formatTime12(t.nextDose)})`,
+                      time: new Date().toISOString(),
+                      read: isRead,
+                      patientName,
+                      patient_id: c.patientId,
+                      nextDose: t.nextDose,
+                      minutesLeft: diff,
+                      caseName,
+                      remarks: t.remarks || 'Take as prescribed',
+                      timeGiven: t.timeGiven,
+                      medicineName: t.medicineName,
+                      isDue: false,
+                    });
+                  }
+                }
+              }
+            }
+          });
+        });
+
+        // ─── 2. BED MANAGEMENT TIMERS & NOTIFICATIONS ───────────────────────
+        beds.forEach(b => {
+          if (b.status === 'Occupied' && b.timeOccupied && b.allottedTime) {
+            const start = new Date(b.timeOccupied).getTime();
+            if (isNaN(start)) return;
+            const elapsed = Date.now() - start;
+            const allottedMs = b.allottedTime * 60000;
+            const remainingMs = allottedMs - elapsed;
+            const remainingMins = Math.ceil(remainingMs / 60000);
+
+            // Condition 1: Time is UP (expired)
+            if (remainingMs <= 0) {
+              const notifId = `bed-due-${b.id}-${b.timeOccupied}`;
+              const upcomingId = `bed-upcoming-${b.id}-${b.timeOccupied}`;
+              dismissedNotifIdsRef.current.add(upcomingId);
+
+              if (!dismissedNotifIdsRef.current.has(notifId)) {
+                const alertKey = `${b.id}-${b.timeOccupied}-expired`;
+                if (!alertedBedsRef.current.has(alertKey)) {
+                  alertedBedsRef.current.add(alertKey);
+                  toast.error(`🚨 Time's Up: Bed ${b.bedNumber} allotted time for ${b.patientName || 'Patient'} has expired!`, {
+                    description: `Reason: ${b.reason || 'Observation/Rest'} • Allotted: ${b.allottedTime} mins`,
                     duration: 10000,
                   });
 
                   if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
                     try {
-                      new Notification('Medication Reminder - CURA', {
-                        body: `Time for ${patientName}'s next dose of ${t.medicineName} (${formatTime12(t.nextDose)})`,
+                      new Notification('Bed Timer Expired - CURA', {
+                        body: `Time's up for ${b.patientName || 'Patient'} in Bed ${b.bedNumber} (${b.allottedTime}m limit)`,
                         icon: '/favicon.ico',
                       });
                     } catch {}
@@ -367,52 +480,69 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                   const isRead = readNotifIdsRef.current.has(notifId);
                   newNotifs.push({
                     id: notifId,
-                    type: 'medication',
-                    message: `Time for next intake: Medication (${t.medicineName}) is DUE NOW for ${patientName}`,
+                    type: 'bed',
+                    message: `Time's Up: Bed ${b.bedNumber} allotted time for ${b.patientName || 'Patient'} has expired!`,
                     time: new Date().toISOString(),
                     read: isRead,
-                    patientName,
-                    patient_id: c.patientId,
-                    nextDose: t.nextDose,
-                    minutesLeft: diff,
-                    caseName,
-                    remarks: t.remarks || 'Take as prescribed',
-                    timeGiven: t.timeGiven,
-                    medicineName: t.medicineName,
+                    patientName: b.patientName || undefined,
+                    patient_id: b.patientId || undefined,
+                    minutesLeft: 0,
                     isDue: true,
                   });
                 }
               }
-              // Condition B: Dose is approaching within 30 minutes (diff > 0 && diff <= 30)
-              else if (diff > 0 && diff <= 30) {
-                const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
-                if (dismissedNotifIdsRef.current.has(notifId)) return;
+            }
+            // Condition 2: Approaching / Malapit na (<= 5 minutes remaining)
+            else if (remainingMins <= 5) {
+              const notifId = `bed-upcoming-${b.id}-${b.timeOccupied}`;
+              if (!dismissedNotifIdsRef.current.has(notifId)) {
+                const alertKey = `${b.id}-${b.timeOccupied}-upcoming`;
+                if (!alertedUpcomingBedsRef.current.has(alertKey)) {
+                  alertedUpcomingBedsRef.current.add(alertKey);
+                  toast.warning(`⚠️ Bed Reminder: Bed ${b.bedNumber} for ${b.patientName || 'Patient'} is ending soon (${remainingMins} min${remainingMins !== 1 ? 's' : ''} left)!`, {
+                    description: `Reason: ${b.reason || 'Observation/Rest'} • Allotted: ${b.allottedTime} mins`,
+                    duration: 8000,
+                  });
+
+                  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                    try {
+                      new Notification('Bed Ending Soon - CURA', {
+                        body: `${b.patientName || 'Patient'} in Bed ${b.bedNumber} has ${remainingMins}m remaining`,
+                        icon: '/favicon.ico',
+                      });
+                    } catch {}
+                  }
+                }
 
                 if (!prev.find(n => n.id === notifId) && !newNotifs.find(n => n.id === notifId)) {
                   const isRead = readNotifIdsRef.current.has(notifId);
                   newNotifs.push({
                     id: notifId,
-                    type: 'medication',
-                    message: `Medication (${t.medicineName}) due for ${patientName} in ${diff} mins (${formatTime12(t.nextDose)})`,
+                    type: 'bed',
+                    message: `Bed ${b.bedNumber} for ${b.patientName || 'Patient'} is ending in ${remainingMins} mins`,
                     time: new Date().toISOString(),
                     read: isRead,
-                    patientName,
-                    patient_id: c.patientId,
-                    nextDose: t.nextDose,
-                    minutesLeft: diff,
-                    caseName,
-                    remarks: t.remarks || 'Take as prescribed',
-                    timeGiven: t.timeGiven,
-                    medicineName: t.medicineName,
+                    patientName: b.patientName || undefined,
+                    patient_id: b.patientId || undefined,
+                    minutesLeft: remainingMins,
                     isDue: false,
                   });
                 }
               }
             }
-          });
+          }
         });
 
-        const cleanedPrev = prev.filter(n => !dismissedNotifIdsRef.current.has(n.id));
+        // Clean dismissed or inactive notifications
+        const cleanedPrev = prev.filter(n => {
+          if (dismissedNotifIdsRef.current.has(n.id)) return false;
+          if (n.type === 'bed' && n.id.startsWith('bed-')) {
+            const bedMatch = beds.find(b => n.id.includes(b.id));
+            if (!bedMatch || bedMatch.status === 'Available') return false;
+          }
+          return true;
+        });
+
         if (newNotifs.length > 0) {
           return [...newNotifs, ...cleanedPrev];
         }
@@ -420,11 +550,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       });
     };
 
-    // Run immediately, then every 10 seconds for real-time dose checks
-    checkUpcomingDoses();
-    const interval = setInterval(checkUpcomingDoses, 10000);
+    // Run immediately, then every 6 seconds for real-time checks
+    checkAlertsAndTimers();
+    const interval = setInterval(checkAlertsAndTimers, 6000);
     return () => clearInterval(interval);
-  }, [consultations, patients]);
+  }, [consultations, patients, beds]);
 
   // Check for low stock medicines daily (auto-resolves when restocked, stays dismissed for today if cleared)
   useEffect(() => {

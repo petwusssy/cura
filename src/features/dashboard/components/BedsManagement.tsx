@@ -55,11 +55,6 @@ function useDurationTimers(beds: Bed[]) {
             const remaining = allottedMs - diff;
             if (remaining <= 0) {
               c[b.id] = "Time's up!";
-              const alertKey = `${b.id}-${b.timeOccupied}`;
-              if (!alertedBeds.current.has(alertKey)) {
-                toast.error(`Time is up for ${b.patientName} in Bed ${b.bedNumber}!`, { duration: 10000 });
-                alertedBeds.current.add(alertKey);
-              }
             } else {
               const rh = Math.floor(remaining / 3600000);
               const rm = Math.floor((remaining % 3600000) / 60000);
