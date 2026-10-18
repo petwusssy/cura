@@ -147,6 +147,7 @@ export interface PurchaseRequest {
   unit?: string;
   prfNo?: string;
   unitPrice?: number;
+  time?: string;
 }
 
 export interface MedicalCertificate {

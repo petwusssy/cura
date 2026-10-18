@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
-import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
+import { getManilaDate, formatManilaDateTime, normalizeDate, formatManilaDisplayTime } from '@/utils/philippineTime';
 import uaSeal from '@/assets/images/ua-seal.png';
 
 const PRIMARY = '#1E5AA8';
@@ -80,6 +80,51 @@ function getPrfDisplayTitle(prf: string): string {
     return `Purchase Requisition Form (PRF) - ${match[1]} - ${match[2]}`;
   }
   return `Purchase Requisition Form (PRF) - ${prf}`;
+}
+
+function savePrfTime(prfKey: string, timeStr: string, force = false) {
+  try {
+    const raw = localStorage.getItem('cura_prf_timestamps');
+    const map = raw ? JSON.parse(raw) : {};
+    if (force || !map[prfKey]) {
+      map[prfKey] = timeStr;
+      localStorage.setItem('cura_prf_timestamps', JSON.stringify(map));
+    }
+  } catch {}
+}
+
+function getSavedPrfTime(prfKey: string, items?: PurchaseRequest[]): string {
+  if (items) {
+    for (const item of items) {
+      if (item.time) return item.time;
+    }
+  }
+
+  try {
+    const raw = localStorage.getItem('cura_prf_timestamps');
+    if (raw) {
+      const map = JSON.parse(raw);
+      if (map[prfKey]) return map[prfKey];
+    }
+  } catch {}
+
+  if (items) {
+    for (const item of items) {
+      const match = item.id?.match(/PR-(\d{10,13})/);
+      if (match) {
+        const ts = parseInt(match[1], 10);
+        if (!isNaN(ts)) {
+          const t = formatManilaDisplayTime(ts);
+          savePrfTime(prfKey, t);
+          return t;
+        }
+      }
+    }
+  }
+
+  const defaultTime = formatManilaDisplayTime(new Date());
+  savePrfTime(prfKey, defaultTime);
+  return defaultTime;
 }
 
 export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, searchQuery }: PurchaseReceiptsProps) {
@@ -222,6 +267,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setIsSubmitting(true);
     const tempId = `PR-${Date.now()}`;
     const targetPrf = newReq.prfNo?.trim() || prfNo;
+    const submissionTime = formatManilaDisplayTime(new Date());
+    savePrfTime(targetPrf, submissionTime, true);
     const req: PurchaseRequest = {
       id: tempId,
       medicine: newReq.medicine,
@@ -232,6 +279,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       requestedQty: parseInt(newReq.requestedQty, 10) || 1,
       receivedQty: 0,
       date: getManilaDate(),
+      time: submissionTime,
       status: 'Pending',
       history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${targetPrf}` }],
     };
@@ -263,6 +311,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setIsSubmitting(true);
     try {
       let addedCount = 0;
+      const submissionTime = formatManilaDisplayTime(new Date());
+      savePrfTime(currentPrf, submissionTime, true);
       for (const row of validRows) {
         const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
         const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
@@ -292,6 +342,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             requestedQty: qty,
             receivedQty: 0,
             date: getManilaDate(),
+            time: submissionTime,
             status: 'Pending',
             history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
           };
@@ -347,17 +398,22 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   });
 
   // Group filteredRequests by PRF No.
-  const prfGroups: Record<string, { prfNo: string; date: string; items: PurchaseRequest[] }> = {};
+  const prfGroups: Record<string, { prfNo: string; date: string; time: string; items: PurchaseRequest[] }> = {};
   for (const req of filteredRequests) {
     const key = req.prfNo?.trim() || 'PRF-2026-001';
     if (!prfGroups[key]) {
       prfGroups[key] = {
         prfNo: key,
         date: req.date || getManilaDate(),
+        time: '',
         items: [],
       };
     }
     prfGroups[key].items.push(req);
+  }
+
+  for (const key of Object.keys(prfGroups)) {
+    prfGroups[key].time = getSavedPrfTime(key, prfGroups[key].items);
   }
 
   const sortedPrfKeys = Object.keys(prfGroups).sort((a, b) => {
@@ -974,6 +1030,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 const isOpen = Boolean(openPrfs[prfKey]);
                 const prfTitle = getPrfDisplayTitle(group.prfNo);
                 const purchaseDate = group.date ? normalizeDate(group.date) : getManilaDate();
+                const purchaseTime = group.time || getSavedPrfTime(prfKey, group.items);
 
                 return (
                   <div key={prfKey} className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all">
@@ -993,7 +1050,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           </span>
                         </div>
                         <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
-                          Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate}</strong>
+                          Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate} • {purchaseTime}</strong>
                         </span>
                       </button>
 
@@ -1065,7 +1122,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                                     </span>
                                     <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
                                       <Calendar size={11} className="text-gray-400" />
-                                      <span>{normalizeDate(req.date)}</span>
+                                      <span>{normalizeDate(req.date)} • {req.time || purchaseTime}</span>
                                     </span>
                                     <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-50 border border-gray-200/60 px-2 py-0.5 rounded-md">
                                       <span className="text-gray-400">Unit:</span>
