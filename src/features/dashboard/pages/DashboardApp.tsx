@@ -256,19 +256,23 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications, queues, consultations, and beds (6s interval)
+    // Polling for new notifications, queues, and beds (6s interval)
     // Skips when tab is hidden to prevent clogging the server when multiple devices are idle
     let isPolling = false;
+    let pollCount = 0;
     const pollData = () => {
       if (isPolling) return;
       if (typeof document !== 'undefined' && document.hidden) return;
       isPolling = true;
+      pollCount++;
+      const shouldFetchConsultations = pollCount % 10 === 0;
+
       Promise.allSettled([
         notificationService.getNotifications(),
         queueService.getQueues(),
-        consultationService.getConsultations(),
-        bedService.getBeds()
-      ]).then(([nRes, qRes, cRes, bRes]) => {
+        bedService.getBeds(),
+        ...(shouldFetchConsultations ? [consultationService.getConsultations()] : [])
+      ]).then(([nRes, qRes, bRes, cRes]) => {
         if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           const incoming = nRes.value;
 
@@ -314,7 +318,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q)
           );
         }
-        if (cRes.status === 'fulfilled' && cRes.value && Array.isArray(cRes.value)) {
+        if (bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
+          setBeds(bRes.value);
+        }
+        if (cRes && cRes.status === 'fulfilled' && cRes.value && Array.isArray(cRes.value)) {
           const seen = new Set<string>();
           const unique = cRes.value.filter(c => {
             const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
@@ -323,9 +330,6 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             return true;
           });
           setConsultations(unique);
-        }
-        if (bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
-          setBeds(bRes.value);
         }
       }).catch(() => {}).finally(() => {
         isPolling = false;
