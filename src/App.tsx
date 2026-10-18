@@ -7,7 +7,7 @@ export default function App() {
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} themes={['light', 'dark', 'ocean', 'system']}>
       <div className="relative w-full h-full overflow-hidden bg-bg-base text-text-base transition-colors duration-300">
         <AppRouter />
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" richColors closeButton />
       </div>
     </ThemeProvider>
   )
