@@ -276,7 +276,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   useEffect(() => {
     fetchMedCertRequests();
-    const interval = setInterval(fetchMedCertRequests, 8000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchMedCertRequests();
+    }, 10000);
     return () => clearInterval(interval);
   }, [fetchMedCertRequests]);
 
@@ -297,35 +300,50 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   const handleReqAction = async () => {
     if (!selectedReq || !reqActionType) return;
-    setIsReqSubmitting(true);
-    try {
-      const status = reqActionType === 'Approve' ? 'Approved' : 'Rejected';
-      const res = await medcertRequestService.approveRequest(selectedReq.id, {
-        status,
-        diagnosis: reqDiagnosis,
-        recommendations: reqRecommendations,
-        doctor: reqDoctor,
-        remarks: reqRemarks,
-      });
+    const status = reqActionType === 'Approve' ? 'Approved' : 'Rejected';
+    const targetId = selectedReq.id;
+    const prevRequests = requests;
+    const patientName = selectedReq.patient_name || 'patient';
 
+    // Optimistic UI update: instantly close modal & update state (0ms delay)
+    const optimisticRes: MedicalCertificateRequest = {
+      ...selectedReq,
+      status: status as any,
+      diagnosis: reqDiagnosis,
+      recommendations: reqRecommendations,
+      doctor: reqDoctor,
+      remarks: reqRemarks,
+    };
+    setRequests(prev => prev.map(r => r.id === targetId ? optimisticRes : r));
+    setSelectedReq(null);
+    setReqActionType(null);
+    setIsReqSubmitting(false);
+
+    triggerToast(
+      status === 'Approved'
+        ? `✅ Request approved! Medical Certificate generated for ${patientName}.`
+        : `⚠️ Request rejected for ${patientName}.`
+    );
+
+    // Background server call with rollback guard
+    medcertRequestService.approveRequest(targetId, {
+      status,
+      diagnosis: reqDiagnosis,
+      recommendations: reqRecommendations,
+      doctor: reqDoctor,
+      remarks: reqRemarks,
+    }).then(res => {
       if (res) {
         setRequests(prev => prev.map(r => r.id === res.id ? res : r));
-        triggerToast(
-          status === 'Approved'
-            ? `✅ Request approved! Medical Certificate generated for ${res.patient_name || selectedReq.patient_name || 'patient'}.`
-            : `⚠️ Request rejected for ${res.patient_name || selectedReq.patient_name || 'patient'}.`
-        );
-        setSelectedReq(null);
-        setReqActionType(null);
       } else {
-        triggerToast('⚠️ Error processing issuance request.');
+        setRequests(prevRequests);
+        triggerToast('⚠️ Error processing issuance request. Reverting...');
       }
-    } catch (err) {
+    }).catch(err => {
       console.error('Error handling request action:', err);
-      triggerToast('⚠️ Server error processing request.');
-    } finally {
-      setIsReqSubmitting(false);
-    }
+      setRequests(prevRequests);
+      triggerToast('⚠️ Server error processing request. Reverting...');
+    });
   };
 
   const handleDeleteRequest = async (id: string, name?: string) => {

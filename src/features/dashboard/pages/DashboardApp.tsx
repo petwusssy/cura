@@ -115,6 +115,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const notifiedQueueIdsRef = useRef<Set<string>>(new Set());
   const savingConsultationRef = useRef<boolean>(false);
   const savingConversionRef = useRef<boolean>(false);
+  const knownServerNotifIdsRef = useRef<Set<string>>(new Set());
+  const isInitialServerNotifFetchRef = useRef<boolean>(true);
 
   useEffect(() => {
     try {
@@ -236,6 +238,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
         if (d !== undefined && Array.isArray(d)) {
+          d.forEach(n => {
+            if (n.id) knownServerNotifIdsRef.current.add(String(n.id));
+          });
+          isInitialServerNotifFetchRef.current = false;
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = d
@@ -250,10 +256,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications, queues, and consultations with non-overlapping guard (6s interval)
+    // Polling for new notifications, queues, consultations, and beds (6s interval)
+    // Skips when tab is hidden to prevent clogging the server when multiple devices are idle
     let isPolling = false;
-    const interval = setInterval(() => {
+    const pollData = () => {
       if (isPolling) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
       isPolling = true;
       Promise.allSettled([
         notificationService.getNotifications(),
@@ -262,9 +270,39 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         bedService.getBeds()
       ]).then(([nRes, qRes, cRes, bRes]) => {
         if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
+          const incoming = nRes.value;
+
+          if (isInitialServerNotifFetchRef.current) {
+            incoming.forEach(n => {
+              if (n.id) knownServerNotifIdsRef.current.add(String(n.id));
+            });
+            isInitialServerNotifFetchRef.current = false;
+          } else {
+            // Announce brand new unread notifications across all open devices
+            const brandNew = incoming.filter(n => !n.read && n.id && !knownServerNotifIdsRef.current.has(String(n.id)));
+            brandNew.forEach(n => {
+              knownServerNotifIdsRef.current.add(String(n.id));
+              const title = n.type === 'appointment_request' ? '📅 New Appointment Request'
+                : n.type === 'telemedicine_request' ? '📹 New Telemedicine Request'
+                : n.type === 'medcert_request' ? '📋 New MedCert Request'
+                : '🔔 New Notification';
+              toast.info(`${title}: ${n.message || 'New request received'}`, {
+                duration: 8000,
+              });
+              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                try {
+                  new Notification(title, {
+                    body: n.message || 'New request received',
+                    icon: '/favicon.ico',
+                  });
+                } catch {}
+              }
+            });
+          }
+
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
-            const backendNotifs = nRes.value!
+            const backendNotifs = incoming
               .filter(n => !dismissedNotifIdsRef.current.has(n.id))
               .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
             return [...localNotifs, ...backendNotifs];
@@ -292,8 +330,25 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }).catch(() => {}).finally(() => {
         isPolling = false;
       });
-    }, 6000);
-    return () => clearInterval(interval);
+    };
+
+    const interval = setInterval(pollData, 6000);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        pollData();
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -973,9 +1028,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
     if (!id.startsWith('med-') && !id.startsWith('stock-')) {
       try {
-        await notificationService.deleteNotification(id);
+        await notificationService.updateNotification(id, { read: true });
       } catch (error) {
-        console.error('Failed to delete notification on server:', error);
+        console.error('Failed to update notification read status on server:', error);
       }
     }
   };

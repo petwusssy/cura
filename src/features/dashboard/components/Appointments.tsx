@@ -136,6 +136,7 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
     let isFetching = false;
     const interval = setInterval(() => {
       if (isFetching) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
       isFetching = true;
       appointmentService.getRequests().then(data => {
         if (data && Array.isArray(data) && data.length > 0) {
@@ -144,7 +145,7 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
       }).catch(() => {}).finally(() => {
         isFetching = false;
       });
-    }, 6000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -166,30 +167,49 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
 
   const handleAction = async () => {
     if (!selectedReq || !actionType) return;
-    setIsSubmitting(true);
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
+    const targetId = selectedReq.id;
+    const prevRequests = requests;
     
-    const res = await appointmentService.approveRequest(selectedReq.id, {
-      status: finalStatus as any, // backend expects Approved or Rejected
+    // Optimistic UI update: instantly close modal & update status on screen (0ms delay)
+    const optimisticRes: AppointmentRequest = {
+      ...selectedReq,
+      status: finalStatus as any,
+      scheduled_date: scheduledDate,
+      scheduled_time: scheduledTime,
+    };
+    setRequests(prev => prev.map(r => r.id === targetId ? optimisticRes : r));
+    setSelectedReq(null);
+    setActionType(null);
+    setIsSubmitting(false);
+
+    // Background server sync with rollback guard
+    appointmentService.approveRequest(targetId, {
+      status: finalStatus as any,
       scheduled_date: scheduledDate,
       scheduled_time: scheduledTime
+    }).then(res => {
+      if (res) {
+        setRequests(prev => prev.map(r => r.id === res.id ? res : r));
+      } else {
+        setRequests(prevRequests);
+        alert('Failed to update request on server. Reverting...');
+      }
+    }).catch(() => {
+      setRequests(prevRequests);
+      alert('Failed to update request on server. Reverting...');
     });
-    
-    if (res) {
-      setRequests(prev => prev.map(r => r.id === res.id ? res : r));
-      setSelectedReq(null);
-      setActionType(null);
-    }
-    
-    setIsSubmitting(false);
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const prevRequests = requests;
+    setRequests(prev => prev.filter(r => r.id !== id));
     const success = await appointmentService.deleteRequest(id);
-    if (success) {
-      setRequests(prev => prev.filter(r => r.id !== id));
+    if (!success) {
+      setRequests(prevRequests);
+      alert("Failed to delete request on server.");
     }
   };
 

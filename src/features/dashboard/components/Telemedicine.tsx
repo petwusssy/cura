@@ -257,6 +257,7 @@ const TELEMEDICINE_TIME_SLOTS = [
     let isFetching = false;
     const interval = setInterval(() => {
       if (isFetching) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
       isFetching = true;
       telemedicineService.getRequests().then(data => {
         if (data && Array.isArray(data) && data.length > 0) {
@@ -265,7 +266,7 @@ const TELEMEDICINE_TIME_SLOTS = [
       }).catch(() => {}).finally(() => {
         isFetching = false;
       });
-    }, 6000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -291,32 +292,52 @@ const TELEMEDICINE_TIME_SLOTS = [
 
   const handleAction = async () => {
     if (!selectedReq || !actionType) return;
-    setIsSubmitting(true);
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
     const effectiveMeetingLink = `https://cura-bice.vercel.app/call/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
+    const targetId = selectedReq.id;
+    const prevRequests = requests;
 
-    const res = await telemedicineService.approveRequest(selectedReq.id, {
+    // Optimistic UI update: instantly close modal & update status on screen (0ms delay)
+    const optimisticRes: TelemedicineRequest = {
+      ...selectedReq,
       status: finalStatus as any,
       scheduled_date: scheduledDate,
       scheduled_time: scheduledTime,
       meeting_link: effectiveMeetingLink,
-    });
-    
-    if (res) {
-      setRequests(prev => prev.map(r => r.id === res.id ? res : r));
-      setSelectedReq(null);
-      setActionType(null);
-    }
-    
+    };
+    setRequests(prev => prev.map(r => r.id === targetId ? optimisticRes : r));
+    setSelectedReq(null);
+    setActionType(null);
     setIsSubmitting(false);
+
+    // Background server sync with rollback guard
+    telemedicineService.approveRequest(targetId, {
+      status: finalStatus as any,
+      scheduled_date: scheduledDate,
+      scheduled_time: scheduledTime,
+      meeting_link: effectiveMeetingLink,
+    }).then(res => {
+      if (res) {
+        setRequests(prev => prev.map(r => r.id === res.id ? res : r));
+      } else {
+        setRequests(prevRequests);
+        alert('Failed to update telemedicine request on server. Reverting...');
+      }
+    }).catch(() => {
+      setRequests(prevRequests);
+      alert('Failed to update telemedicine request on server. Reverting...');
+    });
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const prevRequests = requests;
+    setRequests(prev => prev.filter(r => r.id !== id));
     const success = await telemedicineService.deleteRequest(id);
-    if (success) {
-      setRequests(prev => prev.filter(r => r.id !== id));
+    if (!success) {
+      setRequests(prevRequests);
+      alert("Failed to delete request on server.");
     }
   };
 
