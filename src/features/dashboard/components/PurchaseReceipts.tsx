@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate, formatManilaDisplayTime } from '@/utils/philippineTime';
@@ -127,12 +127,33 @@ function getSavedPrfTime(prfKey: string, items?: PurchaseRequest[]): string {
   return defaultTime;
 }
 
+function savePrfPreparedBy(prfKey: string, name: string) {
+  try {
+    const raw = localStorage.getItem('cura_prf_prepared_by');
+    const map = raw ? JSON.parse(raw) : {};
+    map[prfKey] = name;
+    localStorage.setItem('cura_prf_prepared_by', JSON.stringify(map));
+  } catch {}
+}
+
+function getSavedPrfPreparedBy(prfKey: string): string {
+  try {
+    const raw = localStorage.getItem('cura_prf_prepared_by');
+    if (raw) {
+      const map = JSON.parse(raw);
+      if (map[prfKey]) return map[prfKey];
+    }
+  } catch {}
+  return 'Abigael C. Landingin';
+}
+
 export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, searchQuery }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
   const [openPrfs, setOpenPrfs] = useState<Record<string, boolean>>({});
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
   const [printingPrfGroup, setPrintingPrfGroup] = useState<{ prfNo: string; date: string; items: PurchaseRequest[] } | null>(null);
 
   const handlePrintPrf = (group: { prfNo: string; date: string; items: PurchaseRequest[] }) => {
@@ -196,7 +217,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [dateNeeded, setDateNeeded] = useState('To follow lead time in Purchasing');
 
   // PRF Signature Boxes Editable State
-  const [preparedBy, setPreparedBy] = useState('Abigael C. Landingin');
+  const [preparedBy, setPreparedBy] = useState(() => localStorage.getItem('cura_prf_current_prepared_by') || 'Abigael C. Landingin');
   const [evalRemarks, setEvalRemarks] = useState('');
   const [recommendedBy, setRecommendedBy] = useState('');
   const [supplier1, setSupplier1] = useState('');
@@ -242,7 +263,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setDepartment('Medical-Dental Clinic');
     setPurpose('Medical-Dental Clinic Routine Requisition & Replenishment');
     setDateNeeded('To follow lead time in Purchasing');
-    setPreparedBy('Abigael C. Landingin');
+    setPreparedBy(localStorage.getItem('cura_prf_current_prepared_by') || 'Abigael C. Landingin');
     setEvalRemarks('');
     setRecommendedBy('');
     setSupplier1('');
@@ -310,48 +331,52 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
     setIsSubmitting(true);
     try {
-      let addedCount = 0;
       const submissionTime = formatManilaDisplayTime(new Date());
       savePrfTime(currentPrf, submissionTime, true);
-      for (const row of validRows) {
-        const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
-        const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
-        const isExisting = purchaseRequests.find(r => r.id === row.id);
-        
-        if (isExisting) {
-          // If it exists, update it if changed
-          if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
-            await onUpdateRequest({
-              ...isExisting,
-              requestedQty: qty,
+      const currentPreparedBy = preparedBy.trim() || 'Abigael C. Landingin';
+      savePrfPreparedBy(currentPrf, currentPreparedBy);
+
+      await Promise.all(
+        validRows.map(async (row, index) => {
+          const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
+          const unitPrice = typeof row.unitPrice === 'string' ? parseFloat(row.unitPrice) || 0 : row.unitPrice;
+          const isExisting = purchaseRequests.find(r => r.id === row.id);
+
+          if (isExisting) {
+            // If it exists, update it if changed
+            if (isExisting.requestedQty !== qty || isExisting.medicine !== row.item || isExisting.description !== row.description || isExisting.unitPrice !== unitPrice) {
+              await onUpdateRequest({
+                ...isExisting,
+                requestedQty: qty,
+                medicine: row.item,
+                description: row.description || undefined,
+                unitPrice: unitPrice,
+              });
+            }
+          } else {
+            // New request
+            const req: PurchaseRequest = {
+              id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${index}`,
               medicine: row.item,
               description: row.description || undefined,
+              unit: row.unit || 'Tablet',
+              prfNo: currentPrf,
               unitPrice: unitPrice,
-            });
-            addedCount++;
+              requestedQty: qty,
+              receivedQty: 0,
+              date: getManilaDate(),
+              time: submissionTime,
+              status: 'Pending',
+              history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
+            };
+            await onAddRequest(req);
           }
-        } else {
-          // New request
-          const req: PurchaseRequest = {
-            id: row.id.startsWith('PR-') ? row.id : `PR-${Date.now()}-${addedCount}`,
-            medicine: row.item,
-            description: row.description || undefined,
-            unit: row.unit || 'Tablet',
-            prfNo: currentPrf,
-            unitPrice: unitPrice,
-            requestedQty: qty,
-            receivedQty: 0,
-            date: getManilaDate(),
-            time: submissionTime,
-            status: 'Pending',
-            history: [{ date: getManilaDate(), qty: 0, note: `Requisition registered via ${currentPrf}` }],
-          };
-          await onAddRequest(req);
-          addedCount++;
-        }
-      }
+        })
+      );
+
       const nextPrf = getNextPrfNo(currentPrf);
       resetPrfForm(nextPrf);
+      setShowSubmitConfirmModal(false);
       setViewMode('tracker');
       setSubmitSuccessMsg(`${currentPrf} successfully submitted to Delivery Tracker! Form auto-reset for ${nextPrf}.`);
       setTimeout(() => setSubmitSuccessMsg(null), 6000);
@@ -378,57 +403,64 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setPrfItems(prev => prev.map(r => r.id === id ? { ...r, [field]: val } : r));
   };
 
-  const seenPrKeys = new Set<string>();
-  const filteredRequests = purchaseRequests.filter(req => {
-    const matchesStatus = statusFilter === 'All' ? true : req.status === statusFilter;
-    const matchesSearch = searchQuery.trim() === '' || 
-      req.medicine.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (req.description && req.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (req.prfNo && req.prfNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      req.id.toLowerCase().includes(searchQuery.toLowerCase());
-    if (!matchesStatus || !matchesSearch) return false;
+  const filteredRequests = useMemo(() => {
+    const seenPrKeys = new Set<string>();
+    return purchaseRequests.filter(req => {
+      const matchesStatus = statusFilter === 'All' ? true : req.status === statusFilter;
+      const matchesSearch = searchQuery.trim() === '' || 
+        req.medicine.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (req.description && req.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (req.prfNo && req.prfNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        req.id.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchesStatus || !matchesSearch) return false;
 
-    const key = req.id ? `id:${req.id}` : '';
-    const semanticKey = `${(req.medicine || '').toLowerCase()}|${(req.prfNo || '').toLowerCase()}|${req.requestedQty}`;
-    if (key && seenPrKeys.has(key)) return false;
-    if (seenPrKeys.has(semanticKey)) return false;
-    if (key) seenPrKeys.add(key);
-    seenPrKeys.add(semanticKey);
-    return true;
-  });
+      const key = req.id ? `id:${req.id}` : '';
+      const semanticKey = `${(req.medicine || '').toLowerCase()}|${(req.prfNo || '').toLowerCase()}|${req.requestedQty}`;
+      if (key && seenPrKeys.has(key)) return false;
+      if (seenPrKeys.has(semanticKey)) return false;
+      if (key) seenPrKeys.add(key);
+      seenPrKeys.add(semanticKey);
+      return true;
+    });
+  }, [purchaseRequests, statusFilter, searchQuery]);
 
-  // Group filteredRequests by PRF No.
-  const prfGroups: Record<string, { prfNo: string; date: string; time: string; items: PurchaseRequest[] }> = {};
-  for (const req of filteredRequests) {
-    const key = req.prfNo?.trim() || 'PRF-2026-001';
-    if (!prfGroups[key]) {
-      prfGroups[key] = {
-        prfNo: key,
-        date: req.date || getManilaDate(),
-        time: '',
-        items: [],
-      };
+  // Group filteredRequests by PRF No. memoized with fast lookup
+  const { prfGroups, sortedPrfKeys } = useMemo(() => {
+    const groups: Record<string, { prfNo: string; date: string; time: string; preparedBy: string; items: PurchaseRequest[] }> = {};
+    for (const req of filteredRequests) {
+      const key = req.prfNo?.trim() || 'PRF-2026-001';
+      if (!groups[key]) {
+        groups[key] = {
+          prfNo: key,
+          date: req.date || getManilaDate(),
+          time: '',
+          preparedBy: getSavedPrfPreparedBy(key),
+          items: [],
+        };
+      }
+      groups[key].items.push(req);
     }
-    prfGroups[key].items.push(req);
-  }
 
-  for (const key of Object.keys(prfGroups)) {
-    prfGroups[key].time = getSavedPrfTime(key, prfGroups[key].items);
-  }
-
-  const sortedPrfKeys = Object.keys(prfGroups).sort((a, b) => {
-    const ma = a.match(/PRF-(\d{4})-(\d+)/i) || a.match(/PRF-(\d+)/i);
-    const mb = b.match(/PRF-(\d{4})-(\d+)/i) || b.match(/PRF-(\d+)/i);
-    if (ma && mb) {
-      const ya = ma.length === 3 ? parseInt(ma[1], 10) : 0;
-      const yb = mb.length === 3 ? parseInt(mb[1], 10) : 0;
-      if (ya !== yb) return yb - ya;
-      const na = parseInt(ma[ma.length - 1], 10);
-      const nb = parseInt(mb[mb.length - 1], 10);
-      return nb - na;
+    for (const key of Object.keys(groups)) {
+      groups[key].time = getSavedPrfTime(key, groups[key].items);
     }
-    return b.localeCompare(a);
-  });
+
+    const keys = Object.keys(groups).sort((a, b) => {
+      const ma = a.match(/PRF-(\d{4})-(\d+)/i) || a.match(/PRF-(\d+)/i);
+      const mb = b.match(/PRF-(\d{4})-(\d+)/i) || b.match(/PRF-(\d+)/i);
+      if (ma && mb) {
+        const ya = ma.length === 3 ? parseInt(ma[1], 10) : 0;
+        const yb = mb.length === 3 ? parseInt(mb[1], 10) : 0;
+        if (ya !== yb) return yb - ya;
+        const na = parseInt(ma[ma.length - 1], 10);
+        const nb = parseInt(mb[mb.length - 1], 10);
+        return nb - na;
+      }
+      return b.localeCompare(a);
+    });
+
+    return { prfGroups: groups, sortedPrfKeys: keys };
+  }, [filteredRequests]);
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     Pending:  { bg: `${YELLOW}25`, text: '#A17A0C', border: '#E2BD3D' },
@@ -543,8 +575,19 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             </div>
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button
-                onClick={handleRegisterAllToTracker}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488] w-full sm:w-auto"
+                type="button"
+                onClick={() => {
+                  const validRows = prfItems.filter(row => {
+                    const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
+                    return row.item.trim() && qty && qty > 0;
+                  });
+                  if (validRows.length === 0) {
+                    alert('Please enter at least one medicine/item with a quantity before submitting.');
+                    return;
+                  }
+                  setShowSubmitConfirmModal(true);
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488] w-full sm:w-auto cursor-pointer"
               >
                 <BookmarkCheck size={15} /> Submit Delivery Tracker
               </button>
@@ -733,7 +776,10 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <input
                     type="text"
                     value={preparedBy}
-                    onChange={e => setPreparedBy(e.target.value)}
+                    onChange={e => {
+                      setPreparedBy(e.target.value);
+                      try { localStorage.setItem('cura_prf_current_prepared_by', e.target.value); } catch {}
+                    }}
                     className="w-full font-extrabold text-center border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 pb-1"
                   />
                 </div>
@@ -1039,7 +1085,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                       <button
                         type="button"
                         onClick={() => setOpenPrfs(prev => ({ ...prev, [prfKey]: !isOpen }))}
-                        className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0 pr-3 cursor-pointer text-left select-none"
+                        className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0 pr-3 cursor-pointer text-left select-none flex-wrap"
                       >
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1E5AA8] flex items-center justify-center flex-shrink-0">
@@ -1051,6 +1097,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                         </div>
                         <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
                           Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate} • {purchaseTime}</strong>
+                        </span>
+                        <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
+                          Prepared by: <strong className="text-gray-700 font-semibold">{group.preparedBy || getSavedPrfPreparedBy(prfKey)}</strong>
                         </span>
                       </button>
 
@@ -1294,7 +1343,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 <div className="p-3 flex flex-col justify-between min-h-[140px]">
                   <div>
                     <div className="font-bold mb-6">Prepared by/Date:</div>
-                    <div className="w-full font-extrabold text-center border-b border-black pb-1">{preparedBy}</div>
+                    <div className="w-full font-extrabold text-center border-b border-black pb-1">
+                      {printingPrfGroup ? getSavedPrfPreparedBy(printingPrfGroup.prfNo) : preparedBy}
+                    </div>
                   </div>
                   <div className="text-center font-bold uppercase mt-2">REQUESTING PARTY</div>
                 </div>
@@ -1555,6 +1606,120 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             <div className="flex items-center justify-end gap-3 mt-6 pt-2">
               <button onClick={() => setShowNewForm(false)} type="button" className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-colors">CANCEL</button>
               <button onClick={handleNewRequest} type="button" className="px-6 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:opacity-95 active:scale-95" style={{ background: PRIMARY }}>CREATE ITEM</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal before redirecting to Delivery Tracker */}
+      {showSubmitConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-xl bg-teal-50 text-[#0D9488] flex items-center justify-center flex-shrink-0 border border-teal-100/80 shadow-2xs">
+                <PackageCheck size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Confirm Delivery Tracker Submission
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Are you sure you want to register this Purchase Requisition Form into the Delivery Tracker?
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isSubmitting && setShowSubmitConfirmModal(false)}
+                disabled={isSubmitting}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Content / Summary */}
+            <div className="p-6 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/70 text-xs space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <span className="text-slate-500 font-medium">PRF Number:</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {prfNo.trim() || 'PRF-2026-001'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Date of Requisition:</span>
+                  <span className="font-semibold text-slate-800">{getManilaDate()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Prepared by:</span>
+                  <span className="font-semibold text-slate-900">{preparedBy.trim() || 'Abigael C. Landingin'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Items to Register:</span>
+                  <span className="font-bold text-[#0D9488]">
+                    {prfItems.filter(r => r.item.trim() && Number(r.qty) > 0).length} item(s)
+                  </span>
+                </div>
+              </div>
+
+              {/* List of items preview */}
+              <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+                {prfItems
+                  .filter(r => r.item.trim() && Number(r.qty) > 0)
+                  .map((r, i) => (
+                    <div key={r.id || i} className="p-2.5 px-3 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <div className="truncate">
+                          <span className="font-bold text-slate-800">{r.item}</span>
+                          {r.description && <span className="text-slate-400 text-[11px] ml-1.5 font-normal">({r.description})</span>}
+                        </div>
+                      </div>
+                      <span className="font-semibold text-slate-700 whitespace-nowrap ml-2">
+                        {r.qty} {r.unit}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200/80 p-2.5 rounded-xl">
+                <AlertCircle size={15} className="flex-shrink-0 text-amber-600" />
+                <span>Submitting will transfer these items to the Delivery Tracker and auto-advance the PRF number for the next requisition.</span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 px-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirmModal(false)}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRegisterAllToTracker}
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 bg-[#0D9488] disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" /> Submitting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={14} /> Confirm &amp; Submit
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

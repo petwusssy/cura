@@ -61,7 +61,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>(() => {
+    try {
+      const cached = localStorage.getItem('cura_purchase_requests_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(() => {
     try {
       const cached = localStorage.getItem('cura_medical_certs');
@@ -85,7 +90,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [isLoading, setIsLoading]               = useState(true);
 
   // If we already have loaded data, never show a blocking skeleton
-  const hasExistingData = patients.length > 0 || consultations.length > 0 || medicines.length > 0;
+  const hasExistingData = patients.length > 0 || consultations.length > 0 || medicines.length > 0 || purchaseRequests.length > 0;
 
   // Threshold delay: only reveal skeleton if network is actually slow (> 150ms) and we have no data
   const [skeletonVisible, setSkeletonVisible]   = useState(false);
@@ -181,6 +186,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }
       if (prRes.status === 'fulfilled' && prRes.value !== undefined) {
         setPurchaseRequests(prRes.value);
+        try { localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(prRes.value)); } catch {}
       }
       if (bRes.status === 'fulfilled' && bRes.value !== undefined) {
         setBeds(bRes.value);
@@ -255,6 +261,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }, 6000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (purchaseRequests.length > 0) {
+      try {
+        localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(purchaseRequests));
+      } catch {}
+    }
+  }, [purchaseRequests]);
 
   // Check for upcoming and due medication doses
   useEffect(() => {
