@@ -88,6 +88,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
   const [openPrfs, setOpenPrfs] = useState<Record<string, boolean>>({});
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
+  const [printingPrfGroup, setPrintingPrfGroup] = useState<{ prfNo: string; date: string; items: PurchaseRequest[] } | null>(null);
+
+  const handlePrintPrf = (group: { prfNo: string; date: string; items: PurchaseRequest[] }) => {
+    setPrintingPrfGroup(group);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
 
   // Delivery Receive Modal state
   const [receiveModal, setReceiveModal] = useState<PurchaseRequest | null>(null);
@@ -293,8 +301,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       }
       const nextPrf = getNextPrfNo(currentPrf);
       resetPrfForm(nextPrf);
-      setOpenPrfs(prev => ({ ...prev, [currentPrf]: true }));
-      setSubmitSuccessMsg(`${currentPrf} successfully submitted! Form auto-reset for ${nextPrf}.`);
+      setViewMode('tracker');
+      setSubmitSuccessMsg(`${currentPrf} successfully submitted to Delivery Tracker! Form auto-reset for ${nextPrf}.`);
       setTimeout(() => setSubmitSuccessMsg(null), 6000);
     } catch (e) {
       console.error(e);
@@ -475,7 +483,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           <div className="no-print flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
               <AlertCircle size={16} className="text-[#1E5AA8]" />
-              <span>Click any field in the template below to type or edit before printing.</span>
+              <span>Click any field in the template below to type or edit before submitting.</span>
             </div>
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button
@@ -483,13 +491,6 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 active:scale-95 bg-[#0D9488] w-full sm:w-auto"
               >
                 <BookmarkCheck size={15} /> Submit Delivery Tracker
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow-sm hover:opacity-90 active:scale-95 w-full sm:w-auto"
-                style={{ background: PRIMARY }}
-              >
-                <Printer size={15} /> Print PRF Form
               </button>
             </div>
           </div>
@@ -892,6 +893,21 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       {/* ========================================================================================= */}
       {viewMode === 'tracker' && (
         <div className="space-y-6 animate-in fade-in duration-300">
+          {submitSuccessMsg && (
+            <div className="no-print bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle size={17} className="text-emerald-600 flex-shrink-0" />
+                <span>{submitSuccessMsg}</span>
+              </div>
+              <button
+                onClick={() => setSubmitSuccessMsg(null)}
+                className="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
           {/* Summary Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {(['Pending', 'Partial', 'Complete'] as const).map(s => {
@@ -955,19 +971,19 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             ) : (
               sortedPrfKeys.map(prfKey => {
                 const group = prfGroups[prfKey];
-                const isOpen = openPrfs[prfKey] !== undefined ? openPrfs[prfKey] : true;
+                const isOpen = Boolean(openPrfs[prfKey]);
                 const prfTitle = getPrfDisplayTitle(group.prfNo);
                 const purchaseDate = group.date ? normalizeDate(group.date) : getManilaDate();
 
                 return (
                   <div key={prfKey} className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all">
                     {/* PRF Container Header / Dropdown Toggle */}
-                    <button
-                      type="button"
-                      onClick={() => setOpenPrfs(prev => ({ ...prev, [prfKey]: !isOpen }))}
-                      className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors cursor-pointer select-none"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0 pr-3">
+                    <div className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => setOpenPrfs(prev => ({ ...prev, [prfKey]: !isOpen }))}
+                        className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0 pr-3 cursor-pointer text-left select-none"
+                      >
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1E5AA8] flex items-center justify-center flex-shrink-0">
                             <FileText size={16} />
@@ -979,17 +995,34 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                         <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
                           Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate}</strong>
                         </span>
-                      </div>
+                      </button>
 
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintPrf(group);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white font-bold text-xs bg-[#1E5AA8] hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
+                          title={`Print ${group.prfNo} Form`}
+                        >
+                          <Printer size={13} />
+                          <span className="hidden sm:inline">Print PRF Form</span>
+                        </button>
+
                         <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold hidden xs:inline-block">
                           {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
                         </span>
-                        <div className={`w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenPrfs(prev => ({ ...prev, [prfKey]: !isOpen }))}
+                          className={`w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center transition-transform duration-200 cursor-pointer ${isOpen ? 'rotate-180' : ''}`}
+                        >
                           <ChevronDown size={16} />
-                        </div>
+                        </button>
                       </div>
-                    </button>
+                    </div>
 
                     {/* Dropdown Content: Medicines inside this PRF container */}
                     {isOpen && (
@@ -1115,6 +1148,197 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               })
             )}
           </div>
+
+          {/* Printable Area for Submitted PRF when printing from Delivery Tracker */}
+          {printingPrfGroup && (
+            <div className="prf-printable-area bg-white border-2 border-gray-400 p-8 md:p-12 shadow-lg max-w-5xl mx-auto text-black font-sans hidden print:block" style={{ minWidth: '800px' }}>
+              {/* Header section with Logo & Titles */}
+              <div className="flex items-start justify-between pb-3">
+                <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                  <img src={uaSeal} alt="University Seal" className="w-20 h-20 object-contain" />
+                </div>
+                <div className="text-center flex-1 px-4">
+                  <div className="text-2xl font-extrabold tracking-wide font-serif text-[#002060]">
+                    UNIVERSITY of the ASSUMPTION
+                  </div>
+                  <div className="text-xs font-normal text-gray-800">
+                    Unisite Subd., Del Pilar, City of San Fernando, Pampanga
+                  </div>
+                  <div className="text-lg font-bold mt-5 uppercase text-black tracking-wider">
+                    PURCHASE REQUISITION FORM (PRF)
+                  </div>
+                </div>
+                <div className="text-right w-40 mt-4 text-xs font-bold text-black">
+                  <div className="flex items-center justify-end">
+                    <span>PRF No.&nbsp;</span>
+                    <span className="border-b border-black w-28 text-right font-bold inline-block px-1">
+                      {printingPrfGroup.prfNo}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Explanatory Note */}
+              <div className="text-[10.5px] italic text-gray-800 text-justify mb-2 leading-snug">
+                <strong>Note:</strong> <em>To be used when requesting for the purchase of office and school supplies, computer and IT peripherals, laboratory equipment and supplies, library books and learning resources, construction materials, furniture and fixtures which are not available at the Central Supplies Room and Physical Plant Warehouse.</em>
+              </div>
+              <div className="text-[10.5px] italic text-black mb-4">
+                <strong>(Please fill up in two copies. Copy distribution: original copy to RMS, duplicate copy to Requesting Party)</strong>
+              </div>
+
+              {/* Department Input */}
+              <div className="flex items-center font-bold text-sm text-black mb-3">
+                <span>DEPARTMENT:&nbsp;&nbsp;</span>
+                <span className="border-b border-black w-72 font-bold px-1 inline-block">
+                  {department}
+                </span>
+              </div>
+
+              {/* Requisition Table */}
+              <table className="w-full border-collapse border-2 border-black text-xs text-black mb-4">
+                <thead>
+                  <tr className="bg-gray-100 font-bold border-b-2 border-black">
+                    <th className="border border-black p-2 text-center w-20">QUANTITY</th>
+                    <th className="border border-black p-2 text-center w-20">Unit</th>
+                    <th className="border border-black p-2 text-left w-56">ITEM</th>
+                    <th className="border border-black p-2 text-left">DESCRIPTION (Color/Size/Brand/Technical Specifications, etc…)</th>
+                    <th className="border border-black p-2 text-center w-20">Unit Price</th>
+                    <th className="border border-black p-2 text-right w-24">AMOUNT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {printingPrfGroup.items.map((row, idx) => (
+                    <tr key={row.id || idx} className="border border-black">
+                      <td className="border border-black p-1 text-center font-semibold">{row.requestedQty}</td>
+                      <td className="border border-black p-1 text-center font-medium">{row.unit || 'Tablet'}</td>
+                      <td className="border border-black p-1.5 text-left font-semibold">{row.medicine}</td>
+                      <td className="border border-black p-1.5 text-left text-gray-800">{row.description || ''}</td>
+                      <td className="border border-black p-1 text-center font-medium">{row.unitPrice ? row.unitPrice : ''}</td>
+                      <td className="border border-black p-1 text-right font-bold pr-2"></td>
+                    </tr>
+                  ))}
+                  <tr className="border border-black bg-white">
+                    <td colSpan={6} className="p-3 border border-black text-xs font-medium space-y-2">
+                      <div className="flex items-center">
+                        <span className="font-bold whitespace-nowrap">Purpose of Purchase:</span>
+                        <span className="ml-2 font-medium">{purpose}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="font-bold whitespace-nowrap">Date/Time Needed: (To follow lead time in Purchasing)</span>
+                        <span className="ml-2 font-medium">{printingPrfGroup.date ? normalizeDate(printingPrfGroup.date) : dateNeeded}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Signatures & Verification Grid */}
+              <div className="border-2 border-black text-[11px] text-black bg-white grid grid-cols-4 divide-x-2 divide-black">
+                <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-6">Prepared by/Date:</div>
+                    <div className="w-full font-extrabold text-center border-b border-black pb-1">{preparedBy}</div>
+                  </div>
+                  <div className="text-center font-bold uppercase mt-2">REQUESTING PARTY</div>
+                </div>
+                <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-1">Evaluation Remarks:</div>
+                    <div className="w-full text-xs border-b border-black mb-3 min-h-[30px]">{evalRemarks}</div>
+                    <div className="font-bold mb-3">Recommended by/Date:</div>
+                    <div className="w-full border-b border-black min-h-[20px]">{recommendedBy}</div>
+                  </div>
+                  <div className="text-center mt-2">
+                    <div className="font-bold">DIRECTOR</div>
+                    <div className="text-[9px] text-gray-600 leading-tight mt-0.5">OMISS or Dean for Computer, Peripherals & Labs; Physical Plant if Physical Facilities; Library for Books; EAMO for Marketing</div>
+                  </div>
+                </div>
+                <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-1">Processed by/Date:</div>
+                    <div className="text-[10px] font-bold mb-1">Supplier – Price Quoted</div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1"><span>1</span><span className="flex-1 border-b border-black text-[10px] inline-block">{supplier1}</span></div>
+                      <div className="flex items-center gap-1"><span>2</span><span className="flex-1 border-b border-black text-[10px] inline-block">{supplier2}</span></div>
+                      <div className="flex items-center gap-1"><span>3</span><span className="flex-1 border-b border-black text-[10px] inline-block">{supplier3}</span></div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-1 flex flex-col gap-1">
+                    <div className="w-full border-b border-black text-center text-[11px] font-bold min-h-[16px]"></div>
+                    <div className="text-center font-bold mt-1">CANVASSER</div>
+                  </div>
+                </div>
+                <div className="p-3 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-2">Reviewed by/Date:</div>
+                    <div className="space-y-1 text-xs mb-2">
+                      <div className="flex items-center gap-2"><span>[{forCashAdvance ? 'X' : ' '}] For Cash Advance</span></div>
+                      <div className="flex items-center gap-2"><span>[{forPurchaseOrder ? 'X' : ' '}] For Purchase Order</span></div>
+                    </div>
+                    <div className="flex items-center text-[11px] mb-1">
+                      <span className="font-bold">Supplier:</span><span className="flex-1 ml-1 border-b border-black px-1 inline-block">{revSupplier}</span>
+                    </div>
+                    <div className="flex items-center text-[11px]">
+                      <span className="font-bold">Terms:</span><span className="flex-1 ml-1 border-b border-black px-1 inline-block">{revTerms}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-1 flex flex-col gap-1">
+                    <div className="w-full border-b border-black text-center text-[11px] font-bold min-h-[16px]"></div>
+                    <div className="text-center font-bold mt-1">HEAD, RMS</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Row Signatures */}
+              <div className="border-x-2 border-b-2 border-black text-[11px] text-black bg-white grid grid-cols-4 divide-x-2 divide-black">
+                <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <table className="w-full text-sm mb-2">
+                      <tbody>
+                        <tr><td className="font-bold whitespace-nowrap">Budget Amount:</td><td><span className="w-full border-b border-black px-1 inline-block">{budgetAmount}</span></td></tr>
+                        <tr><td className="font-bold whitespace-nowrap">If CAPEX, Authority No.</td><td><span className="w-full border-b border-black px-1 inline-block">{capexNo}</span></td></tr>
+                      </tbody>
+                    </table>
+                    <div className="pt-1 font-bold">Verified by/Date:</div>
+                    <div className="w-full border-b border-black min-h-[18px]">{verifiedBy}</div>
+                  </div>
+                  <div className="mt-2 text-center font-bold">HEAD, AFMS</div>
+                </div>
+                <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                  <div className="space-y-1">
+                    <div className="font-bold">Source of Funds if without budget:</div>
+                    <div className="w-full border-b border-black min-h-[18px]">{sourceOfFunds}</div>
+                    <div className="font-bold pt-1">Endorsed by/Date:</div>
+                    <div className="w-full border-b border-black min-h-[18px]">{endorsedBy}</div>
+                  </div>
+                  <div className="mt-2 text-center font-bold">
+                    <div>CLUSTER HEAD</div>
+                    <div className="text-[9px] font-normal">(VPAA, VPA,VPF, PRESIDENT)</div>
+                  </div>
+                </div>
+                <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-2">Recommended by/Date:</div>
+                    <div className="w-full border-b border-black min-h-[18px]">{recFinance}</div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <div className="font-bold">VP FOR FINANCE</div>
+                    <div className="text-[10px]">(more than 500K)</div>
+                  </div>
+                </div>
+                <div className="p-2 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <div className="font-bold mb-2">Approved by/Date:</div>
+                    <div className="w-full border-b border-black min-h-[18px]">{approvedBy}</div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <div className="font-bold">VP FOR FINANCE (up to 500K)</div>
+                    <div className="font-bold mt-0.5">PRESIDENT (more than 500K to 1M)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
