@@ -65,11 +65,12 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   }) => {
     const keys = [
       item.id,
+      item.treatmentId ? String(item.treatmentId) : '',
       `${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `${item.consultationId}-${item.medicineName}-${item.timeGiven}`,
       `med-due-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
       `med-${item.consultationId}-${item.medicineName}-${item.nextDose}`,
-    ];
+    ].filter(Boolean);
 
     setIntakedDoseIds(prev => {
       const next = new Set(prev);
@@ -94,6 +95,13 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     if (resolvedTreatmentId) {
       const uuidMatch = resolvedTreatmentId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
       if (uuidMatch) {
+        // Direct PATCH to ensure immediate cross-device sync with mobile
+        fetch(`https://cura-backend-dtfj.onrender.com/api/treatments/${uuidMatch[0]}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ remarks: updatedRemarks }),
+        }).catch(() => {});
+
         consultationService.updateTreatment(uuidMatch[0], updatedRemarks).catch(err => {
           console.error('Failed to update treatment intake on backend:', err);
         });
@@ -196,7 +204,22 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         const semKey1 = `${c.id}-${t.medicineName}-${t.nextDose}`;
         const semKey2 = `${c.id}-${t.medicineName}-${t.timeGiven}`;
 
-        if (intakedDoseIds.has(itemId) || intakedDoseIds.has(semKey1) || intakedDoseIds.has(semKey2)) {
+        if (
+          intakedDoseIds.has(itemId) ||
+          intakedDoseIds.has(semKey1) ||
+          intakedDoseIds.has(semKey2) ||
+          (t.id && intakedDoseIds.has(String(t.id)))
+        ) {
+          return;
+        }
+
+        // Only include in medication reminders if nextDose was applied to patient
+        if (
+          !t.nextDose ||
+          !t.nextDose.trim() ||
+          t.nextDose.toLowerCase() === 'none' ||
+          t.nextDose.toLowerCase() === 'null'
+        ) {
           return;
         }
 
@@ -204,16 +227,14 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
         let isDue = false;
         let isUpcoming = false;
 
-        if (t.nextDose) {
-          const [dH, dM] = t.nextDose.split(':').map(Number);
-          if (!isNaN(dH) && !isNaN(dM)) {
-            const doseMins = dH * 60 + dM;
-            diffMinutes = doseMins - currentTimeNow;
-            if (isVisitToday && diffMinutes <= 0 && diffMinutes >= -180) {
-              isDue = true;
-            } else if (isVisitToday && diffMinutes > 0 && diffMinutes <= 30) {
-              isUpcoming = true;
-            }
+        const [dH, dM] = t.nextDose.split(':').map(Number);
+        if (!isNaN(dH) && !isNaN(dM)) {
+          const doseMins = dH * 60 + dM;
+          diffMinutes = doseMins - currentTimeNow;
+          if (isVisitToday && diffMinutes <= 0 && diffMinutes >= -180) {
+            isDue = true;
+          } else if (isVisitToday && diffMinutes > 0 && diffMinutes <= 30) {
+            isUpcoming = true;
           }
         }
 
@@ -250,7 +271,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       if (!a.nextDose && b.nextDose) return 1;
       return 0;
     });
-  }, [consultations, filteredConsultations, dateFilter, today, patients, currentTimeNow]);
+  }, [consultations, filteredConsultations, dateFilter, today, patients, currentTimeNow, intakedDoseIds]);
 
   const statCards = [
     { label: 'Total Consultations', value: filteredConsultations.length, color: PRIMARY, icon: <Stethoscope size={22} />, sub: `${todayConsultations.length} with doctor` },

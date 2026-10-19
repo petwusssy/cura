@@ -3,11 +3,7 @@ import axios from 'axios';
 // If deployed on Vercel but VITE_API_URL is missing, we shouldn't use localhost.
 // Please set VITE_API_URL in your Vercel project settings to point to your Render backend (e.g. https://cura-backend.onrender.com/api)
 // If deployed on Vercel but VITE_API_URL is missing, we shouldn't use localhost.
-const API_URL = import.meta.env.VITE_API_URL || (
-  typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')
-    ? 'https://cura-backend-dtfj.onrender.com/api'
-    : 'http://127.0.0.1:8000/api'
-);
+const API_URL = import.meta.env.VITE_API_URL || 'https://cura-backend-dtfj.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,

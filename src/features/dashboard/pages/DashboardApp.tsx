@@ -265,7 +265,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       if (typeof document !== 'undefined' && document.hidden) return;
       isPolling = true;
       pollCount++;
-      const shouldFetchConsultations = pollCount % 10 === 0;
+      const shouldFetchConsultations = pollCount === 1 || pollCount % 2 === 0;
 
       Promise.allSettled([
         notificationService.getNotifications(),
