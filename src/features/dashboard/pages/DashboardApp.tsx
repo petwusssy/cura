@@ -186,46 +186,73 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       queueService.getQueues(),
     ]).then(([pRes, cRes, mRes, prRes, bRes, certRes, qRes]) => {
       if (pRes.status === 'fulfilled' && pRes.value !== undefined) {
-        const formatted = pRes.value.map(p => ({ ...p, name: p.name ? p.name.toUpperCase() : p.name }));
+        const pMap = new Map<string, Patient>();
+        pRes.value.forEach(p => {
+          if (p.id) pMap.set(String(p.id), { ...p, name: p.name ? p.name.toUpperCase() : p.name });
+        });
+        const formatted = Array.from(pMap.values());
         setPatients(formatted);
         try { localStorage.setItem('cura_patients_cache', JSON.stringify(formatted)); } catch {}
       }
       if (cRes.status === 'fulfilled' && cRes.value !== undefined) {
-        const seen = new Set<string>();
+        const seenIds = new Set<string>();
+        const seenKeys = new Set<string>();
         const unique = cRes.value.filter(c => {
+          if (c.id && seenIds.has(String(c.id))) return false;
           const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
+          if (seenKeys.has(key)) return false;
+          if (c.id) seenIds.add(String(c.id));
+          seenKeys.add(key);
           return true;
         });
         setConsultations(unique);
         try { localStorage.setItem('cura_consultations_cache', JSON.stringify(unique)); } catch {}
       }
       if (mRes.status === 'fulfilled' && mRes.value !== undefined) {
-        setMedicines(mRes.value);
-        try { localStorage.setItem('cura_medicines_cache', JSON.stringify(mRes.value)); } catch {}
+        const mMap = new Map<string, MedicineItem>();
+        mRes.value.forEach(m => {
+          if (m.id) mMap.set(String(m.id), m);
+        });
+        const uniqueMeds = Array.from(mMap.values());
+        setMedicines(uniqueMeds);
+        try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch {}
       }
       if (prRes.status === 'fulfilled' && prRes.value !== undefined) {
-        setPurchaseRequests(prRes.value);
-        try { localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(prRes.value)); } catch {}
+        const prMap = new Map<string, PurchaseRequest>();
+        prRes.value.forEach(pr => {
+          if (pr.id) prMap.set(String(pr.id), pr);
+        });
+        const uniquePR = Array.from(prMap.values());
+        setPurchaseRequests(uniquePR);
+        try { localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(uniquePR)); } catch {}
       }
       if (bRes.status === 'fulfilled' && bRes.value !== undefined) {
-        setBeds(bRes.value);
-        try { localStorage.setItem('cura_beds_cache', JSON.stringify(bRes.value)); } catch {}
+        const bMap = new Map<string, Bed>();
+        bRes.value.forEach(b => {
+          if (b.id) bMap.set(String(b.id), b);
+        });
+        const uniqueBeds = Array.from(bMap.values());
+        setBeds(uniqueBeds);
+        try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch {}
       }
       if (certRes.status === 'fulfilled' && certRes.value !== undefined && certRes.value.length > 0) {
         setMedicalCerts(prev => {
           const map = new Map<string, MedicalCertificate>();
-          prev.forEach(c => map.set(c.id, c));
-          certRes.value!.forEach(c => map.set(c.id, c));
+          prev.forEach(c => { if (c.id) map.set(String(c.id), c); });
+          certRes.value!.forEach(c => { if (c.id) map.set(String(c.id), c); });
           const merged = Array.from(map.values());
           try { localStorage.setItem('cura_medical_certs', JSON.stringify(merged)); } catch {}
           return merged;
         });
       }
       if (qRes.status === 'fulfilled' && qRes.value !== undefined) {
-        setQueues(qRes.value);
-        try { localStorage.setItem('cura_queues_cache', JSON.stringify(qRes.value)); } catch {}
+        const qMap = new Map<string, PatientQueue>();
+        qRes.value.forEach(q => {
+          if (q.id) qMap.set(String(q.id), q);
+        });
+        const uniqueQueues = Array.from(qMap.values());
+        setQueues(uniqueQueues);
+        try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch {}
       }
     }).finally(() => {
       // Immediate transition when network requests settle
@@ -256,24 +283,38 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     fetchAndMergeNotifications();
     fetchQueues();
 
-    // Polling for new notifications, queues, and beds (6s interval)
-    // Skips when tab is hidden to prevent clogging the server when multiple devices are idle
+    // Polling for multi-device auto-synchronization (no manual refresh needed)
     let isPolling = false;
     let pollCount = 0;
-    const pollData = () => {
+    const pollData = (forceFullSync = false) => {
       if (isPolling) return;
-      if (typeof document !== 'undefined' && document.hidden) return;
+      if (!forceFullSync && typeof document !== 'undefined' && document.hidden) return;
       isPolling = true;
       pollCount++;
-      const shouldFetchConsultations = pollCount === 1 || pollCount % 2 === 0;
+
+      // Stagger queries across cycles to balance server load:
+      // Cycle 1: Notifications + Queues + Beds (Every 5s)
+      // Cycle 2: Consultations + Patients (Every ~10s or on tab focus)
+      // Cycle 3: Medicines + Medical Certificates (Every ~15s or on tab focus)
+      const shouldSyncRecords = forceFullSync || pollCount % 2 === 0;
+      const shouldSyncInventory = forceFullSync || pollCount % 3 === 0;
 
       Promise.allSettled([
         notificationService.getNotifications(),
         queueService.getQueues(),
         bedService.getBeds(),
-        ...(shouldFetchConsultations ? [consultationService.getConsultations()] : [])
-      ]).then(([nRes, qRes, bRes, cRes]) => {
-        if (nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
+        ...(shouldSyncRecords ? [consultationService.getConsultations(), patientService.getPatients()] : []),
+        ...(shouldSyncInventory ? [medicineService.getMedicines(), certificateService.getCertificates()] : []),
+      ]).then((results) => {
+        const [nRes, qRes, bRes] = results.slice(0, 3);
+        let extraIdx = 3;
+        const cRes = shouldSyncRecords ? results[extraIdx++] : null;
+        const pRes = shouldSyncRecords ? results[extraIdx++] : null;
+        const mRes = shouldSyncInventory ? results[extraIdx++] : null;
+        const certRes = shouldSyncInventory ? results[extraIdx++] : null;
+
+        // 1. Notifications with deduplication
+        if (nRes && nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           const incoming = nRes.value;
 
           if (isInitialServerNotifFetchRef.current) {
@@ -282,7 +323,6 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             });
             isInitialServerNotifFetchRef.current = false;
           } else {
-            // Announce brand new unread notifications across all open devices
             const brandNew = incoming.filter(n => !n.read && n.id && !knownServerNotifIdsRef.current.has(String(n.id)));
             brandNew.forEach(n => {
               knownServerNotifIdsRef.current.add(String(n.id));
@@ -312,45 +352,108 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             return [...localNotifs, ...backendNotifs];
           });
         }
-        if (qRes.status === 'fulfilled' && qRes.value && Array.isArray(qRes.value)) {
-          setQueues(qRes.value
-            .filter(q => !completedQueueIdsRef.current.has(q.id))
-            .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q)
-          );
+
+        // 2. Queues with Map deduplication
+        if (qRes && qRes.status === 'fulfilled' && qRes.value && Array.isArray(qRes.value)) {
+          const qMap = new Map<string, PatientQueue>();
+          qRes.value.forEach(q => {
+            if (q.id && !completedQueueIdsRef.current.has(q.id)) {
+              qMap.set(String(q.id), notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
+            }
+          });
+          const uniqueQueues = Array.from(qMap.values());
+          setQueues(uniqueQueues);
+          try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch {}
         }
-        if (bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
-          setBeds(bRes.value);
+
+        // 3. Beds with Map deduplication
+        if (bRes && bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
+          const bMap = new Map<string, Bed>();
+          bRes.value.forEach(b => {
+            if (b.id) bMap.set(String(b.id), b);
+          });
+          const uniqueBeds = Array.from(bMap.values());
+          setBeds(uniqueBeds);
+          try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch {}
         }
+
+        // 4. Consultations with strict ID and composite-key deduplication
         if (cRes && cRes.status === 'fulfilled' && cRes.value && Array.isArray(cRes.value)) {
-          const seen = new Set<string>();
-          const unique = cRes.value.filter(c => {
+          const seenIds = new Set<string>();
+          const seenKeys = new Set<string>();
+          const uniqueConsults = cRes.value.filter(c => {
+            if (c.id && seenIds.has(String(c.id))) return false;
             const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
+            if (seenKeys.has(key)) return false;
+            if (c.id) seenIds.add(String(c.id));
+            seenKeys.add(key);
             return true;
           });
-          setConsultations(unique);
+          setConsultations(uniqueConsults);
+          try { localStorage.setItem('cura_consultations_cache', JSON.stringify(uniqueConsults)); } catch {}
+        }
+
+        // 5. Patients with Map deduplication by ID (seamlessly syncs newly added patients across devices)
+        if (pRes && pRes.status === 'fulfilled' && pRes.value && Array.isArray(pRes.value)) {
+          const pMap = new Map<string, Patient>();
+          pRes.value.forEach(p => {
+            if (p.id) {
+              pMap.set(String(p.id), { ...p, name: p.name ? p.name.toUpperCase() : p.name });
+            }
+          });
+          const uniquePatients = Array.from(pMap.values());
+          setPatients(uniquePatients);
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(uniquePatients)); } catch {}
+        }
+
+        // 6. Medicines with Map deduplication
+        if (mRes && mRes.status === 'fulfilled' && mRes.value && Array.isArray(mRes.value)) {
+          const mMap = new Map<string, MedicineItem>();
+          mRes.value.forEach(m => {
+            if (m.id) mMap.set(String(m.id), m);
+          });
+          const uniqueMeds = Array.from(mMap.values());
+          setMedicines(uniqueMeds);
+          try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch {}
+        }
+
+        // 7. Medical Certificates with Map deduplication
+        if (certRes && certRes.status === 'fulfilled' && certRes.value && Array.isArray(certRes.value) && certRes.value.length > 0) {
+          const certMap = new Map<string, MedicalCertificate>();
+          certRes.value.forEach(c => {
+            if (c.id) certMap.set(String(c.id), c);
+          });
+          const uniqueCerts = Array.from(certMap.values());
+          setMedicalCerts(uniqueCerts);
+          try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch {}
         }
       }).catch(() => {}).finally(() => {
         isPolling = false;
       });
     };
 
-    const interval = setInterval(pollData, 6000);
+    const interval = setInterval(() => pollData(false), 5000);
 
-    const handleVisibilityChange = () => {
+    const handleFocusOrVisible = () => {
       if (typeof document !== 'undefined' && !document.hidden) {
-        pollData();
+        pollData(true);
       }
     };
+
     if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+      document.addEventListener('visibilitychange', handleFocusOrVisible);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocusOrVisible);
     }
 
     return () => {
       clearInterval(interval);
       if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.removeEventListener('visibilitychange', handleFocusOrVisible);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocusOrVisible);
       }
     };
   }, []);
@@ -694,11 +797,23 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     };
     if (editingPatientId) {
       setPatients(prev => prev.map(p => p.id === editingPatientId ? formattedPatient : p));
-      try { await patientService.updatePatient(editingPatientId, formattedPatient); } 
+      try { 
+        const updated = await patientService.updatePatient(editingPatientId, formattedPatient); 
+        setPatients(prev => prev.map(p => p.id === editingPatientId ? updated : p));
+      } 
       catch (error) { console.error('API failed, but state updated locally:', error); }
     } else {
-      setPatients(prev => [formattedPatient, ...prev]);
-      try { await patientService.createPatient(formattedPatient); } 
+      const tempId = formattedPatient.id;
+      setPatients(prev => [formattedPatient, ...prev.filter(p => p.id !== tempId)]);
+      try { 
+        const created = await patientService.createPatient(formattedPatient); 
+        setPatients(prev => {
+          const map = new Map<string, Patient>();
+          prev.forEach(p => { if (p.id !== tempId) map.set(String(p.id), p); });
+          map.set(String(created.id), created);
+          return Array.from(map.values());
+        });
+      } 
       catch (error) { console.error('API failed, but state updated locally:', error); }
     }
   };
