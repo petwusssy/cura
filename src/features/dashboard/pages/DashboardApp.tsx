@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
 import { Dashboard } from '../components/Dashboard';
-import { DashboardSkeleton, PageSkeleton } from '../components/PageSkeleton';
+import { PageSkeleton } from '../components/PageSkeleton';
 import { GlobalSearch } from '../components/GlobalSearch';
 
 const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));

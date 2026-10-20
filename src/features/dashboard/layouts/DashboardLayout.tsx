@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
+import uaLogo from '@/assets/images/ua-logo.webp';
 import curaLogoMain from '@/assets/images/cura-logo.webp';
 import { authService } from '@/services/authService';
 
