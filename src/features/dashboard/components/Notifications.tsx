@@ -48,8 +48,7 @@ export function Notifications({ notifications, onMarkRead, onMarkAllRead, onDism
     if (filter === 'unread') return !n.read;
     if (filter === 'stock') return n.type === 'stock';
     if (filter === 'medication') return n.type === 'medication';
-    if (filter === 'bed') return n.type === 'bed';
-    if (filter === 'request') return n.type === 'telemedicine_request' || n.type === 'appointment_request' || n.type === 'telemedicine_update' || n.type === 'appointment_update';
+    if (filter === 'request') return n.type === 'telemedicine_request' || n.type === 'appointment_request' || (n.type as string) === 'medcert_request';
     return true;
   });
 

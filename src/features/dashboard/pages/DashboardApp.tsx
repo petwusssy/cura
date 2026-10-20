@@ -262,6 +262,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     const isLocalNotif = (id: string, type?: string) =>
       id.startsWith('med-') || id.startsWith('stock-') || type === 'stock' || id.startsWith('N');
 
+    const isPatientOnlyNotif = (n: AppNotification) =>
+      n.type === 'appointment_update' ||
+      n.type === 'telemedicine_update' ||
+      (n.type as string) === 'certificate' ||
+      (n.type === 'general' && typeof n.message === 'string' && (
+        n.message.toLowerCase().includes("it's your turn") ||
+        n.message.toLowerCase().includes('your medical certificate')
+      ));
+
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
         if (d !== undefined && Array.isArray(d)) {
@@ -272,7 +281,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = d
-              .filter(n => !dismissedNotifIdsRef.current.has(n.id))
+              .filter(n => !isPatientOnlyNotif(n) && !dismissedNotifIdsRef.current.has(n.id))
               .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
             return [...localNotifs, ...backendNotifs];
           });
@@ -315,7 +324,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
         // 1. Notifications with deduplication
         if (nRes && nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
-          const incoming = nRes.value;
+          const incoming = nRes.value as AppNotification[];
 
           if (isInitialServerNotifFetchRef.current) {
             incoming.forEach(n => {
@@ -323,7 +332,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             });
             isInitialServerNotifFetchRef.current = false;
           } else {
-            const brandNew = incoming.filter(n => !n.read && n.id && !knownServerNotifIdsRef.current.has(String(n.id)));
+            const brandNew = incoming.filter(n => !isPatientOnlyNotif(n) && !n.read && n.id && !knownServerNotifIdsRef.current.has(String(n.id)));
             brandNew.forEach(n => {
               knownServerNotifIdsRef.current.add(String(n.id));
               const title = n.type === 'appointment_request' ? '📅 New Appointment Request'
@@ -347,7 +356,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           setNotifications(prev => {
             const localNotifs = prev.filter(p => isLocalNotif(p.id, p.type) && !dismissedNotifIdsRef.current.has(p.id));
             const backendNotifs = incoming
-              .filter(n => !dismissedNotifIdsRef.current.has(n.id))
+              .filter(n => !isPatientOnlyNotif(n) && !dismissedNotifIdsRef.current.has(n.id))
               .map(n => readNotifIdsRef.current.has(n.id) ? { ...n, read: true } : n);
             return [...localNotifs, ...backendNotifs];
           });

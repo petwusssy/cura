@@ -4,7 +4,7 @@ import { AppNotification } from '@/types';
 export const notificationService = {
   getNotifications: async (): Promise<AppNotification[]> => {
     try {
-      const response = await api.get<AppNotification[]>('/notifications/');
+      const response = await api.get<AppNotification[]>('/notifications/?audience=web');
       return response.data || [];
     } catch {
       return [];
@@ -17,7 +17,7 @@ export const notificationService = {
   },
 
   markAllRead: async (): Promise<void> => {
-    await api.post('/notifications/mark_all_read/');
+    await api.post('/notifications/mark_all_read/?audience=web');
   },
 
   deleteNotification: async (id: string): Promise<void> => {
@@ -25,6 +25,6 @@ export const notificationService = {
   },
 
   clearAll: async (): Promise<void> => {
-    await api.post('/notifications/clear_all/');
+    await api.post('/notifications/clear_all/?audience=web');
   },
 };
