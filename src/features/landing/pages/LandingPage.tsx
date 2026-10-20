@@ -10,10 +10,10 @@ import {
   ShieldAlert,
   AlertTriangle,
 } from "lucide-react"
-import uaLogo from "@/assets/images/ua-logo.png"
-import curaLogo from "@/assets/images/cura-logo.png"
-import anthropeakLogo from "@/assets/images/anthropeak-logo.png"
-import campusBg from "@/features/landing/assets/uafacade.jpg"
+import uaLogo from "@/assets/images/ua-logo.webp"
+import curaLogo from "@/assets/images/cura-logo.webp"
+import anthropeakLogo from "@/assets/images/anthropeak-logo.webp"
+import campusBg from "@/features/landing/assets/uafacade.webp"
 import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 
@@ -116,6 +116,9 @@ export default function LandingPage({
         <img
           src={campusBg}
           alt="University of the Assumption campus"
+          width={1920}
+          height={1080}
+          fetchPriority="high"
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Base Static Navy Blue Overlay (Maintains transparent right edge) */}
@@ -193,6 +196,8 @@ export default function LandingPage({
                   <motion.img
                     src={uaLogo}
                     alt="UA Logo"
+                    width={36}
+                    height={36}
                     initial={{ opacity: 0, scale: 0.4 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.4 }}
@@ -223,6 +228,8 @@ export default function LandingPage({
                     <img
                       src={curaLogo}
                       alt="CURA"
+                      width={138}
+                      height={138}
                       className="w-full h-full object-contain select-none"
                       draggable={false}
                     />
@@ -361,7 +368,7 @@ export default function LandingPage({
                           Username
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
+                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/60">
                             <User size={16} />
                           </div>
                           <input
@@ -374,7 +381,7 @@ export default function LandingPage({
                               setLimitState(loginLimiter.getLimitState(val.trim()))
                             }}
                             placeholder="Enter your username"
-                            className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm"
+                            className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/55 shadow-sm"
                             style={{ fontFamily: "'Inter', sans-serif" }}
                           />
                         </div>
@@ -389,7 +396,7 @@ export default function LandingPage({
                           Password
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/40">
+                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#001e50]/60">
                             <Lock size={16} />
                           </div>
                           <input
@@ -401,14 +408,14 @@ export default function LandingPage({
                               if (errorMessage) setErrorMessage(null)
                             }}
                             placeholder="Enter your password"
-                            className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/30 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl text-[#001e50] text-sm bg-white border border-[#a8cde5] focus:border-[#1b6ca8] focus:ring-2 focus:ring-[#1b6ca8]/15 outline-none transition-all placeholder-[#001e50]/55 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ fontFamily: "'Inter', sans-serif" }}
                           />
                           <button
                             type="button"
                             disabled={limitState.isLocked}
                             onClick={() => setShowPassword((v) => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#001e50]/40 hover:text-[#001e50]/80 transition-colors"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#001e50]/60 hover:text-[#001e50]/90 transition-colors"
                           >
                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
@@ -528,7 +535,7 @@ export default function LandingPage({
                       setErrorMessage(null)
                       if (onBackToHome) onBackToHome()
                     }}
-                    className="inline-flex items-center gap-2 text-[#001e50]/60 hover:text-[#001e50] transition-colors text-xs sm:text-[13px] font-semibold mt-3 px-1"
+                    className="inline-flex items-center gap-2 text-[#001e50]/75 hover:text-[#001e50] transition-colors text-xs sm:text-[13px] font-semibold mt-3 px-1"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                     whileHover={{ x: -2 }}
                   >
@@ -541,21 +548,23 @@ export default function LandingPage({
           </div>
 
           {/* Footer inside White Panel */}
-          <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/40 font-medium">
+          <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/75 font-medium">
             <span>CURA System</span>
             <div className="text-right flex flex-col items-end leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#001e50]/55">
+                <span className="font-bold text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#001e50]/75">
                   DEVELOPED BY :
                 </span>
                 <img
                   src={anthropeakLogo}
                   alt="ANTHROPEAK"
+                  width={80}
+                  height={14}
                   className="h-3 sm:h-3.5 w-auto object-contain select-none opacity-85 hover:opacity-100 transition-opacity"
                   draggable={false}
                 />
               </div>
-              <span className="text-[9px] sm:text-[9.5px] text-[#001e50]/45 tracking-wider mt-0.5">
+              <span className="text-[9px] sm:text-[9.5px] text-[#001e50]/75 tracking-wider mt-0.5">
                 GIRADO, NATIVIDAD, SALAC
               </span>
             </div>
@@ -597,6 +606,8 @@ export default function LandingPage({
               <img
                 src={uaLogo}
                 alt="University of the Assumption Logo"
+                width={140}
+                height={140}
                 className="object-contain w-[92px] h-[92px] sm:w-[104px] sm:h-[104px] lg:w-[113px] lg:h-[113px] xl:w-[129px] xl:h-[129px] 2xl:w-[140px] 2xl:h-[140px] drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)]"
                 draggable={false}
               />

@@ -1,8 +1,18 @@
+import { lazy, Suspense } from "react"
 import { Routes, Route, useNavigate, Navigate } from "react-router"
-import LandingPage from "@/features/landing/pages/LandingPage"
-import DashboardApp from "@/features/dashboard/pages/DashboardApp"
-import { CallPage } from "@/features/telemedicine/CallPage"
 import { authService } from "@/services/authService"
+
+const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"))
+const DashboardApp = lazy(() => import("@/features/dashboard/pages/DashboardApp"))
+const CallPage = lazy(() => import("@/features/telemedicine/CallPage").then(m => ({ default: m.CallPage })))
+
+function RouteFallback() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-bg-base" aria-busy="true">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1E5AA8] border-t-transparent" />
+    </div>
+  )
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!authService.isAuthenticated()) {
@@ -25,43 +35,45 @@ export function AppRouter() {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <LandingPage
-            initialStage="idle"
-            onLoginClick={() => navigate("/login")}
-            onSplitComplete={() => navigate("/dashboard")}
-          />
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <LandingPage
-            initialStage="form"
-            onBackToHome={() => navigate("/")}
-            onSplitComplete={() => navigate("/dashboard")}
-          />
-        }
-      />
-      <Route
-        path="/call/:roomId"
-        element={<CallPage />}
-      />
-      <Route
-        path="/telemedicine/call/:roomId"
-        element={<CallPage />}
-      />
-      <Route
-        path="/dashboard/*"
-        element={
-          <ProtectedRoute>
-            <DashboardApp onLogout={handleLogout} />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <LandingPage
+              initialStage="idle"
+              onLoginClick={() => navigate("/login")}
+              onSplitComplete={() => navigate("/dashboard")}
+            />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LandingPage
+              initialStage="form"
+              onBackToHome={() => navigate("/")}
+              onSplitComplete={() => navigate("/dashboard")}
+            />
+          }
+        />
+        <Route
+          path="/call/:roomId"
+          element={<CallPage />}
+        />
+        <Route
+          path="/telemedicine/call/:roomId"
+          element={<CallPage />}
+        />
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <DashboardApp onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Suspense>
   )
 }

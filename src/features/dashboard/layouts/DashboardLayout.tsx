@@ -5,8 +5,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
-import uaLogo from '@/assets/images/ua-logo.png';
-import curaLogoMain from '@/assets/images/cura-logo.png';
+import curaLogoMain from '@/assets/images/cura-logo.webp';
 import { authService } from '@/services/authService';
 
 // ── Nav structure ──────────────────────────────────────────────────────────────
@@ -260,6 +259,8 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             <img
               src={curaLogoMain}
               alt="CURA"
+              width={48}
+              height={48}
               className={`object-contain transition-transform duration-300 group-hover:scale-105 group-active:scale-95 ${
                 collapsed ? 'w-11 h-11' : 'w-12 h-12'
               }`}

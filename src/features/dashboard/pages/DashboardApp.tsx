@@ -1,13 +1,25 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Layout } from '../layouts/DashboardLayout';
-import {
-  Dashboard, DashboardSkeleton, PageSkeleton,
-  PatientManagement, PatientForm, PatientProfile, NewConsultation,
-  ConsultationTab, NonConsultationTab, Inventory, PurchaseReceipts,
-  MedicalCertificates, BedsManagement, Reports, Notifications, Settings,
-  GlobalSearch, Appointments, Telemedicine
-} from '../components';
+import { Dashboard } from '../components/Dashboard';
+import { DashboardSkeleton, PageSkeleton } from '../components/PageSkeleton';
+import { GlobalSearch } from '../components/GlobalSearch';
+
+const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));
+const PatientForm = lazy(() => import('../components/PatientForm').then(m => ({ default: m.PatientForm })));
+const PatientProfile = lazy(() => import('../components/PatientProfile').then(m => ({ default: m.PatientProfile })));
+const NewConsultation = lazy(() => import('../components/NewConsultation').then(m => ({ default: m.NewConsultation })));
+const ConsultationTab = lazy(() => import('../components/ConsultationTab').then(m => ({ default: m.ConsultationTab })));
+const NonConsultationTab = lazy(() => import('../components/NonConsultationTab').then(m => ({ default: m.NonConsultationTab })));
+const Inventory = lazy(() => import('../components/Inventory').then(m => ({ default: m.Inventory })));
+const PurchaseReceipts = lazy(() => import('../components/PurchaseReceipts').then(m => ({ default: m.PurchaseReceipts })));
+const MedicalCertificates = lazy(() => import('../components/MedicalCertificates').then(m => ({ default: m.MedicalCertificates })));
+const BedsManagement = lazy(() => import('../components/BedsManagement').then(m => ({ default: m.BedsManagement })));
+const Reports = lazy(() => import('../components/Reports').then(m => ({ default: m.Reports })));
+const Notifications = lazy(() => import('../components/Notifications').then(m => ({ default: m.Notifications })));
+const Settings = lazy(() => import('../components/Settings').then(m => ({ default: m.Settings })));
+const Appointments = lazy(() => import('../components/Appointments').then(m => ({ default: m.Appointments })));
+const Telemedicine = lazy(() => import('../components/Telemedicine').then(m => ({ default: m.Telemedicine })));
 import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
   Bed, AppNotification, HospitalTransfer, Page, PatientQueue
@@ -1401,7 +1413,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           )
         }
       >
-        {renderPage()}
+        <Suspense fallback={<PageSkeleton page={currentPage} />}>
+          {renderPage()}
+        </Suspense>
       </Layout>
     </div>
   );
