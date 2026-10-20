@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Video, Check, X, Calendar, Clock, Link as LinkIcon, Trash2, ExternalLink, Copy, Sparkles, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Patient } from '../types';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
@@ -134,6 +134,7 @@ export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) 
     }
   });
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
+  const deletedIdsRef = useRef<Set<string>>(new Set());
   
   // Embedded Video Call State
   const [activeCallReq, setActiveCallReq] = useState<TelemedicineRequest | null>(null);
@@ -260,8 +261,8 @@ const TELEMEDICINE_TIME_SLOTS = [
       if (typeof document !== 'undefined' && document.hidden) return;
       isFetching = true;
       telemedicineService.getRequests().then(data => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          setRequests(data);
+        if (data && Array.isArray(data)) {
+          setRequests(data.filter(r => !deletedIdsRef.current.has(r.id)));
         }
       }).catch(() => {}).finally(() => {
         isFetching = false;
@@ -273,8 +274,8 @@ const TELEMEDICINE_TIME_SLOTS = [
   const fetchRequests = async () => {
     try {
       const data = await telemedicineService.getRequests();
-      if (data && Array.isArray(data) && data.length > 0) {
-        setRequests(data);
+      if (data && Array.isArray(data)) {
+        setRequests(data.filter(r => !deletedIdsRef.current.has(r.id)));
       }
     } finally {
       setLoading(false);
@@ -332,13 +333,16 @@ const TELEMEDICINE_TIME_SLOTS = [
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this request?")) return;
+    deletedIdsRef.current.add(id);
     const prevRequests = requests;
     setRequests(prev => prev.filter(r => r.id !== id));
     const success = await telemedicineService.deleteRequest(id);
     if (!success) {
+      deletedIdsRef.current.delete(id);
       setRequests(prevRequests);
       alert("Failed to delete request on server.");
     } else {
+      setRequests(prev => prev.filter(r => r.id !== id));
       alert("Telemedicine request successfully deleted!");
     }
   };

@@ -60,6 +60,7 @@ export const telemedicineService = {
       } catch {}
     };
 
+    cleanCache();
     try {
       await api.delete(`/telemedicine/${id}/`);
       cleanCache();
