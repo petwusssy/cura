@@ -235,15 +235,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         setBeds(uniqueBeds);
         try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch {}
       }
-      if (certRes.status === 'fulfilled' && certRes.value !== undefined && certRes.value.length > 0) {
-        setMedicalCerts(prev => {
-          const map = new Map<string, MedicalCertificate>();
-          prev.forEach(c => { if (c.id) map.set(String(c.id), c); });
-          certRes.value!.forEach(c => { if (c.id) map.set(String(c.id), c); });
-          const merged = Array.from(map.values());
-          try { localStorage.setItem('cura_medical_certs', JSON.stringify(merged)); } catch {}
-          return merged;
-        });
+      if (certRes.status === 'fulfilled' && certRes.value !== undefined) {
+        const certMap = new Map<string, MedicalCertificate>();
+        certRes.value.forEach(c => { if (c.id) certMap.set(String(c.id), c); });
+        const uniqueCerts = Array.from(certMap.values());
+        setMedicalCerts(uniqueCerts);
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch {}
       }
       if (qRes.status === 'fulfilled' && qRes.value !== undefined) {
         const qMap = new Map<string, PatientQueue>();
@@ -427,7 +424,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         }
 
         // 7. Medical Certificates with Map deduplication
-        if (certRes && certRes.status === 'fulfilled' && certRes.value && Array.isArray(certRes.value) && certRes.value.length > 0) {
+        if (certRes && certRes.status === 'fulfilled' && certRes.value && Array.isArray(certRes.value)) {
           const certMap = new Map<string, MedicalCertificate>();
           certRes.value.forEach(c => {
             if (c.id) certMap.set(String(c.id), c);

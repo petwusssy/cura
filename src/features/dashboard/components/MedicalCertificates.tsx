@@ -257,7 +257,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       }
       triggerToast(`🗑️ Medical Certificate ${ref} deleted from archives.`);
       if (selectedCertId === certId) {
-        handleCreateNew();
+        setSelectedCertId('');
       }
     } catch (err) {
       console.error('Failed to delete certificate:', err);
@@ -901,7 +901,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
             </button>
             <button
               onClick={() => {
-                syncToArchives();
                 setActiveTab('archives');
               }}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
