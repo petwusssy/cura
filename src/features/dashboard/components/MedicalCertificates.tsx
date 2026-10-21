@@ -213,24 +213,26 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     recommendations: '',
   });
 
-  // Active document fields initialized with reference document data matching user image
-  const [date, setDate] = useState('June 17, 2026');
+  // Active document fields initialized to blank template by default
+  const [date, setDate] = useState(() =>
+    new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+  );
   const [certPrefix, setCertPrefix] = useState('This is to certify that');
-  const [patientName, setPatientName] = useState('Aaliyah Ysabella G. Cosino');
+  const [patientName, setPatientName] = useState('');
   const [certAgeSeparator, setCertAgeSeparator] = useState(',');
-  const [age, setAge] = useState<number | string>(23);
+  const [age, setAge] = useState<number | string>('');
   const [certAgeSuffix, setCertAgeSuffix] = useState('years old,');
-  const [sex, setSex] = useState('FEMALE');
+  const [sex, setSex] = useState('');
   const [certSexSuffix, setCertSexSuffix] = useState(', a');
-  const [yearLevel, setYearLevel] = useState('4');
-  const [yearSuffix, setYearSuffix] = useState('th');
+  const [yearLevel, setYearLevel] = useState('');
+  const [yearSuffix, setYearSuffix] = useState('');
   const [certYearLevelLabel, setCertYearLevelLabel] = useState('year level of');
-  const [courseAndSchool, setCourseAndSchool] = useState('BS Arc student of University of the Assumption');
+  const [courseAndSchool, setCourseAndSchool] = useState('');
   const [certExaminedPrefix, setCertExaminedPrefix] = useState('has been seen and examined due to');
-  const [examinedDueTo, setExaminedDueTo] = useState('skin allergies and difficulty on breathing.');
-  const [diagnosis, setDiagnosis] = useState('Allergic reaction secondary to food intake with allergens.');
-  const [treatment, setTreatment] = useState('Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
-  const [recommendations, setRecommendations] = useState('Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
+  const [examinedDueTo, setExaminedDueTo] = useState('');
+  const [diagnosis, setDiagnosis] = useState('');
+  const [treatment, setTreatment] = useState('');
+  const [recommendations, setRecommendations] = useState('');
   const [doctor, setDoctor] = useState('JOHNNY MICHAEL P. MANGULABNAN, MD');
   const [doctorTitle, setDoctorTitle] = useState('UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
   const [licenseNo, setLicenseNo] = useState('0095055');
@@ -238,7 +240,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   const [purpose, setPurpose] = useState('Medical Certificate issuance');
   const [currentPatientId, setCurrentPatientId] = useState<string>('');
 
-  const isCertIssued = Boolean(selectedCertId && medicalCerts.some(c => c.id === selectedCertId));
+  const isCertIssued = Boolean(currentPatientId && selectedCertId && medicalCerts.some(c => c.id === selectedCertId));
 
   const triggerToast = (msg: string) => {
     setShowToast(msg);
@@ -385,28 +387,23 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     }
 
     let pId = currentPatientId;
-    if (!pId && patientName) {
+    if (!pId && patientName && patientName.trim().length >= 2) {
       const cleanInput = patientName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      const matched = patients.find(p => {
-        const cleanPName = (p.name || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        return cleanPName === cleanInput || cleanPName.includes(cleanInput) || cleanInput.includes(cleanPName);
-      });
-      if (matched) pId = matched.id;
+      if (cleanInput.length >= 2) {
+        const matched = patients.find(p => {
+          const cleanPName = (p.name || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+          return cleanPName === cleanInput || cleanPName.includes(cleanInput) || cleanInput.includes(cleanPName);
+        });
+        if (matched) pId = matched.id;
+      }
     }
     if (!pId && selectedPatientId) {
       pId = selectedPatientId;
     }
-    // Guarantee pId is a valid UUID for Django backend if possible
-    if (!pId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pId)) {
-      const validPatient = patients.find(p => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id));
-      if (validPatient) {
-        pId = validPatient.id;
-      }
-    }
 
     const updatedCert: MedicalCertificate = {
       id: certIdToUse,
-      patientId: pId || (patients[0]?.id || 'STU-2024-001'),
+      patientId: pId || '',
       date: date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }),
       purpose: purpose || 'Medical Certificate issuance',
       diagnosis: diagnosis,
@@ -503,21 +500,36 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       }
     }
     
-    setExaminedDueTo(cert.examinedDueTo || 'skin allergies and difficulty on breathing.');
-    setDiagnosis(cert.diagnosis || 'Allergic reaction secondary to food intake with allergens.');
-    setTreatment(cert.treatment || 'Loratadine 10 mg tablet, 1 tablet once a day for 7 days.\nPrednisone 5 mg tablet, 1 tablet once a day for 7 days.');
-    setRecommendations(cert.recommendation || 'Have a rest for 1-2 days. May go back to school after 1-2 days once there is no presence of itchiness/allergies. Advice proper hand washing at all times and avoid allergenic foods.');
+    setExaminedDueTo(cert.examinedDueTo || '');
+    setDiagnosis(cert.diagnosis || '');
+    setTreatment(cert.treatment || '');
+    setRecommendations(cert.recommendation || '');
     setDoctor(cert.doctor || 'JOHNNY MICHAEL P. MANGULABNAN, MD');
     setDoctorTitle(cert.doctorTitle || 'UNIVERSITY PHYSICIAN/PHILHEALTH YAKAP');
     setLicenseNo(cert.licenseNo || '0095055');
     setPtrNo(cert.ptrNo || '22483890');
     setPurpose(cert.purpose || 'Medical clearance');
-    setCurrentPatientId(cert.patientId || 'STU-2024-001');
+    setCurrentPatientId(cert.patientId || '');
     setActiveTab('template');
     triggerToast(`Loaded certificate ${cert.id} into official template.`);
   };
 
   const handleQuickLoadPatient = (patientId: string) => {
+    if (!patientId) {
+      setCurrentPatientId('');
+      setSelectedCertId('');
+      setPatientName('');
+      setAge('');
+      setSex('');
+      setYearLevel('');
+      setYearSuffix('');
+      setCourseAndSchool('');
+      setExaminedDueTo('');
+      setDiagnosis('');
+      setTreatment('');
+      setRecommendations('');
+      return;
+    }
     const p = patients.find(pt => pt.id === patientId);
     if (!p) return;
     setCurrentPatientId(p.id);
@@ -600,9 +612,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     }
     if (!finalPatientId && selectedPatientId) {
       finalPatientId = selectedPatientId;
-    }
-    if (!finalPatientId && patients.length > 0) {
-      finalPatientId = patients[0].id;
     }
 
     // Populate the certificate template fields
@@ -1123,11 +1132,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 {/* Paragraph 1: Certification statement */}
                 <div className="text-justify indent-10">
                   <AutoResizeInput value={certPrefix} onChange={(e: any) => setCertPrefix(e.target.value)} readOnly={!editMode} />{' '}
-                  <AutoResizeInput value={patientName} onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
-                  <AutoResizeInput value={certAgeSeparator} onChange={(e: any) => setCertAgeSeparator(e.target.value)} readOnly={!editMode} />{' '}
-                  <AutoResizeInput value={age} onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />{' '}
-                  <AutoResizeInput value={certAgeSuffix} onChange={(e: any) => setCertAgeSuffix(e.target.value)} readOnly={!editMode} />{' '}
-                  <AutoResizeInput value={sex} onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} />
+                  <AutoResizeInput value={patientName} placeholder="________________________" onChange={(e: any) => setPatientName(e.target.value)} readOnly={!editMode} />
+                  <AutoResizeInput value={patientName ? certAgeSeparator : ''} onChange={(e: any) => setCertAgeSeparator(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={age} placeholder="____" onChange={(e: any) => setAge(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={age ? certAgeSuffix : 'years old,'} onChange={(e: any) => setCertAgeSuffix(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={sex} placeholder="________" onChange={(e: any) => setSex(e.target.value.toUpperCase())} readOnly={!editMode} />
                   <AutoResizeInput value={certSexSuffix} onChange={(e: any) => setCertSexSuffix(e.target.value)} readOnly={!editMode} />{' '}
                   
                   {(yearLevel || editMode) && (
@@ -1142,15 +1151,15 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                     </>
                   )}
                   
-                  <AutoResizeInput value={courseAndSchool} onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />{' '}
+                  <AutoResizeInput value={courseAndSchool} placeholder="________________________________________________" onChange={(e: any) => setCourseAndSchool(e.target.value)} readOnly={!editMode} />{' '}
                   <AutoResizeInput value={certExaminedPrefix} onChange={(e: any) => setCertExaminedPrefix(e.target.value)} readOnly={!editMode} />{' '}
-                  <AutoResizeInput value={examinedDueTo} onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} />
+                  <AutoResizeInput value={examinedDueTo} placeholder="____________________________________" onChange={(e: any) => setExaminedDueTo(e.target.value)} readOnly={!editMode} />
                 </div>
 
                 {/* Paragraph 2: Diagnosis */}
                 <div className="font-official font-bold text-[15.5px] leading-[1.8] text-black">
                   <span>Diagnosis:&nbsp;&nbsp;</span>
-                  <AutoResizeInput value={diagnosis} onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} />
+                  <AutoResizeInput value={diagnosis} placeholder="________________________________________________" onChange={(e: any) => setDiagnosis(e.target.value)} readOnly={!editMode} />
                 </div>
 
                 {/* Paragraph 3: Treatment (Indented block layout matching image) */}
@@ -1158,7 +1167,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                   <span className="whitespace-nowrap flex-shrink-0">Treatment:&nbsp;&nbsp;</span>
                   <div className="flex-1">
                     {!editMode ? (
-                      <div className="whitespace-pre-line">{treatment}</div>
+                      <div className="whitespace-pre-line">{treatment || '________________________________________________'}</div>
                     ) : (
                       <textarea
                         value={treatment}
@@ -1175,7 +1184,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
                 <div className="text-justify font-official font-bold text-[15.5px] leading-[1.8] text-black">
                   <span>Recommendations:&nbsp;&nbsp;</span>
                   {!editMode ? (
-                    <span>{recommendations}</span>
+                    <span>{recommendations || '________________________________________________'}</span>
                   ) : (
                     <textarea
                       value={recommendations}
