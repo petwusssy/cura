@@ -129,7 +129,23 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' }
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      { urls: 'stun:stun.relay.metered.ca:80' },
+      {
+        urls: 'turn:global.relay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
     ];
 
     const playRemoteAudio = (stream: MediaStream) => {
@@ -158,16 +174,14 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       if (vTracks.length === 0) {
         setIsRemoteVideoOff(true);
       } else {
-        const isLive = vTracks.some(t => t.enabled && !t.muted && t.readyState === 'live');
-        setIsRemoteVideoOff(!isLive);
+        const hasLiveVideo = vTracks.some(t => t.enabled && t.readyState === 'live');
+        setIsRemoteVideoOff(!hasLiveVideo);
         vTracks.forEach((t) => {
-          t.onmute = () => {
-            console.log('[CURA WebRTC] Remote video track muted');
-            setIsRemoteVideoOff(true);
-          };
           t.onunmute = () => {
             console.log('[CURA WebRTC] Remote video track unmuted');
-            setIsRemoteVideoOff(false);
+            if (remoteVideoRef.current && remoteVideoRef.current.paused) {
+              remoteVideoRef.current.play().catch(() => {});
+            }
           };
           t.onended = () => {
             setIsRemoteVideoOff(true);
@@ -179,16 +193,14 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       if (aTracks.length > 0) {
         aTracks.forEach((t) => {
           t.enabled = true;
-          t.onmute = () => {
-            console.log('[CURA WebRTC] Remote audio track muted');
-            setIsRemoteMicMuted(true);
-          };
           t.onunmute = () => {
             console.log('[CURA WebRTC] Remote audio track unmuted');
-            setIsRemoteMicMuted(false);
+            if (remoteAudioRef.current && remoteAudioRef.current.paused) {
+              remoteAudioRef.current.play().catch(() => {});
+            }
           };
         });
-        setIsRemoteMicMuted(aTracks.every(t => !t.enabled || t.muted));
+        setIsRemoteMicMuted(aTracks.every(t => !t.enabled));
       }
 
       // Video element is muted so browser autoplay policy NEVER blocks video rendering
@@ -249,6 +261,17 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
       });
     };
 
+    const isCallHealthy = () => {
+      if (!activeMediaCall || !activeMediaCall.open) return false;
+      const pc = activeMediaCall.peerConnection;
+      if (!pc) return false;
+      const conn = pc.connectionState;
+      const ice = pc.iceConnectionState;
+      if (conn === 'failed' || conn === 'closed') return false;
+      if (ice === 'failed' || ice === 'closed') return false;
+      return (conn === 'connected' || ice === 'connected' || ice === 'completed');
+    };
+
     // Helper to bind call events with consolidated track handling
     const bindCallEvents = (call: MediaConnection) => {
       if (activeMediaCall && activeMediaCall !== call) {
@@ -283,11 +306,46 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
           if (state === 'connected') {
             setConnectionStatus('connected');
             isInitiatingCall = false;
-          } else if (state === 'failed' || state === 'disconnected') {
+          } else if (state === 'failed') {
+            if (!isCancelled) {
+              console.log('[CURA WebRTC] Connection failed, resetting call state');
+              setConnectionStatus('waiting');
+              isInitiatingCall = false;
+              try { call.close(); } catch {}
+              if (activeMediaCall === call) activeMediaCall = null;
+            }
+          } else if (state === 'disconnected') {
             if (!isCancelled) {
               setConnectionStatus('waiting');
               isInitiatingCall = false;
             }
+          }
+        };
+
+        call.peerConnection.oniceconnectionstatechange = () => {
+          const ice = call.peerConnection?.iceConnectionState;
+          console.log('[CURA WebRTC] ICE state:', ice);
+          if (ice === 'connected' || ice === 'completed') {
+            setConnectionStatus('connected');
+            isInitiatingCall = false;
+          } else if (ice === 'failed') {
+            console.log('[CURA WebRTC] ICE failed, attempting ICE restart...');
+            try {
+              if (typeof (call.peerConnection as any).restartIce === 'function') {
+                (call.peerConnection as any).restartIce();
+              }
+            } catch (e) {
+              console.warn('[CURA WebRTC] restartIce error:', e);
+            }
+            setTimeout(() => {
+              if (call.peerConnection?.iceConnectionState === 'failed') {
+                console.log('[CURA WebRTC] ICE unrecoverable after 3s, closing dead call');
+                try { call.close(); } catch {}
+                if (activeMediaCall === call) activeMediaCall = null;
+              }
+            }, 3000);
+          } else if (ice === 'disconnected') {
+            setConnectionStatus('waiting');
           }
         };
       }
@@ -334,8 +392,8 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         }
       }
 
-      // Check if we already have an active call with valid remote tracks
-      if (activeMediaCall?.open && remoteStreamRef.current.getTracks().length > 0) {
+      // If already healthy with tracks, no need to call
+      if (isCallHealthy() && remoteStreamRef.current.getTracks().length > 0) {
         return;
       }
 
@@ -382,7 +440,28 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
         console.log('[CURA WebRTC] Peer opened with ID:', id);
         if (isCancelled) return;
         setConnectionStatus('waiting');
-        attemptDirectCall();
+        if (role === 'doctor') {
+          // Doctor initiates immediately
+          attemptDirectCall();
+        } else {
+          // Patient gives doctor a head start to avoid dual-call collision glare
+          setTimeout(() => {
+            if (!isCancelled && !isCallHealthy()) {
+              attemptDirectCall();
+            }
+          }, 2500);
+        }
+      });
+
+      newPeer.on('disconnected', () => {
+        console.log('[CURA WebRTC] Signaling disconnected, reconnecting...');
+        if (!isCancelled && !newPeer.destroyed) {
+          try {
+            newPeer.reconnect();
+          } catch (e) {
+            console.warn('[CURA WebRTC] Reconnect failed:', e);
+          }
+        }
       });
 
       // Handle DataConnection for camera/mic state and name sync
@@ -498,11 +577,19 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     createPeerInstance();
     requestMediaStream();
 
-    // Reconnection retry loop every 3s if not yet connected
+    // Reconnection retry loop every 3s if not yet healthy
     checkTimer = setInterval(() => {
       if (isCancelled || !currentPeer || currentPeer.destroyed) return;
-      if (activeMediaCall?.open && connectionStatus === 'connected') return;
-      if (activeMediaCall?.open && remoteStreamRef.current.getTracks().length > 0) return;
+      if (isCallHealthy()) {
+        if (connectionStatus !== 'connected') {
+          setConnectionStatus('connected');
+        }
+        return;
+      }
+      // If call is dead or failed, clear it
+      if (activeMediaCall && !activeMediaCall.open) {
+        activeMediaCall = null;
+      }
       attemptDirectCall();
     }, 3000);
 
@@ -678,7 +765,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     isRemoteVideoOff || 
     !remoteStream || 
     remoteStream.getVideoTracks().length === 0 || 
-    remoteStream.getVideoTracks().every((t) => t.muted || !t.enabled);
+    remoteStream.getVideoTracks().every((t) => !t.enabled);
 
   return (
     <div className={`relative flex flex-col w-full h-full bg-gradient-to-b from-[#0B1C33] via-[#071426] to-[#040C18] text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none ${isEmbedded ? 'rounded-2xl' : ''}`}>
