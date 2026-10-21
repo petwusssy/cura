@@ -1947,36 +1947,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
               </div>
             </div>
 
-            {/* Verification checklist badges */}
-            <div className="space-y-2 mb-5">
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-md bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">📊</span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-800">Recorded in Clinic Reports</div>
-                  <div className="text-[10px] text-gray-500">Available under Reports &gt; Medical Certificate</div>
-                </div>
-                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              </div>
-
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-md bg-sky-100 text-sky-700 font-bold flex items-center justify-center shrink-0 text-xs">📱</span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-800">Synced to Patient Mobile App</div>
-                  <div className="text-[10px] text-gray-500">Visible under My Documents &gt; Certificates tab</div>
-                </div>
-                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              </div>
-
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200/70 text-xs">
-                <span className="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center shrink-0 text-xs">📥</span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-800">Downloaded Official PDF</div>
-                  <div className="text-[10px] text-gray-500">Official letterhead PDF saved to your downloads</div>
-                </div>
-                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              </div>
-            </div>
-
             {/* Action buttons */}
             <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
               <button
