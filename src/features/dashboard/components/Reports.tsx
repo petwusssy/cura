@@ -275,7 +275,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
-  const [isPdfExporting, setIsPdfExporting] = useState(false);
   const currentMonth = new Date().toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Manila' }).toUpperCase();
   const currentYear = new Date().toLocaleString('en-US', { year: 'numeric', timeZone: 'Asia/Manila' });
   const [reportMonth, setReportMonth] = useState(currentMonth);
@@ -601,16 +600,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       );
     });
     return blocks;
-  };
-
-  const handleExportPDF = () => {
-    // Use the browser's built-in print-to-PDF — html2canvas freezes on large tables.
-    // The print CSS already hides everything except the report container.
-    setIsPdfExporting(true);
-    setTimeout(() => {
-      window.print();
-      setIsPdfExporting(false);
-    }, 150);
   };
 
   const handleExportExcel = async (title: string) => {
@@ -1154,12 +1143,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         <button onClick={() => window.print()}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
           <Printer size={12} /> Print
-        </button>
-        <button onClick={() => handleExportPDF()}
-          disabled={isPdfExporting}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer disabled:opacity-60"
-          style={{ background: PRIMARY }}>
-          <Download size={12} /> {isPdfExporting ? 'Opening...' : 'Export PDF'}
         </button>
         <button onClick={() => {
             if (activeReport === 'daily') exportDailyReportExcel();
