@@ -47,7 +47,13 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
       const p = patients.find(p => p.id === editingPatientId);
       if (p) {
         // Merge with defaultForm so new fields (e.g. studentCategory) always have a value
-        setForm({ ...defaultForm(), ...p, studentCategory: p.studentCategory ?? 'College' });
+        setForm({
+          ...defaultForm(),
+          ...p,
+          contact: p.contact === 'Not Provided' ? '' : (p.contact || ''),
+          birthday: p.birthday === '2000-01-01' ? '' : (p.birthday || ''),
+          studentCategory: p.studentCategory ?? 'College',
+        });
       }
     } else {
       setForm(defaultForm());
@@ -63,11 +69,6 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = 'Name is required';
     if (form.category !== 'Outsider' && !form.id?.trim()) e.id = 'ID is required';
-    if (!form.contact.trim()) e.contact = 'Contact is required';
-    if (!form.birthday) e.birthday = 'Birthday is required';
-    if (form.category === 'Student' && form.studentCategory === 'College' && !form.course?.trim()) e.course = 'Course is required';
-    if (form.category === 'Student' && MINOR_CATEGORIES.includes(form.studentCategory as StudentCategory) && !form.gradeLevel?.trim()) e.gradeLevel = 'Grade level is required';
-    if (form.category === 'Employee' && !form.position?.trim()) e.position = 'Position is required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -77,12 +78,28 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
     if (isSubmitting) return;
     if (!validate()) return;
     const finalId = isEditing ? editingPatientId! : (form.category === 'Outsider' ? generateId('Outsider') : form.id);
-    // Calculate age from birthday
-    const bday = new Date(form.birthday);
-    const age = new Date().getFullYear() - bday.getFullYear();
+    
+    // Calculate age from birthday if provided
+    let age = 0;
+    if (form.birthday) {
+      const bday = new Date(form.birthday);
+      if (!isNaN(bday.getTime())) {
+        age = Math.max(0, new Date().getFullYear() - bday.getFullYear());
+      }
+    }
+
+    const payload: Patient = {
+      ...form,
+      name: form.name.trim().toUpperCase(),
+      id: finalId,
+      contact: form.contact?.trim() || 'Not Provided',
+      birthday: form.birthday || '2000-01-01',
+      age,
+    };
+
     setIsSubmitting(true);
     try {
-      await onSave({ ...form, name: form.name.trim().toUpperCase(), id: finalId, age });
+      await onSave(payload);
       onNavigate('patients');
     } catch (error: any) {
       setIsSubmitting(false);
