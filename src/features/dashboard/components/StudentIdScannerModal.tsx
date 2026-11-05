@@ -228,8 +228,10 @@ export function StudentIdScannerModal({
     const lines: string[] = [];
 
     for (const r of rawLines) {
+      // Strip leading noise characters like ". NATIVIDAD" or "~BALTAZAR" or "- CRUZ"
+      const stripped = r.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9.]+$/, '').trim();
       // Common OCR typo: replace semicolon with comma when between letters (e.g. CRUZ; JUAN -> CRUZ, JUAN)
-      const normalized = r.replace(/([A-Za-z]);\s*([A-Za-z])/g, '$1, $2');
+      const normalized = stripped.replace(/([A-Za-z]);\s*([A-Za-z])/g, '$1, $2');
       const c = cleanLine(normalized);
       if (c.length >= 2 && !/^[^a-zA-Z0-9]+$/.test(c)) {
         lines.push(c);
@@ -280,6 +282,74 @@ export function StudentIdScannerModal({
     }
     const candidates: NameCandidate[] = [];
 
+    // Strategy A: Multi-line Name Detection (Standard Philippine & UA ID format: Line 1 = Surname, Line 2 = Given Name + M.I.)
+    // Example from UA ID:
+    // Line 1: ". NATIVIDAD JR."
+    // Line 2: "BALTAZAR O."
+    // Result: "NATIVIDAD JR., BALTAZAR O."
+    for (let i = 0; i < lines.length - 1; i++) {
+      const lineA = lines[i];
+      const lineB = lines[i + 1];
+
+      const upperA = lineA.toUpperCase();
+      const upperB = lineB.toUpperCase();
+
+      // Skip if either line matches blacklist or contains numbers
+      if (BLACKLIST_KEYWORDS.some(k => upperA.includes(k) || upperB.includes(k))) continue;
+      if (/\d/.test(lineA) || /\d/.test(lineB)) continue;
+
+      const cleanA = lineA
+        .replace(/[^a-zA-Z,.\s-]/g, '')
+        .replace(/^[,.\s-]+/, '')
+        .replace(/[,.\s-]+$/, '')
+        .trim();
+
+      const cleanB = lineB
+        .replace(/[^a-zA-Z,.\s-]/g, '')
+        .replace(/^[,.\s-]+/, '')
+        .replace(/[,.\s-]+$/, '')
+        .trim();
+
+      if (cleanA.length < 2 || cleanB.length < 2) continue;
+
+      const wordsA = cleanA.split(/\s+/).filter(Boolean);
+      const wordsB = cleanB.split(/\s+/).filter(Boolean);
+
+      // Surname line is usually 1 to 3 words; given name line is usually 1 to 4 words
+      if (wordsA.length >= 1 && wordsA.length <= 3 && wordsB.length >= 1 && wordsB.length <= 4) {
+        let pairScore = 80;
+
+        // Line A has suffix (JR, SR, II, III, IV)
+        const hasSuffixA = /\b(?:JR|SR|II|III|IV)\.?$/i.test(cleanA);
+        if (hasSuffixA) pairScore += 45;
+
+        // Line B has middle initial ending with period or single letter (e.g. "O." or "O" or "P.")
+        const hasMiddleInitialB = /\b[A-Z]\.?$/i.test(cleanB);
+        if (hasMiddleInitialB) pairScore += 50;
+
+        // Line A has comma already (e.g. "NATIVIDAD,")
+        if (cleanA.includes(',')) pairScore += 20;
+
+        // Proximity to top / ID center
+        if (i <= 4) pairScore += 30;
+
+        // All uppercase boost
+        if (cleanA === cleanA.toUpperCase() && cleanB === cleanB.toUpperCase()) {
+          pairScore += 20;
+        }
+
+        const combined = cleanA.includes(',')
+          ? `${cleanA.toUpperCase()} ${cleanB.toUpperCase()}`
+          : `${cleanA.toUpperCase()}, ${cleanB.toUpperCase()}`;
+
+        candidates.push({
+          name: combined.replace(/\s{2,}/g, ' ').trim(),
+          score: pairScore,
+        });
+      }
+    }
+
+    // Strategy B: Single-line Name Detection (e.g. "DELA CRUZ, JUAN P." or "SANTOS, MARIA CLARA D.")
     lines.forEach((line, index) => {
       const upper = line.toUpperCase();
 
@@ -304,7 +374,7 @@ export function StudentIdScannerModal({
 
       let score = 20;
 
-      // Format 1: LASTNAME, FIRSTNAME (Dominant in Philippine school IDs)
+      // Format 1: LASTNAME, FIRSTNAME (Dominant single-line format)
       if (clean.includes(',')) {
         const [last, first] = clean.split(',').map(s => s.trim());
         if (last && first && last.length >= 2 && first.length >= 2) {
@@ -334,7 +404,6 @@ export function StudentIdScannerModal({
         score -= 20; // lower lines are usually disclaimers or signatures
       }
 
-      // Check if words look like common name particles (DE, DELA, SAN, etc.)
       const upperClean = clean.toUpperCase();
       candidates.push({ name: upperClean, score });
     });
