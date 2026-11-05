@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Save, User, UserCheck, ScanLine } from 'lucide-react';
+import { ChevronLeft, Save, User, UserCheck, ScanLine, Sparkles } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 import { loadDepartmentSectionGroups, inferYearLevelFromSection } from '../constants/sectionsData';
+import { StudentIdScannerModal } from './StudentIdScannerModal';
 
 const PRIMARY = '#1B3A6B';
 
@@ -41,6 +42,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
   const [form, setForm] = useState<Patient>(defaultForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const deptGroups = loadDepartmentSectionGroups();
 
   const isEditing = editingPatientId !== null;
@@ -263,16 +265,14 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
               </h3>
               <button
                 type="button"
-                onClick={() => {
-                  // Non-functional placeholder per user instruction
-                }}
-                title="ID Scanner will be enabled soon"
-                className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 text-[#1B3A6B] text-xs font-bold cursor-default select-none"
+                onClick={() => setIsScannerOpen(true)}
+                title="Scan Student ID card with camera or photo"
+                className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-blue-300 bg-blue-50/80 text-[#1B3A6B] hover:bg-blue-100 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
               >
-                <ScanLine size={14} className="text-blue-600" />
-                <span>Scan Student ID (Optional)</span>
-                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/70 text-blue-900 font-extrabold">
-                  Soon
+                <ScanLine size={15} className="text-blue-600" />
+                <span>Scan Student ID</span>
+                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/90 text-blue-900 font-extrabold flex items-center gap-1">
+                  <Sparkles size={10} className="text-blue-700" /> OCR
                 </span>
               </button>
             </div>
@@ -501,6 +501,27 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
           </button>
         </div>
       </form>
+
+      {/* ID Scanner Modal */}
+      <StudentIdScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        initialId={form.id}
+        initialName={form.name}
+        onApply={({ studentId: newId, studentName: newName }) => {
+          setForm(prev => ({
+            ...prev,
+            id: newId || prev.id,
+            name: newName || prev.name,
+          }));
+          setErrors(prev => {
+            const next = { ...prev };
+            if (newId) delete next.id;
+            if (newName) delete next.name;
+            return next;
+          });
+        }}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   saveDepartmentSectionGroups,
   inferYearLevelFromSection
 } from '../constants/sectionsData';
+import { StudentIdScannerModal } from './StudentIdScannerModal';
 import { toast } from 'sonner';
 
 const PRIMARY = '#1B3A6B';
@@ -44,6 +45,7 @@ export function QuickStudentCheckInModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [confirmedPatient, setConfirmedPatient] = useState<Patient | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
   const selectedDept = useMemo(
     () => deptGroups.find(d => d.id === selectedDeptId) || deptGroups[0],
@@ -515,17 +517,17 @@ export function QuickStudentCheckInModal({
                     3. Student Identification
                   </label>
 
-                  {/* Optional Scan ID Button (UI attached, non-functional as requested) */}
+                  {/* Scan ID Button */}
                   <button
                     type="button"
-                    onClick={() => {}}
-                    title="ID Scanner will be enabled soon"
-                    className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 text-[#1B3A6B] text-xs font-bold transition-all hover:bg-blue-100/60 cursor-default select-none"
+                    onClick={() => setIsScannerOpen(true)}
+                    title="Scan Student ID card with camera or photo"
+                    className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-blue-300 bg-blue-50/80 text-[#1B3A6B] hover:bg-blue-100 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                   >
                     <ScanLine size={15} className="text-blue-600" />
-                    <span>Scan Student ID (Optional)</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/70 text-blue-900 font-extrabold">
-                      Soon
+                    <span>Scan Student ID</span>
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/90 text-blue-900 font-extrabold flex items-center gap-1">
+                      <Sparkles size={10} className="text-blue-700" /> OCR
                     </span>
                   </button>
                 </div>
@@ -763,6 +765,24 @@ export function QuickStudentCheckInModal({
           )}
         </div>
       </div>
+
+      {/* ID Scanner Modal */}
+      <StudentIdScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        initialId={studentId}
+        initialName={studentName}
+        onApply={({ studentId: newId, studentName: newName }) => {
+          if (newId) setStudentId(newId);
+          if (newName) setStudentName(newName);
+          setErrors(prev => {
+            const next = { ...prev };
+            if (newId) delete next.studentId;
+            if (newName) delete next.studentName;
+            return next;
+          });
+        }}
+      />
     </div>
   );
 }
