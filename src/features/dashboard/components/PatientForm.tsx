@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Save, User } from 'lucide-react';
+import { ChevronLeft, Save, User, UserCheck, ScanLine } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
+import { DEPARTMENT_SECTION_GROUPS, inferYearLevelFromSection } from '../constants/sectionsData';
 
 const PRIMARY = '#1B3A6B';
 
@@ -9,6 +10,7 @@ interface PatientFormProps {
   editingPatientId: string | null;
   onSave: (patient: Patient) => void | Promise<void>;
   onNavigate: (page: Page) => void;
+  onOpenQuickWalkIn?: () => void;
 }
 
 const CATEGORIES: PatientCategory[] = ['Student', 'Employee', 'Outsider'];
@@ -35,7 +37,7 @@ const defaultForm = (): Patient => ({
   studentCategory: 'College', guardianName: '', gradeLevel: '',
 });
 
-export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: PatientFormProps) {
+export function PatientForm({ patients, editingPatientId, onSave, onNavigate, onOpenQuickWalkIn }: PatientFormProps) {
   const [form, setForm] = useState<Patient>(defaultForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,21 +163,33 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => onNavigate('patients')}
-          className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
-            <User size={20} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => onNavigate('patients')}
+            className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${PRIMARY}15`, color: PRIMARY }}>
+              <User size={20} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Patient' : 'Add New Patient'}</h1>
+            </div>
           </div>
         </div>
+        {!isEditing && onOpenQuickWalkIn && (
+          <button
+            type="button"
+            onClick={onOpenQuickWalkIn}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1B3A6B] text-white text-xs sm:text-sm font-bold shadow-xs hover:opacity-95 transition-all cursor-pointer"
+          >
+            <UserCheck size={16} className="text-[#F4C542]" />
+            Quick Student Walk-In (Dept & Section)
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -242,11 +256,93 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate }: 
             className="bg-white rounded-xl p-5 sm:p-6 transition-all"
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}
           >
-            <h3 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-              Student Information
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">
+                Student Information
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  // Non-functional placeholder per user instruction
+                }}
+                title="ID Scanner will be enabled soon"
+                className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 text-[#1B3A6B] text-xs font-bold cursor-default select-none"
+              >
+                <ScanLine size={14} className="text-blue-600" />
+                <span>Scan Student ID (Optional)</span>
+                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/70 text-blue-900 font-extrabold">
+                  Soon
+                </span>
+              </button>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Student ID', 'id', 'text', 'e.g., 202012345')}
+
+              {/* Quick Department & Section Preset Selector */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Department (Quick Filter)</label>
+                <select
+                  value={
+                    DEPARTMENT_SECTION_GROUPS.find(d => d.name === form.department)?.id ||
+                    DEPARTMENT_SECTION_GROUPS.find(d => d.sections.includes(form.course || ''))?.id ||
+                    ''
+                  }
+                  onChange={e => {
+                    const dept = DEPARTMENT_SECTION_GROUPS.find(d => d.id === e.target.value);
+                    if (dept) {
+                      const firstSec = dept.sections[0] || '';
+                      setForm(f => ({
+                        ...f,
+                        department: dept.name,
+                        studentCategory: dept.studentCategory,
+                        gradeLevel: dept.defaultGradeLevel || '',
+                        course: firstSec,
+                        yearLevel: inferYearLevelFromSection(firstSec, dept.studentCategory),
+                      }));
+                    }
+                  }}
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all cursor-pointer"
+                >
+                  <option value="">-- Select Department --</option>
+                  {DEPARTMENT_SECTION_GROUPS.map(dept => (
+                    <option key={dept.id} value={dept.id}>{dept.shortName} — {dept.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Section Dropdown if a Department is matched */}
+              {(() => {
+                const matchedDept =
+                  DEPARTMENT_SECTION_GROUPS.find(d => d.name === form.department) ||
+                  DEPARTMENT_SECTION_GROUPS.find(d => d.sections.includes(form.course || ''));
+                if (!matchedDept) return null;
+                return (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Year & Section ({matchedDept.shortName})
+                    </label>
+                    <select
+                      value={form.course ?? ''}
+                      onChange={e => {
+                        const sec = e.target.value;
+                        setForm(f => ({
+                          ...f,
+                          course: sec,
+                          yearLevel: matchedDept.studentCategory === 'College'
+                            ? inferYearLevelFromSection(sec, 'College')
+                            : f.yearLevel,
+                        }));
+                      }}
+                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all cursor-pointer"
+                    >
+                      <option value="">-- Select Section --</option>
+                      {matchedDept.sections.map(sec => (
+                        <option key={sec} value={sec}>{sec}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
 
               {/* Student Category Dropdown */}
               <div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList, Package, ShoppingCart,
-  FileText, BedDouble, BarChart2, Bell, Settings, LogOut, Menu, Calendar, Video, ChevronDown
+  FileText, BedDouble, BarChart2, Bell, Settings, LogOut, Menu, Calendar, Video, ChevronDown, UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
@@ -81,9 +81,10 @@ interface LayoutProps {
   notifications: AppNotification[];
   children: React.ReactNode;
   headerSearchComponent?: React.ReactNode;
+  onOpenQuickWalkIn?: () => void;
 }
 
-export function Layout({ currentPage, onNavigate, onLogout, notifications, children, headerSearchComponent }: LayoutProps) {
+export function Layout({ currentPage, onNavigate, onLogout, notifications, children, headerSearchComponent, onOpenQuickWalkIn }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const unread = notifications.filter(n => !n.read).length;
 
@@ -369,6 +370,22 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           {headerSearchComponent}
 
           <div className="hidden sm:block sm:flex-1" />
+
+          {/* Quick Student Walk-In Button */}
+          {onOpenQuickWalkIn && (
+            <button
+              type="button"
+              onClick={onOpenQuickWalkIn}
+              title="Quick Student Walk-In (Dept & Section)"
+              className="relative z-10 flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-sm hover:opacity-95 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #1B3A6B 0%, #2465ad 100%)',
+              }}
+            >
+              <UserCheck size={16} className="text-[#F4C542] flex-shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Quick Walk-In</span>
+            </button>
+          )}
 
           {/* Notification bell */}
           <button

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Stethoscope, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 
 const PRIMARY = '#1E5AA8';
@@ -25,9 +25,10 @@ interface PatientManagementProps {
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
   onEditPatient: (id: string | null) => void;
+  onOpenQuickWalkIn?: () => void;
 }
 
-export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient }: PatientManagementProps) {
+export function PatientManagement({ patients, searchQuery, onNavigate, onSelectPatient, onEditPatient, onOpenQuickWalkIn }: PatientManagementProps) {
   const [categoryFilter, setCategoryFilter] = useState<PatientCategory | 'All'>('All');
   const [studentCategoryFilter, setStudentCategoryFilter] = useState<StudentCategory | 'All'>('All');
   const [page, setPage] = useState(1);
@@ -59,13 +60,25 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Patient Management</h1>
         </div>
-        <button
-          onClick={handleNewPatient}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 w-full sm:w-auto"
-          style={{ background: PRIMARY }}
-        >
-          <Plus size={16} /> Add Patient
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          {onOpenQuickWalkIn && (
+            <button
+              type="button"
+              onClick={onOpenQuickWalkIn}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-95 w-full sm:w-auto cursor-pointer shadow-xs"
+              style={{ background: '#1B3A6B' }}
+            >
+              <UserCheck size={16} className="text-[#F4C542]" /> Quick Student Walk-In
+            </button>
+          )}
+          <button
+            onClick={handleNewPatient}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90 w-full sm:w-auto cursor-pointer"
+            style={{ background: PRIMARY }}
+          >
+            <Plus size={16} /> Add Patient
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -180,7 +193,13 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                               {p.studentCategory}
                             </span>
                           )}
-                          <span>{p.course}{p.gradeLevel ? (p.gradeLevel.toLowerCase().startsWith('grade') ? p.gradeLevel : `Grade ${p.gradeLevel}`) : ''}{p.yearLevel ? `, ${p.yearLevel}` : ''}</span>
+                          <span>
+                            {[
+                              p.course,
+                              p.gradeLevel ? (p.gradeLevel.toLowerCase().startsWith('grade') ? p.gradeLevel : `Grade ${p.gradeLevel}`) : '',
+                              p.yearLevel,
+                            ].filter(Boolean).join(' • ')}
+                          </span>
                         </span>
                       )}
                       {p.category === 'Employee' && <span>{p.position}</span>}

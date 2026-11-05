@@ -4,6 +4,7 @@ import { Layout } from '../layouts/DashboardLayout';
 import { Dashboard } from '../components/Dashboard';
 import { PageSkeleton } from '../components/PageSkeleton';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { QuickStudentCheckInModal } from '../components/QuickStudentCheckInModal';
 
 const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));
 const PatientForm = lazy(() => import('../components/PatientForm').then(m => ({ default: m.PatientForm })));
@@ -52,6 +53,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
   const [convertingId, setConvertingId]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
+  const [isQuickWalkInOpen, setIsQuickWalkInOpen] = useState(false);
 
   // Initialize with cached data when available to eliminate skeleton on repeat views
   const [patients, setPatients]                 = useState<Patient[]>(() => {
@@ -836,6 +838,54 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
 
+  const handleSaveQuickStudent = async (patient: Patient) => {
+    const formattedPatient: Patient = {
+      ...patient,
+      name: patient.name ? patient.name.trim().toUpperCase() : patient.name,
+    };
+    const existing = patients.find(p => p.id.toLowerCase() === formattedPatient.id.toLowerCase());
+    setSelectedPatientId(existing ? existing.id : formattedPatient.id);
+
+    if (existing) {
+      const updatedLocal = { ...existing, ...formattedPatient, id: existing.id };
+      setPatients(prev => {
+        const next = prev.map(p => p.id === existing.id ? updatedLocal : p);
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+        return next;
+      });
+      try {
+        const updated = await patientService.updatePatient(existing.id, updatedLocal);
+        setPatients(prev => {
+          const next = prev.map(p => p.id === existing.id ? updated : p);
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      } catch (error) {
+        console.error('Quick student update API note (saved locally):', error);
+      }
+    } else {
+      const tempId = formattedPatient.id;
+      setPatients(prev => {
+        const next = [formattedPatient, ...prev.filter(p => p.id !== tempId)];
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+        return next;
+      });
+      try {
+        const created = await patientService.createPatient(formattedPatient);
+        setPatients(prev => {
+          const map = new Map<string, Patient>();
+          prev.forEach(p => { if (p.id !== tempId) map.set(String(p.id), p); });
+          map.set(String(created.id), created);
+          const next = Array.from(map.values());
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      } catch (error) {
+        console.error('Quick student create API note (saved locally):', error);
+      }
+    }
+  };
+
   const processMedicineDeductions = async (consultationDate: string, patientId: string, treatments: Treatment[]) => {
     if (!treatments || treatments.length === 0) return;
     const patientName = patients.find(p => p.id === patientId)?.name || 'patient';
@@ -1230,6 +1280,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             patients={patients} searchQuery={searchQuery}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
             onEditPatient={setEditingPatientId}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'appointments':
@@ -1245,6 +1296,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           <PatientForm
             patients={patients} editingPatientId={editingPatientId}
             onSave={handleSavePatient} onNavigate={navigate}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'patient-profile':
@@ -1263,6 +1315,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             patients={patients}
             medicines={medicines}
             onSave={handleSaveConsultation} onNavigate={navigate}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'new-consultation-tab':
@@ -1273,6 +1326,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             medicines={medicines}
             forcedStatus="Consultation"
             onSave={handleSaveConsultation} onNavigate={navigate}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'new-non-consultation-tab':
@@ -1283,6 +1337,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             medicines={medicines}
             forcedStatus="Non-Consultation"
             onSave={handleSaveConsultation} onNavigate={navigate}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'convert-consultation-tab': {
@@ -1300,6 +1355,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               navigate('consultations');
             }}
             onNavigate={navigate}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       }
@@ -1311,6 +1367,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             onUpdateConsultation={handleUpdateConsultation}
             onAddTransfer={handleAddTransfer}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'non-consultations':
@@ -1320,6 +1377,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             searchQuery={searchQuery}
             onConvertToConsultation={handleConvertToConsultation}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
+            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'inventory':
@@ -1387,6 +1445,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         currentPage={currentPage} onNavigate={navigate}
         onLogout={onLogout}
         notifications={notifications}
+        onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
         headerSearchComponent={
           currentPage === 'dashboard' ? (
             <GlobalSearch
@@ -1417,6 +1476,22 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           {renderPage()}
         </Suspense>
       </Layout>
+
+      <QuickStudentCheckInModal
+        isOpen={isQuickWalkInOpen}
+        onClose={() => setIsQuickWalkInOpen(false)}
+        patients={patients}
+        onSavePatient={handleSaveQuickStudent}
+        onProceed={(mode, confirmedStudent) => {
+          setSelectedPatientId(confirmedStudent.id);
+          setIsQuickWalkInOpen(false);
+          if (mode === 'Consultation') {
+            navigate('new-consultation-tab');
+          } else {
+            navigate('new-non-consultation-tab');
+          }
+        }}
+      />
     </div>
   );
 }

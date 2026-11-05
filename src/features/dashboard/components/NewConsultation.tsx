@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X } from 'lucide-react';
-import { Patient, Consultation, Treatment, Page } from '../types';
+import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X, UserCheck } from 'lucide-react';
+import { Patient, Consultation, Treatment, Page, MedicineItem } from '../types';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -39,18 +39,26 @@ interface NewConsultationProps {
   patients?: Patient[];
   medicines?: MedicineItem[];
   forcedStatus?: 'Consultation' | 'Non-Consultation';
+  initialData?: Consultation;
   onSave: (consultation: Consultation) => void | Promise<void>;
   onNavigate: (page: Page) => void;
+  onOpenQuickWalkIn?: () => void;
 }
 
 const now = () => getManilaTime();
 const today = () => getManilaDate();
 
-export function NewConsultation({ patient, patients = [], medicines = [], forcedStatus, initialData, onSave, onNavigate }: NewConsultationProps) {
+export function NewConsultation({ patient, patients = [], medicines = [], forcedStatus, initialData, onSave, onNavigate, onOpenQuickWalkIn }: NewConsultationProps) {
   const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || initialData?.patientId || '');
   const [patientSearch, setPatientSearch] = useState('');
   const [isPatientDropdownOpen, setIsPatientDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (patient?.id) {
+      setSelectedPatientId(patient.id);
+    }
+  }, [patient?.id]);
 
   // Medicine combobox state: keyed by treatment id
   const [medicineSearch, setMedicineSearch] = useState<Record<string, string>>({});
@@ -107,6 +115,12 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
   const [followUp, setFollowUp] = useState(initialData?.followUp || '');
   const [status, setStatus] = useState<'Consultation' | 'Non-Consultation'>(forcedStatus || 'Non-Consultation');
+
+  useEffect(() => {
+    if (forcedStatus) {
+      setStatus(forcedStatus);
+    }
+  }, [forcedStatus]);
 
   const [purposeOfVisit, setPurposeOfVisit] = useState(initialData?.purposeOfVisit || '');
   const [operationalNotes, setOperationalNotes] = useState(initialData?.operationalNotes || '');
@@ -246,15 +260,42 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Select Patient */}
         {patient ? sectionCard('Patient Information', (
-          <div>
-            <label className={labelCls}>Patient</label>
-            <div className={inputCls + ' bg-gray-50 dark:bg-[#13141f] cursor-not-allowed opacity-80 uppercase font-bold'}>
-              {patient.name}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className={labelCls + ' mb-0'}>Patient</label>
+              {onOpenQuickWalkIn && (
+                <button
+                  type="button"
+                  onClick={onOpenQuickWalkIn}
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#1B3A6B] hover:underline cursor-pointer"
+                >
+                  <UserCheck size={14} />
+                  Change / Quick Student Walk-In
+                </button>
+              )}
+            </div>
+            <div className={inputCls + ' bg-gray-50 dark:bg-[#13141f] flex flex-wrap items-center justify-between gap-2'}>
+              <span className="uppercase font-bold text-gray-900">{patient.name}</span>
+              <span className="text-xs font-mono text-gray-500">
+                ID: {patient.id} {patient.course ? `• ${patient.course}` : ''}
+              </span>
             </div>
           </div>
         )) : sectionCard('Select Patient', (
-          <div className="relative" ref={dropdownRef}>
-            <label className={labelCls}>Patient *</label>
+          <div className="relative space-y-2" ref={dropdownRef}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className={labelCls + ' mb-0'}>Patient *</label>
+              {onOpenQuickWalkIn && (
+                <button
+                  type="button"
+                  onClick={onOpenQuickWalkIn}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1B3A6B] text-white text-xs font-semibold hover:opacity-95 transition-opacity cursor-pointer"
+                >
+                  <UserCheck size={14} className="text-[#F4C542]" />
+                  Quick Student Walk-In (Dept & Section)
+                </button>
+              )}
+            </div>
             <div 
               className={inputCls + ' flex items-center justify-between cursor-pointer'}
               onClick={() => setIsPatientDropdownOpen(!isPatientDropdownOpen)}
@@ -281,7 +322,22 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                 </div>
                 <div className="max-h-60 overflow-y-auto">
                   {filteredPatients.length === 0 ? (
-                    <div className="p-3 text-sm text-gray-500 text-center">No patient found</div>
+                    <div className="p-3 text-sm text-gray-500 text-center space-y-2">
+                      <div>No patient found</div>
+                      {onOpenQuickWalkIn && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsPatientDropdownOpen(false);
+                            onOpenQuickWalkIn();
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1B3A6B] text-white text-xs font-semibold hover:opacity-90 cursor-pointer"
+                        >
+                          <UserCheck size={13} className="text-[#F4C542]" />
+                          + Quick Student Walk-In (Dept & Section)
+                        </button>
+                      )}
+                    </div>
                   ) : filteredPatients.map(p => (
                     <div
                       key={p.id}
@@ -293,7 +349,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                       }}
                     >
                       <div className="font-medium text-gray-800 uppercase">{p.name}</div>
-                      <div className="text-xs text-gray-500">{p.id} • {p.category}</div>
+                      <div className="text-xs text-gray-500">{p.id} • {p.category}{p.course ? ` • ${p.course}` : ''}</div>
                     </div>
                   ))}
                 </div>

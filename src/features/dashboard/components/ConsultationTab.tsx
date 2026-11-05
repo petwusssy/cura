@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle } from 'lucide-react';
+import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle, UserCheck } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
 import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12, formatTimeRange12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
@@ -41,10 +41,11 @@ interface ConsultationTabProps {
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
   searchQuery: string;
+  onOpenQuickWalkIn?: () => void;
 }
 
 export function ConsultationTab({
-  patients, consultations, transfers, onUpdateConsultation, onAddTransfer, onNavigate, onSelectPatient, searchQuery
+  patients, consultations, transfers, onUpdateConsultation, onAddTransfer, onNavigate, onSelectPatient, searchQuery, onOpenQuickWalkIn
 }: ConsultationTabProps) {
   const [datePreset, setDatePreset] = useState<'all' | 'today' | 'yesterday' | 'week' | 'custom'>('all');
   const [customFrom, setCustomFrom] = useState('');
@@ -186,9 +187,19 @@ export function ConsultationTab({
           <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">
             {filtered.length} records
           </span>
+          {onOpenQuickWalkIn && (
+            <button
+              type="button"
+              onClick={onOpenQuickWalkIn}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1E5AA8] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-semibold w-full sm:w-auto cursor-pointer"
+            >
+              <UserCheck size={16} className="text-[#F4C542]" />
+              Quick Student Walk-In
+            </button>
+          )}
           <button
             onClick={() => { onSelectPatient(''); onNavigate('new-consultation-tab'); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium w-full sm:w-auto cursor-pointer"
           >
             <Plus size={16} />
             Add Consultation
