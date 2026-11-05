@@ -116,6 +116,19 @@ export const DEPARTMENT_SECTION_GROUPS: DepartmentSectionGroup[] = [
     ],
   },
   {
+    id: 'ccs-cs-it',
+    name: 'College of Computing Studies (BSCS & BSIT)',
+    shortName: 'CCS — CS / IT',
+    studentCategory: 'College',
+    sections: [
+      'CS 1A', 'CS 2A', 'CS 3A', 'CS 4A',
+      'IT 1A', 'IT 1B', 'IT 1C',
+      'IT 2A', 'IT 2B', 'IT 2C',
+      'IT 3A', 'IT 3B',
+      'IT 4A', 'IT 4B',
+    ],
+  },
+  {
     id: 'cea-eng',
     name: 'College of Engineering & Architecture (CE, CPE & IE)',
     shortName: 'CEA — CE / CPE / IE',
