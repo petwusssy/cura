@@ -429,9 +429,19 @@ export function StudentIdScannerModal({
 
       setScanProgress(100);
       if (extracted.name) {
-        toast.success(`Found Name: ${extracted.name}`);
+        setScanStatus(`Auto-filled: ${extracted.name}`);
+        toast.success(`Auto-filled Student Name: ${extracted.name}`);
+        setTimeout(() => {
+          onApply({
+            studentId: extracted.id || studentId || '',
+            studentName: extracted.name,
+          });
+          stopCamera();
+          onClose();
+        }, 450);
+        return;
       } else {
-        toast.info('ID photo captured. Please enter or review student name.');
+        toast.info('Could not clearly read the name. Please retake or enter name manually.');
       }
     } catch (err: any) {
       console.error('OCR scan failed:', err);
