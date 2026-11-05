@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Save, User, UserCheck, ScanLine } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
-import { DEPARTMENT_SECTION_GROUPS, inferYearLevelFromSection } from '../constants/sectionsData';
+import { loadDepartmentSectionGroups, inferYearLevelFromSection } from '../constants/sectionsData';
 
 const PRIMARY = '#1B3A6B';
 
@@ -41,6 +41,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
   const [form, setForm] = useState<Patient>(defaultForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const deptGroups = loadDepartmentSectionGroups();
 
   const isEditing = editingPatientId !== null;
 
@@ -283,12 +284,12 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Department (Quick Filter)</label>
                 <select
                   value={
-                    DEPARTMENT_SECTION_GROUPS.find(d => d.name === form.department)?.id ||
-                    DEPARTMENT_SECTION_GROUPS.find(d => d.sections.includes(form.course || ''))?.id ||
+                    deptGroups.find(d => d.name === form.department)?.id ||
+                    deptGroups.find(d => d.sections.includes(form.course || ''))?.id ||
                     ''
                   }
                   onChange={e => {
-                    const dept = DEPARTMENT_SECTION_GROUPS.find(d => d.id === e.target.value);
+                    const dept = deptGroups.find(d => d.id === e.target.value);
                     if (dept) {
                       const firstSec = dept.sections[0] || '';
                       setForm(f => ({
@@ -304,7 +305,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
                   className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all cursor-pointer"
                 >
                   <option value="">-- Select Department --</option>
-                  {DEPARTMENT_SECTION_GROUPS.map(dept => (
+                  {deptGroups.map(dept => (
                     <option key={dept.id} value={dept.id}>{dept.shortName} — {dept.name}</option>
                   ))}
                 </select>
@@ -313,8 +314,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
               {/* Section Dropdown if a Department is matched */}
               {(() => {
                 const matchedDept =
-                  DEPARTMENT_SECTION_GROUPS.find(d => d.name === form.department) ||
-                  DEPARTMENT_SECTION_GROUPS.find(d => d.sections.includes(form.course || ''));
+                  deptGroups.find(d => d.name === form.department) ||
+                  deptGroups.find(d => d.sections.includes(form.course || ''));
                 if (!matchedDept) return null;
                 return (
                   <div className="sm:col-span-2">

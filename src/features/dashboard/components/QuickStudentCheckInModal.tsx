@@ -1,10 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   X, ScanLine, CheckCircle2, Stethoscope, ClipboardList,
-  Building2, Users, Search, ArrowLeft, UserCheck, Sparkles, IdCard
+  Building2, Users, Search, ArrowLeft, UserCheck, Sparkles, IdCard, Plus, Trash2
 } from 'lucide-react';
 import { Patient } from '../types';
-import { DEPARTMENT_SECTION_GROUPS, inferYearLevelFromSection } from '../constants/sectionsData';
+import {
+  DepartmentSectionGroup,
+  loadDepartmentSectionGroups,
+  saveDepartmentSectionGroups,
+  inferYearLevelFromSection
+} from '../constants/sectionsData';
+import { toast } from 'sonner';
 
 const PRIMARY = '#1B3A6B';
 
@@ -23,10 +29,15 @@ export function QuickStudentCheckInModal({
   onSavePatient,
   onProceed,
 }: QuickStudentCheckInModalProps) {
+  const [deptGroups, setDeptGroups] = useState<DepartmentSectionGroup[]>(() => loadDepartmentSectionGroups());
   const [step, setStep] = useState<'form' | 'confirmed'>('form');
-  const [selectedDeptId, setSelectedDeptId] = useState<string>(DEPARTMENT_SECTION_GROUPS[0].id);
+  const [selectedDeptId, setSelectedDeptId] = useState<string>(deptGroups[0].id);
   const [selectedSection, setSelectedSection] = useState<string>('');
   const [sectionSearch, setSectionSearch] = useState<string>('');
+  const [isAddingSection, setIsAddingSection] = useState<boolean>(false);
+  const [newSectionName, setNewSectionName] = useState<string>('');
+  const [isDeleteMode, setIsDeleteMode] = useState<boolean>(false);
+
   const [studentId, setStudentId] = useState<string>('');
   const [studentName, setStudentName] = useState<string>('');
   const [sex, setSex] = useState<string>('Female');
@@ -35,8 +46,8 @@ export function QuickStudentCheckInModal({
   const [confirmedPatient, setConfirmedPatient] = useState<Patient | null>(null);
 
   const selectedDept = useMemo(
-    () => DEPARTMENT_SECTION_GROUPS.find(d => d.id === selectedDeptId) || DEPARTMENT_SECTION_GROUPS[0],
-    [selectedDeptId]
+    () => deptGroups.find(d => d.id === selectedDeptId) || deptGroups[0],
+    [deptGroups, selectedDeptId]
   );
 
   const filteredSections = useMemo(() => {
@@ -45,12 +56,11 @@ export function QuickStudentCheckInModal({
     return selectedDept.sections.filter(sec => sec.toLowerCase().includes(q));
   }, [selectedDept, sectionSearch]);
 
-  // If searching for a section not in the current dept, find matches across all departments
   const crossDeptMatches = useMemo(() => {
     const q = sectionSearch.trim().toLowerCase();
     if (!q || filteredSections.length > 0) return [];
     const results: { deptId: string; deptShortName: string; section: string }[] = [];
-    DEPARTMENT_SECTION_GROUPS.forEach(dept => {
+    deptGroups.forEach(dept => {
       if (dept.id === selectedDeptId) return;
       dept.sections.forEach(sec => {
         if (sec.toLowerCase().includes(q)) {
@@ -59,15 +69,19 @@ export function QuickStudentCheckInModal({
       });
     });
     return results.slice(0, 12);
-  }, [sectionSearch, filteredSections, selectedDeptId]);
+  }, [deptGroups, sectionSearch, filteredSections, selectedDeptId]);
 
-  // Reset modal state when opened
   useEffect(() => {
     if (isOpen) {
+      const loaded = loadDepartmentSectionGroups();
+      setDeptGroups(loaded);
       setStep('form');
-      setSelectedDeptId(DEPARTMENT_SECTION_GROUPS[0].id);
-      setSelectedSection(DEPARTMENT_SECTION_GROUPS[0].sections[0] || '');
+      setSelectedDeptId(loaded[0].id);
+      setSelectedSection(loaded[0].sections[0] || '');
       setSectionSearch('');
+      setIsAddingSection(false);
+      setNewSectionName('');
+      setIsDeleteMode(false);
       setStudentId('');
       setStudentName('');
       setSex('Female');
@@ -77,11 +91,12 @@ export function QuickStudentCheckInModal({
     }
   }, [isOpen]);
 
-  // Auto-select first section when department changes
   const handleSelectDept = (deptId: string) => {
     setSelectedDeptId(deptId);
     setSectionSearch('');
-    const dept = DEPARTMENT_SECTION_GROUPS.find(d => d.id === deptId);
+    setIsAddingSection(false);
+    setNewSectionName('');
+    const dept = deptGroups.find(d => d.id === deptId);
     setSelectedSection(dept?.sections[0] || '');
     if (errors.section) {
       setErrors(prev => {
@@ -92,7 +107,46 @@ export function QuickStudentCheckInModal({
     }
   };
 
-  // Match existing student records while typing ID or Name to prevent duplicates/typos
+  const handleAddSection = (rawName?: string) => {
+    const clean = (rawName ?? newSectionName).trim().toUpperCase();
+    if (!clean) return;
+    if (selectedDept.sections.some(s => s.toUpperCase() === clean)) {
+      setSelectedSection(clean);
+      setNewSectionName('');
+      setIsAddingSection(false);
+      setSectionSearch('');
+      toast.info(`Section "${clean}" already exists in ${selectedDept.shortName}`);
+      return;
+    }
+
+    const updated = deptGroups.map(d =>
+      d.id === selectedDept.id ? { ...d, sections: [...d.sections, clean] } : d
+    );
+    setDeptGroups(updated);
+    saveDepartmentSectionGroups(updated);
+    setSelectedSection(clean);
+    setNewSectionName('');
+    setIsAddingSection(false);
+    setSectionSearch('');
+    toast.success(`Added "${clean}" to ${selectedDept.shortName}`);
+  };
+
+  const handleDeleteSection = (secToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = deptGroups.map(d => {
+      if (d.id !== selectedDept.id) return d;
+      return { ...d, sections: d.sections.filter(s => s !== secToDelete) };
+    });
+    setDeptGroups(updated);
+    saveDepartmentSectionGroups(updated);
+
+    if (selectedSection === secToDelete) {
+      const remaining = updated.find(d => d.id === selectedDept.id)?.sections || [];
+      setSelectedSection(remaining[0] || '');
+    }
+    toast.success(`Removed "${secToDelete}" from ${selectedDept.shortName}`);
+  };
+
   const matchingExistingStudents = useMemo(() => {
     const idQuery = studentId.trim().toLowerCase();
     const nameQuery = studentName.trim().toLowerCase();
@@ -111,9 +165,8 @@ export function QuickStudentCheckInModal({
     setStudentId(p.id);
     setStudentName(p.name.toUpperCase());
     if (p.sex) setSex(p.sex);
-    // If student already has a known section in our list, select its department & section automatically
     if (p.course) {
-      const foundDept = DEPARTMENT_SECTION_GROUPS.find(d =>
+      const foundDept = deptGroups.find(d =>
         d.sections.some(s => s.toLowerCase() === p.course?.toLowerCase())
       );
       if (foundDept) {
@@ -187,31 +240,24 @@ export function QuickStudentCheckInModal({
         className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[92dvh]"
         onClick={e => e.stopPropagation()}
       >
-        {/* Top Modal Header */}
+        {/* Top Modal Header (Cleaned up without subtitle clutter) */}
         <div
-          className="px-5 py-4 flex items-center justify-between text-white flex-shrink-0"
+          className="px-5 py-3.5 flex items-center justify-between text-white flex-shrink-0"
           style={{
             background: 'linear-gradient(135deg, #0d213f 0%, #1B3A6B 60%, #2465ad 100%)',
           }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
-              <UserCheck size={20} className="text-[#F4C542]" />
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
+              <UserCheck size={18} className="text-[#F4C542]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight">
-                  Quick Student Walk-In
-                </h2>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F4C542]/20 text-[#F4C542] border border-[#F4C542]/40">
-                  Fast Triage
-                </span>
-              </div>
-              <p className="text-xs text-blue-100/80">
-                {step === 'form'
-                  ? 'Step 1 of 2: Select Department & Section, then input Student ID & Name'
-                  : 'Step 2 of 2: Student confirmed — choose Consultation or Non-Consultation'}
-              </p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight">
+                Quick Student Walk-In
+              </h2>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F4C542]/20 text-[#F4C542] border border-[#F4C542]/40">
+                Fast Triage
+              </span>
             </div>
           </div>
           <button
@@ -234,7 +280,7 @@ export function QuickStudentCheckInModal({
                   1. Select Department
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {DEPARTMENT_SECTION_GROUPS.map(dept => {
+                  {deptGroups.map(dept => {
                     const active = dept.id === selectedDeptId;
                     return (
                       <button
@@ -266,67 +312,162 @@ export function QuickStudentCheckInModal({
                 </div>
               </div>
 
-              {/* 2. Section Selection */}
+              {/* 2. Section Selection + Add / Delete Controls */}
               <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <Users size={14} className="text-[#1B3A6B]" />
                     2. Select Year & Section ({selectedDept.shortName})
                   </label>
-                  <div className="relative w-full sm:w-56">
-                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      value={sectionSearch}
-                      onChange={e => setSectionSearch(e.target.value)}
-                      placeholder="Filter sections..."
-                      className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#1B3A6B] text-gray-900"
-                    />
-                    {sectionSearch && (
-                      <button
-                        type="button"
-                        onClick={() => setSectionSearch('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
+
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                    {/* Search Filter */}
+                    <div className="relative flex-1 sm:w-44">
+                      <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={sectionSearch}
+                        onChange={e => setSectionSearch(e.target.value)}
+                        placeholder="Filter sections..."
+                        className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#1B3A6B] text-gray-900"
+                      />
+                      {sectionSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setSectionSearch('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* + Add Section Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingSection(prev => !prev);
+                        setIsDeleteMode(false);
+                      }}
+                      title="Add new section to this department"
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer flex-shrink-0 ${
+                        isAddingSection
+                          ? 'bg-[#1B3A6B] text-white border-[#1B3A6B]'
+                          : 'bg-white text-[#1B3A6B] border-gray-200 hover:bg-blue-50'
+                      }`}
+                    >
+                      <Plus size={13} />
+                      <span>Add</span>
+                    </button>
+
+                    {/* Delete Mode Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDeleteMode(prev => !prev);
+                        setIsAddingSection(false);
+                      }}
+                      title={isDeleteMode ? 'Done removing sections' : 'Remove sections'}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer flex-shrink-0 ${
+                        isDeleteMode
+                          ? 'bg-red-600 text-white border-red-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50'
+                      }`}
+                    >
+                      <Trash2 size={13} />
+                      <span>{isDeleteMode ? 'Done' : 'Delete'}</span>
+                    </button>
                   </div>
                 </div>
+
+                {/* Inline Add Section Bar */}
+                {isAddingSection && (
+                  <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-blue-200 shadow-2xs animate-in fade-in duration-150">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newSectionName}
+                      onChange={e => setNewSectionName(e.target.value.toUpperCase())}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddSection();
+                        }
+                      }}
+                      placeholder={`New section for ${selectedDept.shortName} (e.g., BSN 1I)`}
+                      style={{ textTransform: 'uppercase' }}
+                      className="flex-1 px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg focus:outline-none focus:border-[#1B3A6B] text-gray-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddSection()}
+                      disabled={!newSectionName.trim()}
+                      className="px-3.5 py-1.5 rounded-lg bg-[#1B3A6B] text-white text-xs font-bold hover:opacity-95 disabled:opacity-40 cursor-pointer"
+                    >
+                      Save Section
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingSection(false);
+                        setNewSectionName('');
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {isDeleteMode && (
+                  <div className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200/70 rounded-lg px-3 py-1.5 flex items-center justify-between">
+                    <span>Click any section below to delete it from {selectedDept.shortName}.</span>
+                  </div>
+                )}
 
                 {/* Section Chips / Scrollable Grid */}
                 <div className="max-h-36 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
                   {filteredSections.length === 0 ? (
-                    crossDeptMatches.length > 0 ? (
-                      <div className="w-full space-y-1.5">
-                        <div className="text-[11px] font-semibold text-blue-700">
-                          Found in other departments (click to switch & select):
+                    <div className="w-full space-y-2 py-2">
+                      {crossDeptMatches.length > 0 && (
+                        <div className="space-y-1.5">
+                          <div className="text-[11px] font-semibold text-blue-700">
+                            Found in other departments (click to switch & select):
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {crossDeptMatches.map(m => (
+                              <button
+                                key={`${m.deptId}-${m.section}`}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDeptId(m.deptId);
+                                  setSelectedSection(m.section);
+                                  setSectionSearch('');
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white text-gray-800 border-blue-200 hover:bg-blue-50 transition-all cursor-pointer flex items-center gap-1.5"
+                              >
+                                <span>{m.section}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-[#1B3A6B] font-bold">
+                                  {m.deptShortName}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {crossDeptMatches.map(m => (
-                            <button
-                              key={`${m.deptId}-${m.section}`}
-                              type="button"
-                              onClick={() => {
-                                setSelectedDeptId(m.deptId);
-                                setSelectedSection(m.section);
-                                setSectionSearch('');
-                              }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white text-gray-800 border-blue-200 hover:bg-blue-50 transition-all cursor-pointer flex items-center gap-1.5"
-                            >
-                              <span>{m.section}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-[#1B3A6B] font-bold">
-                                {m.deptShortName}
-                              </span>
-                            </button>
-                          ))}
+                      )}
+                      {sectionSearch.trim() && (
+                        <div className="flex items-center justify-between gap-2 bg-white border border-dashed border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-600">
+                          <span>No section "<strong>{sectionSearch.toUpperCase()}</strong>" in {selectedDept.shortName}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSection(sectionSearch)}
+                            className="px-3 py-1 rounded-lg bg-[#1B3A6B] text-white font-bold text-xs hover:opacity-90 cursor-pointer"
+                          >
+                            + Add "{sectionSearch.trim().toUpperCase()}"
+                          </button>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-400 py-3 text-center w-full">
-                        No section matching "{sectionSearch}"
-                      </div>
-                    )
+                      )}
+                    </div>
                   ) : (
                     filteredSections.map(sec => {
                       const isSelected = selectedSection === sec;
@@ -334,7 +475,11 @@ export function QuickStudentCheckInModal({
                         <button
                           key={sec}
                           type="button"
-                          onClick={() => {
+                          onClick={e => {
+                            if (isDeleteMode) {
+                              handleDeleteSection(sec, e);
+                              return;
+                            }
                             setSelectedSection(sec);
                             if (errors.section) {
                               setErrors(prev => {
@@ -344,13 +489,16 @@ export function QuickStudentCheckInModal({
                               });
                             }
                           }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#1E5AA8] text-white border-[#1E5AA8] shadow-xs'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50/40'
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                            isDeleteMode
+                              ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-600 hover:text-white'
+                              : isSelected
+                                ? 'bg-[#1E5AA8] text-white border-[#1E5AA8] shadow-xs'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50/40'
                           }`}
                         >
-                          {sec}
+                          <span>{sec}</span>
+                          {isDeleteMode && <X size={12} className="flex-shrink-0" />}
                         </button>
                       );
                     })
@@ -370,9 +518,7 @@ export function QuickStudentCheckInModal({
                   {/* Optional Scan ID Button (UI attached, non-functional as requested) */}
                   <button
                     type="button"
-                    onClick={() => {
-                      // Non-functional placeholder per user instruction
-                    }}
+                    onClick={() => {}}
                     title="ID Scanner will be enabled soon"
                     className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 text-[#1B3A6B] text-xs font-bold transition-all hover:bg-blue-100/60 cursor-default select-none"
                   >
@@ -451,7 +597,6 @@ export function QuickStudentCheckInModal({
                   </div>
                 </div>
 
-                {/* Smart Auto-Match Suggestions if Student already exists in records */}
                 {matchingExistingStudents.length > 0 && (
                   <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 space-y-1.5">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-800">
@@ -527,7 +672,6 @@ export function QuickStudentCheckInModal({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {/* Consultation Button */}
                   <button
                     type="button"
                     onClick={() => confirmedPatient && onProceed('Consultation', confirmedPatient)}
@@ -551,7 +695,6 @@ export function QuickStudentCheckInModal({
                     </div>
                   </button>
 
-                  {/* Non-Consultation Button */}
                   <button
                     type="button"
                     onClick={() => confirmedPatient && onProceed('Non-Consultation', confirmedPatient)}
