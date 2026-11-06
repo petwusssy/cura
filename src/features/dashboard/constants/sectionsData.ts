@@ -176,20 +176,174 @@ export const DEPARTMENT_SECTION_GROUPS: DepartmentSectionGroup[] = [
     shortName: 'SED — Education',
     studentCategory: 'College',
     sections: [
-      'EDUC 1A', 'EDUC 2A', 'EDUC 2B', 'EDUC 3A', 'EDUC 3B', 'EDUC 4A', 'EDUC 4B',
-      'GENED2A', 'GENED3A', 'GENED4A',
+      'EDUC 1A', 'EDUC 2A', 'EDUC 3A', 'EDUC 4A',
+      'GENED2A', 'GENED3A', 'EDUC 4B', 'GENED4A',
       'BPED1A', 'BPED2A', 'BPED 3A', 'BPED 4A',
-      'BSED4FIL-C', 'BSE 4A',
-      'ENG2A', 'ENG3A', 'ENG4A',
-      'FIL2A', 'FIL3A', 'FIL4A',
+      'BSED4FIL-C', 'FIL4A',
       'MAPEH1A', 'MAPEH2A', 'MAPEH3A', 'MAPEH4A',
       'MATH1A', 'MATH2A', 'MATH3A', 'MATH4A',
-      'REVE 1A', 'REVE1A', 'REVE2A', 'REVE3A', 'REVE4A',
+      'REVE 1A', 'REVE1A', 'EDUC 2B', 'REVE2A', 'EDUC 3B', 'REVE3A', 'REVE4A',
       'SS2A', 'SOCST4A',
       'VERE 1A', 'VERE 2A', 'VERE 3A', 'VERE 4A',
+      'ENG2A', 'ENG3A', 'BSE 4A', 'ENG4A', 'FIL2A', 'FIL3A',
     ],
   },
 ];
+
+export interface CensusSheetGroup {
+  id: string;
+  sheetName: string;
+  label: string;
+  sectionHeader: 'YEAR & SECTION' | 'COURSE & SECTION:';
+  hasSpacerRows: boolean;
+  totalFillHex: string;
+  totalFillArgb: string;
+  colWidths: [number, number, number, number, number, number];
+  sections: string[];
+}
+
+export function getCensusSheetGroups(): CensusSheetGroup[] {
+  const depts = loadDepartmentSectionGroups();
+  const byId = Object.fromEntries(depts.map(d => [d.id, d.sections]));
+  const sasAll = byId['sas-comm-bhs-blis'] || [];
+  const abComm = sasAll.filter(s => /^AB\s*COMM/i.test(s));
+  const bhsBlis = sasAll.filter(s => !/^AB\s*COMM/i.test(s));
+
+  return [
+    {
+      id: 'shs-11',
+      sheetName: 'G11',
+      label: 'G11 (SHS Grade 11)',
+      sectionHeader: 'YEAR & SECTION',
+      hasSpacerRows: true,
+      totalFillHex: '#FFCCFF',
+      totalFillArgb: 'FFFFCCFF',
+      colWidths: [31.29, 18.57, 18.14, 18.43, 21, 12.71],
+      sections: byId['shs-11'] || [],
+    },
+    {
+      id: 'shs-12',
+      sheetName: 'G12',
+      label: 'G12 (SHS Grade 12)',
+      sectionHeader: 'YEAR & SECTION',
+      hasSpacerRows: true,
+      totalFillHex: '#3399FF',
+      totalFillArgb: 'FF3399FF',
+      colWidths: [36.14, 18.29, 18.14, 18.43, 18.14, 14],
+      sections: byId['shs-12'] || [],
+    },
+    {
+      id: 'comm-ar',
+      sheetName: 'ABCOMM, AR',
+      label: 'ABCOMM, AR',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#00B050',
+      totalFillArgb: 'FF00B050',
+      colWidths: [20.86, 18.14, 18.43, 18.57, 19.14, 9.14],
+      sections: [...abComm, ...(byId['cea-ar'] || [])],
+    },
+    {
+      id: 'sed-educ',
+      sheetName: 'EDUC',
+      label: 'EDUC',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#E2EFD9',
+      totalFillArgb: 'FFE2EFD9',
+      colWidths: [21.43, 16.29, 17.29, 17.57, 19.86, 8.71],
+      sections: byId['sed-educ'] || [],
+    },
+    {
+      id: 'bhs-blis',
+      sheetName: 'PSE,BHS,BLIS',
+      label: 'PSE,BHS,BLIS',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#F7CAAC',
+      totalFillArgb: 'FFF7CAAC',
+      colWidths: [22.14, 23.14, 24.43, 22.86, 18.14, 8.71],
+      sections: bhsBlis,
+    },
+    {
+      id: 'chtm-hm-tm',
+      sheetName: 'HM,TM',
+      label: 'HM,TM',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#ADB9CA',
+      totalFillArgb: 'FFADB9CA',
+      colWidths: [26.57, 13.71, 16.14, 17.14, 17.29, 9.14],
+      sections: byId['chtm-hm-tm'] || [],
+    },
+    {
+      id: 'ccj-sas-crim-psych',
+      sheetName: 'CRIM, PSYCH',
+      label: 'CRIM, PSYCH',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#FBE4D5',
+      totalFillArgb: 'FFFBE4D5',
+      colWidths: [22.43, 15.86, 16.57, 16.86, 20, 8.71],
+      sections: byId['ccj-sas-crim-psych'] || [],
+    },
+    {
+      id: 'coa-acc-ais',
+      sheetName: 'ACC,AIS',
+      label: 'ACC,AIS',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#ECECEC',
+      totalFillArgb: 'FFECECEC',
+      colWidths: [22, 18.14, 18.43, 18.14, 18.29, 8.71],
+      sections: byId['coa-acc-ais'] || [],
+    },
+    {
+      id: 'cba-mm-om',
+      sheetName: 'MM,OM',
+      label: 'MM,OM',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#FF0000',
+      totalFillArgb: 'FFFF0000',
+      colWidths: [21.43, 18.14, 18.43, 18.43, 18.14, 9.14],
+      sections: byId['cba-mm-om'] || [],
+    },
+    {
+      id: 'cea-eng',
+      sheetName: 'ENGR',
+      label: 'ENGR',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#00CC99',
+      totalFillArgb: 'FF00CC99',
+      colWidths: [20.43, 18.29, 18.43, 18.43, 18.29, 8.71],
+      sections: byId['cea-eng'] || [],
+    },
+    {
+      id: 'ccs-cs-it',
+      sheetName: 'IT, CS',
+      label: 'IT, CS',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#FFE598',
+      totalFillArgb: 'FFFFE598',
+      colWidths: [20.43, 18.29, 18, 18.14, 20.14, 9.14],
+      sections: byId['ccs-cs-it'] || [],
+    },
+    {
+      id: 'conp-bsn-bsp',
+      sheetName: 'BSN, BSP',
+      label: 'BSN, BSP',
+      sectionHeader: 'COURSE & SECTION:',
+      hasSpacerRows: false,
+      totalFillHex: '#DEEAF6',
+      totalFillArgb: 'FFDEEAF6',
+      colWidths: [21.71, 18.57, 18.14, 18, 18.29, 9.14],
+      sections: byId['conp-bsn-bsp'] || [],
+    },
+  ];
+}
 
 const STORAGE_KEY = 'cura_custom_department_sections_v1';
 

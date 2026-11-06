@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Printer, Download, FileText, Package, BarChart2, ClipboardList, Calendar, Video } from 'lucide-react';
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
 import { appointmentService, AppointmentRequest } from '@/services/appointmentService';
@@ -8,6 +8,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
+import { getCensusSheetGroups } from '../constants/sectionsData';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -166,7 +167,43 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 ];
 
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-type ReportType = 'daily' | 'cases' | 'nonconsult' | 'inventory' | 'appointments' | 'telemedicine';
+type ReportType = 'daily' | 'census' | 'cases' | 'nonconsult' | 'inventory' | 'appointments' | 'telemedicine';
+
+const MONTH_NAMES = [
+  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+];
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+function getCensusWeeks(yearNum: number, monthIdx1: number): { label: string; startDay: number; endDay: number }[] {
+  const daysInMonth = new Date(yearNum, monthIdx1, 0).getDate();
+  const shortM = MONTH_SHORT[monthIdx1 - 1] || 'OCT';
+  const mondays: number[] = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (new Date(yearNum, monthIdx1 - 1, d).getDay() === 1) {
+      mondays.push(d);
+    }
+  }
+  const firstDow = new Date(yearNum, monthIdx1 - 1, 1).getDay();
+  const starts: number[] = [];
+  if (firstDow >= 1 && firstDow <= 3 && mondays.length < 4) {
+    starts.push(1, ...mondays.slice(0, 3));
+  } else if (mondays.length >= 4) {
+    starts.push(...mondays.slice(0, 4));
+  } else {
+    starts.push(1, 8, 15, 22);
+  }
+  return starts.slice(0, 4).map((s, idx) => {
+    const e = idx < 3
+      ? Math.min(daysInMonth, s + (6 - (new Date(yearNum, monthIdx1 - 1, s).getDay() || 7)))
+      : Math.min(daysInMonth, Math.max(s + 5, daysInMonth));
+    return {
+      label: `${shortM} ${s}- ${shortM} ${e}`,
+      startDay: s,
+      endDay: e,
+    };
+  });
+}
 
 function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string, customTo: string, selectedMonthYear?: string): boolean {
   if (filter === 'all') return true;
@@ -177,12 +214,11 @@ function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string
   if (filter === 'today') return date === todayStr;
   if (filter === 'yesterday') return date === yesterdayStr;
   if (filter === 'week') {
-    const weekAgo = getManilaDaysAgo(7);
+    const weekAgo = getManilaDaysAgo(6);
     return date >= weekAgo && date <= todayStr;
   }
   if (filter === 'month') {
-    if (selectedMonthYear && date.slice(0, 7) === selectedMonthYear) return true;
-    return date.slice(0, 7) === todayStr.slice(0, 7);
+    return selectedMonthYear ? date.slice(0, 7) === selectedMonthYear : date.slice(0, 7) === todayStr.slice(0, 7);
   }
   if (filter === 'custom') {
     if (customFrom && customTo) return date >= customFrom && date <= customTo;
@@ -193,7 +229,7 @@ function matchesFilter(rawDate: string, filter: ReportFilter, customFrom: string
   return true;
 }
 
-function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: string): string[] {
+function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: string, selectedMonthYear?: string): string[] {
   const days: string[] = [];
   const todayStr = getManilaDate();
   const yesterdayStr = getManilaYesterday();
@@ -206,7 +242,8 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
     return days;
   }
   if (filter === 'month') {
-    const [y, m] = todayStr.split('-').map(Number);
+    const target = selectedMonthYear || todayStr.slice(0, 7);
+    const [y, m] = target.split('-').map(Number);
     const dim = new Date(y, m, 0).getDate();
     for (let d = 1; d <= dim; d++) {
       days.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
@@ -214,10 +251,10 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
     return days;
   }
   if (filter === 'custom' && customFrom && customTo) {
-    let cur = new Date(customFrom + 'T00:00:00');
-    const endDate = new Date(customTo + 'T00:00:00');
+    let cur = new Date(customFrom + 'T00:00:00+08:00');
+    const endDate = new Date(customTo + 'T00:00:00+08:00');
     while (cur <= endDate) {
-      days.push(cur.toISOString().slice(0, 10));
+      days.push(normalizeDate(cur.toISOString()));
       cur.setDate(cur.getDate() + 1);
     }
     return days;
@@ -225,33 +262,27 @@ function getDaysInFilter(filter: ReportFilter, customFrom: string, customTo: str
   return [todayStr];
 }
 
-const filterLabel = (f: ReportFilter) => {
+const filterLabel = (f: ReportFilter, reportMonth?: string, reportYear?: string, customFrom?: string, customTo?: string) => {
   const now = new Date();
-  
-  if (f === 'all') {
-    return 'All Records';
-  }
-  
+  if (f === 'all') return 'All Records';
   if (f === 'today') {
-    return `Today, ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+    return `Today, ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })} (PHT)`;
   }
-  
   if (f === 'yesterday') {
-    const yest = new Date(now);
-    yest.setDate(yest.getDate() - 1);
-    return `Yesterday, ${yest.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+    const yestStr = getManilaYesterday();
+    return `Yesterday, ${yestStr} (PHT)`;
   }
-  
   if (f === 'week') {
-    const lastWeek = new Date(now);
-    lastWeek.setDate(lastWeek.getDate() - 6);
-    return `${lastWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' })} - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })}`;
+    return `${getManilaDaysAgo(6)} to ${getManilaDate()} (PHT)`;
   }
-  
   if (f === 'month') {
-    return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'Asia/Manila' });
+    return reportMonth && reportYear
+      ? `${reportMonth} ${reportYear} (PHT)`
+      : now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'Asia/Manila' });
   }
-  
+  if (customFrom || customTo) {
+    return `Custom: ${customFrom || '...'} to ${customTo || '...'} (PHT)`;
+  }
   return 'Custom Range';
 };
 
@@ -273,12 +304,24 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const [customTo, setCustomTo] = useState('');
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [activeReport, setActiveReport] = useState<ReportType>('daily');
+  const [censusTab, setCensusTab] = useState<string>('all');
   const [casesTab, setCasesTab] = useState<'student' | 'personnel'>('student');
   const [inventoryTab, setInventoryTab] = useState<'medicines' | 'supplies'>('medicines');
-  const currentMonth = new Date().toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Manila' }).toUpperCase();
-  const currentYear = new Date().toLocaleString('en-US', { year: 'numeric', timeZone: 'Asia/Manila' });
+  const manilaToday = getManilaDate();
+  const [initY, initM] = manilaToday.split('-');
+  const currentMonth = MONTH_NAMES[(parseInt(initM, 10) || 1) - 1] || 'OCTOBER';
+  const currentYear = initY || '2026';
   const [reportMonth, setReportMonth] = useState(currentMonth);
   const [reportYear, setReportYear] = useState(currentYear);
+
+  const syncMonthYearFromDate = (dateStr: string) => {
+    const norm = normalizeDate(dateStr);
+    if (!norm || norm.length < 7) return;
+    const [y, m] = norm.split('-');
+    const mName = MONTH_NAMES[(parseInt(m, 10) || 1) - 1];
+    if (mName) setReportMonth(mName);
+    if (y) setReportYear(y);
+  };
 
   const [appRequests, setAppRequests] = useState<AppointmentRequest[]>(appointmentRequests || []);
   const [teleRequests, setTeleRequests] = useState<TelemedicineRequest[]>(telemedicineRequests || []);
@@ -300,22 +343,24 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
     'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
   };
-  const monthNum = monthMap[reportMonth] || '06';
+  const monthNum = monthMap[reportMonth] || '10';
   const selectedMonthYear = `${reportYear}-${monthNum}`;
 
   const seenReportConsKeys = new Set<string>();
-  const filteredCons = consultations
-    .filter(c => matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear))
-    .filter(c => {
-      const key = c.id ? `id:${c.id}` : '';
-      const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
-      if (key && seenReportConsKeys.has(key)) return false;
-      if (seenReportConsKeys.has(semanticKey)) return false;
-      if (key) seenReportConsKeys.add(key);
-      seenReportConsKeys.add(semanticKey);
-      return true;
-    });
+  const dedupedConsultations = consultations.filter(c => {
+    if ((c.complaint || '').startsWith('[CONVERTED]')) return false;
+    const key = c.id ? `id:${c.id}` : '';
+    const semanticKey = `${c.patientId}|${normalizeDate(c.date)}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
+    if (key && seenReportConsKeys.has(key)) return false;
+    if (seenReportConsKeys.has(semanticKey)) return false;
+    if (key) seenReportConsKeys.add(key);
+    seenReportConsKeys.add(semanticKey);
+    return true;
+  });
 
+  const filteredCons = dedupedConsultations.filter(c =>
+    matchesFilter(c.date, filter, customFrom, customTo, selectedMonthYear)
+  );
 
   const acceptedAppointments = appRequests.filter(req => {
     const isAccepted = req.status === 'Approved' || req.status === 'Completed' || req.status === 'Rejected';
@@ -330,14 +375,14 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
     return matchesFilter(dateStr, filter, customFrom, customTo, selectedMonthYear);
   });
-  const days = getDaysInFilter(filter, customFrom, customTo);
+  const days = getDaysInFilter(filter, customFrom, customTo, selectedMonthYear);
 
   const getPatient = (id: string) => patients.find(p => p.id === id);
   const pat = (c: Consultation) => getPatient(c.patientId);
 
-  const casesConsForMonth = consultations.filter(c => {
+  const casesConsForMonth = filteredCons.filter(c => {
     const dStr = normalizeDate(c.date);
-    return dStr ? dStr.startsWith(selectedMonthYear) : (c.date && c.date.startsWith(selectedMonthYear));
+    return filter === 'all' ? true : dStr.startsWith(selectedMonthYear);
   });
 
   // Dynamic categories from consultations for the selected month not already matching ALL_CASES
@@ -383,11 +428,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     }).length;
   };
 
-  const daysInMonth = new Date(parseInt(reportYear), parseInt(monthNum), 0).getDate();
+  const daysInMonth = new Date(parseInt(reportYear, 10), parseInt(monthNum, 10), 0).getDate();
   const dailyReportsData = activeReport === 'daily' ? Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const dayStr = `${reportYear}-${monthNum}-${String(day).padStart(2, '0')}`;
-    const consForDay = consultations.filter(c => c.date === dayStr);
+    const consForDay = filteredCons.filter(c => normalizeDate(c.date) === dayStr);
 
     let col = 0, shs = 0, jhs = 0, gs = 0, emp = 0, vis = 0;
     let cons = 0, home = 0, hosp = 0, pre = 0;
@@ -434,13 +479,66 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     return acc;
   }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
 
+  // ── Weekly Census Computation (Strictly G11, G12 & College Students Only) ──
+  const censusGroups = getCensusSheetGroups();
+  const censusWeeks = getCensusWeeks(parseInt(reportYear, 10) || 2026, parseInt(monthNum, 10) || 10);
+
+  const normalizeCensusExact = (s: string) => (s || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  const normalizeCensusCompact = (s: string) => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  const censusExactToCanonical = new Map<string, string>();
+  const censusCompactToCanonical = new Map<string, string>();
+  const censusCounts = new Map<string, [number, number, number, number]>();
+
+  censusGroups.forEach(group => {
+    group.sections.forEach(sec => {
+      censusCounts.set(sec, [0, 0, 0, 0]);
+      censusExactToCanonical.set(normalizeCensusExact(sec), sec);
+      const compact = normalizeCensusCompact(sec);
+      if (!censusCompactToCanonical.has(compact)) {
+        censusCompactToCanonical.set(compact, sec);
+      }
+    });
+  });
+
+  filteredCons.forEach(c => {
+    const dStr = normalizeDate(c.date);
+    if (!dStr || !dStr.startsWith(selectedMonthYear)) return;
+    const p = getPatient(c.patientId);
+    if (!p) return;
+    // Strictly G11, G12 (Senior High School) & College students ONLY — exclude Outsiders, Employees, Elementary, JHS
+    if (p.category !== 'Student') return;
+    if (p.studentCategory !== 'Senior High School' && p.studentCategory !== 'College') return;
+    if (p.studentCategory === 'Senior High School' && p.gradeLevel && p.gradeLevel !== 'Grade 11' && p.gradeLevel !== 'Grade 12') return;
+
+    const rawSec = (p.section || p.course || '').trim();
+    if (!rawSec) return;
+    const canonical =
+      censusExactToCanonical.get(normalizeCensusExact(rawSec)) ||
+      censusCompactToCanonical.get(normalizeCensusCompact(rawSec));
+    if (!canonical) return;
+
+    const dayNum = parseInt(dStr.slice(8, 10), 10);
+    if (!dayNum || dayNum < 1 || dayNum > daysInMonth) return;
+
+    let weekIdx = 0;
+    if (dayNum >= censusWeeks[3].startDay) weekIdx = 3;
+    else if (dayNum >= censusWeeks[2].startDay) weekIdx = 2;
+    else if (dayNum >= censusWeeks[1].startDay) weekIdx = 1;
+    else weekIdx = 0;
+
+    const arr = censusCounts.get(canonical);
+    if (arr) arr[weekIdx] += 1;
+  });
+
   const reportTypes = [
     { id: 'daily'        as ReportType, label: 'Daily Report',              icon: <FileText size={15} /> },
+    { id: 'census'       as ReportType, label: 'Weekly Census',             icon: <BarChart2 size={15} /> },
     { id: 'cases'        as ReportType, label: 'Cases Attended',            icon: <BarChart2 size={15} /> },
-    { id: 'nonconsult'   as ReportType, label: 'Non-Consultation',        icon: <ClipboardList size={15} /> },
-    { id: 'inventory'   as ReportType, label: 'Inventory / Medicine',     icon: <Package size={15} /> },
+    { id: 'nonconsult'   as ReportType, label: 'Non-Consultation',          icon: <ClipboardList size={15} /> },
+    { id: 'inventory'    as ReportType, label: 'Inventory / Medicine',      icon: <Package size={15} /> },
     { id: 'appointments' as ReportType, label: 'Appointments Report',       icon: <Calendar size={15} /> },
-    { id: 'telemedicine'  as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
+    { id: 'telemedicine' as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
   ];
 
   const daysInSelectedMonth = new Date(parseInt(reportYear, 10), parseInt(monthNum, 10), 0).getDate();
@@ -479,7 +577,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       if (dispenseHistory.length > 0) {
         dispenseHistory.forEach(h => {
           const dStr = normalizeDate(h.date);
-          if (dStr && dStr.startsWith(selectedMonthYear)) {
+          if (dStr && dStr.startsWith(selectedMonthYear) && matchesFilter(dStr, filter, customFrom, customTo, selectedMonthYear)) {
             const day = parseInt(dStr.slice(8, 10), 10);
             if (day >= 1 && day <= daysInSelectedMonth) {
               consumptionDays[day - 1] += (Number(h.qty) || 0);
@@ -490,14 +588,15 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
       // Also check consultations treatments in case they were not in stockHistory
       const medNameClean = actualMed.name.toLowerCase().trim();
-      consultations.forEach(cons => {
-        if (cons.date && cons.date.startsWith(selectedMonthYear)) {
-          const day = parseInt(cons.date.slice(8, 10), 10);
+      filteredCons.forEach(cons => {
+        const dStr = normalizeDate(cons.date);
+        if (dStr && dStr.startsWith(selectedMonthYear)) {
+          const day = parseInt(dStr.slice(8, 10), 10);
           if (day >= 1 && day <= daysInSelectedMonth) {
             (cons.treatments || []).forEach(t => {
               if (t.medicineName && t.medicineName.toLowerCase().trim() === medNameClean) {
                 const alreadyInHistory = (actualMed.stockHistory || []).some(
-                  h => h.type === 'dispense' && normalizeDate(h.date) === cons.date && Number(h.qty) === Number(t.quantity)
+                  h => h.type === 'dispense' && normalizeDate(h.date) === dStr && Number(h.qty) === Number(t.quantity)
                 );
                 if (!alreadyInHistory) {
                   consumptionDays[day - 1] += (Number(t.quantity) || 0);
@@ -1130,13 +1229,135 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     saveAs(new Blob([buffer]), `inventory_${tab}_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
   };
 
+  // ── Weekly Census Excel Export (Exact 12-Sheet Workbook matching WEEKLY_CENSUS_(oct).xlsx) ──
+  const exportWeeklyCensusExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const groupsToExport = censusTab === 'all'
+      ? censusGroups
+      : [...censusGroups.filter(g => g.id === censusTab), ...censusGroups.filter(g => g.id !== censusTab)];
+
+    const thinBorder: Partial<ExcelJS.Borders> = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+
+    groupsToExport.forEach(group => {
+      const ws = workbook.addWorksheet(group.sheetName);
+      group.colWidths.forEach((w, idx) => {
+        ws.getColumn(idx + 1).width = w;
+      });
+
+      // Row 1: Title
+      const r1 = ws.addRow([`WEEKLY CENSUS FOR THE MONTH OF ${reportMonth} ${reportYear}`, null, null, null, null, null]);
+      ws.mergeCells('A1:E1');
+      r1.height = group.hasSpacerRows ? 42.75 : 28;
+      const c1 = r1.getCell(1);
+      c1.font = { name: 'Arial', size: 18 };
+      c1.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Row 2: DATE + Week 1..4 + TOTAL
+      const r2 = ws.addRow([
+        'DATE:',
+        censusWeeks[0]?.label || '',
+        censusWeeks[1]?.label || '',
+        censusWeeks[2]?.label || '',
+        censusWeeks[3]?.label || '',
+        'TOTAL',
+      ]);
+      for (let c = 1; c <= 6; c++) {
+        const cell = r2.getCell(c);
+        cell.border = thinBorder;
+        if (c === 1) {
+          cell.font = { name: 'Calibri', size: group.hasSpacerRows ? 11 : 12, bold: true };
+          cell.alignment = { horizontal: group.hasSpacerRows ? 'left' : 'center', vertical: 'middle' };
+        } else if (c === 6) {
+          cell.font = { name: 'Calibri', size: 11, bold: true };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: group.totalFillArgb } };
+        } else {
+          cell.font = { name: 'Calibri', size: 11 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+      }
+
+      // Row 3: YEAR & SECTION or COURSE & SECTION:
+      const r3 = ws.addRow([group.sectionHeader, null, null, null, null, null]);
+      for (let c = 1; c <= 6; c++) {
+        const cell = r3.getCell(c);
+        cell.border = thinBorder;
+        if (c === 1) {
+          cell.font = { name: 'Calibri', size: group.hasSpacerRows ? 11 : 12, bold: true };
+          cell.alignment = { horizontal: group.hasSpacerRows ? 'left' : 'center', vertical: 'middle' };
+        } else if (c === 6) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: group.totalFillArgb } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+      }
+
+      // Data rows starting at Row 4
+      group.sections.forEach((sec, idx) => {
+        const counts = censusCounts.get(sec) || [0, 0, 0, 0];
+        const rowTotal = counts[0] + counts[1] + counts[2] + counts[3];
+        const row = ws.addRow([sec, counts[0], counts[1], counts[2], counts[3], null]);
+        const rNum = row.number;
+        if (group.hasSpacerRows) row.height = 26;
+
+        const secCell = row.getCell(1);
+        secCell.border = thinBorder;
+        if (group.hasSpacerRows) {
+          secCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+          secCell.font = { name: 'Tahoma', size: 9 };
+          secCell.alignment = { vertical: 'middle' };
+        } else {
+          secCell.font = { name: 'Calibri', size: 11 };
+          secCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+
+        for (let c = 2; c <= 5; c++) {
+          const wCell = row.getCell(c);
+          wCell.border = thinBorder;
+          wCell.font = { name: 'Calibri', size: 11 };
+          wCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+
+        const totCell = row.getCell(6);
+        totCell.value = { formula: `SUM(B${rNum}:E${rNum})`, result: rowTotal };
+        totCell.border = thinBorder;
+        totCell.font = { name: 'Calibri', size: 11 };
+        totCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        totCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: group.totalFillArgb } };
+
+        // Grey spacer row between SHS sections
+        if (group.hasSpacerRows && idx < group.sections.length - 1) {
+          const sp = ws.addRow([null, null, null, null, null, null]);
+          sp.height = 15.75;
+          for (let c = 1; c <= 6; c++) {
+            const spCell = sp.getCell(c);
+            spCell.border = thinBorder;
+            if (c === 1) {
+              spCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF7B7B7B' } };
+            } else if (c === 6) {
+              spCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: group.totalFillArgb } };
+            }
+          }
+        }
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const shortMonth = reportMonth.slice(0, 3).toLowerCase();
+    saveAs(new Blob([buffer]), `WEEKLY_CENSUS_(${shortMonth}_${reportYear}).xlsx`);
+  };
+
   const PrintBar = ({ title }: { title: string }) => (
     <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 print-bar-ui" style={{ background: '#f8fafd' }}>
       <div className="flex items-center gap-2">
         <img src={uaSeal} alt="UA" className="w-7 h-7 object-contain opacity-70" />
         <div>
           <div className="text-xs font-bold text-gray-700">{title}</div>
-          <div className="text-[10px] text-gray-400">University of the Assumption — Medical Clinic • {filterLabel(filter)}</div>
+          <div className="text-[10px] text-gray-400">University of the Assumption — Medical Clinic • {filterLabel(filter, reportMonth, reportYear, customFrom, customTo)}</div>
         </div>
       </div>
       <div className="flex gap-2">
@@ -1146,6 +1367,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         </button>
         <button onClick={() => {
             if (activeReport === 'daily') exportDailyReportExcel();
+            else if (activeReport === 'census') exportWeeklyCensusExcel();
             else if (activeReport === 'cases') exportCasesAttendedExcel();
             else if (activeReport === 'inventory') exportInventoryExcel(inventoryTab);
             else handleExportExcel(title);
@@ -1207,14 +1429,14 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           }
         }
       `}</style>
-      {/* Page header - Fixed, Stable Layout across all report types */}
-      <div className="flex items-center justify-between gap-4 print:hidden bg-white px-5 py-3.5 rounded-xl shadow-sm border border-gray-100 min-h-[74px] overflow-x-auto hide-scrollbar">
+      {/* Page header - Unified Philippine Time Date & Month Controls across all report types */}
+      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden bg-white px-5 py-3.5 rounded-xl shadow-sm border border-gray-100 min-h-[74px] overflow-x-auto hide-scrollbar">
         <div className="shrink-0">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-foreground whitespace-nowrap">Reports Dashboard</h1>
         </div>
 
-        {/* Filters and Controls - Fixed positioning and height */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Filters and Controls - Synchronized across all reports */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           
           <div className="flex flex-col">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Type</label>
@@ -1229,62 +1451,70 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
           <div className="w-px h-8 bg-gray-200 hidden sm:block mx-0.5"></div>
 
-          {['daily', 'cases', 'inventory'].includes(activeReport) ? (
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Month</label>
-                <select
-                  value={reportMonth}
-                  onChange={e => setReportMonth(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-28 sm:w-32 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-xs"
-                >
-                  {Object.keys(monthMap).map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Year</label>
-                <input
-                  type="number"
-                  value={reportYear}
-                  onChange={e => setReportYear(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-20 bg-gray-50 hover:bg-gray-100 transition-colors text-center shadow-xs"
-                />
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Month</label>
+              <select
+                value={reportMonth}
+                onChange={e => {
+                  setReportMonth(e.target.value);
+                  setFilter('month');
+                }}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-28 sm:w-32 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors shadow-xs"
+              >
+                {Object.keys(monthMap).map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Report Year</label>
+              <input
+                type="number"
+                value={reportYear}
+                onChange={e => {
+                  setReportYear(e.target.value);
+                  setFilter('month');
+                }}
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-bold text-[#1B3A6B] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B] w-20 bg-gray-50 hover:bg-gray-100 transition-colors text-center shadow-xs"
+              />
+            </div>
+          </div>
+
+          <div className="w-px h-8 bg-gray-200 hidden sm:block mx-0.5"></div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Date Range Filter (PHT)</label>
+              <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm overflow-x-auto hide-scrollbar">
+                {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => {
+                      if (f === 'custom') {
+                        setIsCustomModalOpen(true);
+                      } else {
+                        setFilter(f);
+                        if (f === 'today' || f === 'week') syncMonthYearFromDate(getManilaDate());
+                        else if (f === 'yesterday') syncMonthYearFromDate(getManilaYesterday());
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all capitalize whitespace-nowrap cursor-pointer ${
+                      filter === f
+                        ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    {f === 'custom' && filter === 'custom' && (customFrom || customTo)
+                      ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
+                      : f === 'all'
+                      ? 'All'
+                      : f === 'custom'
+                      ? 'Custom'
+                      : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Date Range Filter</label>
-                <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm overflow-x-auto hide-scrollbar">
-                  {(['all', 'today', 'yesterday', 'week', 'month', 'custom'] as ReportFilter[]).map(f => (
-                    <button
-                      key={f}
-                      onClick={() => {
-                        if (f === 'custom') {
-                          setIsCustomModalOpen(true);
-                        } else {
-                          setFilter(f);
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all capitalize whitespace-nowrap cursor-pointer ${
-                        filter === f
-                          ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      }`}
-                    >
-                      {f === 'custom' && filter === 'custom' && (customFrom || customTo)
-                        ? `Custom (${customFrom || '...'} to ${customTo || '...'})`
-                        : f === 'all'
-                        ? 'All'
-                        : f === 'custom'
-                        ? 'Custom'
-                        : f.charAt(0).toUpperCase() + f.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -1354,6 +1584,128 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── 1B. WEEKLY CENSUS (Strictly G11, G12 & College Sections — Exact 12-Sheet Template) ── */}
+          {activeReport === 'census' && (
+            <div>
+              <PrintBar title={`WEEKLY CENSUS FOR THE MONTH OF ${reportMonth} ${reportYear}`} />
+              <div className="px-5 pt-4 pb-2 border-b border-gray-100 flex flex-wrap items-center gap-1.5 no-export">
+                <button
+                  onClick={() => setCensusTab('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    censusTab === 'all'
+                      ? 'bg-[#1B3A6B] text-white shadow-xs'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  All Sheets (12)
+                </button>
+                {censusGroups.map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setCensusTab(g.id)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      censusTab === g.id
+                        ? 'bg-[#1B3A6B] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {g.sheetName}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-5 space-y-8 overflow-x-auto custom-scrollbar">
+                {censusGroups
+                  .filter(g => censusTab === 'all' || g.id === censusTab)
+                  .map(group => (
+                    <div key={group.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-bold text-[#1B3A6B] px-1 no-export">
+                        <span>Sheet: {group.sheetName} — {group.label}</span>
+                        <span className="text-gray-400 font-medium">{group.sections.length} Sections (G11, G12 & College Only)</span>
+                      </div>
+                      <table className="w-full border-collapse border border-black font-sans text-xs max-w-[920px] mx-auto" style={{ minWidth: 680 }}>
+                        <thead>
+                          <tr>
+                            <th colSpan={5} className="bg-white text-black font-normal text-lg text-center py-2.5 border border-black" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              WEEKLY CENSUS FOR THE MONTH OF {reportMonth} {reportYear}
+                            </th>
+                            <th className="bg-white border border-black w-20"></th>
+                          </tr>
+                          <tr className="text-black text-[11px]">
+                            <th className={`border border-black py-1.5 px-2.5 font-bold w-64 ${group.hasSpacerRows ? 'text-left' : 'text-center'}`}>
+                              DATE:
+                            </th>
+                            {censusWeeks.map((wk, wIdx) => (
+                              <th key={wIdx} className="border border-black py-1.5 px-2 font-normal text-center w-36">
+                                {wk.label}
+                              </th>
+                            ))}
+                            <th
+                              className="border border-black py-1.5 px-2 font-bold text-center w-20"
+                              style={{ backgroundColor: group.totalFillHex }}
+                            >
+                              TOTAL
+                            </th>
+                          </tr>
+                          <tr className="text-black text-[11px]">
+                            <th className={`border border-black py-1.5 px-2.5 font-bold ${group.hasSpacerRows ? 'text-left' : 'text-center'}`}>
+                              {group.sectionHeader}
+                            </th>
+                            <th className="border border-black py-1.5 px-2"></th>
+                            <th className="border border-black py-1.5 px-2"></th>
+                            <th className="border border-black py-1.5 px-2"></th>
+                            <th className="border border-black py-1.5 px-2"></th>
+                            <th
+                              className="border border-black py-1.5 px-2"
+                              style={{ backgroundColor: group.totalFillHex }}
+                            ></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.sections.map((sec, sIdx) => {
+                            const counts = censusCounts.get(sec) || [0, 0, 0, 0];
+                            const rowTotal = counts[0] + counts[1] + counts[2] + counts[3];
+                            return (
+                              <Fragment key={sec}>
+                                <tr className="text-black text-[11px]">
+                                  <td
+                                    className={`border border-black py-1.5 px-2.5 ${group.hasSpacerRows ? 'text-left text-[10px] font-medium' : 'text-center'}`}
+                                    style={{ backgroundColor: group.hasSpacerRows ? '#EEEEEE' : '#FFFFFF' }}
+                                  >
+                                    {sec}
+                                  </td>
+                                  <td className="border border-black py-1.5 px-2 text-center">{counts[0]}</td>
+                                  <td className="border border-black py-1.5 px-2 text-center">{counts[1]}</td>
+                                  <td className="border border-black py-1.5 px-2 text-center">{counts[2]}</td>
+                                  <td className="border border-black py-1.5 px-2 text-center">{counts[3]}</td>
+                                  <td
+                                    className="border border-black py-1.5 px-2 text-center font-semibold"
+                                    style={{ backgroundColor: group.totalFillHex }}
+                                  >
+                                    {rowTotal}
+                                  </td>
+                                </tr>
+                                {group.hasSpacerRows && sIdx < group.sections.length - 1 && (
+                                  <tr className="h-4">
+                                    <td className="border border-black" style={{ backgroundColor: '#7B7B7B' }}></td>
+                                    <td className="border border-black bg-white"></td>
+                                    <td className="border border-black bg-white"></td>
+                                    <td className="border border-black bg-white"></td>
+                                    <td className="border border-black bg-white"></td>
+                                    <td className="border border-black" style={{ backgroundColor: group.totalFillHex }}></td>
+                                  </tr>
+                                )}
+                              </Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
@@ -1706,6 +2058,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           setCustomFrom(from);
           setCustomTo(to);
           setFilter('custom');
+          if (from || to) syncMonthYearFromDate(from || to);
         }}
         title="Custom Date Range — Reports"
       />
