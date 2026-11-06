@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Save, User, UserCheck, ScanLine, Sparkles } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
-import { loadDepartmentSectionGroups, inferYearLevelFromSection } from '../constants/sectionsData';
+import { loadDepartmentSectionGroups, inferYearLevelFromSection, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
 import { StudentIdScannerModal } from './StudentIdScannerModal';
 
 const PRIMARY = '#1B3A6B';
@@ -43,7 +43,17 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const deptGroups = loadDepartmentSectionGroups();
+  const [deptGroups, setDeptGroups] = useState(() => loadDepartmentSectionGroups());
+
+  useEffect(() => {
+    const refreshDepts = () => setDeptGroups(loadDepartmentSectionGroups());
+    window.addEventListener(SECTIONS_UPDATED_EVENT, refreshDepts);
+    window.addEventListener('storage', refreshDepts);
+    return () => {
+      window.removeEventListener(SECTIONS_UPDATED_EVENT, refreshDepts);
+      window.removeEventListener('storage', refreshDepts);
+    };
+  }, []);
 
   const isEditing = editingPatientId !== null;
 

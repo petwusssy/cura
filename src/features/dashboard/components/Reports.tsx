@@ -8,7 +8,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
-import { getCensusSheetGroups } from '../constants/sectionsData';
+import { getCensusSheetGroups, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -480,7 +480,16 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   }, { col: 0, shs: 0, jhs: 0, gs: 0, emp: 0, vis: 0, total: 0, cons: 0, home: 0, hosp: 0, pre: 0 });
 
   // ── Weekly Census Computation (Strictly G11, G12 & College Students Only) ──
-  const censusGroups = getCensusSheetGroups();
+  const [censusGroups, setCensusGroups] = useState(() => getCensusSheetGroups());
+  useEffect(() => {
+    const refreshCensusSections = () => setCensusGroups(getCensusSheetGroups());
+    window.addEventListener(SECTIONS_UPDATED_EVENT, refreshCensusSections);
+    window.addEventListener('storage', refreshCensusSections);
+    return () => {
+      window.removeEventListener(SECTIONS_UPDATED_EVENT, refreshCensusSections);
+      window.removeEventListener('storage', refreshCensusSections);
+    };
+  }, []);
   const censusWeeks = getCensusWeeks(parseInt(reportYear, 10) || 2026, parseInt(monthNum, 10) || 10);
 
   const normalizeCensusExact = (s: string) => (s || '').trim().toUpperCase().replace(/\s+/g, ' ');

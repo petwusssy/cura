@@ -206,8 +206,9 @@ export function getCensusSheetGroups(): CensusSheetGroup[] {
   const depts = loadDepartmentSectionGroups();
   const byId = Object.fromEntries(depts.map(d => [d.id, d.sections]));
   const sasAll = byId['sas-comm-bhs-blis'] || [];
-  const abComm = sasAll.filter(s => /^AB\s*COMM/i.test(s));
-  const bhsBlis = sasAll.filter(s => !/^AB\s*COMM/i.test(s));
+  const isCommOrAr = (s: string) => /^(AB\s*)?COMM|^BA\s*COMM|^AR\b/i.test((s || '').trim());
+  const abComm = sasAll.filter(isCommOrAr);
+  const bhsBlis = sasAll.filter(s => !isCommOrAr(s));
 
   return [
     {
@@ -345,7 +346,8 @@ export function getCensusSheetGroups(): CensusSheetGroup[] {
   ];
 }
 
-const STORAGE_KEY = 'cura_custom_department_sections_v1';
+const STORAGE_KEY = 'cura_custom_department_sections_v2';
+export const SECTIONS_UPDATED_EVENT = 'cura-sections-updated';
 
 export function loadDepartmentSectionGroups(): DepartmentSectionGroup[] {
   try {
@@ -366,6 +368,9 @@ export function saveDepartmentSectionGroups(groups: DepartmentSectionGroup[]): v
     const map: Record<string, string[]> = {};
     groups.forEach(g => { map[g.id] = g.sections; });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(SECTIONS_UPDATED_EVENT));
+    }
   } catch {}
 }
 
