@@ -1,7 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop, Droplets, Megaphone } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop,
+  Droplets, Megaphone, Users, Lock, Unlock, KeyRound, Plus, CheckCircle2,
+  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertCircle
+} from 'lucide-react';
 import { useTheme } from 'next-themes';
 import api from '../../../services/api';
+import { authService } from '../../../services/authService';
+import {
+  staffService,
+  ClinicStaffMember,
+  AuditLogEntry,
+  STAFF_UPDATED_EVENT,
+  AUDIT_UPDATED_EVENT,
+} from '../../../services/staffService';
+import { toast } from 'sonner';
 
 const PRIMARY = '#1E5AA8';
 
@@ -13,6 +26,7 @@ interface SettingsSection {
 
 const sections: SettingsSection[] = [
   { id: 'profile', label: 'Profile', icon: <User size={16} /> },
+  { id: 'staff', label: 'Clinic Staff & Audit', icon: <Users size={16} /> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
   { id: 'security', label: 'Security', icon: <Shield size={16} /> },
   { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
@@ -20,6 +34,26 @@ const sections: SettingsSection[] = [
   { id: 'advisory', label: 'Clinic Advisory', icon: <Megaphone size={16} /> },
   { id: 'help', label: 'Help & About', icon: <HelpCircle size={16} /> },
 ];
+
+const STAFF_ROLES = ['Head Nurse', 'Staff Nurse', 'Clinic Physician', 'Clinic Assistant'];
+
+function formatManilaTimestamp(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return iso;
+  }
+}
 
 export function Settings() {
   const [activeSection, setActiveSection] = useState('profile');
@@ -44,6 +78,45 @@ export function Settings() {
   const [broadcastStatus, setBroadcastStatus] = useState<'Open' | 'Closed' | 'Half Day'>('Closed');
   const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
 
+  // ── Admin-Gated Clinic Staff & Audit State ──────────────────────────────────
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminVerifying, setAdminVerifying] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+
+  const [staffSubTab, setStaffSubTab] = useState<'roster' | 'audit'>('roster');
+  const [staffList, setStaffList] = useState<ClinicStaffMember[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+
+  // Add Staff form
+  const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffRole, setNewStaffRole] = useState('Staff Nurse');
+  const [newStaffPin, setNewStaffPin] = useState('');
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
+
+  // Reset PIN inline state
+  const [resettingPinId, setResettingPinId] = useState<string | null>(null);
+  const [resetPinValue, setResetPinValue] = useState('');
+
+  // Audit filter state
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditTargetFilter, setAuditTargetFilter] = useState<string>('All');
+
+  const loadStaffAndLogs = useCallback(async () => {
+    setIsLoadingStaff(true);
+    try {
+      const [loadedStaff, loadedLogs] = await Promise.all([
+        staffService.getStaff(),
+        staffService.getAuditLogs(),
+      ]);
+      setStaffList(loadedStaff);
+      setAuditLogs(loadedLogs);
+    } finally {
+      setIsLoadingStaff(false);
+    }
+  }, []);
+
   useEffect(() => {
     api.get('/advisory/')
       .then(res => {
@@ -54,6 +127,143 @@ export function Settings() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!isAdminUnlocked) return;
+    loadStaffAndLogs();
+    const handleRefresh = () => loadStaffAndLogs();
+    window.addEventListener(STAFF_UPDATED_EVENT, handleRefresh);
+    window.addEventListener(AUDIT_UPDATED_EVENT, handleRefresh);
+    return () => {
+      window.removeEventListener(STAFF_UPDATED_EVENT, handleRefresh);
+      window.removeEventListener(AUDIT_UPDATED_EVENT, handleRefresh);
+    };
+  }, [isAdminUnlocked, loadStaffAndLogs]);
+
+  const handleUnlockAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim() || adminVerifying) return;
+    setAdminVerifying(true);
+    setAdminError(null);
+    try {
+      const ok = await staffService.verifyAdminPassword(adminPassword);
+      if (ok) {
+        setIsAdminUnlocked(true);
+        setAdminPassword('');
+        toast.success('Clinic Staff & Audit settings unlocked');
+      } else {
+        setAdminError('Incorrect CURA login password. Please enter the password used to sign in to CURA.');
+      }
+    } catch {
+      setAdminError('Unable to verify password. Please try again.');
+    } finally {
+      setAdminVerifying(false);
+    }
+  };
+
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaffName.trim()) {
+      toast.error('Please enter the staff member name.');
+      return;
+    }
+    if (!/^\d{4}$/.test(newStaffPin.trim())) {
+      toast.error('PIN must be exactly 4 digits (0-9).');
+      return;
+    }
+    setIsAddingStaff(true);
+    try {
+      const created = await staffService.createStaff({
+        name: newStaffName,
+        role: newStaffRole,
+        pin: newStaffPin,
+      });
+      await staffService.recordAuditLog({
+        staff: created.id,
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Added Clinic Staff',
+        target_type: 'Staff',
+        target_id: created.id,
+        details: `Added ${created.name} (${created.role}) with 4-digit PIN`,
+      });
+      setNewStaffName('');
+      setNewStaffPin('');
+      setNewStaffRole('Staff Nurse');
+      await loadStaffAndLogs();
+      toast.success(`Added ${created.name} (${created.role})`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to add staff member.');
+    } finally {
+      setIsAddingStaff(false);
+    }
+  };
+
+  const handleToggleStaffActive = async (member: ClinicStaffMember) => {
+    try {
+      const updated = await staffService.updateStaff(member.id, {
+        is_active: !member.is_active,
+      });
+      await staffService.recordAuditLog({
+        staff: member.id,
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: updated.is_active ? 'Activated Staff' : 'Deactivated Staff',
+        target_type: 'Staff',
+        target_id: member.id,
+        details: `${updated.is_active ? 'Activated' : 'Deactivated'} ${member.name} (${member.role})`,
+      });
+      await loadStaffAndLogs();
+      toast.success(`${member.name} is now ${updated.is_active ? 'Active' : 'Inactive'}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update staff status.');
+    }
+  };
+
+  const handleSaveResetPin = async (member: ClinicStaffMember) => {
+    if (!/^\d{4}$/.test(resetPinValue.trim())) {
+      toast.error('New PIN must be exactly 4 digits.');
+      return;
+    }
+    try {
+      await staffService.updateStaff(member.id, { pin: resetPinValue.trim() });
+      await staffService.recordAuditLog({
+        staff: member.id,
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Reset Staff PIN',
+        target_type: 'Staff',
+        target_id: member.id,
+        details: `Updated 4-digit PIN for ${member.name}`,
+      });
+      setResettingPinId(null);
+      setResetPinValue('');
+      toast.success(`Updated 4-digit PIN for ${member.name}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update PIN.');
+    }
+  };
+
+  const handleDeleteStaff = async (member: ClinicStaffMember) => {
+    if (!window.confirm(`Remove ${member.name} from Clinic Staff? (Tip: Deactivating is recommended if you want to keep them on the roster.)`)) {
+      return;
+    }
+    try {
+      await staffService.deleteStaff(member.id);
+      await staffService.recordAuditLog({
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Removed Clinic Staff',
+        target_type: 'Staff',
+        target_id: member.id,
+        details: `Removed ${member.name} (${member.role})`,
+      });
+      await loadStaffAndLogs();
+      toast.success(`Removed ${member.name}`);
+    } catch {
+      toast.error('Failed to remove staff member.');
+    }
+  };
 
   const handlePushAdvisory = async () => {
     setSaved(true);
@@ -66,6 +276,20 @@ export function Settings() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const filteredAuditLogs = auditLogs.filter(log => {
+    if (auditTargetFilter !== 'All' && log.target_type !== auditTargetFilter) {
+      return false;
+    }
+    if (!auditSearch.trim()) return true;
+    const q = auditSearch.trim().toLowerCase();
+    return (
+      log.staff_name_snapshot?.toLowerCase().includes(q) ||
+      log.action?.toLowerCase().includes(q) ||
+      log.target_type?.toLowerCase().includes(q) ||
+      log.target_id?.toLowerCase().includes(q) ||
+      log.details?.toLowerCase().includes(q)
+    );
+  });
 
   const inputCls = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E5AA8] transition-all bg-background text-foreground';
   const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5';
@@ -83,7 +307,7 @@ export function Settings() {
         <div className="bg-card text-card-foreground rounded-xl p-3 space-y-1 h-fit" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
           {sections.map(s => (
             <button key={s.id} onClick={() => setActiveSection(s.id)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left cursor-pointer"
               style={{ background: activeSection === s.id ? `${PRIMARY}10` : 'transparent', color: activeSection === s.id ? PRIMARY : '#6b7280' }}>
               {s.icon}
               {s.label}
@@ -125,6 +349,388 @@ export function Settings() {
                   <Save size={15} /> {saved ? 'Saved!' : 'Save Changes'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeSection === 'staff' && (
+            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+              {!isAdminUnlocked ? (
+                /* ── Admin Password Gate (Sudo Mode) ── */
+                <div className="max-w-md mx-auto py-8 text-center space-y-5">
+                  <div
+                    className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white shadow-md"
+                    style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #2465ad 100%)' }}
+                  >
+                    <Lock size={26} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-lg font-bold text-foreground">
+                      Admin Verification Required
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Enter the <strong>CURA Login Password</strong> for workstation account{' '}
+                      <span className="font-bold text-foreground uppercase">
+                        {authService.getUsername() || 'admin'}
+                      </span>{' '}
+                      to manage clinic staff 4-digit PINs and view audit logs.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleUnlockAdmin} className="space-y-3 text-left">
+                    <div>
+                      <label className={labelCls}>CURA Login Password</label>
+                      <input
+                        type="password"
+                        autoFocus
+                        value={adminPassword}
+                        onChange={e => {
+                          setAdminPassword(e.target.value);
+                          setAdminError(null);
+                        }}
+                        placeholder="Enter CURA login password..."
+                        className={inputCls}
+                      />
+                    </div>
+                    {adminError && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
+                        <AlertCircle size={14} className="flex-shrink-0" />
+                        <span>{adminError}</span>
+                      </div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={adminVerifying || !adminPassword.trim()}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-white text-sm font-semibold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                      style={{ background: PRIMARY }}
+                    >
+                      <Unlock size={16} />
+                      {adminVerifying ? 'Verifying...' : 'Unlock Staff & Audit Management'}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                /* ── Unlocked Clinic Staff & Audit View ── */
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-foreground">
+                          Clinic Staff & Audit Trail
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 size={12} /> Admin Unlocked
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Manage individual 4-digit PINs for nurses/physicians and review action logs.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={loadStaffAndLogs}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+                      >
+                        <RefreshCw size={13} className={isLoadingStaff ? 'animate-spin' : ''} />
+                        Refresh
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsAdminUnlocked(false)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100 transition-colors cursor-pointer"
+                      >
+                        <Lock size={13} />
+                        Lock Section
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sub-tabs: Staff Roster vs Audit Trail */}
+                  <div className="flex items-center gap-2 border-b border-border pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setStaffSubTab('roster')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        staffSubTab === 'roster'
+                          ? 'text-white shadow-xs'
+                          : 'text-muted-foreground hover:bg-accent'
+                      }`}
+                      style={staffSubTab === 'roster' ? { background: PRIMARY } : {}}
+                    >
+                      <Users size={14} />
+                      Clinic Staff & PINs ({staffList.filter(s => s.is_active).length} Active)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStaffSubTab('audit')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        staffSubTab === 'audit'
+                          ? 'text-white shadow-xs'
+                          : 'text-muted-foreground hover:bg-accent'
+                      }`}
+                      style={staffSubTab === 'audit' ? { background: PRIMARY } : {}}
+                    >
+                      <ClipboardList size={14} />
+                      Audit Logs ({auditLogs.length})
+                    </button>
+                  </div>
+
+                  {staffSubTab === 'roster' ? (
+                    <div className="space-y-6">
+                      {/* Add New Staff Member Card */}
+                      <form
+                        onSubmit={handleCreateStaff}
+                        className="p-4 rounded-xl bg-blue-50/40 dark:bg-slate-900/40 border border-blue-100 dark:border-border space-y-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E5AA8]">
+                            Add Clinic Staff Member
+                          </h4>
+                          <span className="text-[11px] text-muted-foreground">
+                            Each staff member uses their unique 4-digit PIN when saving records
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                          <div className="sm:col-span-5">
+                            <label className={labelCls}>Full Name & Credentials</label>
+                            <input
+                              type="text"
+                              value={newStaffName}
+                              onChange={e => setNewStaffName(e.target.value.toUpperCase())}
+                              placeholder="e.g., MARIA SANTOS, RN"
+                              className={inputCls}
+                            />
+                          </div>
+                          <div className="sm:col-span-3">
+                            <label className={labelCls}>Role</label>
+                            <select
+                              value={newStaffRole}
+                              onChange={e => setNewStaffRole(e.target.value)}
+                              className={inputCls}
+                            >
+                              {STAFF_ROLES.map(r => (
+                                <option key={r} value={r}>
+                                  {r}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className={labelCls}>4-Digit PIN</label>
+                            <input
+                              type="password"
+                              inputMode="numeric"
+                              maxLength={4}
+                              value={newStaffPin}
+                              onChange={e => setNewStaffPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                              placeholder="••••"
+                              className={inputCls + ' text-center font-mono tracking-widest font-bold'}
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <button
+                              type="submit"
+                              disabled={isAddingStaff}
+                              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-white text-xs font-bold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                              style={{ background: PRIMARY }}
+                            >
+                              <Plus size={15} />
+                              Add Staff
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+
+                      {/* Staff Roster List */}
+                      {staffList.length === 0 ? (
+                        <div className="text-center py-10 border border-dashed border-border rounded-xl space-y-2">
+                          <Users size={28} className="mx-auto text-muted-foreground/60" />
+                          <div className="text-sm font-semibold text-foreground">
+                            No Clinic Staff Configured Yet
+                          </div>
+                          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                            Add your clinic nurses and physicians above with their 4-digit PINs. Once at least one active staff member is added, CURA will prompt for a 4-digit PIN before saving consultations, patients, or inventory changes.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto border border-border rounded-xl">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                <th className="py-3 px-4">Staff Name</th>
+                                <th className="py-3 px-4">Role</th>
+                                <th className="py-3 px-4">Status</th>
+                                <th className="py-3 px-4 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border text-sm">
+                              {staffList.map(member => (
+                                <tr key={member.id} className="hover:bg-muted/20 transition-colors">
+                                  <td className="py-3 px-4 font-bold text-foreground">
+                                    {member.name}
+                                  </td>
+                                  <td className="py-3 px-4 text-xs font-medium text-muted-foreground">
+                                    {member.role}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    {member.is_active ? (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <CheckCircle2 size={12} /> Active
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                        <XCircle size={12} /> Inactive
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    {resettingPinId === member.id ? (
+                                      <div className="inline-flex items-center gap-2">
+                                        <input
+                                          type="password"
+                                          inputMode="numeric"
+                                          maxLength={4}
+                                          autoFocus
+                                          value={resetPinValue}
+                                          onChange={e =>
+                                            setResetPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))
+                                          }
+                                          placeholder="New 4-digit PIN"
+                                          className="w-28 border border-border rounded-lg px-2.5 py-1 text-xs font-mono text-center"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveResetPin(member)}
+                                          className="px-2.5 py-1 rounded-lg text-white text-xs font-semibold cursor-pointer"
+                                          style={{ background: PRIMARY }}
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setResettingPinId(null);
+                                            setResetPinValue('');
+                                          }}
+                                          className="px-2 py-1 rounded-lg border border-border text-xs text-muted-foreground cursor-pointer"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="inline-flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setResettingPinId(member.id);
+                                            setResetPinValue('');
+                                          }}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors cursor-pointer"
+                                        >
+                                          <KeyRound size={12} /> Reset PIN
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleStaffActive(member)}
+                                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                                            member.is_active
+                                              ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                          }`}
+                                        >
+                                          {member.is_active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteStaff(member)}
+                                          title="Delete Staff"
+                                          className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* ── Audit Logs Tab ── */
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <input
+                            type="text"
+                            value={auditSearch}
+                            onChange={e => setAuditSearch(e.target.value)}
+                            placeholder="Search by nurse name, patient, medicine, or action..."
+                            className={inputCls + ' pl-9'}
+                          />
+                        </div>
+                        <select
+                          value={auditTargetFilter}
+                          onChange={e => setAuditTargetFilter(e.target.value)}
+                          className={inputCls + ' sm:w-48'}
+                        >
+                          <option value="All">All Categories</option>
+                          <option value="Consultation">Consultations</option>
+                          <option value="Patient">Patients</option>
+                          <option value="Inventory">Inventory / Medicine</option>
+                          <option value="MedicalCertificate">Medical Certificates</option>
+                          <option value="Staff">Staff Management</option>
+                        </select>
+                      </div>
+
+                      {filteredAuditLogs.length === 0 ? (
+                        <div className="text-center py-10 border border-dashed border-border rounded-xl text-xs text-muted-foreground">
+                          No audit log entries match your filter yet.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto border border-border rounded-xl max-h-[460px] overflow-y-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead className="sticky top-0 bg-card border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                              <tr>
+                                <th className="py-3 px-4">Timestamp (PHT)</th>
+                                <th className="py-3 px-4">Staff Member</th>
+                                <th className="py-3 px-4">Action</th>
+                                <th className="py-3 px-4">Details</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border text-xs">
+                              {filteredAuditLogs.map(log => (
+                                <tr key={log.id} className="hover:bg-muted/20">
+                                  <td className="py-2.5 px-4 whitespace-nowrap text-muted-foreground font-mono">
+                                    {formatManilaTimestamp(log.timestamp)}
+                                  </td>
+                                  <td className="py-2.5 px-4 whitespace-nowrap">
+                                    <div className="font-bold text-foreground">{log.staff_name_snapshot}</div>
+                                    {log.staff_role_snapshot && (
+                                      <div className="text-[10px] text-muted-foreground">{log.staff_role_snapshot}</div>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 px-4 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold bg-blue-50 text-[#1E5AA8] border border-blue-200">
+                                      {log.action}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 px-4 text-foreground">
+                                    {log.details}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -321,6 +927,7 @@ export function Settings() {
                     ['Medical Certificates', 'Issue and print medical certificates for patients'],
                     ['Beds Management', 'Monitor bed occupancy with auto-duration tracking'],
                     ['Reports', 'Generate daily, monthly, and custom reports'],
+                    ['Clinic Staff & Audit', 'Admin-protected 4-digit PIN management and clinical audit trail'],
                   ].map(([title, desc]) => (
                     <div key={title} className="flex gap-3 py-2 border-b border-border">
                       <div className="w-1 h-1 rounded-full bg-gray-400 mt-2 flex-shrink-0" />

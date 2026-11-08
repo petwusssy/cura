@@ -118,6 +118,7 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
       onNavigate('patients');
     } catch (error: any) {
       setIsSubmitting(false);
+      if (error?.message === 'PIN_CANCELLED') return;
       console.error('Save failed', error);
       let errMsg = 'Failed to save patient data.';
       if (error.response?.data) {

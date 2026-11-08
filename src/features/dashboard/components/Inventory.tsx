@@ -137,12 +137,14 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      onUpdateMedicine(updated);
+      await onUpdateMedicine(updated);
       setAdjustModal(null);
       setAdjustQty('');
       setAdjustNote('');
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      if (e?.message !== 'PIN_CANCELLED') {
+        console.error(e);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -168,11 +170,13 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     };
 
     try {
-      onAddMedicine(med);
+      await onAddMedicine(med);
       setShowAddForm(false);
       setNewMed({ name: '', stock: '', dateAdded: getManilaDate(), unit: 'Tablet', threshold: '15', category: 'Medicine' });
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      if (e?.message !== 'PIN_CANCELLED') {
+        console.error(e);
+      }
     } finally {
       setIsSubmitting(false);
     }

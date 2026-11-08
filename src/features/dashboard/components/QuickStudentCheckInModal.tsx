@@ -227,7 +227,11 @@ export function QuickStudentCheckInModal({
       await onSavePatient(payload);
       setConfirmedPatient(payload);
       setStep('confirmed');
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'PIN_CANCELLED') {
+        setIsSaving(false);
+        return;
+      }
       console.error('Failed to save student check-in:', err);
     } finally {
       setIsSaving(false);

@@ -8,6 +8,8 @@ import { Page, AppNotification } from '@/types';
 import uaLogo from '@/assets/images/ua-logo.webp';
 import curaLogoMain from '@/assets/images/cura-logo.webp';
 import { authService } from '@/services/authService';
+import { staffService, ShiftSession, SHIFT_UPDATED_EVENT } from '@/services/staffService';
+import { toast } from 'sonner';
 
 // ── Nav structure ──────────────────────────────────────────────────────────────
 type NavLeaf  = { kind: 'leaf';  id: Page;   label: string; icon: React.ReactNode };
@@ -91,6 +93,17 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
   const roles = authService.getRoles();
   const username = authService.getUsername() || 'Staff';
   const displayRole = roles.length > 0 ? roles.join(', ') : 'Staff';
+  const [activeShift, setActiveShift] = useState<ShiftSession | null>(() => staffService.getActiveShift());
+
+  useEffect(() => {
+    const syncShift = () => setActiveShift(staffService.getActiveShift());
+    window.addEventListener(SHIFT_UPDATED_EVENT, syncShift);
+    const interval = setInterval(syncShift, 15000);
+    return () => {
+      window.removeEventListener(SHIFT_UPDATED_EVENT, syncShift);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Auto-open the group that contains currentPage
   const activeGroup = Object.entries(groupChildren).find(([, pages]) => pages.includes(currentPage))?.[0] ?? null;
@@ -402,6 +415,25 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
               </span>
             )}
           </button>
+
+          {/* Active Nurse Shift Pill */}
+          {activeShift && (
+            <button
+              type="button"
+              onClick={() => {
+                staffService.clearActiveShift();
+                toast.info('Active nurse shift cleared. Next action will prompt for 4-digit PIN.');
+              }}
+              title="Click to end/switch active nurse PIN shift"
+              className="relative z-10 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-colors cursor-pointer flex-shrink-0"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="truncate max-w-[140px]">{activeShift.staff.name}</span>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-200/70 text-emerald-900">
+                Switch
+              </span>
+            </button>
+          )}
 
           {/* User profile */}
           <div className="flex items-center gap-3 pl-3 border-l z-10" style={{ borderColor: 'rgba(147, 197, 253, 0.4)' }}>

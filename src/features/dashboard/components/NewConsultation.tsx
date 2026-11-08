@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X, UserCheck } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page, MedicineItem } from '../types';
+import { staffService } from '@/services/staffService';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -100,7 +101,9 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   });
 
   const [doctorName, setDoctorName] = useState(initialData?.doctorName || '');
-  const [assistingNurse, setAssistingNurse] = useState(initialData?.assistingNurse || 'UA CLINIC ADMIN');
+  const [assistingNurse, setAssistingNurse] = useState(
+    () => initialData?.assistingNurse || staffService.getActiveShift()?.staff.name || 'UA CLINIC ADMIN'
+  );
   
   const [vitals, setVitals] = useState(initialData?.vitals || { height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
   const [treatments, setTreatments] = useState<Treatment[]>(initialData?.treatments || []);
@@ -220,7 +223,11 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
       } else {
         onNavigate('non-consultations');
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'PIN_CANCELLED') {
+        setIsSubmitting(false);
+        return;
+      }
       console.error('Failed to save consultation', err);
       alert('Failed to save consultation. Please check console for details.');
       setIsSubmitting(false);

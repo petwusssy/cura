@@ -5,6 +5,9 @@ import { Dashboard } from '../components/Dashboard';
 import { PageSkeleton } from '../components/PageSkeleton';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { QuickStudentCheckInModal } from '../components/QuickStudentCheckInModal';
+import { StaffPinModal } from '../components/StaffPinModal';
+import { staffService, ClinicStaffMember } from '@/services/staffService';
+import { authService } from '@/services/authService';
 
 const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));
 const PatientForm = lazy(() => import('../components/PatientForm').then(m => ({ default: m.PatientForm })));
@@ -810,11 +813,102 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     });
   }, [medicines]);
 
+  // ── Central Clinic Staff PIN Sign-Off & Audit Trail Helper ──────────────────
+  const [pinPrompt, setPinPrompt] = useState<{
+    actionTitle: string;
+    actionDetails?: string;
+    resolve: (staff: ClinicStaffMember) => void;
+    reject: (err: Error) => void;
+  } | null>(null);
+
+  useEffect(() => {
+    staffService.getStaff().catch(() => {});
+  }, []);
+
+  const requireStaffSignOff = useCallback(
+    async (
+      actionTitle: string,
+      actionDetails: string,
+      targetType: string,
+      targetId: string
+    ): Promise<ClinicStaffMember> => {
+      // 1. Check active 15-minute shift first
+      const shift = staffService.getActiveShift();
+      if (shift?.staff) {
+        staffService
+          .recordAuditLog({
+            staff: shift.staff.id,
+            staff_name_snapshot: shift.staff.name,
+            staff_role_snapshot: shift.staff.role,
+            action: actionTitle,
+            target_type: targetType,
+            target_id: targetId,
+            details: actionDetails,
+          })
+          .catch(() => {});
+        return shift.staff;
+      }
+
+      // 2. If no active staff have been added in Settings yet, fallback to workstation user
+      if (!staffService.hasActiveStaff()) {
+        const fallbackStaff: ClinicStaffMember = {
+          id: 'workstation-admin',
+          name: (authService.getUsername() || 'UA CLINIC ADMIN').toUpperCase(),
+          role: 'Clinic Staff',
+          is_active: true,
+          created_at: new Date().toISOString(),
+        };
+        staffService
+          .recordAuditLog({
+            staff_name_snapshot: fallbackStaff.name,
+            staff_role_snapshot: fallbackStaff.role,
+            action: actionTitle,
+            target_type: targetType,
+            target_id: targetId,
+            details: actionDetails,
+          })
+          .catch(() => {});
+        return fallbackStaff;
+      }
+
+      // 3. Prompt for 4-digit PIN
+      const verifiedStaff = await new Promise<ClinicStaffMember>((resolve, reject) => {
+        setPinPrompt({
+          actionTitle,
+          actionDetails,
+          resolve,
+          reject,
+        });
+      });
+
+      staffService
+        .recordAuditLog({
+          staff: verifiedStaff.id,
+          staff_name_snapshot: verifiedStaff.name,
+          staff_role_snapshot: verifiedStaff.role,
+          action: actionTitle,
+          target_type: targetType,
+          target_id: targetId,
+          details: actionDetails,
+        })
+        .catch(() => {});
+
+      return verifiedStaff;
+    },
+    []
+  );
+
   const handleSavePatient = async (patient: Patient) => {
     const formattedPatient = {
       ...patient,
       name: patient.name ? patient.name.trim().toUpperCase() : patient.name,
     };
+    await requireStaffSignOff(
+      editingPatientId ? 'Updated Patient Record' : 'Registered Patient',
+      `${formattedPatient.name} (${formattedPatient.id}) • ${formattedPatient.category}`,
+      'Patient',
+      String(formattedPatient.id)
+    );
     if (editingPatientId) {
       setPatients(prev => prev.map(p => p.id === editingPatientId ? formattedPatient : p));
       try { 
@@ -843,6 +937,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       ...patient,
       name: patient.name ? patient.name.trim().toUpperCase() : patient.name,
     };
+    await requireStaffSignOff(
+      'Quick Student Walk-In',
+      `${formattedPatient.name} (${formattedPatient.id}) • ${formattedPatient.course || formattedPatient.department || 'Student'}`,
+      'Patient',
+      String(formattedPatient.id)
+    );
     const existing = patients.find(p => p.id.toLowerCase() === formattedPatient.id.toLowerCase());
     setSelectedPatientId(existing ? existing.id : formattedPatient.id);
 
@@ -935,8 +1035,22 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     if (savingConsultationRef.current) return;
     savingConsultationRef.current = true;
     try {
+      const patientName = patients.find(p => p.id === consultation.patientId)?.name || consultation.patientId;
+      const medsSummary = (consultation.treatments || [])
+        .map(t => `${t.medicineName} x${t.quantity}`)
+        .join(', ');
+      const verifiedStaff = await requireStaffSignOff(
+        consultation.status === 'Non-Consultation' ? 'Saved Non-Consultation' : 'Saved Consultation',
+        `${patientName} • ${consultation.complaint || consultation.purposeOfVisit || 'Visit'}${medsSummary ? ` • Meds: ${medsSummary}` : ''}`,
+        'Consultation',
+        String(consultation.patientId)
+      );
       const { id, ...rest } = consultation;
-      const created = await consultationService.createConsultation(rest);
+      const payloadWithStaff = {
+        ...rest,
+        assistingNurse: verifiedStaff.name || rest.assistingNurse,
+      };
+      const created = await consultationService.createConsultation(payloadWithStaff);
       setConsultations(prev => {
         if (prev.some(c => c.id === created.id)) return prev;
         const key = `${created.patientId}|${created.date}|${created.timeIn}|${(created.complaint || '').trim()}|${created.status}`;
@@ -976,8 +1090,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     try {
       const existing = consultations.find(c => c.id === convertingId);
       if (!existing) return;
-      
-      const created = await consultationService.createConsultation(newConsultation);
+
+      const patientName = patients.find(p => p.id === newConsultation.patientId)?.name || newConsultation.patientId;
+      const verifiedStaff = await requireStaffSignOff(
+        'Converted to Consultation',
+        `${patientName} • ${newConsultation.complaint || 'Converted Visit'}`,
+        'Consultation',
+        String(newConsultation.patientId)
+      );
+      const created = await consultationService.createConsultation({
+        ...newConsultation,
+        assistingNurse: verifiedStaff.name || newConsultation.assistingNurse,
+      });
       const updatedOld = await consultationService.updateConsultation(convertingId, { 
         complaint: `${existing.complaint} [CONVERTED]` 
       });
@@ -1009,6 +1133,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleAddMedicine = async (med: MedicineItem) => {
+    await requireStaffSignOff(
+      'Added Inventory Item',
+      `${med.name} • Initial Stock: ${med.stock} ${med.unit || 'units'}`,
+      'Inventory',
+      String(med.id)
+    );
     // Optimistically add to state immediately
     setMedicines(prev => [...prev, med]);
     try {
@@ -1022,6 +1152,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleUpdateMedicine = async (med: MedicineItem) => {
+    await requireStaffSignOff(
+      'Updated Inventory Stock',
+      `${med.name} • Current Stock: ${med.stock} ${med.unit || 'units'}`,
+      'Inventory',
+      String(med.id)
+    );
     setMedicines(prev => prev.map(m => m.id === med.id ? med : m));
     try {
       await medicineService.updateMedicine(med.id, med);
@@ -1079,9 +1215,19 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
   const handleAddMedCert = async (cert: MedicalCertificate) => {
+    const verifiedStaff = await requireStaffSignOff(
+      'Issued Medical Certificate',
+      `${cert.patientName || cert.patientId} • ${cert.diagnosis || cert.purpose || 'Medical Certificate'}`,
+      'MedicalCertificate',
+      String(cert.patientId || cert.id)
+    );
     try {
       const { id, ...rest } = cert;
-      const created = await certificateService.createCertificate(rest);
+      const payloadWithStaff = {
+        ...rest,
+        issuedBy: verifiedStaff.name || rest.issuedBy || 'UA CLINIC ADMIN',
+      };
+      const created = await certificateService.createCertificate(payloadWithStaff);
       const fullCreated = {
         ...cert,
         ...created,
@@ -1490,6 +1636,22 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           } else {
             navigate('new-non-consultation-tab');
           }
+        }}
+      />
+
+      <StaffPinModal
+        isOpen={Boolean(pinPrompt)}
+        actionTitle={pinPrompt?.actionTitle || 'Confirm Action'}
+        actionDetails={pinPrompt?.actionDetails}
+        onSuccess={staff => {
+          const current = pinPrompt;
+          setPinPrompt(null);
+          current?.resolve(staff);
+        }}
+        onCancel={() => {
+          const current = pinPrompt;
+          setPinPrompt(null);
+          current?.reject(new Error('PIN_CANCELLED'));
         }}
       />
     </div>
