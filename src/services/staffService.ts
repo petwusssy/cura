@@ -30,6 +30,8 @@ const STAFF_CACHE_KEY = 'cura_clinic_staff_cache';
 const STAFF_PINS_CACHE_KEY = 'cura_clinic_staff_pins';
 const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
+const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
+const DEFAULT_MGMT_PASSWORD = 'uaclinic-admin';
 
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
 export const AUDIT_UPDATED_EVENT = 'cura-audit-updated';
@@ -263,28 +265,66 @@ export const staffService = {
   async verifyAdminPassword(password: string): Promise<boolean> {
     const cleanPassword = password.trim();
     if (!cleanPassword) return false;
-    const username = authService.getUsername() || 'admin';
+
+    const storedLocalHash = localStorage.getItem(USER_MGMT_PW_HASH_KEY);
+    const enteredHash = hashPinLocal(cleanPassword);
 
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
-        username,
         password: cleanPassword,
       });
-      return Boolean(res.data?.valid);
+      if (res.data?.valid) {
+        try {
+          localStorage.setItem(USER_MGMT_PW_HASH_KEY, enteredHash);
+        } catch {}
+        return true;
+      }
+      return false;
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 400) {
+        // Still allow local hash match if password was recently changed locally
+        if (storedLocalHash && storedLocalHash === enteredHash) {
+          return true;
+        }
         return false;
       }
-      // Fallback: verify directly against Django /auth/login/ with the active CURA workstation username
-      try {
-        const loginRes = await api.post('/auth/login/', {
-          username,
-          password: cleanPassword,
-        });
-        return Boolean(loginRes.data?.access);
-      } catch {
-        return false;
+      // Offline / deploying fallback: check stored local hash or initial default 'uaclinic-admin'
+      if (storedLocalHash) {
+        return storedLocalHash === enteredHash;
       }
+      return cleanPassword === DEFAULT_MGMT_PASSWORD;
+    }
+  },
+
+  async changeAdminPassword(currentPassword: string, newPassword: string): Promise<void> {
+    const cleanCurrent = currentPassword.trim();
+    const cleanNew = newPassword.trim();
+    if (!cleanCurrent || !cleanNew) {
+      throw new Error('Both current and new passwords are required.');
+    }
+    if (cleanNew.length < 6) {
+      throw new Error('New User Management password must be at least 6 characters.');
+    }
+
+    const isValidCurrent = await this.verifyAdminPassword(cleanCurrent);
+    if (!isValidCurrent) {
+      throw new Error('Current User Management password is incorrect.');
+    }
+
+    try {
+      localStorage.setItem(USER_MGMT_PW_HASH_KEY, hashPinLocal(cleanNew));
+    } catch {}
+
+    try {
+      await api.post('/staff/change-admin-password/', {
+        current_password: cleanCurrent,
+        new_password: cleanNew,
+      });
+    } catch (err: any) {
+      if (err?.response?.status === 400 || err?.response?.status === 401) {
+        throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
+      }
+      // If offline/404, local hash is already updated above
     }
   },
 
@@ -423,3 +463,4 @@ export const staffService = {
     } catch {}
   },
 };
+

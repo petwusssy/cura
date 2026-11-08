@@ -84,10 +84,16 @@ export function Settings() {
   const [adminVerifying, setAdminVerifying] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
 
-  const [staffSubTab, setStaffSubTab] = useState<'roster' | 'audit'>('roster');
+  const [staffSubTab, setStaffSubTab] = useState<'roster' | 'audit' | 'password'>('roster');
   const [staffList, setStaffList] = useState<ClinicStaffMember[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+
+  // Change User Management Password form
+  const [currentMgmtPw, setCurrentMgmtPw] = useState('');
+  const [newMgmtPw, setNewMgmtPw] = useState('');
+  const [confirmMgmtPw, setConfirmMgmtPw] = useState('');
+  const [isUpdatingMgmtPw, setIsUpdatingMgmtPw] = useState(false);
 
   // Add Staff form
   const [newStaffName, setNewStaffName] = useState('');
@@ -152,12 +158,49 @@ export function Settings() {
         setAdminPassword('');
         toast.success('Clinic Staff & Audit settings unlocked');
       } else {
-        setAdminError('Incorrect CURA login password. Please enter the password used to sign in to CURA.');
+        setAdminError('Incorrect User Management password. (This is separate from the main CURA login password).');
       }
     } catch {
       setAdminError('Unable to verify password. Please try again.');
     } finally {
       setAdminVerifying(false);
+    }
+  };
+
+  const handleChangeMgmtPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentMgmtPw.trim() || !newMgmtPw.trim()) {
+      toast.error('Please fill in both current and new passwords.');
+      return;
+    }
+    if (newMgmtPw.trim().length < 6) {
+      toast.error('New User Management password must be at least 6 characters.');
+      return;
+    }
+    if (newMgmtPw.trim() !== confirmMgmtPw.trim()) {
+      toast.error('New password and confirmation do not match.');
+      return;
+    }
+    setIsUpdatingMgmtPw(true);
+    try {
+      await staffService.changeAdminPassword(currentMgmtPw, newMgmtPw);
+      await staffService.recordAuditLog({
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'HEAD NURSE / ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Changed User Management Password',
+        target_type: 'Staff',
+        target_id: 'user-management-password',
+        details: 'Updated dedicated User Management master password',
+      });
+      setCurrentMgmtPw('');
+      setNewMgmtPw('');
+      setConfirmMgmtPw('');
+      setStaffSubTab('roster');
+      toast.success('User Management password updated successfully!');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update User Management password.');
+    } finally {
+      setIsUpdatingMgmtPw(false);
     }
   };
 
@@ -365,20 +408,16 @@ export function Settings() {
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-lg font-bold text-foreground">
-                      Admin Verification Required
+                      User Management Master Key Required
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Enter the <strong>CURA Login Password</strong> for workstation account{' '}
-                      <span className="font-bold text-foreground uppercase">
-                        {authService.getUsername() || 'admin'}
-                      </span>{' '}
-                      to manage clinic staff 4-digit PINs and view audit logs.
+                      Enter the dedicated <strong>User Management Password</strong> (Head Nurse / Admin Key) to manage clinic staff 4-digit PINs and view audit logs. This password is completely separate from the main CURA login.
                     </p>
                   </div>
 
                   <form onSubmit={handleUnlockAdmin} className="space-y-3 text-left">
                     <div>
-                      <label className={labelCls}>CURA Login Password</label>
+                      <label className={labelCls}>User Management Password</label>
                       <input
                         type="password"
                         autoFocus
@@ -387,7 +426,7 @@ export function Settings() {
                           setAdminPassword(e.target.value);
                           setAdminError(null);
                         }}
-                        placeholder="Enter CURA login password..."
+                        placeholder="Enter User Management password..."
                         className={inputCls}
                       />
                     </div>
@@ -445,8 +484,8 @@ export function Settings() {
                     </div>
                   </div>
 
-                  {/* Sub-tabs: Staff Roster vs Audit Trail */}
-                  <div className="flex items-center gap-2 border-b border-border pb-3">
+                  {/* Sub-tabs: Staff Roster vs Audit Trail vs Change Admin Key */}
+                  <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
                     <button
                       type="button"
                       onClick={() => setStaffSubTab('roster')}
@@ -472,6 +511,19 @@ export function Settings() {
                     >
                       <ClipboardList size={14} />
                       Audit Logs ({auditLogs.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStaffSubTab('password')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        staffSubTab === 'password'
+                          ? 'text-white shadow-xs'
+                          : 'text-muted-foreground hover:bg-accent'
+                      }`}
+                      style={staffSubTab === 'password' ? { background: PRIMARY } : {}}
+                    >
+                      <KeyRound size={14} />
+                      User Management Password
                     </button>
                   </div>
 
@@ -658,7 +710,7 @@ export function Settings() {
                         </div>
                       )}
                     </div>
-                  ) : (
+                  ) : staffSubTab === 'audit' ? (
                     /* ── Audit Logs Tab ── */
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row gap-3">
@@ -728,6 +780,60 @@ export function Settings() {
                         </div>
                       )}
                     </div>
+                  ) : (
+                    /* ── Change Dedicated User Management Password Tab ── */
+                    <form
+                      onSubmit={handleChangeMgmtPassword}
+                      className="max-w-md space-y-4 p-5 rounded-xl border border-border bg-muted/10"
+                    >
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">
+                          Change User Management Password
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          This password protects Clinic Staff & Audit Logs and is completely separate from the main CURA login password used by nurses on their phones.
+                        </p>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Current User Management Password</label>
+                        <input
+                          type="password"
+                          value={currentMgmtPw}
+                          onChange={e => setCurrentMgmtPw(e.target.value)}
+                          placeholder="Enter current User Management password"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>New User Management Password</label>
+                        <input
+                          type="password"
+                          value={newMgmtPw}
+                          onChange={e => setNewMgmtPw(e.target.value)}
+                          placeholder="Minimum 6 characters"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Confirm New Password</label>
+                        <input
+                          type="password"
+                          value={confirmMgmtPw}
+                          onChange={e => setConfirmMgmtPw(e.target.value)}
+                          placeholder="Re-enter new password"
+                          className={inputCls}
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isUpdatingMgmtPw}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-xs font-bold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                        style={{ background: PRIMARY }}
+                      >
+                        <Save size={15} />
+                        {isUpdatingMgmtPw ? 'Updating...' : 'Update User Management Password'}
+                      </button>
+                    </form>
                   )}
                 </>
               )}
