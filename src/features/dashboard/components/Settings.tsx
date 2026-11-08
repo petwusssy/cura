@@ -90,7 +90,6 @@ export function Settings() {
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
 
   // Change User Management Password form
-  const [currentMgmtPw, setCurrentMgmtPw] = useState('');
   const [newMgmtPw, setNewMgmtPw] = useState('');
   const [confirmMgmtPw, setConfirmMgmtPw] = useState('');
   const [isUpdatingMgmtPw, setIsUpdatingMgmtPw] = useState(false);
@@ -169,8 +168,8 @@ export function Settings() {
 
   const handleChangeMgmtPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentMgmtPw.trim() || !newMgmtPw.trim()) {
-      toast.error('Please fill in both current and new passwords.');
+    if (!newMgmtPw.trim()) {
+      toast.error('Please enter a new password.');
       return;
     }
     if (newMgmtPw.trim().length < 6) {
@@ -183,16 +182,15 @@ export function Settings() {
     }
     setIsUpdatingMgmtPw(true);
     try {
-      await staffService.changeAdminPassword(currentMgmtPw, newMgmtPw);
+      await staffService.changeAdminPassword(newMgmtPw);
       await staffService.recordAuditLog({
         staff_name_snapshot: authService.getUsername().toUpperCase() || 'HEAD NURSE / ADMIN',
         staff_role_snapshot: 'Administrator',
         action: 'Changed User Management Password',
         target_type: 'Staff',
         target_id: 'user-management-password',
-        details: 'Updated dedicated User Management master password',
+        details: 'Updated User Management password',
       });
-      setCurrentMgmtPw('');
       setNewMgmtPw('');
       setConfirmMgmtPw('');
       setStaffSubTab('roster');
@@ -410,9 +408,6 @@ export function Settings() {
                     <h3 className="text-lg font-bold text-foreground">
                       User Management Master Key Required
                     </h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Enter the dedicated <strong>User Management Password</strong> (Head Nurse / Admin Key) to manage clinic staff 4-digit PINs and view audit logs. This password is completely separate from the main CURA login.
-                    </p>
                   </div>
 
                   <form onSubmit={handleUnlockAdmin} className="space-y-3 text-left">
@@ -460,9 +455,6 @@ export function Settings() {
                           <CheckCircle2 size={12} /> Admin Unlocked
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Manage individual 4-digit PINs for nurses/physicians and review action logs.
-                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -538,9 +530,6 @@ export function Settings() {
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E5AA8]">
                             Add Clinic Staff Member
                           </h4>
-                          <span className="text-[11px] text-muted-foreground">
-                            Each staff member uses their unique 4-digit PIN when saving records
-                          </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                           <div className="sm:col-span-5">
@@ -600,9 +589,6 @@ export function Settings() {
                           <div className="text-sm font-semibold text-foreground">
                             No Clinic Staff Configured Yet
                           </div>
-                          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                            Add your clinic nurses and physicians above with their 4-digit PINs. Once at least one active staff member is added, CURA will prompt for a 4-digit PIN before saving consultations, patients, or inventory changes.
-                          </p>
                         </div>
                       ) : (
                         <div className="overflow-x-auto border border-border rounded-xl">
@@ -790,19 +776,6 @@ export function Settings() {
                         <h4 className="text-sm font-bold text-foreground">
                           Change User Management Password
                         </h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          This password protects Clinic Staff & Audit Logs and is completely separate from the main CURA login password used by nurses on their phones.
-                        </p>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Current User Management Password</label>
-                        <input
-                          type="password"
-                          value={currentMgmtPw}
-                          onChange={e => setCurrentMgmtPw(e.target.value)}
-                          placeholder="Enter current User Management password"
-                          className={inputCls}
-                        />
                       </div>
                       <div>
                         <label className={labelCls}>New User Management Password</label>

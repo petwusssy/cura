@@ -269,46 +269,39 @@ export const staffService = {
     const storedLocalHash = localStorage.getItem(USER_MGMT_PW_HASH_KEY);
     const enteredHash = hashPinLocal(cleanPassword);
 
+    // 1. Check custom password saved locally in CURA Settings
+    if (storedLocalHash && storedLocalHash === enteredHash) {
+      return true;
+    }
+
+    // 2. Check backend (validates both Render ENV recovery password USER_MANAGEMENT_PASSWORD and server-saved custom password)
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
       });
       if (res.data?.valid) {
-        try {
-          localStorage.setItem(USER_MGMT_PW_HASH_KEY, enteredHash);
-        } catch {}
         return true;
       }
       return false;
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 400) {
-        // Still allow local hash match if password was recently changed locally
-        if (storedLocalHash && storedLocalHash === enteredHash) {
-          return true;
-        }
         return false;
       }
-      // Offline / deploying fallback: check stored local hash or initial default 'uaclinic-admin'
-      if (storedLocalHash) {
-        return storedLocalHash === enteredHash;
-      }
-      return cleanPassword === DEFAULT_MGMT_PASSWORD;
+      // Offline / deploying fallback: allow either stored custom password or recovery default
+      return Boolean(
+        (storedLocalHash && storedLocalHash === enteredHash) ||
+        cleanPassword === DEFAULT_MGMT_PASSWORD
+      );
     }
   },
 
-  async changeAdminPassword(currentPassword: string, newPassword: string): Promise<void> {
-    const cleanCurrent = currentPassword.trim();
+  async changeAdminPassword(newPassword: string): Promise<void> {
     const cleanNew = newPassword.trim();
-    if (!cleanCurrent || !cleanNew) {
-      throw new Error('Both current and new passwords are required.');
+    if (!cleanNew) {
+      throw new Error('New password is required.');
     }
     if (cleanNew.length < 6) {
       throw new Error('New User Management password must be at least 6 characters.');
-    }
-
-    const isValidCurrent = await this.verifyAdminPassword(cleanCurrent);
-    if (!isValidCurrent) {
-      throw new Error('Current User Management password is incorrect.');
     }
 
     try {
@@ -317,7 +310,6 @@ export const staffService = {
 
     try {
       await api.post('/staff/change-admin-password/', {
-        current_password: cleanCurrent,
         new_password: cleanNew,
       });
     } catch (err: any) {
