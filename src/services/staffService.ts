@@ -269,23 +269,22 @@ export const staffService = {
     const storedLocalHash = localStorage.getItem(USER_MGMT_PW_HASH_KEY);
     const enteredHash = hashPinLocal(cleanPassword);
 
-    // 1. Check custom password saved locally in CURA Settings
-    if (storedLocalHash && storedLocalHash === enteredHash) {
-      return true;
-    }
-
-    // 2. Check backend (validates both Render ENV recovery password USER_MANAGEMENT_PASSWORD and server-saved custom password)
+    // 1. Check backend first (validates Render ENV USER_MANAGEMENT_PASSWORD and server-saved custom password)
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
       });
       if (res.data?.valid) {
+        try {
+          localStorage.setItem(USER_MGMT_PW_HASH_KEY, enteredHash);
+        } catch {}
         return true;
       }
-      return false;
+      // Also allow custom password saved locally in CURA Settings if backend didn't have it yet
+      return Boolean(storedLocalHash && storedLocalHash === enteredHash);
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 400) {
-        return false;
+        return Boolean(storedLocalHash && storedLocalHash === enteredHash);
       }
       // Offline / deploying fallback: allow either stored custom password or recovery default
       return Boolean(

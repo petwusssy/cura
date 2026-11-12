@@ -44,6 +44,15 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest?._retry) {
+      // Do not treat Staff PIN or User Management Master Key verification 401s as main session expiry
+      if (
+        originalRequest.url?.includes('/staff/verify-admin/') ||
+        originalRequest.url?.includes('/staff/change-admin-password/') ||
+        originalRequest.url?.includes('/staff/verify-pin/')
+      ) {
+        return Promise.reject(error);
+      }
+
       // Don't retry if the failing request is refresh or login itself
       if (originalRequest.url?.includes('/auth/refresh/') || originalRequest.url?.includes('/auth/login/')) {
         localStorage.removeItem('accessToken');
