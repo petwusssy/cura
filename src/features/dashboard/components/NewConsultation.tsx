@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X, UserCheck } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page, MedicineItem } from '../types';
 import { staffService } from '@/services/staffService';
+import api from '@/services/api';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -162,11 +163,32 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
     setTreatments(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void,
+    category: 'prescription' | 'fetcher_id' = 'prescription'
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setter(URL.createObjectURL(file));
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 900;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/webp', 0.72);
+        setter(compressed);
+        api.post('/upload/', { image: compressed, category, label: selectedPatientId || 'consult' })
+          .then(res => { if (res.data?.url) setter(res.data.url); })
+          .catch(() => {});
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -740,7 +762,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
                     </div>
                     <div className="sm:col-span-2">
                       <label className={labelCls}>Fetcher's ID Picture</label>
-                      <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setFetcherIdImage)} className={inputCls} />
+                      <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setFetcherIdImage, 'fetcher_id')} className={inputCls} />
                       {fetcherIdImage && <img src={fetcherIdImage} alt="Fetcher ID" className="mt-2 h-32 object-contain border rounded-lg" />}
                     </div>
                   </div>
@@ -779,7 +801,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
         {status === 'Consultation' && sectionCard('Prescription Attachment', (
           <div>
             <label className={labelCls}>Upload Prescription Image</label>
-            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setPrescriptionImage)} className={inputCls} />
+            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setPrescriptionImage, 'prescription')} className={inputCls} />
             {prescriptionImage && <img src={prescriptionImage} alt="Prescription" className="mt-2 h-48 object-contain border rounded-lg" />}
           </div>
         ))}
