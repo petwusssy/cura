@@ -6,6 +6,11 @@ import path from 'node:path'
 // Vite config — https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
+  define: {
+    'import.meta.env.USER_MANAGEMENT_PASSWORD': JSON.stringify(
+      process.env.USER_MANAGEMENT_PASSWORD || process.env.VITE_USER_MANAGEMENT_PASSWORD || ''
+    ),
+  },
   plugins: [
     react(),
     tailwindcss(),

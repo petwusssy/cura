@@ -266,31 +266,33 @@ export const staffService = {
     const cleanPassword = password.trim();
     if (!cleanPassword) return false;
 
-    const storedLocalHash = localStorage.getItem(USER_MGMT_PW_HASH_KEY);
-    const enteredHash = hashPinLocal(cleanPassword);
+    // Clear any legacy local hash so only ENV USER_MANAGEMENT_PASSWORD or server-saved custom User Management password works
+    try {
+      localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
+    } catch {}
 
-    // 1. Check backend first (validates Render ENV USER_MANAGEMENT_PASSWORD and server-saved custom password)
+    const frontendEnvPw = String(
+      (import.meta.env as any).USER_MANAGEMENT_PASSWORD ||
+      (import.meta.env as any).VITE_USER_MANAGEMENT_PASSWORD ||
+      ''
+    ).trim();
+
+    // 1. Always allow ENV USER_MANAGEMENT_PASSWORD (permanent Master / Recovery password)
+    if (frontendEnvPw && cleanPassword === frontendEnvPw) {
+      return true;
+    }
+
+    // 2. Check backend (validates Render ENV USER_MANAGEMENT_PASSWORD and custom password saved in Settings)
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
       });
-      if (res.data?.valid) {
-        try {
-          localStorage.setItem(USER_MGMT_PW_HASH_KEY, enteredHash);
-        } catch {}
-        return true;
-      }
-      // Also allow custom password saved locally in CURA Settings if backend didn't have it yet
-      return Boolean(storedLocalHash && storedLocalHash === enteredHash);
+      return Boolean(res.data?.valid);
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 400) {
-        return Boolean(storedLocalHash && storedLocalHash === enteredHash);
+        return false;
       }
-      // Offline / deploying fallback: allow either stored custom password or recovery default
-      return Boolean(
-        (storedLocalHash && storedLocalHash === enteredHash) ||
-        cleanPassword === DEFAULT_MGMT_PASSWORD
-      );
+      return Boolean(frontendEnvPw ? cleanPassword === frontendEnvPw : cleanPassword === DEFAULT_MGMT_PASSWORD);
     }
   },
 
@@ -304,7 +306,7 @@ export const staffService = {
     }
 
     try {
-      localStorage.setItem(USER_MGMT_PW_HASH_KEY, hashPinLocal(cleanNew));
+      localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
     try {
@@ -312,10 +314,7 @@ export const staffService = {
         new_password: cleanNew,
       });
     } catch (err: any) {
-      if (err?.response?.status === 400 || err?.response?.status === 401) {
-        throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
-      }
-      // If offline/404, local hash is already updated above
+      throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
     }
   },
 
