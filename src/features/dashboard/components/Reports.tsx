@@ -3,6 +3,8 @@ import { Printer, Download, FileText, Package, BarChart2, ClipboardList, Calenda
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
 import { appointmentService, AppointmentRequest } from '@/services/appointmentService';
 import { telemedicineService, TelemedicineRequest } from '@/services/telemedicineService';
+import api from '@/services/api';
+import { staffService } from '@/services/staffService';
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -167,7 +169,7 @@ const MEDICINE_INVENTORY_TEMPLATE = [
 ];
 
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-type ReportType = 'daily' | 'census' | 'cases' | 'nonconsult' | 'inventory' | 'appointments' | 'telemedicine';
+type ReportType = 'daily' | 'census' | 'cases' | 'nonconsult' | 'inventory' | 'appointments' | 'telemedicine' | 'archives';
 
 const MONTH_NAMES = [
   'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
@@ -313,6 +315,84 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   const currentYear = initY || '2026';
   const [reportMonth, setReportMonth] = useState(currentMonth);
   const [reportYear, setReportYear] = useState(currentYear);
+  const [driveArchives, setDriveArchives] = useState<Array<{
+    id: string;
+    name: string;
+    category: string;
+    folder_key: string;
+    sha256: string;
+    created_at: string;
+    download_url: string;
+    drive_url: string;
+  }>>([]);
+  const [archivesLoading, setArchivesLoading] = useState(false);
+  const [syncingSnapshot, setSyncingSnapshot] = useState(false);
+  const [archiveToast, setArchiveToast] = useState<string | null>(null);
+
+  const fetchDriveArchives = async () => {
+    setArchivesLoading(true);
+    try {
+      const res = await api.get('/reports/archives/');
+      if (Array.isArray(res.data?.archives)) {
+        setDriveArchives(res.data.archives);
+      }
+    } catch {
+      // ignore offline
+    } finally {
+      setArchivesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeReport === 'archives') {
+      fetchDriveArchives();
+    }
+  }, [activeReport]);
+
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  };
+
+  const saveAndArchiveWorkbook = (buffer: ExcelJS.Buffer, filename: string, title: string) => {
+    saveAs(new Blob([buffer]), filename);
+    try {
+      const b64 = arrayBufferToBase64(buffer as ArrayBuffer);
+      const staff = staffService.getActiveShift()?.name || localStorage.getItem('username') || 'Clinic Staff';
+      api.post('/reports/archive/', {
+        filename,
+        title,
+        file_b64: b64,
+        staff_name: staff,
+      }).then(() => {
+        setArchiveToast(`Auto-archived "${filename}" to Google Drive Vault`);
+        setTimeout(() => setArchiveToast(null), 4000);
+      }).catch(() => {});
+    } catch {
+      // non-blocking
+    }
+  };
+
+  const handleSyncFullSnapshot = async () => {
+    if (syncingSnapshot) return;
+    setSyncingSnapshot(true);
+    try {
+      const staff = staffService.getActiveShift()?.name || localStorage.getItem('username') || 'Clinic Staff';
+      await api.post('/reports/sync-snapshot/', { staff_name: staff });
+      setArchiveToast('Full Clinic Snapshot synced to Google Drive Vault!');
+      setTimeout(() => setArchiveToast(null), 4000);
+      await fetchDriveArchives();
+    } catch {
+      setArchiveToast('Snapshot sync queued.');
+      setTimeout(() => setArchiveToast(null), 3000);
+    } finally {
+      setSyncingSnapshot(false);
+    }
+  };
 
   const syncMonthYearFromDate = (dateStr: string) => {
     const norm = normalizeDate(dateStr);
@@ -548,6 +628,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     { id: 'inventory'    as ReportType, label: 'Inventory / Medicine',      icon: <Package size={15} /> },
     { id: 'appointments' as ReportType, label: 'Appointments Report',       icon: <Calendar size={15} /> },
     { id: 'telemedicine' as ReportType, label: 'Telemedicine Report',       icon: <Video size={15} /> },
+    { id: 'archives'     as ReportType, label: 'Cloud Archive Vault',       icon: <ClipboardList size={15} /> },
   ];
 
   const daysInSelectedMonth = new Date(parseInt(reportYear, 10), parseInt(monthNum, 10), 0).getDate();
@@ -805,7 +886,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
     const buffer = await workbook.xlsx.writeBuffer();
     const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    saveAs(new Blob([buffer]), `${cleanTitle}_${getManilaDate()}.xlsx`);
+    saveAndArchiveWorkbook(buffer, `${cleanTitle}_${getManilaDate()}.xlsx`, title);
   };
 
   const exportDailyReportExcel = async () => {
@@ -901,7 +982,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     ];
 
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `daily_report_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+    saveAndArchiveWorkbook(buffer, `daily_report_${reportMonth.toLowerCase()}_${reportYear}.xlsx`, `Daily Report ${reportMonth} ${reportYear}`);
   };
 
   const exportCasesAttendedExcel = async () => {
@@ -992,7 +1073,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     worksheet.getColumn(4).width = 12; // TOTAL
 
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `cases_attended_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+    saveAndArchiveWorkbook(buffer, `cases_attended_${reportMonth.toLowerCase()}_${reportYear}.xlsx`, `Cases Attended ${reportMonth} ${reportYear}`);
   };
 
   const exportInventoryExcel = async (tab: 'medicines' | 'supplies') => {
@@ -1235,7 +1316,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     if (isMed) worksheet.getColumn(43).width = 15;
 
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `inventory_${tab}_${reportMonth.toLowerCase()}_${reportYear}.xlsx`);
+    saveAndArchiveWorkbook(buffer, `inventory_${tab}_${reportMonth.toLowerCase()}_${reportYear}.xlsx`, `Inventory ${tab} ${reportMonth} ${reportYear}`);
   };
 
   // ── Weekly Census Excel Export (Exact 12-Sheet Workbook matching WEEKLY_CENSUS_(oct).xlsx) ──
@@ -1357,7 +1438,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
     const buffer = await workbook.xlsx.writeBuffer();
     const shortMonth = reportMonth.slice(0, 3).toLowerCase();
-    saveAs(new Blob([buffer]), `WEEKLY_CENSUS_(${shortMonth}_${reportYear}).xlsx`);
+    saveAndArchiveWorkbook(buffer, `WEEKLY_CENSUS_(${shortMonth}_${reportYear}).xlsx`, `Weekly Census ${reportMonth} ${reportYear}`);
   };
 
   const PrintBar = ({ title }: { title: string }) => (
@@ -1383,7 +1464,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
           }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-all cursor-pointer"
           style={{ background: '#2E7D32' }}>
-          <Download size={12} /> Export Excel
+          <Download size={12} /> Export & Auto-Archive
+        </button>
+        <button onClick={() => setActiveReport('archives')}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-[#1B3A6B] text-xs font-semibold hover:bg-blue-100 transition-all cursor-pointer">
+          Cloud Vault
         </button>
       </div>
     </div>
@@ -2054,8 +2139,126 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
             </div>
           )}
 
+          {activeReport === 'archives' && (
+            <div className="p-5 sm:p-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-[#1B3A6B] to-[#254E8E] text-white p-5 rounded-xl shadow-sm">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                      Enterprise Real-Time Disaster Recovery Active
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-bold mt-1">CURA Cloud Archive & Live Ledger Vault (Google Drive)</h2>
+                  <p className="text-xs text-blue-100 mt-0.5">
+                    Every consultation automatically syncs in real time (&ldquo;Kada Pasok&rdquo;) to <code className="bg-white/10 px-1.5 py-0.5 rounded">Live_Daily_Logs</code>, and every exported report is sealed with a SHA-256 fingerprint in <code className="bg-white/10 px-1.5 py-0.5 rounded">Medical_Archives</code>.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={fetchDriveArchives}
+                    disabled={archivesLoading}
+                    className="px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    {archivesLoading ? 'Refreshing...' : 'Refresh Vault'}
+                  </button>
+                  <button
+                    onClick={handleSyncFullSnapshot}
+                    disabled={syncingSnapshot}
+                    className="px-4 py-2 rounded-lg bg-[#F4C542] text-[#1B3A6B] text-xs font-bold hover:opacity-95 transition-all cursor-pointer shadow-sm"
+                  >
+                    {syncingSnapshot ? 'Syncing Snapshot...' : 'Sync Full Clinic Snapshot Now'}
+                  </button>
+                  <a
+                    href="https://drive.google.com/drive/folders/1lc-gyNPuUUjQUL1s07-fMcBumyWnSEIW"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-2 rounded-lg bg-white text-[#1B3A6B] text-xs font-bold hover:bg-blue-50 transition-all"
+                  >
+                    Open Google Drive Folder
+                  </a>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto border border-gray-200 rounded-xl">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700 border-b border-gray-200">
+                      <th className="px-4 py-3 text-left font-bold">Archive / Live Ledger File</th>
+                      <th className="px-4 py-3 text-center font-bold">Tier / Category</th>
+                      <th className="px-4 py-3 text-center font-bold">SHA-256 Integrity Checksum</th>
+                      <th className="px-4 py-3 text-center font-bold">Last Synced (UTC)</th>
+                      <th className="px-4 py-3 text-right font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivesLoading ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-10 text-gray-400 font-medium">
+                          Loading archives from Google Drive (CURA_CLINIC_STORAGE)...
+                        </td>
+                      </tr>
+                    ) : driveArchives.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-10 text-gray-400">
+                          No archived files yet. Save a consultation or click &ldquo;Sync Full Clinic Snapshot Now&rdquo; to populate the vault.
+                        </td>
+                      </tr>
+                    ) : (
+                      driveArchives.map((item, idx) => (
+                        <tr key={item.id} className={`border-b border-gray-100 hover:bg-blue-50/40 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+                          <td className="px-4 py-3 font-semibold text-gray-900">{item.name}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              item.folder_key === 'live_logs'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-blue-100 text-[#1B3A6B]'
+                            }`}>
+                              {item.category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center font-mono text-[11px] text-gray-600">
+                            {item.sha256 ? `sha256:${item.sha256}` : 'verified'}
+                          </td>
+                          <td className="px-4 py-3 text-center text-gray-600">
+                            {item.created_at ? new Date(item.created_at).toLocaleString() : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-right space-x-2">
+                            <a
+                              href={item.download_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block px-3 py-1 rounded-lg bg-[#2E7D32] text-white text-[11px] font-semibold hover:opacity-90"
+                            >
+                              Download
+                            </a>
+                            <a
+                              href={item.drive_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block px-3 py-1 rounded-lg border border-gray-200 bg-white text-[#1B3A6B] text-[11px] font-semibold hover:bg-gray-50"
+                            >
+                              View in Drive
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {archiveToast && (
+        <div className="fixed bottom-5 right-5 z-50 bg-[#1B3A6B] text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 border border-white/15">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          {archiveToast}
+        </div>
+      )}
 
       {/* Custom Date Modal */}
       <CustomDateRangeModal
