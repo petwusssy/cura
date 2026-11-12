@@ -32,6 +32,7 @@ const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
 const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
 const DEFAULT_MGMT_PASSWORD = 'uaclinic-admin';
+const RENDER_ENV_BACKEND_URL = 'https://cura-backend-dvj5.onrender.com/api';
 declare const __CURA_ENV_MGMT_PW__: string;
 
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
@@ -267,7 +268,6 @@ export const staffService = {
     const cleanPassword = password.trim();
     if (!cleanPassword) return false;
 
-    // Clear any legacy local hash so only ENV USER_MANAGEMENT_PASSWORD or server-saved custom User Management password works
     try {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
@@ -278,12 +278,28 @@ export const staffService = {
       ''
     ).trim();
 
-    // 1. Always allow ENV USER_MANAGEMENT_PASSWORD (permanent Master / Recovery password)
     if (frontendEnvPw && cleanPassword === frontendEnvPw) {
       return true;
     }
 
-    // 2. Check backend (validates Render ENV USER_MANAGEMENT_PASSWORD and custom password saved in Settings)
+    // 1. Check the Render service where USER_MANAGEMENT_PASSWORD ENV is configured (cura-backend-dvj5)
+    try {
+      const envRes = await fetch(`${RENDER_ENV_BACKEND_URL}/staff/verify-admin/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: cleanPassword }),
+      });
+      const envData = await envRes.json().catch(() => null);
+      if (envData?.valid) {
+        return true;
+      }
+      // If dvj5 explicitly has USER_MANAGEMENT_PASSWORD configured in Render ENV, trust its verdict strictly
+      if (envData?.env_configured === true) {
+        return false;
+      }
+    } catch {}
+
+    // 2. Fallback to primary API URL if dvj5 is unreachable
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
@@ -310,11 +326,23 @@ export const staffService = {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
-    try {
-      await api.post('/staff/change-admin-password/', {
+    // Update custom password on both Render instances so custom password + ENV recovery password both work
+    const [dvj5Res, primaryRes] = await Promise.allSettled([
+      fetch(`${RENDER_ENV_BACKEND_URL}/staff/change-admin-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: cleanNew }),
+      }).then(async r => ({ ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) })),
+      api.post('/staff/change-admin-password/', {
         new_password: cleanNew,
-      });
-    } catch (err: any) {
+      }),
+    ]);
+
+    if (dvj5Res.status === 'fulfilled' && !dvj5Res.value.ok) {
+      throw new Error(dvj5Res.value.data?.error || 'Failed to update User Management password.');
+    }
+    if (dvj5Res.status === 'rejected' && primaryRes.status === 'rejected') {
+      const err: any = primaryRes.reason;
       throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
     }
   },
