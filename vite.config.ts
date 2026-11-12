@@ -7,7 +7,7 @@ import path from 'node:path'
 export default defineConfig({
   base: '/',
   define: {
-    'import.meta.env.USER_MANAGEMENT_PASSWORD': JSON.stringify(
+    __CURA_ENV_MGMT_PW__: JSON.stringify(
       process.env.USER_MANAGEMENT_PASSWORD || process.env.VITE_USER_MANAGEMENT_PASSWORD || ''
     ),
   },

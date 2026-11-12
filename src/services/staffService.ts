@@ -32,6 +32,7 @@ const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
 const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
 const DEFAULT_MGMT_PASSWORD = 'uaclinic-admin';
+declare const __CURA_ENV_MGMT_PW__: string;
 
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
 export const AUDIT_UPDATED_EVENT = 'cura-audit-updated';
@@ -271,9 +272,9 @@ export const staffService = {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
-    const frontendEnvPw = String(
-      (import.meta.env as any).USER_MANAGEMENT_PASSWORD ||
-      (import.meta.env as any).VITE_USER_MANAGEMENT_PASSWORD ||
+    const frontendEnvPw = (
+      (typeof __CURA_ENV_MGMT_PW__ !== 'undefined' ? __CURA_ENV_MGMT_PW__ : '') ||
+      import.meta.env.VITE_USER_MANAGEMENT_PASSWORD ||
       ''
     ).trim();
 
