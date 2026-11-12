@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy, UserCheck } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate, formatManilaDisplayTime } from '@/utils/philippineTime';
+import { staffService, SHIFT_UPDATED_EVENT, ClinicStaffMember } from '@/services/staffService';
 import uaSeal from '@/assets/images/ua-seal.png';
 
 const PRIMARY = '#1E5AA8';
@@ -13,6 +14,12 @@ interface PurchaseReceiptsProps {
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
   onDeleteRequest: (id: string) => void | Promise<void>;
+  onRequireStaffSignOff?: (
+    actionTitle: string,
+    actionDetails: string,
+    targetType: string,
+    targetId: string
+  ) => Promise<ClinicStaffMember>;
   searchQuery: string;
 }
 
@@ -144,10 +151,10 @@ function getSavedPrfPreparedBy(prfKey: string): string {
       if (map[prfKey]) return map[prfKey];
     }
   } catch {}
-  return 'Abigael C. Landingin';
+  return staffService.getActiveShift()?.staff.name || localStorage.getItem('cura_prf_current_prepared_by') || 'Clinic Staff (PIN Verified)';
 }
 
-export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, searchQuery }: PurchaseReceiptsProps) {
+export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, onRequireStaffSignOff, searchQuery }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
@@ -216,8 +223,67 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [purpose, setPurpose] = useState('Medical-Dental Clinic Routine Requisition & Replenishment');
   const [dateNeeded, setDateNeeded] = useState('To follow lead time in Purchasing');
 
-  // PRF Signature Boxes Editable State
-  const [preparedBy, setPreparedBy] = useState(() => localStorage.getItem('cura_prf_current_prepared_by') || 'Abigael C. Landingin');
+  // PRF Signature Boxes State — "Prepared by" is strictly PIN-controlled and non-editable
+  const [preparedBy, setPreparedBy] = useState(() => {
+    const activeName = staffService.getActiveShift()?.staff.name;
+    return activeName || localStorage.getItem('cura_prf_current_prepared_by') || '';
+  });
+
+  useEffect(() => {
+    const syncFromShift = () => {
+      const activeName = staffService.getActiveShift()?.staff.name;
+      if (activeName) {
+        setPreparedBy(activeName);
+        try { localStorage.setItem('cura_prf_current_prepared_by', activeName); } catch {}
+      }
+    };
+    syncFromShift();
+    window.addEventListener(SHIFT_UPDATED_EVENT, syncFromShift);
+    return () => window.removeEventListener(SHIFT_UPDATED_EVENT, syncFromShift);
+  }, []);
+
+  const handleVerifyPrfSigner = async () => {
+    if (!onRequireStaffSignOff) return;
+    const prevShift = staffService.getActiveShift();
+    if (prevShift) {
+      staffService.clearActiveShift();
+    }
+    try {
+      const staff = await onRequireStaffSignOff(
+        'Signed Purchase Requisition Form (PRF)',
+        `Verified Prepared By signature for ${prfNo}`,
+        'PurchaseRequest',
+        prfNo
+      );
+      if (staff?.name) {
+        setPreparedBy(staff.name);
+        savePrfPreparedBy(prfNo, staff.name);
+        try { localStorage.setItem('cura_prf_current_prepared_by', staff.name); } catch {}
+      }
+    } catch {
+      if (prevShift?.staff) {
+        staffService.setActiveShift(prevShift.staff, 15);
+      }
+    }
+  };
+
+  // Prompt for Staff PIN automatically when opening PRF Template if no staff is currently signed in
+  useEffect(() => {
+    if (viewMode === 'template' && !staffService.getActiveShift()?.staff && onRequireStaffSignOff) {
+      onRequireStaffSignOff(
+        'Opened Purchase Requisition Form (PRF)',
+        `Authorized PRF preparation for ${prfNo}`,
+        'PurchaseRequest',
+        prfNo
+      ).then(staff => {
+        if (staff?.name) {
+          setPreparedBy(staff.name);
+          savePrfPreparedBy(prfNo, staff.name);
+          try { localStorage.setItem('cura_prf_current_prepared_by', staff.name); } catch {}
+        }
+      }).catch(() => {});
+    }
+  }, [viewMode]);
   const [evalRemarks, setEvalRemarks] = useState('');
   const [recommendedBy, setRecommendedBy] = useState('');
   const [supplier1, setSupplier1] = useState('');
@@ -238,14 +304,33 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const handleReceive = async () => {
     if (!receiveModal || !receiveQty) return;
     const qty = parseInt(receiveQty) || 0;
-    const newReceived = receiveModal.receivedQty + qty;
-    const updated: PurchaseRequest = {
-      ...receiveModal,
-      receivedQty: newReceived,
-      status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
-      history: [...receiveModal.history, { date: getManilaDate(), qty, note: receiveNote || `Received delivery (+${qty} units)` }],
-    };
+    if (qty <= 0) return;
     try {
+      let verifierName = staffService.getActiveShift()?.staff.name || '';
+      if (onRequireStaffSignOff) {
+        const staff = await onRequireStaffSignOff(
+          'Received Purchase Delivery',
+          `${receiveModal.medicine} • +${qty} ${receiveModal.unit || 'units'} (${receiveModal.prfNo || 'PRF'})`,
+          'PurchaseRequest',
+          String(receiveModal.id)
+        );
+        verifierName = staff.name;
+      }
+      const newReceived = receiveModal.receivedQty + qty;
+      const notePrefix = receiveNote ? `${receiveNote} ` : `Received delivery (+${qty} units) `;
+      const updated: PurchaseRequest = {
+        ...receiveModal,
+        receivedQty: newReceived,
+        status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
+        history: [
+          ...receiveModal.history,
+          {
+            date: getManilaDate(),
+            qty,
+            note: `${notePrefix}${verifierName ? `• Verified by ${verifierName}` : ''}`.trim(),
+          },
+        ],
+      };
       await onUpdateRequest(updated);
       setReceiveModal(null);
       setReceiveQty('');
@@ -263,7 +348,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setDepartment('Medical-Dental Clinic');
     setPurpose('Medical-Dental Clinic Routine Requisition & Replenishment');
     setDateNeeded('To follow lead time in Purchasing');
-    setPreparedBy(localStorage.getItem('cura_prf_current_prepared_by') || 'Abigael C. Landingin');
+    setPreparedBy(staffService.getActiveShift()?.staff.name || localStorage.getItem('cura_prf_current_prepared_by') || '');
     setEvalRemarks('');
     setRecommendedBy('');
     setSupplier1('');
@@ -288,23 +373,36 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setIsSubmitting(true);
     const tempId = `PR-${Date.now()}`;
     const targetPrf = newReq.prfNo?.trim() || prfNo;
-    const submissionTime = formatManilaDisplayTime(new Date());
-    savePrfTime(targetPrf, submissionTime, true);
-    const req: PurchaseRequest = {
-      id: tempId,
-      medicine: newReq.medicine,
-      description: newReq.description || undefined,
-      unit: newReq.unit || 'Tablet',
-      prfNo: targetPrf,
-      unitPrice: parseFloat(newReq.unitPrice) || 0,
-      requestedQty: parseInt(newReq.requestedQty, 10) || 1,
-      receivedQty: 0,
-      date: getManilaDate(),
-      time: submissionTime,
-      status: 'Pending',
-      history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${targetPrf}` }],
-    };
     try {
+      let signerName = preparedBy.trim();
+      if (onRequireStaffSignOff) {
+        const staff = await onRequireStaffSignOff(
+          'Created Purchase Requisition Item',
+          `${newReq.medicine} x${newReq.requestedQty} ${newReq.unit || 'Tablet'} (${targetPrf})`,
+          'PurchaseRequest',
+          targetPrf
+        );
+        signerName = staff.name;
+        setPreparedBy(staff.name);
+        try { localStorage.setItem('cura_prf_current_prepared_by', staff.name); } catch {}
+      }
+      const submissionTime = formatManilaDisplayTime(new Date());
+      savePrfTime(targetPrf, submissionTime, true);
+      if (signerName) savePrfPreparedBy(targetPrf, signerName);
+      const req: PurchaseRequest = {
+        id: tempId,
+        medicine: newReq.medicine,
+        description: newReq.description || undefined,
+        unit: newReq.unit || 'Tablet',
+        prfNo: targetPrf,
+        unitPrice: parseFloat(newReq.unitPrice) || 0,
+        requestedQty: parseInt(newReq.requestedQty, 10) || 1,
+        receivedQty: 0,
+        date: getManilaDate(),
+        time: submissionTime,
+        status: 'Pending',
+        history: [{ date: getManilaDate(), qty: 0, note: `Requisition initiated under ${targetPrf}${signerName ? ` by ${signerName}` : ''}` }],
+      };
       await onAddRequest(req);
       setShowNewForm(false);
       const nextPrf = getNextPrfNo(targetPrf);
@@ -333,7 +431,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     try {
       const submissionTime = formatManilaDisplayTime(new Date());
       savePrfTime(currentPrf, submissionTime, true);
-      const currentPreparedBy = preparedBy.trim() || 'Abigael C. Landingin';
+      const currentPreparedBy = preparedBy.trim() || staffService.getActiveShift()?.staff.name || 'Clinic Staff (PIN Verified)';
       savePrfPreparedBy(currentPrf, currentPreparedBy);
 
       await Promise.all(
@@ -576,7 +674,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   const validRows = prfItems.filter(row => {
                     const qty = typeof row.qty === 'string' ? parseInt(row.qty, 10) : row.qty;
                     return row.item.trim() && qty && qty > 0;
@@ -584,6 +682,25 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   if (validRows.length === 0) {
                     alert('Please enter at least one medicine/item with a quantity before submitting.');
                     return;
+                  }
+                  const currentPrf = prfNo.trim() || 'PRF-2026-001';
+                  if (onRequireStaffSignOff) {
+                    try {
+                      const summary = validRows.map(r => `${r.item} x${r.qty}`).join(', ');
+                      const staff = await onRequireStaffSignOff(
+                        'Prepared Purchase Requisition (PRF)',
+                        `${currentPrf} • ${validRows.length} item(s): ${summary}`,
+                        'PurchaseRequest',
+                        currentPrf
+                      );
+                      if (staff?.name) {
+                        setPreparedBy(staff.name);
+                        savePrfPreparedBy(currentPrf, staff.name);
+                        try { localStorage.setItem('cura_prf_current_prepared_by', staff.name); } catch {}
+                      }
+                    } catch {
+                      return;
+                    }
                   }
                   setShowSubmitConfirmModal(true);
                 }}
@@ -769,19 +886,32 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
             {/* Signatures & Verification Grid (Exactly matching the 2-row x 4-col layout of PDF) */}
             <div className="border-2 border-black text-[11px] text-black bg-white grid grid-cols-1 md:grid-cols-4 print:grid-cols-4 divide-y md:divide-y-0 print:divide-y-0 md:divide-x-2 print:divide-x-2 divide-black">
-              {/* Row 1 Box 1: Prepared by */}
+              {/* Row 1 Box 1: Prepared by (Locked to PIN-Verified Staff) */}
               <div className="p-3 flex flex-col justify-between min-h-[140px]">
                 <div>
-                  <div className="font-bold mb-6">Prepared by/Date:</div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-bold">Prepared by/Date:</span>
+                    <button
+                      type="button"
+                      onClick={handleVerifyPrfSigner}
+                      className="no-print inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-[#1E5AA8] border border-blue-200 text-[10px] font-bold transition-colors cursor-pointer"
+                      title="Verify 4-Digit Staff PIN to set Prepared By"
+                    >
+                      <UserCheck size={11} />
+                      {preparedBy ? 'Switch Signer (PIN)' : 'Sign with PIN'}
+                    </button>
+                  </div>
                   <input
                     type="text"
-                    value={preparedBy}
-                    onChange={e => {
-                      setPreparedBy(e.target.value);
-                      try { localStorage.setItem('cura_prf_current_prepared_by', e.target.value); } catch {}
-                    }}
-                    className="w-full font-extrabold text-center border-b border-black bg-transparent focus:outline-none focus:bg-yellow-50 pb-1"
+                    readOnly
+                    value={preparedBy || 'Verify PIN on Submit'}
+                    onClick={handleVerifyPrfSigner}
+                    title="Locked to PIN-verified clinic staff. Click to verify PIN."
+                    className="w-full font-extrabold text-center border-b border-black bg-gray-50/70 print:bg-transparent text-black cursor-pointer select-none focus:outline-none pb-1"
                   />
+                  <div className="no-print text-[9px] text-center text-emerald-700 font-semibold mt-1">
+                    🔒 Auto-filled via Staff PIN (Non-editable)
+                  </div>
                 </div>
                 <div className="text-center font-bold uppercase mt-2">
                   REQUESTING PARTY
@@ -1650,8 +1780,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   <span className="font-semibold text-slate-800">{getManilaDate()}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-medium">Prepared by:</span>
-                  <span className="font-semibold text-slate-900">{preparedBy.trim() || 'Abigael C. Landingin'}</span>
+                  <span className="text-slate-500 font-medium">Prepared by (PIN Locked):</span>
+                  <span className="font-semibold text-slate-900">{preparedBy.trim() || staffService.getActiveShift()?.staff.name || 'Clinic Staff (PIN Verified)'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 font-medium">Items to Register:</span>

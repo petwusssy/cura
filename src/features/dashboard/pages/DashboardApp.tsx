@@ -1072,6 +1072,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const handleUpdateConsultation = async (updated: Consultation) => {
     try {
+      const patientName = patients.find(p => p.id === updated.patientId)?.name || updated.patientId;
+      await requireStaffSignOff(
+        'Updated Consultation Record',
+        `${patientName} • ${updated.complaint || updated.purposeOfVisit || 'Consultation'}`,
+        'Consultation',
+        String(updated.id)
+      );
       const res = await consultationService.updateConsultation(updated.id, updated);
       setConsultations(prev => prev.map(c => c.id === res.id ? res : c));
     } catch (e) {
@@ -1122,11 +1129,22 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   };
 
-  const handleAddTransfer = (transfer: HospitalTransfer) => {
+  const handleAddTransfer = async (transfer: HospitalTransfer) => {
+    const patientName = patients.find(p => p.id === transfer.patientId)?.name || transfer.patientId;
+    try {
+      await requireStaffSignOff(
+        'Authorized Hospital Transfer',
+        `${patientName} ➔ ${transfer.receivingHospital} (${transfer.reason || 'Emergency Transfer'})`,
+        'HospitalTransfer',
+        String(transfer.patientId)
+      );
+    } catch {
+      return;
+    }
     setTransfers(prev => [...prev, transfer]);
     const notif: AppNotification = {
       id: `N${Date.now()}`, type: 'general',
-      message: `Patient ${patients.find(p => p.id === transfer.patientId)?.name} transferred to ${transfer.receivingHospital}`,
+      message: `Patient ${patientName} transferred to ${transfer.receivingHospital}`,
       time: new Date().toISOString(), read: false,
     };
     setNotifications(prev => [notif, ...prev]);
@@ -1206,6 +1224,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleDeletePurchaseRequest = async (id: string) => {
+    const targetReq = purchaseRequests.find(r => r.id === id);
+    await requireStaffSignOff(
+      'Removed Purchase Requisition Item',
+      `${targetReq?.medicine || id} (${targetReq?.prfNo || 'PRF'})`,
+      'PurchaseRequest',
+      String(id)
+    );
     // Optimistic update: remove from state immediately so tracker and PRF template sync instantly
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
     try {
@@ -1253,6 +1278,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleDeleteMedCert = async (id: string) => {
+    const targetCert = medicalCerts.find(c => c.id === id);
+    await requireStaffSignOff(
+      'Removed Medical Certificate',
+      `${targetCert?.patientName || targetCert?.patientId || id}`,
+      'MedicalCertificate',
+      String(id)
+    );
     setMedicalCerts(prev => {
       const next = prev.filter(c => c.id !== id);
       try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
@@ -1266,6 +1298,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleUpdateMedCert = async (cert: MedicalCertificate) => {
+    await requireStaffSignOff(
+      'Updated Medical Certificate',
+      `${cert.patientName || cert.patientId} • ${cert.diagnosis || cert.purpose || 'Medical Certificate'}`,
+      'MedicalCertificate',
+      String(cert.id)
+    );
     try {
       const updated = await certificateService.updateCertificate(cert.id, cert);
       const fullUpdated = { ...cert, ...updated, patientId: updated.patientId || cert.patientId };
@@ -1287,6 +1325,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleUpdateBed = async (bed: Bed) => {
+    const prevBed = beds.find(b => b.id === bed.id);
+    await requireStaffSignOff(
+      bed.status === 'Occupied' ? 'Admitted Patient to Clinic Bed' : 'Discharged Patient from Clinic Bed',
+      bed.status === 'Occupied'
+        ? `Bed ${bed.bedNumber} • ${bed.patientName || 'Patient'}${bed.reason ? ` (${bed.reason})` : ''}`
+        : `Bed ${bed.bedNumber} • Discharged ${prevBed?.patientName || 'Patient'}`,
+      'Bed',
+      String(bed.bedNumber)
+    );
     // 1. Optimistic UI update for immediate 0ms responsiveness!
     setBeds(prev => prev.map(b => b.id === bed.id ? bed : b));
     if (bed.status === 'Occupied' && bed.patientName) {
@@ -1542,6 +1589,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             onUpdateRequest={handleUpdatePurchaseRequest}
             onAddRequest={handleAddPurchaseRequest}
             onDeleteRequest={handleDeletePurchaseRequest}
+            onRequireStaffSignOff={requireStaffSignOff}
           />
         );
       case 'medical-certificates':
