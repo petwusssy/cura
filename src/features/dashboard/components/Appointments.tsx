@@ -9,6 +9,7 @@ interface AppointmentsProps {
   patients: Patient[];
   searchQuery?: string;
   onNavigate?: (page: string) => void;
+  onRequireStaffSignOff?: (actionTitle: string, actionDetails: string, targetType: string, targetId: string) => Promise<any>;
 }
 
 const PRIMARY = '#1B3A6B';
@@ -30,7 +31,7 @@ const APPOINTMENT_TIME_SLOTS = [
   '9:00 PM - 10:00 PM',
 ];
 
-export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) {
+export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff }: AppointmentsProps) {
   const [requests, setRequests] = useState<AppointmentRequest[]>(() => {
     try {
       const cached = localStorage.getItem('cura_appointment_requests_cache');
@@ -119,6 +120,18 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
   };
 
   const handleSaveAvailability = async () => {
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Updated Appointment Schedule Availability',
+          `Blocked ${unavailableDates.length} dates`,
+          'Appointment',
+          'availability'
+        );
+      } catch {
+        return;
+      }
+    }
     setAvailSaving(true);
     const success = await appointmentService.saveAvailability(unavailableDates, unavailableTimes);
     setAvailSaving(false);
@@ -167,6 +180,18 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
 
   const handleAction = async () => {
     if (!selectedReq || !actionType) return;
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          actionType === 'Approve' ? 'Approved Appointment Request' : 'Declined Appointment Request',
+          `${getPatientName(selectedReq.patient)} • ${scheduledDate || selectedReq.preferred_date} ${scheduledTime || selectedReq.preferred_time}`,
+          'Appointment',
+          String(selectedReq.id)
+        );
+      } catch {
+        return;
+      }
+    }
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
     const targetId = selectedReq.id;
@@ -204,6 +229,19 @@ export function Appointments({ patients, searchQuery = '' }: AppointmentsProps) 
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const targetReq = requests.find(r => r.id === id);
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Deleted Appointment Request',
+          `${targetReq ? getPatientName(targetReq.patient) : id}`,
+          'Appointment',
+          String(id)
+        );
+      } catch {
+        return;
+      }
+    }
     const prevRequests = requests;
     setRequests(prev => prev.filter(r => r.id !== id));
     const success = await appointmentService.deleteRequest(id);

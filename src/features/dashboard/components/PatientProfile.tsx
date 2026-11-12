@@ -18,9 +18,10 @@ interface PatientProfileProps {
   medicalCerts: MedicalCertificate[];
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
+  onEditPatient?: (id: string | null) => void;
 }
 
-export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient }: PatientProfileProps) {
+export function PatientProfile({ patient, consultations, medicalCerts, onNavigate, onSelectPatient, onEditPatient }: PatientProfileProps) {
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [selectedCert, setSelectedCert] = useState<MedicalCertificate | null>(null);
 
@@ -168,6 +169,14 @@ export function PatientProfile({ patient, consultations, medicalCerts, onNavigat
 
           {/* Action buttons */}
           <div className="mt-5 space-y-2">
+            {onEditPatient && (
+              <button
+                onClick={() => { onEditPatient(patient.id); onNavigate('patient-form'); }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border border-[#1E5AA8]/30 text-[#1E5AA8] hover:bg-blue-50 transition-colors cursor-pointer"
+              >
+                <User size={16} /> Edit Patient Record
+              </button>
+            )}
             <button
               onClick={() => { onSelectPatient(patient.id); onNavigate('new-consultation'); }}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"

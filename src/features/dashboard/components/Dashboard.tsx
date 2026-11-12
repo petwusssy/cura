@@ -27,13 +27,14 @@ interface DashboardProps {
   onNotifyQueue?: (id: string) => void;
   onCompleteQueue?: (id: string) => void;
   onMarkDoseIntaked?: (keys: string[], consultationId?: string, treatmentId?: string, updatedRemarks?: string) => void;
+  onRequireStaffSignOff?: (actionTitle: string, actionDetails: string, targetType: string, targetId: string) => Promise<any>;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'custom';
 
-export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onMarkDoseIntaked, onNavigate, onSelectPatient }: DashboardProps) {
+export function Dashboard({ patients, consultations, medicines, notifications, queues = [], onNotifyQueue, onCompleteQueue, onMarkDoseIntaked, onRequireStaffSignOff, onNavigate, onSelectPatient }: DashboardProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -53,7 +54,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     }
   });
 
-  const handleMarkIntaked = (item: {
+  const handleMarkIntaked = async (item: {
     id: string;
     treatmentId?: string;
     consultationId: string;
@@ -63,6 +64,18 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     patientName: string;
     remarks?: string;
   }) => {
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Marked Medication Dose Intaked',
+          `${item.patientName} • ${item.medicineName} (${item.nextDose})`,
+          'Consultation',
+          String(item.consultationId)
+        );
+      } catch {
+        return;
+      }
+    }
     const keys = [
       item.id,
       item.treatmentId ? String(item.treatmentId) : '',

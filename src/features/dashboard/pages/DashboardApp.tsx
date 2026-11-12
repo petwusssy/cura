@@ -832,21 +832,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       targetType: string,
       targetId: string
     ): Promise<ClinicStaffMember> => {
-      // 1. Check active 15-minute shift first
-      const shift = staffService.getActiveShift();
-      if (shift?.staff) {
-        staffService
-          .recordAuditLog({
-            staff: shift.staff.id,
-            staff_name_snapshot: shift.staff.name,
-            staff_role_snapshot: shift.staff.role,
-            action: actionTitle,
-            target_type: targetType,
-            target_id: targetId,
-            details: actionDetails,
-          })
-          .catch(() => {});
-        return shift.staff;
+      // 1. Ensure active staff list is synced from server if local cache is empty
+      if (!staffService.hasActiveStaff()) {
+        await staffService.getStaff().catch(() => []);
       }
 
       // 2. If no active staff have been added in Settings yet, fallback to workstation user
@@ -871,7 +859,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return fallbackStaff;
       }
 
-      // 3. Prompt for 4-digit PIN
+      // 3. Always prompt for 4-digit PIN on every create/edit/update action
       const verifiedStaff = await new Promise<ClinicStaffMember>((resolve, reject) => {
         setPinPrompt({
           actionTitle,
@@ -1071,18 +1059,20 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   };
 
   const handleUpdateConsultation = async (updated: Consultation) => {
+    const patientName = patients.find(p => p.id === updated.patientId)?.name || updated.patientId;
+    await requireStaffSignOff(
+      'Updated Consultation Record',
+      `${patientName} • ${updated.complaint || updated.purposeOfVisit || 'Consultation'}`,
+      'Consultation',
+      String(updated.id)
+    );
     try {
-      const patientName = patients.find(p => p.id === updated.patientId)?.name || updated.patientId;
-      await requireStaffSignOff(
-        'Updated Consultation Record',
-        `${patientName} • ${updated.complaint || updated.purposeOfVisit || 'Consultation'}`,
-        'Consultation',
-        String(updated.id)
-      );
       const res = await consultationService.updateConsultation(updated.id, updated);
       setConsultations(prev => prev.map(c => c.id === res.id ? res : c));
+      return res;
     } catch (e) {
-      console.error('Failed to update consultation', e);
+      setConsultations(prev => prev.map(c => c.id === updated.id ? updated : c));
+      return updated;
     }
   };
 
@@ -1131,17 +1121,25 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const handleAddTransfer = async (transfer: HospitalTransfer) => {
     const patientName = patients.find(p => p.id === transfer.patientId)?.name || transfer.patientId;
-    try {
-      await requireStaffSignOff(
-        'Authorized Hospital Transfer',
-        `${patientName} ➔ ${transfer.receivingHospital} (${transfer.reason || 'Emergency Transfer'})`,
-        'HospitalTransfer',
-        String(transfer.patientId)
-      );
-    } catch {
-      return;
+    const verifiedStaff = await requireStaffSignOff(
+      'Authorized Hospital Transfer',
+      `${patientName} ➔ ${transfer.receivingHospital} (${transfer.reason || 'Emergency Transfer'})`,
+      'HospitalTransfer',
+      String(transfer.patientId)
+    );
+    const enrichedTransfer: HospitalTransfer = {
+      ...transfer,
+      transferredBy: verifiedStaff.name || transfer.transferredBy,
+    };
+    setTransfers(prev => [...prev, enrichedTransfer]);
+    if (transfer.consultationId) {
+      const targetCons = consultations.find(c => c.id === transfer.consultationId);
+      if (targetCons) {
+        const updatedCons = { ...targetCons, transferred: true };
+        setConsultations(prev => prev.map(c => c.id === updatedCons.id ? updatedCons : c));
+        consultationService.updateConsultation(updatedCons.id, updatedCons).catch(() => {});
+      }
     }
-    setTransfers(prev => [...prev, transfer]);
     const notif: AppNotification = {
       id: `N${Date.now()}`, type: 'general',
       message: `Patient ${patientName} transferred to ${transfer.receivingHospital}`,
@@ -1464,6 +1462,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               }
             }}
             onMarkDoseIntaked={handleMarkDoseIntaked}
+            onRequireStaffSignOff={requireStaffSignOff}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
           />
         );
@@ -1478,11 +1477,17 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         );
       case 'appointments':
         return (
-          <Appointments patients={patients} searchQuery={searchQuery} onNavigate={navigate} />
+          <Appointments
+            patients={patients} searchQuery={searchQuery}
+            onNavigate={navigate} onRequireStaffSignOff={requireStaffSignOff}
+          />
         );
       case 'telemedicine':
         return (
-          <Telemedicine patients={patients} searchQuery={searchQuery} onNavigate={navigate} />
+          <Telemedicine
+            patients={patients} searchQuery={searchQuery}
+            onNavigate={navigate} onRequireStaffSignOff={requireStaffSignOff}
+          />
         );
       case 'patient-form':
         return (
@@ -1499,6 +1504,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             patient={selectedPatient} consultations={consultations}
             medicalCerts={medicalCerts} onNavigate={navigate}
             onSelectPatient={setSelectedPatientId}
+            onEditPatient={setEditingPatientId}
           />
         );
       case 'new-consultation':
@@ -1599,6 +1605,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             selectedPatientId={selectedPatientId} searchQuery={searchQuery}
             onAddCert={handleAddMedCert} onUpdateCert={handleUpdateMedCert}
             onDeleteCert={handleDeleteMedCert}
+            onRequireStaffSignOff={requireStaffSignOff}
           />
         );
       case 'beds':
@@ -1627,7 +1634,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           />
         );
       case 'settings':
-        return <Settings />;
+        return <Settings onRequireStaffSignOff={requireStaffSignOff} />;
       default:
         return null;
     }

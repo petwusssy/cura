@@ -16,6 +16,7 @@ interface MedicalCertificatesProps {
   onAddCert: (cert: MedicalCertificate) => any;
   onUpdateCert: (cert: MedicalCertificate) => any;
   onDeleteCert?: (id: string) => void | Promise<void>;
+  onRequireStaffSignOff?: (actionTitle: string, actionDetails: string, targetType: string, targetId: string) => Promise<any>;
   searchQuery: string;
 }
 
@@ -164,7 +165,7 @@ function formatCertRef(id?: string): string {
   return `MC-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
-export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, onDeleteCert, searchQuery }: MedicalCertificatesProps) {
+export function MedicalCertificates({ medicalCerts, patients, selectedPatientId, onAddCert, onUpdateCert, onDeleteCert, onRequireStaffSignOff, searchQuery }: MedicalCertificatesProps) {
   const [activeTab, setActiveTab] = useState<'template' | 'archives' | 'requests'>('template');
 
   // Issuance Requests state
@@ -307,6 +308,19 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const prevRequests = requests;
     const patientName = selectedReq.patient_name || 'patient';
 
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          status === 'Approved' ? 'Approved Medical Certificate Request' : 'Declined Medical Certificate Request',
+          `${patientName} • ${reqDiagnosis || selectedReq.purpose || 'Medical Certificate Request'}`,
+          'MedicalCertificate',
+          String(targetId)
+        );
+      } catch {
+        return;
+      }
+    }
+
     // Optimistic UI update: instantly close modal & update state (0ms delay)
     const optimisticRes: MedicalCertificateRequest = {
       ...selectedReq,
@@ -350,6 +364,18 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
   const handleDeleteRequest = async (id: string, name?: string) => {
     if (!window.confirm(`Are you sure you want to delete this issuance request for ${name || 'patient'}?`)) return;
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Deleted Medical Certificate Request',
+          `${name || id}`,
+          'MedicalCertificate',
+          String(id)
+        );
+      } catch {
+        return;
+      }
+    }
     const success = await medcertRequestService.deleteRequest(id);
     if (success) {
       setRequests(prev => prev.filter(r => r.id !== id));
@@ -432,7 +458,10 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         }
         return created || updatedCert;
       }
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.message === 'PIN_CANCELLED') {
+        throw e;
+      }
       console.error('Error saving certificate to archive:', e);
       return updatedCert;
     }
@@ -471,7 +500,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       } else if (options.printAfter) {
         handlePrint();
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'PIN_CANCELLED') {
+        triggerToast('⚠️ PIN verification cancelled.');
+        return;
+      }
       console.error('Issue failed:', err);
       triggerToast('⚠️ Error issuing certificate. Please try again.');
     } finally {

@@ -229,22 +229,9 @@ export function StaffPinModal({
               <Delete size={17} />
             </button>
           </div>
-
-          {/* 15-Minute Shift Toggle */}
-          <label className="flex items-center gap-2.5 pt-1 px-1 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={keepShift}
-              onChange={e => setKeepShift(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-[#1B3A6B] focus:ring-[#1B3A6B]"
-            />
-            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
-              <Clock size={13} className="text-[#1B3A6B]" />
-              Keep my PIN active for 15 minutes (Shift Mode)
-            </span>
-          </label>
         </div>
       </div>
     </div>
   );
 }
+

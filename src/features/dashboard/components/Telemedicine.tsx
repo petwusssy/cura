@@ -112,11 +112,12 @@ interface TelemedicineProps {
   patients: Patient[];
   searchQuery?: string;
   onNavigate?: (page: string) => void;
+  onRequireStaffSignOff?: (actionTitle: string, actionDetails: string, targetType: string, targetId: string) => Promise<any>;
 }
 
 const PRIMARY = '#1B3A6B';
 
-export function Telemedicine({ patients, searchQuery = '' }: TelemedicineProps) {
+export function Telemedicine({ patients, searchQuery = '', onRequireStaffSignOff }: TelemedicineProps) {
   const [requests, setRequests] = useState<TelemedicineRequest[]>(() => {
     try {
       const cached = localStorage.getItem('cura_telemedicine_requests_cache');
@@ -227,6 +228,18 @@ const TELEMEDICINE_TIME_SLOTS = [
   };
 
   const handleSaveAvailability = async () => {
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Updated Telemedicine Schedule Availability',
+          `Blocked ${unavailableDates.length} dates`,
+          'Telemedicine',
+          'availability'
+        );
+      } catch {
+        return;
+      }
+    }
     setAvailSaving(true);
     const success = await telemedicineService.saveAvailability(unavailableDates, unavailableTimes);
     setAvailSaving(false);
@@ -293,6 +306,18 @@ const TELEMEDICINE_TIME_SLOTS = [
 
   const handleAction = async () => {
     if (!selectedReq || !actionType) return;
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          actionType === 'Approve' ? 'Approved Telemedicine Request' : 'Declined Telemedicine Request',
+          `${getPatientName(selectedReq.patient)} • ${scheduledDate || selectedReq.preferred_date} ${scheduledTime || selectedReq.preferred_time}`,
+          'Telemedicine',
+          String(selectedReq.id)
+        );
+      } catch {
+        return;
+      }
+    }
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
     const effectiveMeetingLink = `https://cura-bice.vercel.app/call/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
@@ -333,6 +358,19 @@ const TELEMEDICINE_TIME_SLOTS = [
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this request?")) return;
+    const targetReq = requests.find(r => r.id === id);
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Deleted Telemedicine Request',
+          `${targetReq ? getPatientName(targetReq.patient) : id}`,
+          'Telemedicine',
+          String(id)
+        );
+      } catch {
+        return;
+      }
+    }
     deletedIdsRef.current.add(id);
     const prevRequests = requests;
     setRequests(prev => prev.filter(r => r.id !== id));

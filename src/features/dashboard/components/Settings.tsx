@@ -55,7 +55,11 @@ function formatManilaTimestamp(iso: string): string {
   }
 }
 
-export function Settings() {
+interface SettingsProps {
+  onRequireStaffSignOff?: (actionTitle: string, actionDetails: string, targetType: string, targetId: string) => Promise<any>;
+}
+
+export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [activeSection, setActiveSection] = useState('profile');
   const [saved, setSaved] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -70,7 +74,19 @@ export function Settings() {
     emailNotifs: false, soundAlerts: true, reminderBefore: '10',
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Updated Clinic Profile Settings',
+          `${profile.name} (${profile.designation} • ${profile.department})`,
+          'Settings',
+          'profile'
+        );
+      } catch {
+        return;
+      }
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -307,6 +323,18 @@ export function Settings() {
   };
 
   const handlePushAdvisory = async () => {
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          'Updated Clinic Advisory Broadcast',
+          `Status: ${broadcastStatus} • ${broadcastMessage.slice(0, 60)}`,
+          'Advisory',
+          'clinic-advisory'
+        );
+      } catch {
+        return;
+      }
+    }
     setSaved(true);
     try {
       await api.post('/advisory/', {
@@ -719,7 +747,14 @@ export function Settings() {
                           <option value="Consultation">Consultations</option>
                           <option value="Patient">Patients</option>
                           <option value="Inventory">Inventory / Medicine</option>
+                          <option value="PurchaseRequest">Purchase Requisitions (PRF)</option>
                           <option value="MedicalCertificate">Medical Certificates</option>
+                          <option value="Bed">Clinic Beds</option>
+                          <option value="HospitalTransfer">Hospital Transfers</option>
+                          <option value="Appointment">Appointments</option>
+                          <option value="Telemedicine">Telemedicine</option>
+                          <option value="Advisory">Clinic Advisory</option>
+                          <option value="Settings">Settings</option>
                           <option value="Staff">Staff Management</option>
                         </select>
                       </div>

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle, UserCheck } from 'lucide-react';
+import { Search, Eye, User, Pill, Upload, Calendar, Ambulance, X, Save, Plus, CheckCircle, UserCheck, Edit2 } from 'lucide-react';
 import { Patient, Consultation, HospitalTransfer, Page } from '../types';
 import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12, formatTimeRange12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
+import api from '@/services/api';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -36,8 +37,8 @@ interface ConsultationTabProps {
   patients: Patient[];
   consultations: Consultation[];
   transfers: HospitalTransfer[];
-  onUpdateConsultation: (c: Consultation) => void | Promise<void>;
-  onAddTransfer: (t: HospitalTransfer) => void;
+  onUpdateConsultation: (c: Consultation) => any;
+  onAddTransfer: (t: HospitalTransfer) => any;
   onNavigate: (page: Page) => void;
   onSelectPatient: (id: string) => void;
   searchQuery: string;
@@ -52,6 +53,8 @@ export function ConsultationTab({
   const [customTo, setCustomTo] = useState('');
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [viewDetail, setViewDetail] = useState<Consultation | null>(null);
+  const [isEditingDetail, setIsEditingDetail] = useState(false);
+  const [editDraft, setEditDraft] = useState<Consultation | null>(null);
   const [transferModal, setTransferModal] = useState<Consultation | null>(null);
   const [activeTab, setActiveTab] = useState<'consultations' | 'transfers'>('consultations');
 
@@ -155,14 +158,13 @@ export function ConsultationTab({
       notes: tfNotes,
       transferredBy: 'Dr. Rosario Mendez',
     };
-    onAddTransfer(transfer);
-    
     try {
-      await onUpdateConsultation({ ...transferModal, transferred: true });
+      await onAddTransfer(transfer);
       setTransferModal(null);
-    } catch (e) {
-      console.error('Failed to update consultation transfer status', e);
-      alert('Error saving transfer status.');
+    } catch (e: any) {
+      if (e?.message !== 'PIN_CANCELLED') {
+        console.error('Failed to save transfer status', e);
+      }
     }
   };
 
@@ -577,12 +579,61 @@ export function ConsultationTab({
                   </h3>
                   <p className="text-sm text-gray-500">{normalizeDate(viewDetail.date)} • {formatTimeRange12(viewDetail.timeIn, viewDetail.timeOut, 'Present')}</p>
                 </div>
-                <button
-                  onClick={() => setViewDetail(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {!isEditingDetail ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditDraft({
+                          ...viewDetail,
+                          vitals: { ...(viewDetail.vitals || {}) },
+                        });
+                        setIsEditingDetail(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-[#1B3A6B] text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
+                    >
+                      <Edit2 size={13} /> Edit Record
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingDetail(false);
+                          setEditDraft(null);
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!editDraft) return;
+                          try {
+                            const saved = await onUpdateConsultation(editDraft);
+                            setViewDetail(saved || editDraft);
+                            setIsEditingDetail(false);
+                            setEditDraft(null);
+                          } catch {}
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1B3A6B] text-white text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        <Save size={13} /> Save Changes (PIN)
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsEditingDetail(false);
+                      setEditDraft(null);
+                      setViewDetail(null);
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
               
               {/* Content */}
@@ -595,7 +646,16 @@ export function ConsultationTab({
                        <div className="space-y-3">
                          <div>
                            <span className="text-xs text-gray-500 block mb-1">Complaint</span>
-                           <div className="text-sm font-medium text-gray-800">{viewDetail.complaint}</div>
+                           {isEditingDetail && editDraft ? (
+                             <input
+                               type="text"
+                               value={editDraft.complaint || ''}
+                               onChange={e => setEditDraft({ ...editDraft, complaint: e.target.value })}
+                               className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                             />
+                           ) : (
+                             <div className="text-sm font-medium text-gray-800">{viewDetail.complaint}</div>
+                           )}
                          </div>
                          
                          <div>
@@ -628,43 +688,57 @@ export function ConsultationTab({
                      </div>
                      
                      {/* Vital Signs */}
-                     {viewDetail.vitals && (
+                     {(viewDetail.vitals || isEditingDetail) && (
                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                          <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Vital Signs</h4>
                          <div className="grid grid-cols-3 gap-3">
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">BP</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.bp || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">HR</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.hr || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">Temp</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.temp || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">Weight</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.weight || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">Height</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.height || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">Resp. Rate</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.rr || '—'}</div>
-                           </div>
-                           <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-                             <span className="text-[10px] text-gray-500 uppercase">O2 Sat</span>
-                             <div className="text-sm font-semibold">{viewDetail.vitals.o2 || '—'}</div>
-                           </div>
+                           {([
+                             { key: 'bp', label: 'BP' },
+                             { key: 'hr', label: 'HR' },
+                             { key: 'temp', label: 'Temp' },
+                             { key: 'weight', label: 'Weight' },
+                             { key: 'height', label: 'Height' },
+                             { key: 'rr', label: 'Resp. Rate' },
+                             { key: 'o2', label: 'O2 Sat' },
+                           ] as const).map(v => (
+                             <div key={v.key} className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                               <span className="text-[10px] text-gray-500 uppercase">{v.label}</span>
+                               {isEditingDetail && editDraft ? (
+                                 <input
+                                   type="text"
+                                   value={(editDraft.vitals as any)?.[v.key] || ''}
+                                   onChange={e =>
+                                     setEditDraft({
+                                       ...editDraft,
+                                       vitals: { ...(editDraft.vitals || {}), [v.key]: e.target.value },
+                                     })
+                                   }
+                                   className="w-full mt-0.5 px-2 py-1 rounded border border-gray-300 bg-white text-xs font-semibold focus:outline-none focus:border-[#1B3A6B]"
+                                 />
+                               ) : (
+                                 <div className="text-sm font-semibold">{(viewDetail.vitals as any)?.[v.key] || '—'}</div>
+                               )}
+                             </div>
+                           ))}
                          </div>
-                         {viewDetail.vitals.notes && (
+                         {(viewDetail.vitals?.notes || isEditingDetail) && (
                            <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-100">
                              <span className="text-[10px] text-gray-500 uppercase block mb-1">Vital Notes</span>
-                             <div className="text-sm font-semibold text-gray-700">{viewDetail.vitals.notes}</div>
+                             {isEditingDetail && editDraft ? (
+                               <input
+                                 type="text"
+                                 value={editDraft.vitals?.notes || ''}
+                                 onChange={e =>
+                                   setEditDraft({
+                                     ...editDraft,
+                                     vitals: { ...(editDraft.vitals || {}), notes: e.target.value },
+                                   })
+                                 }
+                                 className="w-full px-2 py-1 rounded border border-gray-300 bg-white text-xs font-semibold focus:outline-none focus:border-[#1B3A6B]"
+                               />
+                             ) : (
+                               <div className="text-sm font-semibold text-gray-700">{viewDetail.vitals?.notes}</div>
+                             )}
                            </div>
                          )}
                        </div>
@@ -701,16 +775,43 @@ export function ConsultationTab({
                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                        <div>
                          <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nurse's Notes</h4>
-                         <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.nurseNotes || '—'}</div>
+                         {isEditingDetail && editDraft ? (
+                           <textarea
+                             rows={3}
+                             value={editDraft.nurseNotes || ''}
+                             onChange={e => setEditDraft({ ...editDraft, nurseNotes: e.target.value })}
+                             className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                           />
+                         ) : (
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.nurseNotes || '—'}</div>
+                         )}
                        </div>
                        <div className="border-t border-gray-100 pt-3">
                          <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recommendations</h4>
-                         <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.recommendations || '—'}</div>
+                         {isEditingDetail && editDraft ? (
+                           <textarea
+                             rows={2}
+                             value={editDraft.recommendations || ''}
+                             onChange={e => setEditDraft({ ...editDraft, recommendations: e.target.value })}
+                             className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                           />
+                         ) : (
+                           <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.recommendations || '—'}</div>
+                         )}
                        </div>
-                       {viewDetail.followUp && (
+                       {(viewDetail.followUp || isEditingDetail) && (
                          <div className="border-t border-gray-100 pt-3">
                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Follow-up Notes</h4>
-                           <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.followUp}</div>
+                           {isEditingDetail && editDraft ? (
+                             <textarea
+                               rows={2}
+                               value={editDraft.followUp || ''}
+                               onChange={e => setEditDraft({ ...editDraft, followUp: e.target.value })}
+                               className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                             />
+                           ) : (
+                             <div className="text-sm text-gray-700 whitespace-pre-line">{viewDetail.followUp}</div>
+                           )}
                          </div>
                        )}
                        
@@ -743,7 +844,19 @@ export function ConsultationTab({
                        <input type="file" accept="image/*" className="hidden" onChange={e => {
                          if (e.target.files?.[0]) {
                            const reader = new FileReader();
-                           reader.onload = ev => onUpdateConsultation({ ...viewDetail, prescriptionImage: ev.target?.result as string });
+                           reader.onload = async ev => {
+                             const dataUrl = ev.target?.result as string;
+                             if (!dataUrl) return;
+                             let finalUrl = dataUrl;
+                             try {
+                               const res = await api.post('/upload/', { image: dataUrl, category: 'prescription', label: viewDetail.patientId || 'rx' });
+                               if (res.data?.url) finalUrl = res.data.url;
+                             } catch {}
+                             try {
+                               const saved = await onUpdateConsultation({ ...viewDetail, prescriptionImage: finalUrl });
+                               setViewDetail(saved || { ...viewDetail, prescriptionImage: finalUrl });
+                             } catch {}
+                           };
                            reader.readAsDataURL(e.target.files[0]);
                          }
                        }} />
