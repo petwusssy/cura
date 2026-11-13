@@ -2151,7 +2151,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </div>
                   <h2 className="text-lg font-bold mt-1">CURA Cloud Archive & Live Ledger Vault (Google Drive)</h2>
                   <p className="text-xs text-blue-100 mt-0.5">
-                    Every consultation automatically syncs in real time (&ldquo;Kada Pasok&rdquo;) to <code className="bg-white/10 px-1.5 py-0.5 rounded">Live_Daily_Logs</code>, and every exported report is sealed with a SHA-256 fingerprint in <code className="bg-white/10 px-1.5 py-0.5 rounded">Medical_Archives</code>.
+                    Every consultation automatically syncs in real time (&ldquo;Kada Pasok&rdquo;) to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Consultations / 01 - Daily Consultation Logs</code>, and exported reports are saved in <code className="bg-white/10 px-1.5 py-0.5 rounded">03 - Reports &amp; Archives</code>.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5">

@@ -156,7 +156,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
       const created = await staffService.syncAuditSnapshot(staffName);
       if (created?.folder_url) setAuditDriveFolderUrl(created.folder_url);
       await loadStaffAndLogs();
-      toast.success(`Synced ${created?.name || 'audit logs'} to Google Drive (Audit_Logs)`);
+      toast.success(`Synced ${created?.name || 'audit logs'} to Google Drive (04 - Settings (Audit Logs))`);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Failed to sync audit logs to Google Drive.');
     } finally {
@@ -759,7 +759,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                             <Cloud size={18} className="text-[#1E5AA8] shrink-0 mt-0.5" />
                             <div>
                               <div className="text-xs font-bold text-foreground">
-                                Google Drive Backup (<span className="font-mono">Audit_Logs</span>)
+                                Google Drive Backup (<span className="font-mono">04 - Settings (Audit Logs)</span>)
                               </div>
                               <div className="text-[11px] text-muted-foreground">
                                 New logs sync automatically to daily CSV trails. Push a full snapshot anytime ({auditDriveFiles.length} synced {auditDriveFiles.length === 1 ? 'file' : 'files'}).
