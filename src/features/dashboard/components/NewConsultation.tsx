@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, Plus, Trash2, Save, Clock, Calendar, Search, X, UserCheck } from 'lucide-react';
 import { Patient, Consultation, Treatment, Page, MedicineItem } from '../types';
-import { staffService } from '@/services/staffService';
+import { staffService, SHIFT_UPDATED_EVENT } from '@/services/staffService';
 import api from '@/services/api';
 
 const PRIMARY = '#1B3A6B';
@@ -102,9 +102,21 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
   });
 
   const [doctorName, setDoctorName] = useState(initialData?.doctorName || '');
-  const [assistingNurse, setAssistingNurse] = useState(
-    () => initialData?.assistingNurse || staffService.getActiveShift()?.staff.name || 'UA CLINIC ADMIN'
+  const [activeShiftNurse, setActiveShiftNurse] = useState(
+    () => staffService.getActiveShift()?.staff.name || ''
   );
+
+  useEffect(() => {
+    const syncShift = () => setActiveShiftNurse(staffService.getActiveShift()?.staff.name || '');
+    window.addEventListener(SHIFT_UPDATED_EVENT, syncShift);
+    return () => window.removeEventListener(SHIFT_UPDATED_EVENT, syncShift);
+  }, []);
+
+  const assistingNurse = activeShiftNurse || initialData?.assistingNurse || 'UA CLINIC ADMIN';
+  const assistingNurseDisplay =
+    activeShiftNurse ||
+    initialData?.assistingNurse ||
+    (staffService.hasActiveStaff() ? 'Assigned via Staff PIN on Save' : 'UA CLINIC ADMIN');
   
   const [vitals, setVitals] = useState(initialData?.vitals || { height: '', weight: '', temp: '', bp: '', hr: '', rr: '', o2: '', notes: '' });
   const [treatments, setTreatments] = useState<Treatment[]>(initialData?.treatments || []);
@@ -268,6 +280,19 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
 
   const inputCls = 'w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white text-gray-900 transition-all shadow-2xs';
   const labelCls = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5';
+  const renderAssistingNurseField = () => (
+    <div>
+      <label className={labelCls}>Assisting Nurse (Locked)</label>
+      <input
+        type="text"
+        value={assistingNurseDisplay}
+        readOnly
+        aria-readonly="true"
+        title="Automatically assigned and locked by verified Staff PIN"
+        className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-gray-50 text-gray-500 cursor-not-allowed focus:outline-none shadow-2xs"
+      />
+    </div>
+  );
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
@@ -424,10 +449,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
               <label className={labelCls}>Purpose of Visit</label>
               <input type="text" value={purposeOfVisit} onChange={e => setPurposeOfVisit(e.target.value)} placeholder="e.g., Medicine refill, blood pressure check..." className={inputCls} />
             </div>
-            <div>
-              <label className={labelCls}>Assisting Nurse</label>
-              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} className={inputCls} />
-            </div>
+            {renderAssistingNurseField()}
             <div>
               <label className={labelCls}>Operational Notes & Readings</label>
               <textarea value={operationalNotes} onChange={e => setOperationalNotes(e.target.value)} rows={3} placeholder="Notes, readings, observations..." className={inputCls + ' resize-none'} />
@@ -566,10 +588,7 @@ export function NewConsultation({ patient, patients = [], medicines = [], forced
               <label className={labelCls}>Doctor's Name <span className="text-red-500">*</span></label>
               <input type="text" value={doctorName} onChange={e => setDoctorName(e.target.value)} className={inputCls} />
             </div>
-            <div>
-              <label className={labelCls}>Assisting Nurse</label>
-              <input type="text" value={assistingNurse} onChange={e => setAssistingNurse(e.target.value)} placeholder="e.g., UA CLINIC ADMIN" className={inputCls} />
-            </div>
+            {renderAssistingNurseField()}
           </div>
         ))}
 

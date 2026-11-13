@@ -1066,13 +1066,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       'Consultation',
       String(updated.id)
     );
+    const { assistingNurse: _lockedAssistingNurse, ...safeUpdated } = updated;
+    const preserved = {
+      ...safeUpdated,
+      assistingNurse: consultations.find(c => c.id === updated.id)?.assistingNurse ?? updated.assistingNurse,
+    } as Consultation;
     try {
-      const res = await consultationService.updateConsultation(updated.id, updated);
+      const res = await consultationService.updateConsultation(updated.id, safeUpdated);
       setConsultations(prev => prev.map(c => c.id === res.id ? res : c));
       return res;
     } catch (e) {
-      setConsultations(prev => prev.map(c => c.id === updated.id ? updated : c));
-      return updated;
+      setConsultations(prev => prev.map(c => c.id === updated.id ? preserved : c));
+      return preserved;
     }
   };
 
