@@ -128,7 +128,6 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [auditDriveFolderUrl, setAuditDriveFolderUrl] = useState(
     'https://drive.google.com/drive/folders/1qRJu1lh8pOmwJ8W_ugpc_OEt8ML7cnie'
   );
-  const [isSyncingAuditDrive, setIsSyncingAuditDrive] = useState(false);
 
   const loadStaffAndLogs = useCallback(async () => {
     setIsLoadingStaff(true);
@@ -148,21 +147,6 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
       setIsLoadingStaff(false);
     }
   }, []);
-
-  const handleSyncAuditDrive = async () => {
-    setIsSyncingAuditDrive(true);
-    try {
-      const staffName = authService.getUsername().toUpperCase() || 'ADMIN';
-      const created = await staffService.syncAuditSnapshot(staffName);
-      if (created?.folder_url) setAuditDriveFolderUrl(created.folder_url);
-      await loadStaffAndLogs();
-      toast.success(`Synced ${created?.name || 'audit logs'} to Google Drive (04 - Settings (Audit Logs))`);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to sync audit logs to Google Drive.');
-    } finally {
-      setIsSyncingAuditDrive(false);
-    }
-  };
 
   useEffect(() => {
     api.get('/advisory/')
@@ -762,7 +746,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                                 Google Drive Backup (<span className="font-mono">04 - Settings (Audit Logs)</span>)
                               </div>
                               <div className="text-[11px] text-muted-foreground">
-                                New logs sync automatically to daily CSV trails. Push a full snapshot anytime ({auditDriveFiles.length} synced {auditDriveFiles.length === 1 ? 'file' : 'files'}).
+                                Audit trails are backed up automatically to daily CSV files.
                               </div>
                             </div>
                           </div>
@@ -775,16 +759,6 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                             >
                               <ExternalLink size={13} /> Open Drive Folder
                             </a>
-                            <button
-                              type="button"
-                              onClick={handleSyncAuditDrive}
-                              disabled={isSyncingAuditDrive}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-                              style={{ backgroundColor: PRIMARY }}
-                            >
-                              <RefreshCw size={13} className={isSyncingAuditDrive ? 'animate-spin' : ''} />
-                              {isSyncingAuditDrive ? 'Syncing...' : 'Sync Snapshot'}
-                            </button>
                           </div>
                         </div>
                         {auditDriveFiles.length > 0 && (

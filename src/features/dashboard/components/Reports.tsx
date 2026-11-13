@@ -326,8 +326,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     drive_url: string;
   }>>([]);
   const [archivesLoading, setArchivesLoading] = useState(false);
-  const [syncingSnapshot, setSyncingSnapshot] = useState(false);
-  const [archiveToast, setArchiveToast] = useState<string | null>(null);
 
   const fetchDriveArchives = async () => {
     setArchivesLoading(true);
@@ -368,29 +366,9 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
         title,
         file_b64: b64,
         staff_name: staff,
-      }).then(() => {
-        setArchiveToast(`Auto-archived "${filename}" to Google Drive Vault`);
-        setTimeout(() => setArchiveToast(null), 4000);
       }).catch(() => {});
     } catch {
       // non-blocking
-    }
-  };
-
-  const handleSyncFullSnapshot = async () => {
-    if (syncingSnapshot) return;
-    setSyncingSnapshot(true);
-    try {
-      const staff = staffService.getActiveShift()?.name || localStorage.getItem('username') || 'Clinic Staff';
-      await api.post('/reports/sync-snapshot/', { staff_name: staff });
-      setArchiveToast('Full Clinic Snapshot synced to Google Drive Vault!');
-      setTimeout(() => setArchiveToast(null), 4000);
-      await fetchDriveArchives();
-    } catch {
-      setArchiveToast('Snapshot sync queued.');
-      setTimeout(() => setArchiveToast(null), 3000);
-    } finally {
-      setSyncingSnapshot(false);
     }
   };
 
@@ -2143,32 +2121,12 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
             <div className="p-5 sm:p-6 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-[#1B3A6B] to-[#254E8E] text-white p-5 rounded-xl shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
-                      Enterprise Real-Time Disaster Recovery Active
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-bold mt-1">CURA Cloud Archive & Live Ledger Vault (Google Drive)</h2>
+                  <h2 className="text-lg font-bold">CURA Cloud Archives (Google Drive)</h2>
                   <p className="text-xs text-blue-100 mt-0.5">
-                    Every consultation automatically syncs in real time (&ldquo;Kada Pasok&rdquo;) to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Consultations / 01 - Daily Consultation Logs</code>, and exported reports are saved in <code className="bg-white/10 px-1.5 py-0.5 rounded">03 - Reports &amp; Archives</code>.
+                    Consultations are backed up automatically to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Consultations / 01 - Daily Consultation Logs</code>, and exported reports to <code className="bg-white/10 px-1.5 py-0.5 rounded">03 - Reports &amp; Archives</code>.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={fetchDriveArchives}
-                    disabled={archivesLoading}
-                    className="px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition-all cursor-pointer"
-                  >
-                    {archivesLoading ? 'Refreshing...' : 'Refresh Vault'}
-                  </button>
-                  <button
-                    onClick={handleSyncFullSnapshot}
-                    disabled={syncingSnapshot}
-                    className="px-4 py-2 rounded-lg bg-[#F4C542] text-[#1B3A6B] text-xs font-bold hover:opacity-95 transition-all cursor-pointer shadow-sm"
-                  >
-                    {syncingSnapshot ? 'Syncing Snapshot...' : 'Sync Full Clinic Snapshot Now'}
-                  </button>
                   <a
                     href="https://drive.google.com/drive/folders/1lc-gyNPuUUjQUL1s07-fMcBumyWnSEIW"
                     target="_blank"
@@ -2184,10 +2142,10 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="bg-gray-50 text-gray-700 border-b border-gray-200">
-                      <th className="px-4 py-3 text-left font-bold">Archive / Live Ledger File</th>
-                      <th className="px-4 py-3 text-center font-bold">Tier / Category</th>
-                      <th className="px-4 py-3 text-center font-bold">SHA-256 Integrity Checksum</th>
-                      <th className="px-4 py-3 text-center font-bold">Last Synced (UTC)</th>
+                      <th className="px-4 py-3 text-left font-bold">Archive / Daily Log File</th>
+                      <th className="px-4 py-3 text-center font-bold">Folder / Category</th>
+                      <th className="px-4 py-3 text-center font-bold">SHA-256 Checksum</th>
+                      <th className="px-4 py-3 text-center font-bold">Last Updated</th>
                       <th className="px-4 py-3 text-right font-bold">Actions</th>
                     </tr>
                   </thead>
@@ -2195,13 +2153,13 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                     {archivesLoading ? (
                       <tr>
                         <td colSpan={5} className="text-center py-10 text-gray-400 font-medium">
-                          Loading archives from Google Drive (CURA_CLINIC_STORAGE)...
+                          Loading files from Google Drive...
                         </td>
                       </tr>
                     ) : driveArchives.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="text-center py-10 text-gray-400">
-                          No archived files yet. Save a consultation or click &ldquo;Sync Full Clinic Snapshot Now&rdquo; to populate the vault.
+                          No archived files yet. Files appear here automatically as consultations and reports are saved.
                         </td>
                       </tr>
                     ) : (
@@ -2252,13 +2210,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
         </div>
       </div>
-
-      {archiveToast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#1B3A6B] text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 border border-white/15">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          {archiveToast}
-        </div>
-      )}
 
       {/* Custom Date Modal */}
       <CustomDateRangeModal

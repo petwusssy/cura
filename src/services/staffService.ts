@@ -523,10 +523,5 @@ export const staffService = {
     const res = await api.get<AuditDriveArchivesResponse>('/audit-logs/drive-archives/');
     return res.data;
   },
-
-  async syncAuditSnapshot(staffName: string): Promise<AuditDriveArchiveItem & { folder_url?: string }> {
-    const res = await api.post('/audit-logs/drive-archives/', { staff_name: staffName });
-    return res.data;
-  },
 };
 
