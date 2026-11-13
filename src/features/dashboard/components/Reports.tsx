@@ -2123,7 +2123,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                 <div>
                   <h2 className="text-lg font-bold">CURA Cloud Archives (Google Drive)</h2>
                   <p className="text-xs text-blue-100 mt-0.5">
-                    Consultations are backed up automatically to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Consultations / 01 - Daily Consultation Logs</code>, and exported reports to <code className="bg-white/10 px-1.5 py-0.5 rounded">03 - Reports &amp; Archives</code>.
+                    Consultations sync to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Consultations / 01 - Daily Consultation Logs</code>, live report tables auto-update in <code className="bg-white/10 px-1.5 py-0.5 rounded">03 - Reports &amp; Archives / 01 - Live Report Mirrors (Auto-Synced)</code>, and Excel exports go to <code className="bg-white/10 px-1.5 py-0.5 rounded">02 - Exported Excel Workbooks</code>.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5">
@@ -2170,7 +2170,11 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                               item.folder_key === 'live_logs'
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-blue-100 text-[#1B3A6B]'
+                                : item.folder_key === 'live_reports'
+                                  ? 'bg-sky-100 text-sky-800'
+                                  : item.folder_key === 'patients'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : 'bg-blue-100 text-[#1B3A6B]'
                             }`}>
                               {item.category}
                             </span>
