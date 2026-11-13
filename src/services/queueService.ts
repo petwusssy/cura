@@ -1,6 +1,5 @@
 import { PatientQueue } from '@/features/dashboard/types';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://cura-backend-dtfj.onrender.com/api';
+import { API_URL } from './api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('accessToken') || localStorage.getItem('cura_access_token');

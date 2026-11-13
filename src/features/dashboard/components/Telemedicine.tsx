@@ -280,7 +280,7 @@ const TELEMEDICINE_TIME_SLOTS = [
       }).catch(() => {}).finally(() => {
         isFetching = false;
       });
-    }, 8000);
+    }, 25000);
     return () => clearInterval(interval);
   }, []);
 

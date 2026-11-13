@@ -1,4 +1,4 @@
-import api from './api';
+import api, { API_URL } from './api';
 import { authService } from './authService';
 
 export interface ClinicStaffMember {
@@ -300,6 +300,7 @@ export const staffService = {
     }
 
     // 1. Check the Render service where USER_MANAGEMENT_PASSWORD ENV is configured (cura-backend-dvj5)
+    let envCheckCompleted = false;
     try {
       const envRes = await fetch(`${RENDER_ENV_BACKEND_URL}/staff/verify-admin/`, {
         method: 'POST',
@@ -314,7 +315,15 @@ export const staffService = {
       if (envData?.env_configured === true) {
         return false;
       }
+      if (envRes.ok) {
+        envCheckCompleted = true;
+      }
     } catch {}
+
+    // If primary API already points to dvj5 and responded above, avoid duplicate request
+    if (envCheckCompleted && API_URL === RENDER_ENV_BACKEND_URL) {
+      return false;
+    }
 
     // 2. Fallback to primary API URL if dvj5 is unreachable
     try {
@@ -343,22 +352,33 @@ export const staffService = {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
-    // Update custom password on both Render instances so custom password + ENV recovery password both work
-    const [dvj5Res, primaryRes] = await Promise.allSettled([
-      fetch(`${RENDER_ENV_BACKEND_URL}/staff/change-admin-password/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_password: cleanNew }),
-      }).then(async r => ({ ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) })),
-      api.post('/staff/change-admin-password/', {
-        new_password: cleanNew,
-      }),
-    ]);
-
-    if (dvj5Res.status === 'fulfilled' && !dvj5Res.value.ok) {
-      throw new Error(dvj5Res.value.data?.error || 'Failed to update User Management password.');
+    // Update custom password on primary backend (and secondary dvj5 only if primary points elsewhere)
+    const calls: Promise<any>[] = [
+      api.post('/staff/change-admin-password/', { new_password: cleanNew }),
+    ];
+    if (API_URL !== RENDER_ENV_BACKEND_URL) {
+      calls.push(
+        fetch(`${RENDER_ENV_BACKEND_URL}/staff/change-admin-password/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: cleanNew }),
+        }).then(async r => {
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            throw new Error(data?.error || 'Failed to update User Management password.');
+          }
+          return data;
+        })
+      );
     }
-    if (dvj5Res.status === 'rejected' && primaryRes.status === 'rejected') {
+
+    const results = await Promise.allSettled(calls);
+    const primaryRes = results[0];
+    const secondaryRes = results[1];
+    if (secondaryRes?.status === 'rejected' && secondaryRes.reason instanceof Error) {
+      throw secondaryRes.reason;
+    }
+    if (primaryRes.status === 'rejected' && (!secondaryRes || secondaryRes.status === 'rejected')) {
       const err: any = primaryRes.reason;
       throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
     }

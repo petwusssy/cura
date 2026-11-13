@@ -455,7 +455,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       });
     };
 
-    const interval = setInterval(() => pollData(false), 12000);
+    const interval = setInterval(() => pollData(false), 30000);
 
     const handleFocusOrVisible = () => {
       if (typeof document !== 'undefined' && !document.hidden) {

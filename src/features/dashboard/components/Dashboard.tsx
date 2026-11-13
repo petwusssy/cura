@@ -108,13 +108,6 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     if (resolvedTreatmentId) {
       const uuidMatch = resolvedTreatmentId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
       if (uuidMatch) {
-        // Direct PATCH to ensure immediate cross-device sync with mobile
-        fetch(`https://cura-backend-dtfj.onrender.com/api/treatments/${uuidMatch[0]}/`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ remarks: updatedRemarks }),
-        }).catch(() => {});
-
         consultationService.updateTreatment(uuidMatch[0], updatedRemarks).catch(err => {
           console.error('Failed to update treatment intake on backend:', err);
         });

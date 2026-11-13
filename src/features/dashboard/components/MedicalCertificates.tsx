@@ -282,7 +282,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       fetchMedCertRequests();
-    }, 10000);
+    }, 25000);
     return () => clearInterval(interval);
   }, [fetchMedCertRequests]);
 

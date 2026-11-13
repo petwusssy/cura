@@ -158,7 +158,7 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
       }).catch(() => {}).finally(() => {
         isFetching = false;
       });
-    }, 8000);
+    }, 25000);
     return () => clearInterval(interval);
   }, []);
 
