@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop,
   Droplets, Megaphone, Users, Lock, Unlock, KeyRound, Plus, CheckCircle2,
-  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertCircle
+  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertCircle, Cloud, Download, ExternalLink
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import api from '../../../services/api';
@@ -11,6 +11,7 @@ import {
   staffService,
   ClinicStaffMember,
   AuditLogEntry,
+  AuditDriveArchiveItem,
   STAFF_UPDATED_EVENT,
   AUDIT_UPDATED_EVENT,
 } from '../../../services/staffService';
@@ -120,23 +121,48 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [resettingPinId, setResettingPinId] = useState<string | null>(null);
   const [resetPinValue, setResetPinValue] = useState('');
 
-  // Audit filter state
+  // Audit filter & Google Drive backup state
   const [auditSearch, setAuditSearch] = useState('');
   const [auditTargetFilter, setAuditTargetFilter] = useState<string>('All');
+  const [auditDriveFiles, setAuditDriveFiles] = useState<AuditDriveArchiveItem[]>([]);
+  const [auditDriveFolderUrl, setAuditDriveFolderUrl] = useState(
+    'https://drive.google.com/drive/folders/1qRJu1lh8pOmwJ8W_ugpc_OEt8ML7cnie'
+  );
+  const [isSyncingAuditDrive, setIsSyncingAuditDrive] = useState(false);
 
   const loadStaffAndLogs = useCallback(async () => {
     setIsLoadingStaff(true);
     try {
-      const [loadedStaff, loadedLogs] = await Promise.all([
+      const [loadedStaff, loadedLogs, driveData] = await Promise.all([
         staffService.getStaff(),
         staffService.getAuditLogs(),
+        staffService.getAuditDriveArchives().catch(() => null),
       ]);
       setStaffList(loadedStaff);
       setAuditLogs(loadedLogs);
+      if (driveData) {
+        if (driveData.folder_url) setAuditDriveFolderUrl(driveData.folder_url);
+        setAuditDriveFiles(Array.isArray(driveData.archives) ? driveData.archives : []);
+      }
     } finally {
       setIsLoadingStaff(false);
     }
   }, []);
+
+  const handleSyncAuditDrive = async () => {
+    setIsSyncingAuditDrive(true);
+    try {
+      const staffName = authService.getUsername().toUpperCase() || 'ADMIN';
+      const created = await staffService.syncAuditSnapshot(staffName);
+      if (created?.folder_url) setAuditDriveFolderUrl(created.folder_url);
+      await loadStaffAndLogs();
+      toast.success(`Synced ${created?.name || 'audit logs'} to Google Drive (Audit_Logs)`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Failed to sync audit logs to Google Drive.');
+    } finally {
+      setIsSyncingAuditDrive(false);
+    }
+  };
 
   useEffect(() => {
     api.get('/advisory/')
@@ -727,6 +753,76 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                   ) : staffSubTab === 'audit' ? (
                     /* ── Audit Logs Tab ── */
                     <div className="space-y-4">
+                      <div className="p-4 rounded-xl border border-border bg-muted/15 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-2.5">
+                            <Cloud size={18} className="text-[#1E5AA8] shrink-0 mt-0.5" />
+                            <div>
+                              <div className="text-xs font-bold text-foreground">
+                                Google Drive Backup (<span className="font-mono">Audit_Logs</span>)
+                              </div>
+                              <div className="text-[11px] text-muted-foreground">
+                                New logs sync automatically to daily CSV trails. Push a full snapshot anytime ({auditDriveFiles.length} synced {auditDriveFiles.length === 1 ? 'file' : 'files'}).
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a
+                              href={auditDriveFolderUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors"
+                            >
+                              <ExternalLink size={13} /> Open Drive Folder
+                            </a>
+                            <button
+                              type="button"
+                              onClick={handleSyncAuditDrive}
+                              disabled={isSyncingAuditDrive}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                              style={{ backgroundColor: PRIMARY }}
+                            >
+                              <RefreshCw size={13} className={isSyncingAuditDrive ? 'animate-spin' : ''} />
+                              {isSyncingAuditDrive ? 'Syncing...' : 'Sync Snapshot'}
+                            </button>
+                          </div>
+                        </div>
+                        {auditDriveFiles.length > 0 && (
+                          <div className="max-h-36 overflow-y-auto border border-border rounded-lg divide-y divide-border bg-card">
+                            {auditDriveFiles.map(file => (
+                              <div
+                                key={file.id}
+                                className="flex items-center justify-between gap-3 px-3 py-2 text-xs hover:bg-muted/20"
+                              >
+                                <div className="min-w-0 flex items-center gap-2">
+                                  <span className="font-mono font-semibold text-foreground truncate">{file.name}</span>
+                                  {file.sha256 && (
+                                    <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">
+                                      {file.sha256}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  {file.created_at && (
+                                    <span className="hidden md:inline text-[11px] font-mono text-muted-foreground">
+                                      {formatManilaTimestamp(file.created_at)}
+                                    </span>
+                                  )}
+                                  <a
+                                    href={file.download_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[#1E5AA8] hover:underline font-semibold"
+                                  >
+                                    <Download size={12} /> CSV
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
                           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

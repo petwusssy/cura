@@ -26,6 +26,23 @@ export interface ShiftSession {
   expiresAt: number;
 }
 
+export interface AuditDriveArchiveItem {
+  id: string;
+  name: string;
+  category?: string;
+  folder_key?: string;
+  sha256?: string;
+  created_at: string;
+  download_url: string;
+  drive_url: string;
+}
+
+export interface AuditDriveArchivesResponse {
+  folder_id: string;
+  folder_url: string;
+  archives: AuditDriveArchiveItem[];
+}
+
 const STAFF_CACHE_KEY = 'cura_clinic_staff_cache';
 const STAFF_PINS_CACHE_KEY = 'cura_clinic_staff_pins';
 const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
@@ -480,6 +497,16 @@ export const staffService = {
       sessionStorage.removeItem(ACTIVE_SHIFT_KEY);
       window.dispatchEvent(new CustomEvent(SHIFT_UPDATED_EVENT));
     } catch {}
+  },
+
+  async getAuditDriveArchives(): Promise<AuditDriveArchivesResponse> {
+    const res = await api.get<AuditDriveArchivesResponse>('/audit-logs/drive-archives/');
+    return res.data;
+  },
+
+  async syncAuditSnapshot(staffName: string): Promise<AuditDriveArchiveItem & { folder_url?: string }> {
+    const res = await api.post('/audit-logs/drive-archives/', { staff_name: staffName });
+    return res.data;
   },
 };
 
