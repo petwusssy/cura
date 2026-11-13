@@ -809,7 +809,11 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                                     </span>
                                   )}
                                   <a
-                                    href={file.download_url}
+                                    href={
+                                      api.defaults.baseURL
+                                        ? `${api.defaults.baseURL.replace(/\/$/, '')}/reports/archives/${file.id}/download/`
+                                        : file.download_url
+                                    }
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 text-[#1E5AA8] hover:underline font-semibold"
