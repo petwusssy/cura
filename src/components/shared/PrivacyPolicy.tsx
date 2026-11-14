@@ -122,14 +122,16 @@ export function PrivacyPolicyContent({ compact = false }: { compact?: boolean })
         ))}
       </div>
 
-      {/* DPO Contact Card */}
-      <div className="rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-br from-[#F4F9FD] to-white dark:from-slate-900 dark:to-slate-900/70 p-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-[#1E5AA8] mb-2">
-          7. Data Protection Officer & Clinic Inquiries
+      {/* DPO Contact & Account Deletion Card */}
+      <div className="rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-br from-[#F4F9FD] to-white dark:from-slate-900 dark:to-slate-900/70 p-4 space-y-3">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[#1E5AA8] mb-1.5">
+            7. Data Protection Officer &amp; Account Deletion Requests
+          </div>
+          <p className="text-xs text-slate-600 dark:text-muted-foreground leading-relaxed">
+            To request medical record copies, corrections, or permanent portal account deletion (subject to mandatory Philippine medical record retention periods under Section 5), use <strong className="text-slate-700 dark:text-foreground">Profile → Privacy &amp; Security → Request Data Copy / Account Deletion</strong> in CURA Mobile or contact the UA Clinic Data Protection Officer directly:
+          </p>
         </div>
-        <p className="text-xs text-slate-600 dark:text-muted-foreground mb-3">
-          To request medical record copies, file corrections, exercise your data rights, or ask questions about how CURA protects your privacy, contact:
-        </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-700 dark:text-foreground">
           <div className="flex items-center gap-2">
             <Mail size={14} className="text-[#1E5AA8] flex-shrink-0" />

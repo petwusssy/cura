@@ -49,7 +49,7 @@ const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
 const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
 const DEFAULT_MGMT_PASSWORD = 'uaclinic-admin';
-const RENDER_ENV_BACKEND_URL = 'https://cura-backend-dvj5.onrender.com/api';
+const ENV_BACKEND_URL = (import.meta.env.VITE_ENV_BACKEND_URL || '').trim().replace(/\/+$/, '');
 declare const __CURA_ENV_MGMT_PW__: string;
 
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
@@ -299,33 +299,25 @@ export const staffService = {
       return true;
     }
 
-    // 1. Check the Render service where USER_MANAGEMENT_PASSWORD ENV is configured (cura-backend-dvj5)
-    let envCheckCompleted = false;
-    try {
-      const envRes = await fetch(`${RENDER_ENV_BACKEND_URL}/staff/verify-admin/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: cleanPassword }),
-      });
-      const envData = await envRes.json().catch(() => null);
-      if (envData?.valid) {
-        return true;
-      }
-      // If dvj5 explicitly has USER_MANAGEMENT_PASSWORD configured in Render ENV, trust its verdict strictly
-      if (envData?.env_configured === true) {
-        return false;
-      }
-      if (envRes.ok) {
-        envCheckCompleted = true;
-      }
-    } catch {}
-
-    // If primary API already points to dvj5 and responded above, avoid duplicate request
-    if (envCheckCompleted && API_URL === RENDER_ENV_BACKEND_URL) {
-      return false;
+    // 1. Optional separate admin-verify host (only when VITE_ENV_BACKEND_URL is explicitly set)
+    if (ENV_BACKEND_URL && ENV_BACKEND_URL !== API_URL) {
+      try {
+        const envRes = await fetch(`${ENV_BACKEND_URL}/staff/verify-admin/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: cleanPassword }),
+        });
+        const envData = await envRes.json().catch(() => null);
+        if (envData?.valid) {
+          return true;
+        }
+        if (envData?.env_configured === true) {
+          return false;
+        }
+      } catch {}
     }
 
-    // 2. Fallback to primary API URL if dvj5 is unreachable
+    // 2. Verify against primary API_URL (follows VITE_API_URL in all environments)
     try {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
@@ -352,13 +344,13 @@ export const staffService = {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
-    // Update custom password on primary backend (and secondary dvj5 only if primary points elsewhere)
+    // Update custom password on primary backend (and optional ENV backend only if separately set)
     const calls: Promise<any>[] = [
       api.post('/staff/change-admin-password/', { new_password: cleanNew }),
     ];
-    if (API_URL !== RENDER_ENV_BACKEND_URL) {
+    if (ENV_BACKEND_URL && API_URL !== ENV_BACKEND_URL) {
       calls.push(
-        fetch(`${RENDER_ENV_BACKEND_URL}/staff/change-admin-password/`, {
+        fetch(`${ENV_BACKEND_URL}/staff/change-admin-password/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ new_password: cleanNew }),
