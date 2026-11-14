@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop,
   Droplets, Megaphone, Users, Lock, Unlock, KeyRound, Plus, CheckCircle2,
-  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertTriangle, Cloud, Download, ExternalLink,
+  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertCircle, AlertTriangle, Cloud, Download, ExternalLink,
   Eye, EyeOff, ShieldAlert
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -113,10 +113,22 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
 
-  // Change User Management Password form
+  // Change Passwords form (Access & Passwords sub-tab)
   const [newMgmtPw, setNewMgmtPw] = useState('');
   const [confirmMgmtPw, setConfirmMgmtPw] = useState('');
   const [isUpdatingMgmtPw, setIsUpdatingMgmtPw] = useState(false);
+
+  const [currentLoginPw, setCurrentLoginPw] = useState('');
+  const [newLoginPw, setNewLoginPw] = useState('');
+  const [confirmLoginPw, setConfirmLoginPw] = useState('');
+  const [isUpdatingLoginPw, setIsUpdatingLoginPw] = useState(false);
+  const [pwVisibility, setPwVisibility] = useState({
+    curLogin: false,
+    newLogin: false,
+    confLogin: false,
+    newMgmt: false,
+    confMgmt: false,
+  });
 
   // Add Staff form
   const [newStaffName, setNewStaffName] = useState('');
@@ -163,7 +175,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
           if (res.data.message) setBroadcastMessage(res.data.message);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -254,6 +266,46 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
       toast.error(err?.message || 'Failed to update User Management password.');
     } finally {
       setIsUpdatingMgmtPw(false);
+    }
+  };
+
+  const handleChangeLoginPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentLoginPw) {
+      toast.error('Please enter the current CURA login password.');
+      return;
+    }
+    if (newLoginPw.trim().length < 8) {
+      toast.error('New CURA login password must be at least 8 characters.');
+      return;
+    }
+    if (newLoginPw !== confirmLoginPw) {
+      toast.error('New password and confirmation do not match.');
+      return;
+    }
+    setIsUpdatingLoginPw(true);
+    try {
+      await api.post('/auth/change-password/', {
+        email: authService.getUsername() || 'ANTHROPEAK2026',
+        current_password: currentLoginPw,
+        new_password: newLoginPw,
+      });
+      await staffService.recordAuditLog({
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'HEAD NURSE / ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Changed CURA Login Password',
+        target_type: 'Staff',
+        target_id: 'cura-login-password',
+        details: 'Updated shared CURA clinic login password',
+      });
+      setCurrentLoginPw('');
+      setNewLoginPw('');
+      setConfirmLoginPw('');
+      toast.success('CURA clinic login password updated successfully!');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || 'Failed to update CURA login password.');
+    } finally {
+      setIsUpdatingLoginPw(false);
     }
   };
 
@@ -380,7 +432,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
         status: broadcastStatus,
         message: broadcastMessage,
       });
-    } catch (e) {}
+    } catch (e) { }
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -516,11 +568,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                       </div>
                     ) : (adminError || adminLimitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS) && (
                       <div
-                        className={`px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 ${
-                          adminLimitState.attemptsRemaining <= 1
-                            ? 'bg-red-50 border border-red-200 text-red-800'
-                            : 'bg-amber-50 border border-amber-200 text-amber-800'
-                        }`}
+                        className={`px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 ${adminLimitState.attemptsRemaining <= 1
+                          ? 'bg-red-50 border border-red-200 text-red-800'
+                          : 'bg-amber-50 border border-amber-200 text-amber-800'
+                          }`}
                       >
                         <AlertTriangle
                           className={adminLimitState.attemptsRemaining <= 1 ? 'text-red-600 shrink-0' : 'text-amber-600 shrink-0'}
@@ -534,13 +585,12 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                             {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
                               <span
                                 key={idx}
-                                className={`w-2 h-2 rounded-full transition-all ${
-                                  idx < adminLimitState.attemptsRemaining
-                                    ? adminLimitState.attemptsRemaining <= 1
-                                      ? 'bg-red-500'
-                                      : 'bg-amber-500'
-                                    : 'bg-black/15'
-                                }`}
+                                className={`w-2 h-2 rounded-full transition-all ${idx < adminLimitState.attemptsRemaining
+                                  ? adminLimitState.attemptsRemaining <= 1
+                                    ? 'bg-red-500'
+                                    : 'bg-amber-500'
+                                  : 'bg-black/15'
+                                  }`}
                               />
                             ))}
                             <span className="text-[10.5px] font-bold text-black/65 ml-1">
@@ -560,8 +610,8 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                       {adminLimitState.isLocked
                         ? `Locked (${loginLimiter.formatTime(adminLimitState.lockoutRemainingSeconds)})`
                         : adminVerifying
-                        ? 'Verifying...'
-                        : 'Unlock Staff & Audit Management'}
+                          ? 'Verifying...'
+                          : 'Unlock Staff & Audit Management'}
                     </button>
                   </form>
                 </div>
@@ -604,11 +654,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                     <button
                       type="button"
                       onClick={() => setStaffSubTab('roster')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        staffSubTab === 'roster'
-                          ? 'text-white shadow-xs'
-                          : 'text-muted-foreground hover:bg-accent'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${staffSubTab === 'roster'
+                        ? 'text-white shadow-xs'
+                        : 'text-muted-foreground hover:bg-accent'
+                        }`}
                       style={staffSubTab === 'roster' ? { background: PRIMARY } : {}}
                     >
                       <Users size={14} />
@@ -617,11 +666,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                     <button
                       type="button"
                       onClick={() => setStaffSubTab('audit')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        staffSubTab === 'audit'
-                          ? 'text-white shadow-xs'
-                          : 'text-muted-foreground hover:bg-accent'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${staffSubTab === 'audit'
+                        ? 'text-white shadow-xs'
+                        : 'text-muted-foreground hover:bg-accent'
+                        }`}
                       style={staffSubTab === 'audit' ? { background: PRIMARY } : {}}
                     >
                       <ClipboardList size={14} />
@@ -630,15 +678,14 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                     <button
                       type="button"
                       onClick={() => setStaffSubTab('password')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        staffSubTab === 'password'
-                          ? 'text-white shadow-xs'
-                          : 'text-muted-foreground hover:bg-accent'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${staffSubTab === 'password'
+                        ? 'text-white shadow-xs'
+                        : 'text-muted-foreground hover:bg-accent'
+                        }`}
                       style={staffSubTab === 'password' ? { background: PRIMARY } : {}}
                     >
                       <KeyRound size={14} />
-                      User Management Password
+                      Access &amp; Passwords
                     </button>
                   </div>
 
@@ -793,11 +840,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                                         <button
                                           type="button"
                                           onClick={() => handleToggleStaffActive(member)}
-                                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                                            member.is_active
-                                              ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                          }`}
+                                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${member.is_active
+                                            ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                            }`}
                                         >
                                           {member.is_active ? 'Deactivate' : 'Activate'}
                                         </button>
@@ -961,46 +1007,105 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                       )}
                     </div>
                   ) : (
-                    /* ── Change Dedicated User Management Password Tab ── */
-                    <form
-                      onSubmit={handleChangeMgmtPassword}
-                      className="max-w-md space-y-4 p-5 rounded-xl border border-border bg-muted/10"
-                    >
-                      <div>
-                        <h4 className="text-sm font-bold text-foreground">
-                          Change User Management Password
-                        </h4>
-                      </div>
-                      <div>
-                        <label className={labelCls}>New User Management Password</label>
-                        <input
-                          type="password"
-                          value={newMgmtPw}
-                          onChange={e => setNewMgmtPw(e.target.value)}
-                          placeholder="Minimum 6 characters"
-                          className={inputCls}
-                        />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Confirm New Password</label>
-                        <input
-                          type="password"
-                          value={confirmMgmtPw}
-                          onChange={e => setConfirmMgmtPw(e.target.value)}
-                          placeholder="Re-enter new password"
-                          className={inputCls}
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={isUpdatingMgmtPw}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-xs font-bold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
-                        style={{ background: PRIMARY }}
+                    /* ── Access & Passwords Sub-tab (Master-Key Protected) ── */
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <form
+                        onSubmit={handleChangeLoginPassword}
+                        className="space-y-4 p-5 rounded-xl border border-border bg-muted/10"
                       >
-                        <Save size={15} />
-                        {isUpdatingMgmtPw ? 'Updating...' : 'Update User Management Password'}
-                      </button>
-                    </form>
+                        <div>
+                          <h4 className="text-sm font-bold text-foreground">
+                            CURA Clinic Login Password
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Updates the shared clinic dashboard login password (Head Nurse / Admin only).
+                          </p>
+                        </div>
+                        {[
+                          { key: 'curLogin' as const, label: 'Current CURA Password', val: currentLoginPw, set: setCurrentLoginPw, ph: 'Enter current login password' },
+                          { key: 'newLogin' as const, label: 'New CURA Password', val: newLoginPw, set: setNewLoginPw, ph: 'Minimum 8 characters' },
+                          { key: 'confLogin' as const, label: 'Confirm New Password', val: confirmLoginPw, set: setConfirmLoginPw, ph: 'Re-enter new login password' },
+                        ].map(f => (
+                          <div key={f.key}>
+                            <label className={labelCls}>{f.label}</label>
+                            <div className="relative">
+                              <input
+                                type={pwVisibility[f.key] ? 'text' : 'password'}
+                                value={f.val}
+                                onChange={e => f.set(e.target.value)}
+                                placeholder={f.ph}
+                                className={`${inputCls} pr-10`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setPwVisibility(p => ({ ...p, [f.key]: !p[f.key] }))}
+                                aria-label={pwVisibility[f.key] ? 'Hide password' : 'Show password'}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                {pwVisibility[f.key] ? <EyeOff size={15} /> : <Eye size={15} />}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="submit"
+                          disabled={isUpdatingLoginPw}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-xs font-bold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                          style={{ background: PRIMARY }}
+                        >
+                          <Save size={15} />
+                          {isUpdatingLoginPw ? 'Updating...' : 'Update CURA Login Password'}
+                        </button>
+                      </form>
+
+                      <form
+                        onSubmit={handleChangeMgmtPassword}
+                        className="space-y-4 p-5 rounded-xl border border-border bg-muted/10 h-fit"
+                      >
+                        <div>
+                          <h4 className="text-sm font-bold text-foreground">
+                            User Management Master Key
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Separate password required to unlock Clinic Staff, PINs, Audit Logs, and Passwords.
+                          </p>
+                        </div>
+                        {[
+                          { key: 'newMgmt' as const, label: 'New User Management Password', val: newMgmtPw, set: setNewMgmtPw, ph: 'Minimum 6 characters' },
+                          { key: 'confMgmt' as const, label: 'Confirm New Password', val: confirmMgmtPw, set: setConfirmMgmtPw, ph: 'Re-enter new password' },
+                        ].map(f => (
+                          <div key={f.key}>
+                            <label className={labelCls}>{f.label}</label>
+                            <div className="relative">
+                              <input
+                                type={pwVisibility[f.key] ? 'text' : 'password'}
+                                value={f.val}
+                                onChange={e => f.set(e.target.value)}
+                                placeholder={f.ph}
+                                className={`${inputCls} pr-10`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setPwVisibility(p => ({ ...p, [f.key]: !p[f.key] }))}
+                                aria-label={pwVisibility[f.key] ? 'Hide password' : 'Show password'}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                {pwVisibility[f.key] ? <EyeOff size={15} /> : <Eye size={15} />}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="submit"
+                          disabled={isUpdatingMgmtPw}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-xs font-bold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                          style={{ background: PRIMARY }}
+                        >
+                          <Save size={15} />
+                          {isUpdatingMgmtPw ? 'Updating...' : 'Update User Management Password'}
+                        </button>
+                      </form>
+                    </div>
                   )}
                 </>
               )}
@@ -1052,24 +1157,27 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
 
           {activeSection === 'security' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-border">Security Settings</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className={labelCls}>Current Password</label>
-                  <input type="password" placeholder="••••••••" className={inputCls} />
+              <h3 className="text-foreground pb-4 border-b border-border">Security &amp; Privacy</h3>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Lock size={15} className="text-amber-700 dark:text-amber-400" />
+                    <h4 className="text-sm font-bold text-foreground">Clinic Password Controls Restricted</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Because staff nurses share the clinic login, changing the CURA Login Password and User Management Master Key is restricted to the Head Nurse inside <span className="font-semibold text-foreground">Clinic Staff &amp; Audit → Access &amp; Passwords</span>.
+                  </p>
                 </div>
-                <div>
-                  <label className={labelCls}>New Password</label>
-                  <input type="password" placeholder="Minimum 8 characters" className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Confirm New Password</label>
-                  <input type="password" placeholder="Re-enter new password" className={inputCls} />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
-                  <Save size={15} /> Update Password
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSection('staff');
+                    setStaffSubTab('password');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-bold hover:opacity-95 transition-opacity shrink-0 cursor-pointer"
+                  style={{ background: PRIMARY }}
+                >
+                  <KeyRound size={13} /> Open Access &amp; Passwords
                 </button>
               </div>
 
@@ -1122,11 +1230,11 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                     { id: 'ocean', label: 'Ocean', icon: <Droplets size={18} /> },
                     { id: 'system', label: 'OS Sync', icon: <Laptop size={18} /> },
                   ].map(t => (
-                    <button 
-                      key={t.id} 
+                    <button
+                      key={t.id}
                       onClick={() => setTheme(t.id)}
                       className="p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all"
-                      style={{ 
+                      style={{
                         borderColor: theme === t.id ? PRIMARY : '#e5e7eb',
                         background: theme === t.id ? `${PRIMARY}08` : 'transparent',
                         color: theme === t.id ? PRIMARY : '#6b7280'
@@ -1173,7 +1281,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
           {activeSection === 'advisory' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
               <h3 className="text-foreground pb-4 border-b border-border">Clinic Status Broadcast</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className={labelCls}>Status</label>
@@ -1182,11 +1290,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                       <button
                         key={status}
                         onClick={() => setBroadcastStatus(status as any)}
-                        className={`px-4 py-1.5 rounded-full text-sm transition-all cursor-pointer whitespace-nowrap ${
-                          broadcastStatus === status 
-                            ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25 font-semibold' 
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-sm transition-all cursor-pointer whitespace-nowrap ${broadcastStatus === status
+                          ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25 font-semibold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          }`}
                       >
                         {status}
                       </button>
