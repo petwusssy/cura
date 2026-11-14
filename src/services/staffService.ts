@@ -83,7 +83,7 @@ function saveLocalStaff(list: ClinicStaffMember[], notify = true): void {
     if (notify) {
       window.dispatchEvent(new CustomEvent(STAFF_UPDATED_EVENT));
     }
-  } catch {}
+  } catch { }
 }
 
 function loadLocalPinMap(): Record<string, string> {
@@ -100,7 +100,7 @@ function saveLocalPin(staffId: string, pin: string): void {
     const map = loadLocalPinMap();
     map[staffId] = hashPinLocal(pin);
     localStorage.setItem(STAFF_PINS_CACHE_KEY, JSON.stringify(map));
-  } catch {}
+  } catch { }
 }
 
 function loadLocalAuditLogs(): AuditLogEntry[] {
@@ -121,7 +121,7 @@ function saveLocalAuditLogs(logs: AuditLogEntry[], notify = true): void {
     if (notify) {
       window.dispatchEvent(new CustomEvent(AUDIT_UPDATED_EVENT));
     }
-  } catch {}
+  } catch { }
 }
 
 export const staffService = {
@@ -290,7 +290,7 @@ export const staffService = {
 
     try {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
-    } catch {}
+    } catch { }
 
     // 1. Optional separate admin-verify host (only when VITE_ENV_BACKEND_URL is explicitly set)
     if (ENV_BACKEND_URL && ENV_BACKEND_URL !== API_URL) {
@@ -308,22 +308,18 @@ export const staffService = {
         if (envData?.env_configured === true) {
           return false;
         }
-      } catch {}
+      } catch { }
     }
 
     // 2. Verify against primary API_URL (follows VITE_API_URL in all environments)
-    try {
-      const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
-        password: cleanPassword,
-      });
-      if (res.data?.valid) {
-        lastVerifiedAdminPassword = cleanPassword;
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
+    const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
+      password: cleanPassword,
+    });
+    if (res.data?.valid) {
+      lastVerifiedAdminPassword = cleanPassword;
+      return true;
     }
+    return false;
   },
 
   async changeAdminPassword(newPassword: string, currentPassword?: string): Promise<void> {
@@ -341,7 +337,7 @@ export const staffService = {
 
     try {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
-    } catch {}
+    } catch { }
 
     // Update custom password on primary backend (and optional ENV backend only if separately set)
     const calls: Promise<any>[] = [
@@ -500,7 +496,7 @@ export const staffService = {
     try {
       sessionStorage.setItem(ACTIVE_SHIFT_KEY, JSON.stringify(session));
       window.dispatchEvent(new CustomEvent(SHIFT_UPDATED_EVENT));
-    } catch {}
+    } catch { }
     return session;
   },
 
@@ -508,7 +504,7 @@ export const staffService = {
     try {
       sessionStorage.removeItem(ACTIVE_SHIFT_KEY);
       window.dispatchEvent(new CustomEvent(SHIFT_UPDATED_EVENT));
-    } catch {}
+    } catch { }
   },
 
   async getAuditDriveArchives(): Promise<AuditDriveArchivesResponse> {

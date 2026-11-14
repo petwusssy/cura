@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop,
   Droplets, Megaphone, Users, Lock, Unlock, KeyRound, Plus, CheckCircle2,
-  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertCircle, Cloud, Download, ExternalLink
+  XCircle, RefreshCw, Search, ClipboardList, Trash2, AlertTriangle, Cloud, Download, ExternalLink,
+  Eye, EyeOff, ShieldAlert
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import api from '../../../services/api';
 import { authService } from '../../../services/authService';
+import { loginLimiter, MAX_LOGIN_ATTEMPTS } from '../../../utils/loginLimiter';
 import {
   staffService,
   ClinicStaffMember,
@@ -98,10 +100,13 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [broadcastMessage, setBroadcastMessage] = useState('Welcome to the University Clinic! Standard operating hours are 8:00 AM to 5:00 PM.');
 
   // ── Admin-Gated Clinic Staff & Audit State ──────────────────────────────────
+  const USER_MGMT_LIMITER_ID = 'user_mgmt_master_key';
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminVerifying, setAdminVerifying] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
+  const [adminLimitState, setAdminLimitState] = useState(() => loginLimiter.getLimitState(USER_MGMT_LIMITER_ID));
 
   const [staffSubTab, setStaffSubTab] = useState<'roster' | 'audit' | 'password'>('roster');
   const [staffList, setStaffList] = useState<ClinicStaffMember[]>([]);
@@ -173,22 +178,44 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
     };
   }, [isAdminUnlocked, loadStaffAndLogs]);
 
+  useEffect(() => {
+    if (!adminLimitState.isLocked || adminLimitState.lockoutRemainingSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setAdminLimitState(prev => {
+        if (prev.lockoutRemainingSeconds <= 1) {
+          clearInterval(interval);
+          setAdminError(null);
+          return loginLimiter.getLimitState(USER_MGMT_LIMITER_ID);
+        }
+        return { ...prev, lockoutRemainingSeconds: prev.lockoutRemainingSeconds - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [adminLimitState.isLocked, adminLimitState.lockoutRemainingSeconds]);
+
   const handleUnlockAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminPassword.trim() || adminVerifying) return;
+    if (adminLimitState.isLocked || !adminPassword.trim() || adminVerifying) return;
     setAdminVerifying(true);
     setAdminError(null);
     try {
       const ok = await staffService.verifyAdminPassword(adminPassword);
       if (ok) {
+        loginLimiter.recordSuccess(USER_MGMT_LIMITER_ID);
+        setAdminLimitState(loginLimiter.getLimitState(USER_MGMT_LIMITER_ID));
         setIsAdminUnlocked(true);
         setAdminPassword('');
+        setShowAdminPassword(false);
         toast.success('Clinic Staff & Audit settings unlocked');
       } else {
-        setAdminError('Incorrect User Management password. (This is separate from the main CURA login password).');
+        const nextLimit = loginLimiter.recordFailure(null, USER_MGMT_LIMITER_ID);
+        setAdminLimitState(nextLimit);
+        setAdminError(nextLimit.isLocked ? null : 'attempts');
       }
-    } catch {
-      setAdminError('Unable to verify password. Please try again.');
+    } catch (err: any) {
+      const nextLimit = loginLimiter.recordFailure(err, USER_MGMT_LIMITER_ID);
+      setAdminLimitState(nextLimit);
+      setAdminError(nextLimit.isLocked ? null : 'attempts');
     } finally {
       setAdminVerifying(false);
     }
@@ -453,32 +480,88 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                   <form onSubmit={handleUnlockAdmin} className="space-y-3 text-left">
                     <div>
                       <label className={labelCls}>User Management Password</label>
-                      <input
-                        type="password"
-                        autoFocus
-                        value={adminPassword}
-                        onChange={e => {
-                          setAdminPassword(e.target.value);
-                          setAdminError(null);
-                        }}
-                        placeholder="Enter User Management password..."
-                        className={inputCls}
-                      />
+                      <div className="relative">
+                        <input
+                          type={showAdminPassword ? 'text' : 'password'}
+                          autoFocus
+                          disabled={adminLimitState.isLocked}
+                          value={adminPassword}
+                          onChange={e => {
+                            setAdminPassword(e.target.value);
+                            if (adminError) setAdminError(null);
+                          }}
+                          placeholder="Enter User Management password..."
+                          className={`${inputCls} pr-10 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        />
+                        <button
+                          type="button"
+                          disabled={adminLimitState.isLocked}
+                          onClick={() => setShowAdminPassword(v => !v)}
+                          aria-label={showAdminPassword ? 'Hide password' : 'Show password'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-40 cursor-pointer"
+                        >
+                          {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
-                    {adminError && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
-                        <AlertCircle size={14} className="flex-shrink-0" />
-                        <span>{adminError}</span>
+                    {adminLimitState.isLocked ? (
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="text-amber-600 shrink-0" size={16} />
+                          <span className="font-bold text-amber-800">Master Key Temporarily Locked</span>
+                        </div>
+                        <span className="font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[11px]">
+                          {loginLimiter.formatTime(adminLimitState.lockoutRemainingSeconds)}
+                        </span>
+                      </div>
+                    ) : (adminError || adminLimitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS) && (
+                      <div
+                        className={`px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 ${
+                          adminLimitState.attemptsRemaining <= 1
+                            ? 'bg-red-50 border border-red-200 text-red-800'
+                            : 'bg-amber-50 border border-amber-200 text-amber-800'
+                        }`}
+                      >
+                        <AlertTriangle
+                          className={adminLimitState.attemptsRemaining <= 1 ? 'text-red-600 shrink-0' : 'text-amber-600 shrink-0'}
+                          size={16}
+                        />
+                        <div className="flex-1 flex items-center justify-between gap-2">
+                          <span className="text-[10.5px] font-semibold uppercase tracking-wider text-black/60">
+                            Attempts remaining:
+                          </span>
+                          <div className="flex gap-1.5 items-center">
+                            {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
+                              <span
+                                key={idx}
+                                className={`w-2 h-2 rounded-full transition-all ${
+                                  idx < adminLimitState.attemptsRemaining
+                                    ? adminLimitState.attemptsRemaining <= 1
+                                      ? 'bg-red-500'
+                                      : 'bg-amber-500'
+                                    : 'bg-black/15'
+                                }`}
+                              />
+                            ))}
+                            <span className="text-[10.5px] font-bold text-black/65 ml-1">
+                              ({adminLimitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS})
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     )}
                     <button
                       type="submit"
-                      disabled={adminVerifying || !adminPassword.trim()}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-white text-sm font-semibold hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                      disabled={adminVerifying || adminLimitState.isLocked || !adminPassword.trim()}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-white text-sm font-semibold hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                       style={{ background: PRIMARY }}
                     >
                       <Unlock size={16} />
-                      {adminVerifying ? 'Verifying...' : 'Unlock Staff & Audit Management'}
+                      {adminLimitState.isLocked
+                        ? `Locked (${loginLimiter.formatTime(adminLimitState.lockoutRemainingSeconds)})`
+                        : adminVerifying
+                        ? 'Verifying...'
+                        : 'Unlock Staff & Audit Management'}
                     </button>
                   </form>
                 </div>
