@@ -444,7 +444,7 @@ export default function LandingPage({
                         <motion.div
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`p-3.5 rounded-xl text-xs flex items-start gap-2.5 shadow-sm ${
+                          className={`px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 shadow-sm ${
                             limitState.attemptsRemaining <= 1
                               ? "bg-red-50 border border-red-200 text-red-800"
                               : "bg-amber-50 border border-amber-200 text-amber-800"
@@ -454,43 +454,39 @@ export default function LandingPage({
                           <AlertTriangle
                             className={
                               limitState.attemptsRemaining <= 1
-                                ? "text-red-600 shrink-0 mt-0.5"
-                                : "text-amber-600 shrink-0 mt-0.5"
+                                ? "text-red-600 shrink-0"
+                                : "text-amber-600 shrink-0"
                             }
                             size={16}
                           />
-                          <div className="flex-1 space-y-1">
-                            <p className="font-bold text-xs leading-snug">
-                              {limitState.attemptsRemaining <= 1 ? "Authentication Warning" : "Incorrect Credentials"}
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-black/75">
-                              {errorMessage}
-                            </p>
-                            {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS && (
-                              <div className="flex items-center justify-between pt-1.5 border-t border-black/10">
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-black/50">
-                                  Attempts remaining:
+                          {limitState.attemptsRemaining < MAX_LOGIN_ATTEMPTS ? (
+                            <div className="flex-1 flex items-center justify-between gap-2">
+                              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-black/60">
+                                Attempts remaining:
+                              </span>
+                              <div className="flex gap-1.5 items-center">
+                                {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={`w-2 h-2 rounded-full transition-all ${
+                                      idx < limitState.attemptsRemaining
+                                        ? limitState.attemptsRemaining <= 1
+                                          ? "bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]"
+                                          : "bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]"
+                                        : "bg-black/15"
+                                    }`}
+                                  />
+                                ))}
+                                <span className="text-[10.5px] font-bold text-black/65 ml-1">
+                                  ({limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS})
                                 </span>
-                                <div className="flex gap-1.5 items-center">
-                                  {Array.from({ length: MAX_LOGIN_ATTEMPTS }).map((_, idx) => (
-                                    <span
-                                      key={idx}
-                                      className={`w-2 h-2 rounded-full transition-all ${
-                                        idx < limitState.attemptsRemaining
-                                          ? limitState.attemptsRemaining <= 1
-                                            ? "bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]"
-                                            : "bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]"
-                                          : "bg-black/15"
-                                      }`}
-                                    />
-                                  ))}
-                                  <span className="text-[10px] font-bold text-black/60 ml-1">
-                                    ({limitState.attemptsRemaining} of {MAX_LOGIN_ATTEMPTS})
-                                  </span>
-                                </div>
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-medium leading-snug text-black/75">
+                              {errorMessage}
+                            </span>
+                          )}
                         </motion.div>
                       ) : null}
 
