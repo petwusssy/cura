@@ -275,7 +275,20 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     });
 
     const isLocalNotif = (id: string, type?: string) =>
-      id.startsWith('med-') || id.startsWith('stock-') || type === 'stock' || id.startsWith('N');
+      id.startsWith('med-') || id.startsWith('stock-') || id.startsWith('bed-') || type === 'stock' || id.startsWith('N');
+
+    const purgePreviouslyDismissed = (serverNotifs: AppNotification[]) => {
+      const toDelete = serverNotifs.filter(n => n.id && !isLocalNotif(String(n.id), n.type) && dismissedNotifIdsRef.current.has(String(n.id)));
+      if (toDelete.length === 0) return;
+      Promise.allSettled(toDelete.map(n => notificationService.deleteNotification(String(n.id)))).then(() => {
+        try {
+          const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+          const deletedSet = new Set(toDelete.map(n => String(n.id)));
+          const cleaned = stored.filter(x => !deletedSet.has(x));
+          localStorage.setItem('cura_dismissed_notifs', JSON.stringify(cleaned));
+        } catch {}
+      });
+    };
 
     const isPatientOnlyNotif = (n: AppNotification) =>
       n.type === 'appointment_update' ||
@@ -289,6 +302,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     const fetchAndMergeNotifications = () => {
       notificationService.getNotifications().then(d => {
         if (d !== undefined && Array.isArray(d)) {
+          purgePreviouslyDismissed(d);
           d.forEach(n => {
             if (n.id) knownServerNotifIdsRef.current.add(String(n.id));
           });
@@ -340,6 +354,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 1. Notifications with deduplication
         if (nRes && nRes.status === 'fulfilled' && nRes.value && Array.isArray(nRes.value)) {
           const incoming = nRes.value as AppNotification[];
+          purgePreviouslyDismissed(incoming);
 
           if (isInitialServerNotifFetchRef.current) {
             incoming.forEach(n => {
@@ -1381,7 +1396,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     } catch (e) {
       console.error(e);
     }
-    if (!id.startsWith('med-') && !id.startsWith('stock-')) {
+    if (!id.startsWith('med-') && !id.startsWith('stock-') && !id.startsWith('bed-') && !id.startsWith('N')) {
       try {
         await notificationService.updateNotification(id, { read: true });
       } catch (error) {
@@ -1404,7 +1419,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
     try {
       await notificationService.markAllRead();
-      const backendUnread = notifications.filter(n => !n.read && !n.id.startsWith('med-') && !n.id.startsWith('stock-'));
+      const backendUnread = notifications.filter(n => !n.read && !n.id.startsWith('med-') && !n.id.startsWith('stock-') && !n.id.startsWith('bed-') && !n.id.startsWith('N'));
       await Promise.allSettled(backendUnread.map(n => notificationService.updateNotification(n.id, { read: true })));
     } catch (error) {
       console.error('Failed to mark all notifications read on server:', error);
@@ -1414,29 +1429,47 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const handleDismissNotification = async (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
     dismissedNotifIdsRef.current.add(id);
+    const isLocal = id.startsWith('med-') || id.startsWith('stock-') || id.startsWith('bed-') || id.startsWith('N');
     try {
-      const stored = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+      const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
       if (!stored.includes(id)) {
         localStorage.setItem('cura_dismissed_notifs', JSON.stringify([...stored, id]));
       }
     } catch (e) {
       console.error(e);
     }
-    if (!id.startsWith('med-') && !id.startsWith('stock-')) {
+    if (!isLocal) {
       try {
-        await notificationService.updateNotification(id, { read: true });
-      } catch (error) {
-        console.error('Failed to update notification read status on server:', error);
+        await notificationService.deleteNotification(id);
+        // Once permanently deleted from Supabase, remove UUID from localStorage so storage stays small
+        try {
+          const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+          localStorage.setItem('cura_dismissed_notifs', JSON.stringify(stored.filter(x => x !== id)));
+        } catch {}
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          try {
+            const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
+            localStorage.setItem('cura_dismissed_notifs', JSON.stringify(stored.filter(x => x !== id)));
+          } catch {}
+        } else {
+          console.error('Failed to delete notification from server:', error);
+        }
       }
     }
   };
 
   const handleClearAllNotifications = async () => {
+    const currentIds = notifications.map(n => n.id);
     setNotifications([]);
-    notifications.forEach(n => dismissedNotifIdsRef.current.add(n.id));
+    currentIds.forEach(id => dismissedNotifIdsRef.current.add(id));
+    const isLocal = (id: string) => id.startsWith('med-') || id.startsWith('stock-') || id.startsWith('bed-') || id.startsWith('N');
     try {
       localStorage.setItem('cura_dismissed_notifs', JSON.stringify(Array.from(dismissedNotifIdsRef.current)));
       await notificationService.clearAll();
+      // Keep only local client-side alert IDs in localStorage after server clear_all deletes rows from Supabase
+      const localOnly = Array.from(dismissedNotifIdsRef.current).filter(isLocal);
+      localStorage.setItem('cura_dismissed_notifs', JSON.stringify(localOnly));
     } catch (error) {
       console.error('Failed to clear notifications on server:', error);
     }
