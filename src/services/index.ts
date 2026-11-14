@@ -1,1 +1,13 @@
-export * from "@/features/dashboard/services";
+export { default as api, API_URL } from './api';
+export * from './authService';
+export * from './patientService';
+export * from './consultationService';
+export * from './medicineService';
+export * from './bedService';
+export * from './certificateService';
+export * from './notificationService';
+export * from './queueService';
+export * from './staffService';
+export * from './appointmentService';
+export * from './telemedicineService';
+export * from './medcertRequestService';

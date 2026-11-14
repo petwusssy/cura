@@ -71,7 +71,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       displayUnit += 's';
     }
 
-    return { beginningQty, dispensed, status, displayUnit };
+    return { beginningQty, dispensed, status, displayUnit, batchNumber: m.batchNumber || '' };
   };
 
   const query = (localSearch || searchQuery || '').trim().toLowerCase();
@@ -161,6 +161,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       name: newMed.name,
       stock: qty,
       unit: newMed.unit,
+      category: newMed.category,
       dateAdded: newMed.dateAdded || getManilaDate(),
       status: qty === 0 ? 'Out of Stock' : qty <= thresh ? 'Low Stock' : 'Normal',
       beginningQty: qty,

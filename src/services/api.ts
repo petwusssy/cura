@@ -7,6 +7,7 @@ export const API_URL = (import.meta.env.VITE_API_URL || 'https://cura-backend-dv
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 25000,
   withCredentials: true, // Important for cookies (refresh token)
   headers: {
     'Content-Type': 'application/json',
@@ -88,6 +89,7 @@ api.interceptors.response.use(
           processQueue(null, newToken);
           return api(originalRequest);
         }
+        throw new Error('Refresh response missing access token');
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         localStorage.removeItem('accessToken');

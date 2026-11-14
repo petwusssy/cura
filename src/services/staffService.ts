@@ -48,9 +48,8 @@ const STAFF_PINS_CACHE_KEY = 'cura_clinic_staff_pins';
 const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
 const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
-const DEFAULT_MGMT_PASSWORD = 'uaclinic-admin';
 const ENV_BACKEND_URL = (import.meta.env.VITE_ENV_BACKEND_URL || '').trim().replace(/\/+$/, '');
-declare const __CURA_ENV_MGMT_PW__: string;
+let lastVerifiedAdminPassword = '';
 
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
 export const AUDIT_UPDATED_EVENT = 'cura-audit-updated';
@@ -78,10 +77,12 @@ function loadLocalStaff(): ClinicStaffMember[] {
   }
 }
 
-function saveLocalStaff(list: ClinicStaffMember[]): void {
+function saveLocalStaff(list: ClinicStaffMember[], notify = true): void {
   try {
     localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent(STAFF_UPDATED_EVENT));
+    if (notify) {
+      window.dispatchEvent(new CustomEvent(STAFF_UPDATED_EVENT));
+    }
   } catch {}
 }
 
@@ -113,11 +114,13 @@ function loadLocalAuditLogs(): AuditLogEntry[] {
   }
 }
 
-function saveLocalAuditLogs(logs: AuditLogEntry[]): void {
+function saveLocalAuditLogs(logs: AuditLogEntry[], notify = true): void {
   try {
     const trimmed = logs.slice(0, 500);
     localStorage.setItem(AUDIT_LOGS_CACHE_KEY, JSON.stringify(trimmed));
-    window.dispatchEvent(new CustomEvent(AUDIT_UPDATED_EVENT));
+    if (notify) {
+      window.dispatchEvent(new CustomEvent(AUDIT_UPDATED_EVENT));
+    }
   } catch {}
 }
 
@@ -137,7 +140,7 @@ export const staffService = {
       if (Array.isArray(res.data)) {
         // Merge server list with any local-only items if server was empty before migration
         if (res.data.length > 0 || localList.length === 0) {
-          saveLocalStaff(res.data);
+          saveLocalStaff(res.data, false);
           return res.data;
         }
       }
@@ -289,16 +292,6 @@ export const staffService = {
       localStorage.removeItem(USER_MGMT_PW_HASH_KEY);
     } catch {}
 
-    const frontendEnvPw = (
-      (typeof __CURA_ENV_MGMT_PW__ !== 'undefined' ? __CURA_ENV_MGMT_PW__ : '') ||
-      import.meta.env.VITE_USER_MANAGEMENT_PASSWORD ||
-      ''
-    ).trim();
-
-    if (frontendEnvPw && cleanPassword === frontendEnvPw) {
-      return true;
-    }
-
     // 1. Optional separate admin-verify host (only when VITE_ENV_BACKEND_URL is explicitly set)
     if (ENV_BACKEND_URL && ENV_BACKEND_URL !== API_URL) {
       try {
@@ -309,6 +302,7 @@ export const staffService = {
         });
         const envData = await envRes.json().catch(() => null);
         if (envData?.valid) {
+          lastVerifiedAdminPassword = cleanPassword;
           return true;
         }
         if (envData?.env_configured === true) {
@@ -322,22 +316,27 @@ export const staffService = {
       const res = await api.post<{ valid: boolean }>('/staff/verify-admin/', {
         password: cleanPassword,
       });
-      return Boolean(res.data?.valid);
-    } catch (err: any) {
-      if (err?.response?.status === 401 || err?.response?.status === 400) {
-        return false;
+      if (res.data?.valid) {
+        lastVerifiedAdminPassword = cleanPassword;
+        return true;
       }
-      return Boolean(frontendEnvPw ? cleanPassword === frontendEnvPw : cleanPassword === DEFAULT_MGMT_PASSWORD);
+      return false;
+    } catch {
+      return false;
     }
   },
 
-  async changeAdminPassword(newPassword: string): Promise<void> {
+  async changeAdminPassword(newPassword: string, currentPassword?: string): Promise<void> {
     const cleanNew = newPassword.trim();
+    const cleanCurrent = (currentPassword || lastVerifiedAdminPassword).trim();
     if (!cleanNew) {
       throw new Error('New password is required.');
     }
     if (cleanNew.length < 6) {
       throw new Error('New User Management password must be at least 6 characters.');
+    }
+    if (!cleanCurrent) {
+      throw new Error('Please unlock User Management again before changing the password.');
     }
 
     try {
@@ -346,14 +345,14 @@ export const staffService = {
 
     // Update custom password on primary backend (and optional ENV backend only if separately set)
     const calls: Promise<any>[] = [
-      api.post('/staff/change-admin-password/', { new_password: cleanNew }),
+      api.post('/staff/change-admin-password/', { current_password: cleanCurrent, new_password: cleanNew }),
     ];
     if (ENV_BACKEND_URL && API_URL !== ENV_BACKEND_URL) {
       calls.push(
         fetch(`${ENV_BACKEND_URL}/staff/change-admin-password/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ new_password: cleanNew }),
+          body: JSON.stringify({ current_password: cleanCurrent, new_password: cleanNew }),
         }).then(async r => {
           const data = await r.json().catch(() => ({}));
           if (!r.ok) {
@@ -374,6 +373,7 @@ export const staffService = {
       const err: any = primaryRes.reason;
       throw new Error(err?.response?.data?.error || 'Failed to update User Management password.');
     }
+    lastVerifiedAdminPassword = cleanNew;
   },
 
   async verifyPin(pin: string): Promise<ClinicStaffMember> {
@@ -422,7 +422,7 @@ export const staffService = {
         const merged = Array.from(map.values()).sort(
           (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
-        saveLocalAuditLogs(merged);
+        saveLocalAuditLogs(merged, false);
         return merged;
       }
     } catch {

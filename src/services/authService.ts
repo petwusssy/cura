@@ -28,10 +28,28 @@ export const authService = {
     } catch {
       // ignore network errors on logout
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('cura_access_token');
-    localStorage.removeItem('userRoles');
-    localStorage.removeItem('username');
+    const keysToRemove = [
+      'accessToken',
+      'cura_access_token',
+      'userRoles',
+      'username',
+      'cura_patients_cache',
+      'cura_consultations_cache',
+      'cura_medicines_cache',
+      'cura_purchase_requests',
+      'cura_medical_certs',
+      'cura_beds_cache',
+      'cura_queues_cache',
+      'cura_audit_logs_cache',
+      'cura_clinic_staff_cache',
+      'cura_clinic_staff_pins',
+    ];
+    keysToRemove.forEach((k) => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+    try {
+      sessionStorage.removeItem('cura_active_staff_shift');
+    } catch {}
   },
 
   getAccessToken: (): string | null => {

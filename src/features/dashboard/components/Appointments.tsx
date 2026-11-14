@@ -152,7 +152,7 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
       if (typeof document !== 'undefined' && document.hidden) return;
       isFetching = true;
       appointmentService.getRequests().then(data => {
-        if (data && Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setRequests(data);
         }
       }).catch(() => {}).finally(() => {
@@ -165,7 +165,7 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
   const fetchRequests = async () => {
     try {
       const data = await appointmentService.getRequests();
-      if (data && Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setRequests(data);
       }
     } finally {

@@ -282,10 +282,10 @@ export function PatientManagement({ patients, searchQuery, onNavigate, onSelectP
                       <span className="text-sm text-gray-700 font-medium">{p.studentCategory}</span>
                     </div>
                   )}
-                  {p.employeeDepartment && (
+                  {(p.department || p.employeeDepartment) && (
                     <div className="flex flex-col col-span-2 mt-1">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Department</span>
-                      <span className="text-sm text-gray-700 font-medium">{p.employeeDepartment}</span>
+                      <span className="text-sm text-gray-700 font-medium">{p.department || p.employeeDepartment}</span>
                     </div>
                   )}
                 </div>

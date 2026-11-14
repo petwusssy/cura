@@ -27,13 +27,11 @@ export const CallPage: React.FC = () => {
     }
 
     // 2. If mobile patient: redirect back to mobile app via custom scheme / deep link
-    const redirectUrl = searchParams.get('redirect_url') || 'curamobile://telemedicine';
-    try {
-      window.location.href = redirectUrl;
-    } catch (e) {}
-
-    // For mobile patient: NEVER navigate to web app '/'!
     if (role === 'patient') {
+      const redirectUrl = searchParams.get('redirect_url') || 'curamobile://telemedicine';
+      try {
+        window.location.href = redirectUrl;
+      } catch (e) {}
       try {
         window.close();
       } catch (e) {}

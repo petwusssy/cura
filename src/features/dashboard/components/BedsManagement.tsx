@@ -26,7 +26,7 @@ function isInRange(rawDate: string, filter: DateFilterType, customFrom?: string,
     if (!customFrom && !customTo) return true;
     if (customFrom && !customTo) return date >= customFrom;
     if (!customFrom && customTo) return date <= customTo;
-    return date >= customFrom && date <= customTo;
+    return date >= (customFrom || '') && date <= (customTo || '');
   }
   return true;
 }
@@ -637,7 +637,10 @@ export function BedsManagement({ beds, patients, onUpdateBed }: BedsManagementPr
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B] bg-white">
                 <option value="">-- Choose Patient --</option>
                 {patients.map(p => {
-                  const isAlreadyOccupied = occupiedPatientIds.includes(p.id) || (p.name && occupiedPatientNames.includes(p.name.trim().toLowerCase()));
+                  const isAlreadyOccupied = Boolean(
+                    occupiedPatientIds.includes(p.id) ||
+                    (p.name && occupiedPatientNames.includes(p.name.trim().toLowerCase()))
+                  );
                   const assignedBed = beds.find(b => b.status === 'Occupied' && (b.patientId === p.id || (b.patientName && p.name && b.patientName.trim().toLowerCase() === p.name.trim().toLowerCase())));
                   return (
                     <option 

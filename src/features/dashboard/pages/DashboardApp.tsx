@@ -26,9 +26,10 @@ const Appointments = lazy(() => import('../components/Appointments').then(m => (
 const Telemedicine = lazy(() => import('../components/Telemedicine').then(m => ({ default: m.Telemedicine })));
 import {
   Patient, Consultation, MedicineItem, PurchaseRequest, MedicalCertificate,
-  Bed, AppNotification, HospitalTransfer, Page, PatientQueue
+  Bed, AppNotification, HospitalTransfer, Page, PatientQueue, Treatment
 } from '@/types';
 
+import api from '@/services/api';
 import { patientService } from '@/services/patientService';
 import { consultationService } from '@/services/consultationService';
 import { medicineService } from '@/services/medicineService';
@@ -304,11 +305,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     };
 
     fetchAndMergeNotifications();
-    fetchQueues();
 
     // Polling for multi-device auto-synchronization (no manual refresh needed)
     let isPolling = false;
     let pollCount = 0;
+    let lastFocusSyncAt = 0;
     const pollData = (forceFullSync = false) => {
       if (isPolling) return;
       if (!forceFullSync && typeof document !== 'undefined' && document.hidden) return;
@@ -316,9 +317,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       pollCount++;
 
       // Stagger queries across cycles to balance server load:
-      // Cycle 1: Notifications + Queues + Beds (Every 5s)
-      // Cycle 2: Consultations + Patients (Every ~10s or on tab focus)
-      // Cycle 3: Medicines + Medical Certificates (Every ~15s or on tab focus)
+      // Cycle 1: Notifications + Queues + Beds (Every 30s)
+      // Cycle 2: Consultations + Patients (Every ~60s or on tab focus)
+      // Cycle 3: Medicines + Medical Certificates (Every ~90s or on tab focus)
       const shouldSyncRecords = forceFullSync || pollCount % 2 === 0;
       const shouldSyncInventory = forceFullSync || pollCount % 3 === 0;
 
@@ -379,7 +380,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 2. Queues with Map deduplication
         if (qRes && qRes.status === 'fulfilled' && qRes.value && Array.isArray(qRes.value)) {
           const qMap = new Map<string, PatientQueue>();
-          qRes.value.forEach(q => {
+          (qRes.value as PatientQueue[]).forEach((q: PatientQueue) => {
             if (q.id && !completedQueueIdsRef.current.has(q.id)) {
               qMap.set(String(q.id), notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
             }
@@ -392,7 +393,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 3. Beds with Map deduplication
         if (bRes && bRes.status === 'fulfilled' && bRes.value && Array.isArray(bRes.value)) {
           const bMap = new Map<string, Bed>();
-          bRes.value.forEach(b => {
+          (bRes.value as Bed[]).forEach((b: Bed) => {
             if (b.id) bMap.set(String(b.id), b);
           });
           const uniqueBeds = Array.from(bMap.values());
@@ -404,7 +405,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         if (cRes && cRes.status === 'fulfilled' && cRes.value && Array.isArray(cRes.value)) {
           const seenIds = new Set<string>();
           const seenKeys = new Set<string>();
-          const uniqueConsults = cRes.value.filter(c => {
+          const uniqueConsults = (cRes.value as Consultation[]).filter((c: Consultation) => {
             if (c.id && seenIds.has(String(c.id))) return false;
             const key = `${c.patientId}|${c.date}|${c.timeIn}|${(c.complaint || '').trim()}|${c.status}`;
             if (seenKeys.has(key)) return false;
@@ -419,7 +420,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 5. Patients with Map deduplication by ID (seamlessly syncs newly added patients across devices)
         if (pRes && pRes.status === 'fulfilled' && pRes.value && Array.isArray(pRes.value)) {
           const pMap = new Map<string, Patient>();
-          pRes.value.forEach(p => {
+          (pRes.value as Patient[]).forEach((p: Patient) => {
             if (p.id) {
               pMap.set(String(p.id), { ...p, name: p.name ? p.name.toUpperCase() : p.name });
             }
@@ -432,7 +433,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 6. Medicines with Map deduplication
         if (mRes && mRes.status === 'fulfilled' && mRes.value && Array.isArray(mRes.value)) {
           const mMap = new Map<string, MedicineItem>();
-          mRes.value.forEach(m => {
+          (mRes.value as MedicineItem[]).forEach((m: MedicineItem) => {
             if (m.id) mMap.set(String(m.id), m);
           });
           const uniqueMeds = Array.from(mMap.values());
@@ -443,7 +444,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         // 7. Medical Certificates with Map deduplication
         if (certRes && certRes.status === 'fulfilled' && certRes.value && Array.isArray(certRes.value)) {
           const certMap = new Map<string, MedicalCertificate>();
-          certRes.value.forEach(c => {
+          (certRes.value as MedicalCertificate[]).forEach((c: MedicalCertificate) => {
             if (c.id) certMap.set(String(c.id), c);
           });
           const uniqueCerts = Array.from(certMap.values());
@@ -459,7 +460,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
     const handleFocusOrVisible = () => {
       if (typeof document !== 'undefined' && !document.hidden) {
-        pollData(true);
+        const now = Date.now();
+        if (now - lastFocusSyncAt >= 15000) {
+          lastFocusSyncAt = now;
+          pollData(true);
+        }
       }
     };
 
@@ -977,30 +982,26 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const processMedicineDeductions = async (consultationDate: string, patientId: string, treatments: Treatment[]) => {
     if (!treatments || treatments.length === 0) return;
     const patientName = patients.find(p => p.id === patientId)?.name || 'patient';
-    
-    const updates = treatments.map(async (t) => {
-      const med = medicines.find(m => m.name === t.medicineName);
+
+    // Aggregate quantities per medicine name so duplicate treatments in one consultation don't overwrite each other
+    const qtyByMedName = new Map<string, number>();
+    treatments.forEach(t => {
+      if (!t.medicineName || !t.quantity) return;
+      qtyByMedName.set(t.medicineName, (qtyByMedName.get(t.medicineName) || 0) + Number(t.quantity));
+    });
+
+    const updates = Array.from(qtyByMedName.entries()).map(async ([medName, totalQty]) => {
+      const med = medicines.find(m => m.name === medName);
       if (med) {
-        const currentDispensed = Math.max(
-          Number(med.dispensed) || 0,
-          (med.stockHistory || []).filter(h => h.type === 'dispense').reduce((sum, h) => sum + (Number(h.qty) || 0), 0)
-        );
-        const newStock = Math.max(0, med.stock - t.quantity);
-        const updatedMed = {
-          ...med,
-          stock: newStock,
-          dispensed: currentDispensed + t.quantity,
-          status: newStock === 0 ? 'Out of Stock' : newStock <= (med.threshold ?? 10) ? 'Low Stock' : 'Normal' as any,
-          stockHistory: [...(med.stockHistory || []), {
-            date: consultationDate,
-            qty: t.quantity,
-            type: 'dispense' as const,
-            note: `Dispensed to ${patientName}`,
-          }],
-        };
         try {
-          await medicineService.updateMedicine(updatedMed.id, updatedMed);
-          return updatedMed;
+          const updatedFromServer = await medicineService.updateStock(
+            med.id,
+            totalQty,
+            'dispense',
+            `Dispensed to ${patientName}`,
+            consultationDate
+          );
+          return updatedFromServer;
         } catch (e) {
           console.error(`Failed to update stock for ${med.name}`, e);
         }
@@ -1137,6 +1138,17 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       transferredBy: verifiedStaff.name || transfer.transferredBy,
     };
     setTransfers(prev => [...prev, enrichedTransfer]);
+    api.post('/hospital-transfers/', {
+      consultation: transfer.consultationId || null,
+      patient: transfer.patientId,
+      date: transfer.date,
+      time: transfer.time,
+      receivingHospital: transfer.receivingHospital,
+      reason: transfer.reason,
+      transportMode: transfer.transportMode,
+      notes: transfer.notes,
+      transferredBy: enrichedTransfer.transferredBy,
+    }).catch((err) => console.warn('Hospital transfer API sync note:', err));
     if (transfer.consultationId) {
       const targetCons = consultations.find(c => c.id === transfer.consultationId);
       if (targetCons) {
@@ -1208,20 +1220,21 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       
       const last = req.history[req.history.length - 1];
       if (last?.qty > 0) {
-        setMedicines(prev => prev.map(m => {
-          if (m.name === req.medicine) {
-            const newStock = m.stock + last.qty;
-            const updatedMed = {
-              ...m, stock: newStock,
-              status: newStock > 10 ? 'Normal' : 'Low Stock',
-              stockHistory: [...m.stockHistory, { date: last.date, qty: last.qty, type: 'add' as const, note: `From PR ${req.id}` }],
-            };
-            // Note: The UI updates immediately, but we should also call the API for the medicine stock update.
-            // For now, it updates locally.
-            return updatedMed as MedicineItem;
+        const targetMed = medicines.find(m => m.name === req.medicine);
+        if (targetMed) {
+          try {
+            const updatedMed = await medicineService.updateStock(
+              targetMed.id,
+              last.qty,
+              'add',
+              `From PR ${req.prfNo || req.id}`,
+              last.date
+            );
+            setMedicines(prev => prev.map(m => m.id === updatedMed.id ? updatedMed : m));
+          } catch (err) {
+            console.error('Failed to persist purchase restock to medicine inventory:', err);
           }
-          return m;
-        }));
+        }
       }
     } catch (e) { console.error(e); }
   };
@@ -1484,14 +1497,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         return (
           <Appointments
             patients={patients} searchQuery={searchQuery}
-            onNavigate={navigate} onRequireStaffSignOff={requireStaffSignOff}
+            onNavigate={(p) => navigate(p as Page)} onRequireStaffSignOff={requireStaffSignOff}
           />
         );
       case 'telemedicine':
         return (
           <Telemedicine
             patients={patients} searchQuery={searchQuery}
-            onNavigate={navigate} onRequireStaffSignOff={requireStaffSignOff}
+            onNavigate={(p) => navigate(p as Page)} onRequireStaffSignOff={requireStaffSignOff}
           />
         );
       case 'patient-form':

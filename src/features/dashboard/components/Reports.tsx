@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, ReactNode } from 'react';
 import { Printer, Download, FileText, Package, BarChart2, ClipboardList, Calendar, Video } from 'lucide-react';
 import { Patient, Consultation, MedicineItem, Bed, MedicalCertificate, PurchaseRequest } from '../types';
 import { appointmentService, AppointmentRequest } from '@/services/appointmentService';
@@ -7,6 +7,7 @@ import api from '@/services/api';
 import { staffService } from '@/services/staffService';
 import uaSeal from '@/assets/images/ua-seal.png';
 import ExcelJS from 'exceljs';
+// @ts-ignore
 import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
@@ -360,7 +361,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     saveAs(new Blob([buffer]), filename);
     try {
       const b64 = arrayBufferToBase64(buffer as ArrayBuffer);
-      const staff = staffService.getActiveShift()?.name || localStorage.getItem('username') || 'Clinic Staff';
+      const staff = staffService.getActiveShift()?.staff?.name || localStorage.getItem('username') || 'Clinic Staff';
       api.post('/reports/archive/', {
         filename,
         title,
@@ -421,7 +422,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   );
 
   const acceptedAppointments = appRequests.filter(req => {
-    const isAccepted = req.status === 'Approved' || req.status === 'Completed' || req.status === 'Rejected';
+    const isAccepted = req.status === 'Approved' || req.status === 'Completed';
     if (!isAccepted) return false;
     const dateStr = req.scheduled_date || req.preferred_date || (req.created_at ? req.created_at.slice(0, 10) : '');
     return matchesFilter(dateStr, filter, customFrom, customTo, selectedMonthYear);
@@ -739,7 +740,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   })();
 
   const renderConsumptionCells = (cArray: number[], isNoStock: boolean = false) => {
-    const blocks: JSX.Element[] = [];
+    const blocks: ReactNode[] = [];
     const intervals = [
       { start: 0, end: 5 }, { start: 5, end: 10 }, { start: 10, end: 15 }, 
       { start: 15, end: 20 }, { start: 20, end: 25 }, { start: 25, end: 31 }

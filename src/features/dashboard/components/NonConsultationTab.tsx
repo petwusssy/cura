@@ -206,7 +206,7 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[160px]">
-                      <div className="truncate text-xs">{c.nurseNotes || <span className="text-gray-400">—</span>}</div>
+                      <div className="truncate text-xs">{c.operationalNotes || c.nurseNotes || <span className="text-gray-400">—</span>}</div>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">

@@ -20,7 +20,8 @@ export type Page =
   | 'telemedicine'
   | 'reports'
   | 'notifications'
-  | 'settings';
+  | 'settings'
+  | 'search';
 
 export type StudentCategory = 'Elementary' | 'Junior High School' | 'Senior High School' | 'College';
 
@@ -37,14 +38,23 @@ export interface Patient {
   emergencyPhone?: string;
   course?: string;
   yearLevel?: string;
+  section?: string;
   position?: string;
   department?: string;
+  employeeDepartment?: string;
   address?: string;
   studentCategory?: StudentCategory;
   guardianName?: string;
   gradeLevel?: string;
   isClaimed?: boolean;
   avatar?: string;
+  allergies?: string[];
+  vitals?: {
+    bloodPressure?: string;
+    heartRate?: string | number;
+    temperature?: string | number;
+    oxygenSaturation?: string | number;
+  };
 }
 
 export interface Treatment {
@@ -93,6 +103,7 @@ export interface Consultation {
   purposeOfVisit?: string;
   operationalNotes?: string;
   assistingNurse?: string;
+  diagnosis?: string;
 }
 
 export interface HospitalTransfer {
@@ -127,6 +138,7 @@ export interface MedicineItem {
   dispensed?: number;
   category?: 'Medicine' | 'Supply';
   threshold?: number;
+  batchNumber?: string;
 }
 
 export interface PurchaseHistory {
@@ -195,7 +207,7 @@ export interface Bed {
 
 export interface AppNotification {
   id: string;
-  type: 'medication' | 'bed' | 'stock' | 'general' | 'telemedicine_request' | 'appointment_request' | 'telemedicine_update' | 'appointment_update';
+  type: 'medication' | 'bed' | 'stock' | 'general' | 'telemedicine_request' | 'appointment_request' | 'telemedicine_update' | 'appointment_update' | 'medcert_request' | 'certificate';
   message: string;
   time: string;
   read: boolean;

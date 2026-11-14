@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, ReactNode } from 'react';
 import { Search, User, Stethoscope, Package } from 'lucide-react';
-import { Patient, Consultation, MedicineItem, Page } from '../../types';
+import { Patient, Consultation, MedicineItem, Page } from '../types';
 
 interface GlobalSearchProps {
   patients: Patient[];
@@ -29,10 +29,17 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
     if (!query) return [];
     
     const q = query.toLowerCase();
-    const results = [];
+    const results: Array<{
+      id: string;
+      type: string;
+      title: string;
+      subtitle: string;
+      icon: ReactNode;
+      action: () => void;
+    }> = [];
 
     // Search Patients
-    const matchedPatients = patients.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)).slice(0, 5);
+    const matchedPatients = patients.filter(p => (p.name || '').toLowerCase().includes(q) || (p.id || '').toLowerCase().includes(q)).slice(0, 5);
     matchedPatients.forEach(p => {
       results.push({
         id: p.id,
@@ -50,7 +57,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
     });
 
     // Search Consultations
-    const matchedConsultations = consultations.filter(c => c.complaint.toLowerCase().includes(q) || c.diagnosis?.toLowerCase().includes(q)).slice(0, 3);
+    const matchedConsultations = consultations.filter(c => (c.complaint || '').toLowerCase().includes(q) || c.diagnosis?.toLowerCase().includes(q)).slice(0, 3);
     matchedConsultations.forEach(c => {
       const patient = patients.find(p => p.id === c.patientId);
       results.push({
@@ -69,7 +76,7 @@ export function GlobalSearch({ patients, consultations, medicines, onNavigate, o
     });
 
     // Search Medicines
-    const matchedMedicines = medicines.filter(m => m.name.toLowerCase().includes(q) || m.batchNumber?.toLowerCase().includes(q)).slice(0, 3);
+    const matchedMedicines = medicines.filter(m => (m.name || '').toLowerCase().includes(q) || m.batchNumber?.toLowerCase().includes(q)).slice(0, 3);
     matchedMedicines.forEach(m => {
       results.push({
         id: m.id,

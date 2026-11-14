@@ -24,8 +24,19 @@ export const medicineService = {
     const response = await api.put<MedicineItem>(`/medicines/${id}/`, data);
     return response.data;
   },
-  updateStock: async (id: string, quantity: number): Promise<MedicineItem> => {
-    const response = await api.patch<MedicineItem>(`/medicines/${id}/stock/`, { quantity });
+  updateStock: async (
+    id: string,
+    quantity: number,
+    type: 'add' | 'dispense' = 'dispense',
+    note?: string,
+    date?: string
+  ): Promise<MedicineItem> => {
+    const response = await api.patch<MedicineItem>(`/medicines/${id}/stock/`, {
+      quantity,
+      type,
+      note,
+      date,
+    });
     return response.data;
   },
 

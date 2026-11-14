@@ -335,12 +335,6 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     setReqActionType(null);
     setIsReqSubmitting(false);
 
-    triggerToast(
-      status === 'Approved'
-        ? `✅ Request approved! Medical Certificate generated for ${patientName}.`
-        : `⚠️ Request rejected for ${patientName}.`
-    );
-
     // Background server call with rollback guard
     medcertRequestService.approveRequest(targetId, {
       status,
@@ -351,6 +345,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
     }).then(res => {
       if (res) {
         setRequests(prev => prev.map(r => r.id === res.id ? res : r));
+        triggerToast(
+          status === 'Approved'
+            ? `✅ Request approved! Medical Certificate generated for ${patientName}.`
+            : `⚠️ Request rejected for ${patientName}.`
+        );
       } else {
         setRequests(prevRequests);
         triggerToast('⚠️ Error processing issuance request. Reverting...');
@@ -627,9 +626,9 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   // Issue Certificate: populate template from form data and save to archives
   const handleIssueCertSubmit = async () => {
     if (isIssuing) return;
-    setIsIssuing(true);
     const { patientId, date: fDate, name, age: fAge, gender, yearLevel: fYL, courseOrDepartment, complaint, diagnosis: fDiag, treatment: fTreat, recommendations: fRec } = issueCertForm;
     if (!name || !fDate || !complaint || !fDiag) return;
+    setIsIssuing(true);
 
     const newId = `MC-${Date.now().toString().slice(-6)}`;
 
