@@ -285,11 +285,11 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
     }
     setIsUpdatingLoginPw(true);
     try {
-      await api.post('/auth/change-password/', {
-        email: authService.getUsername() || 'ANTHROPEAK2026',
-        current_password: currentLoginPw,
-        new_password: newLoginPw,
-      });
+      await staffService.changeClinicLoginPassword(
+        authService.getUsername() || 'ANTHROPEAK2026',
+        currentLoginPw,
+        newLoginPw,
+      );
       await staffService.recordAuditLog({
         staff_name_snapshot: authService.getUsername().toUpperCase() || 'HEAD NURSE / ADMIN',
         staff_role_snapshot: 'Administrator',

@@ -372,6 +372,30 @@ export const staffService = {
     lastVerifiedAdminPassword = cleanNew;
   },
 
+  async changeClinicLoginPassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const cleanAdmin = lastVerifiedAdminPassword.trim();
+    if (!cleanAdmin) {
+      throw new Error('Please unlock User Management again before changing the CURA login password.');
+    }
+
+    const res = await api.post<{ success?: boolean; access?: string }>('/auth/change-password/', {
+      email,
+      current_password: currentPassword,
+      new_password: newPassword,
+      admin_password: cleanAdmin,
+    });
+
+    if (res.data?.access) {
+      localStorage.setItem('accessToken', res.data.access);
+      localStorage.setItem('cura_access_token', res.data.access);
+      api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
+    }
+  },
+
   async verifyPin(pin: string): Promise<ClinicStaffMember> {
     const cleanPin = pin.trim();
     if (!/^\d{4}$/.test(cleanPin)) {
