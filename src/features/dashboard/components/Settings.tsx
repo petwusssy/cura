@@ -16,6 +16,7 @@ import {
   AUDIT_UPDATED_EVENT,
 } from '../../../services/staffService';
 import { toast } from 'sonner';
+import { PrivacyPolicyModal, DPO_CONTACT, PRIVACY_POLICY_VERSION } from '../../../components/shared/PrivacyPolicy';
 
 const PRIMARY = '#1E5AA8';
 
@@ -63,6 +64,7 @@ interface SettingsProps {
 export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [activeSection, setActiveSection] = useState('profile');
   const [saved, setSaved] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const [profile, setProfile] = useState({
@@ -987,6 +989,41 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                   <Save size={15} /> Update Password
                 </button>
               </div>
+
+              {/* Data Privacy & Retention Compliance (RA 10173) */}
+              <div className="pt-5 border-t border-border">
+                <div className="rounded-xl border border-blue-100 dark:border-blue-900/60 bg-blue-50/40 dark:bg-slate-900/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Shield size={16} style={{ color: PRIMARY }} />
+                      <h4 className="text-sm font-bold text-foreground">Data Privacy &amp; Retention Compliance (RA 10173)</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Retention policy: 3–5 yrs routine logs · 10 yrs adult clinical &amp; medcert · Age 18+10 yrs minors. DPO Contact:{' '}
+                      <span className="font-semibold text-foreground">{DPO_CONTACT.email}</span> · Version {PRIVACY_POLICY_VERSION}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-white dark:bg-card text-xs font-semibold text-foreground hover:bg-accent transition-colors"
+                    >
+                      <span>Public URL</span>
+                      <ExternalLink size={12} />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-bold hover:opacity-95 transition-opacity cursor-pointer"
+                      style={{ background: PRIMARY }}
+                    >
+                      View Privacy Policy
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1102,6 +1139,25 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                   <div className="font-bold text-lg" style={{ color: PRIMARY }}>CURA</div>
                   <div className="text-sm text-muted-foreground mt-1">University of the Assumption Clinic Information System</div>
                   <div className="text-xs text-muted-foreground mt-0.5">Version 1.0.0 • June 2026</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="text-xs font-bold hover:underline cursor-pointer"
+                      style={{ color: PRIMARY }}
+                    >
+                      Read Data Privacy Policy (RA 10173)
+                    </button>
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                    >
+                      <span>Public Notice (/privacy)</span>
+                      <ExternalLink size={11} />
+                    </a>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <div className="font-medium text-muted-foreground text-sm">Quick Reference</div>
@@ -1131,6 +1187,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
           )}
         </div>
       </div>
+      <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </div>
   );
 }

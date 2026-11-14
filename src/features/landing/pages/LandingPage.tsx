@@ -16,6 +16,7 @@ import anthropeakLogo from "@/assets/images/anthropeak-logo.webp"
 import campusBg from "@/features/landing/assets/uafacade.webp"
 import { authService } from "@/services/authService"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
+import { PrivacyPolicyModal } from "@/components/shared/PrivacyPolicy"
 
 interface Props {
   onLoginClick?: () => void
@@ -47,6 +48,7 @@ export default function LandingPage({
   const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
   const [isUaHovered, setIsUaHovered] = useState(false)
   const [isRightPanelHovered, setIsRightPanelHovered] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   useEffect(() => {
     if (stage === "splitting") {
@@ -549,7 +551,17 @@ export default function LandingPage({
 
           {/* Footer inside White Panel */}
           <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/75 font-medium">
-            <span>CURA System</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>CURA System</span>
+              <span aria-hidden="true" className="text-slate-300">·</span>
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(true)}
+                className="text-[#1E5AA8] hover:underline font-semibold cursor-pointer"
+              >
+                Privacy Policy (RA 10173)
+              </button>
+            </div>
             <div className="text-right flex flex-col items-end leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#001e50]/75">
@@ -570,6 +582,8 @@ export default function LandingPage({
             </div>
           </div>
         </div>
+
+        <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
         {/* ── RIGHT OVERLAY SECTION (Takes 45% width) ── */}
         <div

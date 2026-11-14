@@ -5,6 +5,7 @@ import { authService } from "@/services/authService"
 const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"))
 const DashboardApp = lazy(() => import("@/features/dashboard/pages/DashboardApp"))
 const CallPage = lazy(() => import("@/features/telemedicine/CallPage").then(m => ({ default: m.CallPage })))
+const PublicPrivacyPage = lazy(() => import("@/components/shared/PrivacyPolicy").then(m => ({ default: m.PublicPrivacyPage })))
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -119,6 +120,14 @@ export function AppRouter() {
           <Route
             path="/telemedicine/call/:roomId"
             element={<CallPage />}
+          />
+          <Route
+            path="/privacy"
+            element={<PublicPrivacyPage />}
+          />
+          <Route
+            path="/privacy-policy"
+            element={<Navigate to="/privacy" replace />}
           />
           <Route
             path="/dashboard/*"

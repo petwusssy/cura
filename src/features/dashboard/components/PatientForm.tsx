@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Save, User, UserCheck, ScanLine, Sparkles } from 'lucide-react';
+import { ChevronLeft, Save, User, UserCheck, ScanLine, Sparkles, ShieldCheck } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 import { loadDepartmentSectionGroups, inferYearLevelFromSection, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
 import { StudentIdScannerModal } from './StudentIdScannerModal';
+import { PrivacyPolicyModal } from '../../../components/shared/PrivacyPolicy';
 
 const PRIMARY = '#1B3A6B';
 
@@ -44,6 +45,8 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [deptGroups, setDeptGroups] = useState(() => loadDepartmentSectionGroups());
+  const [privacyConfirmed, setPrivacyConfirmed] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   useEffect(() => {
     const refreshDepts = () => setDeptGroups(loadDepartmentSectionGroups());
@@ -92,6 +95,13 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
     e.preventDefault();
     if (isSubmitting) return;
     if (!validate()) return;
+    if (!isEditing && !privacyConfirmed) {
+      setErrors(prev => ({
+        ...prev,
+        privacy: 'Please confirm the RA 10173 Data Privacy Notice before registering a new patient.',
+      }));
+      return;
+    }
     const finalId = isEditing ? editingPatientId! : (form.category === 'Outsider' ? generateId('Outsider') : form.id);
     
     // Calculate age from birthday if provided
@@ -483,6 +493,64 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
           </div>
         )}
 
+        {/* RA 10173 Data Privacy Notice & Informed Consent */}
+        <div
+          className={`rounded-xl p-4 border transition-colors ${
+            errors.privacy
+              ? 'bg-red-50/70 border-red-300'
+              : 'bg-[#F4F9FD] border-blue-100'
+          }`}
+        >
+          {!isEditing ? (
+            <div className="space-y-2">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={privacyConfirmed}
+                  onChange={e => {
+                    setPrivacyConfirmed(e.target.checked);
+                    if (e.target.checked && errors.privacy) {
+                      setErrors(prev => {
+                        const next = { ...prev };
+                        delete next.privacy;
+                        return next;
+                      });
+                    }
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1E5AA8] focus:ring-[#1E5AA8] cursor-pointer"
+                />
+                <span className="text-xs text-slate-700 leading-relaxed">
+                  <strong className="text-[#1B3A6B]">RA 10173 Informed Consent:</strong> I confirm the patient has been informed of CURA&apos;s Data Privacy Policy regarding confidential clinical records and institutional healthcare processing.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="font-bold text-[#1E5AA8] hover:underline cursor-pointer"
+                  >
+                    Read Privacy Policy
+                  </button>
+                </span>
+              </label>
+              {errors.privacy && (
+                <p className="text-xs font-medium text-red-600 pl-7">{errors.privacy}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 flex-wrap text-xs text-slate-600">
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#1B3A6B]">
+                <ShieldCheck size={15} className="text-[#1E5AA8]" />
+                Protected health record under Philippine RA 10173 (Data Privacy Act).
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(true)}
+                className="font-bold text-[#1E5AA8] hover:underline cursor-pointer"
+              >
+                View Privacy Policy
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-2">
           <button
@@ -532,6 +600,22 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
             return next;
           });
         }}
+      />
+
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onAccept={!isEditing ? () => {
+          setPrivacyConfirmed(true);
+          if (errors.privacy) {
+            setErrors(prev => {
+              const next = { ...prev };
+              delete next.privacy;
+              return next;
+            });
+          }
+        } : undefined}
+        acceptLabel="Confirm Patient Notice"
       />
     </div>
   );
