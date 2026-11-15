@@ -5,6 +5,8 @@ import { telemedicineService, TelemedicineRequest } from '@/services/telemedicin
 import { EmbeddedJitsiCall } from './EmbeddedJitsiCall';
 import { normalizeDate, getManilaDate, getManilaTime, formatTime12 } from '@/utils/philippineTime';
 import { TelemedicineCardSkeleton } from './PageSkeleton';
+import { MobileFeatureLockButton } from '../../../components/shared/MobileFeatureLockButton';
+import { toast } from 'sonner';
 
 function parseSingleTime(t: string): number | null {
   const match = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
@@ -174,6 +176,8 @@ const TELEMEDICINE_TIME_SLOTS = [
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
   const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
   const [availSaving, setAvailSaving] = useState(false);
+  const [isMobileLocked, setIsMobileLocked] = useState(true);
+  const [lockSaving, setLockSaving] = useState(false);
   const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
 
   const currentYear = currentMonthDate.getFullYear();
@@ -187,6 +191,32 @@ const TELEMEDICINE_TIME_SLOTS = [
     const data = await telemedicineService.getAvailability();
     setUnavailableDates(data.unavailable_dates || []);
     setUnavailableTimes(data.unavailable_times || []);
+    setIsMobileLocked(data.is_locked);
+  };
+
+  const handleToggleMobileLock = async () => {
+    const nextLocked = !isMobileLocked;
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          nextLocked ? 'Locked Telemedicine on Mobile' : 'Unlocked Telemedicine on Mobile',
+          nextLocked ? 'Set mobile Telemedicine to Coming Soon' : 'Enabled mobile Telemedicine requests',
+          'Telemedicine',
+          'mobile-lock'
+        );
+      } catch {
+        return;
+      }
+    }
+    setLockSaving(true);
+    const ok = await telemedicineService.setMobileLocked(nextLocked);
+    setLockSaving(false);
+    if (ok) {
+      setIsMobileLocked(nextLocked);
+      toast.success(nextLocked ? 'Telemedicine is now locked on mobile (Coming Soon).' : 'Telemedicine is now unlocked on mobile.');
+    } else {
+      toast.error('Failed to update mobile lock status.');
+    }
   };
 
   const toggleDate = (dateStr: string) => {
@@ -268,6 +298,7 @@ const TELEMEDICINE_TIME_SLOTS = [
 
   useEffect(() => {
     fetchRequests();
+    telemedicineService.getAvailability().then(d => setIsMobileLocked(d.is_locked)).catch(() => {});
     let isFetching = false;
     const interval = setInterval(() => {
       if (isFetching) return;
@@ -433,6 +464,11 @@ const TELEMEDICINE_TIME_SLOTS = [
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Telemedicine</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <MobileFeatureLockButton
+            isLocked={isMobileLocked}
+            saving={lockSaving}
+            onToggle={handleToggleMobileLock}
+          />
           <button
             type="button"
             onClick={openAvailabilityModal}

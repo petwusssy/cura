@@ -4,6 +4,8 @@ import { Patient } from '../types';
 import { appointmentService, AppointmentRequest } from '../../../services/appointmentService';
 import { normalizeDate, formatTime12, getManilaDate } from '@/utils/philippineTime';
 import { AppointmentCardSkeleton } from './PageSkeleton';
+import { MobileFeatureLockButton } from '../../../components/shared/MobileFeatureLockButton';
+import { toast } from 'sonner';
 
 interface AppointmentsProps {
   patients: Patient[];
@@ -65,6 +67,8 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
   const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
   const [availSaving, setAvailSaving] = useState(false);
+  const [isMobileLocked, setIsMobileLocked] = useState(true);
+  const [lockSaving, setLockSaving] = useState(false);
   const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
 
   const currentYear = currentMonthDate.getFullYear();
@@ -79,6 +83,32 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
     const data = await appointmentService.getAvailability();
     setUnavailableDates(data.unavailable_dates || []);
     setUnavailableTimes(data.unavailable_times || []);
+    setIsMobileLocked(data.is_locked);
+  };
+
+  const handleToggleMobileLock = async () => {
+    const nextLocked = !isMobileLocked;
+    if (onRequireStaffSignOff) {
+      try {
+        await onRequireStaffSignOff(
+          nextLocked ? 'Locked Appointments on Mobile' : 'Unlocked Appointments on Mobile',
+          nextLocked ? 'Set mobile Appointments to Coming Soon' : 'Enabled mobile Appointment requests',
+          'Appointment',
+          'mobile-lock'
+        );
+      } catch {
+        return;
+      }
+    }
+    setLockSaving(true);
+    const ok = await appointmentService.setMobileLocked(nextLocked);
+    setLockSaving(false);
+    if (ok) {
+      setIsMobileLocked(nextLocked);
+      toast.success(nextLocked ? 'Appointments are now locked on mobile (Coming Soon).' : 'Appointments are now unlocked on mobile.');
+    } else {
+      toast.error('Failed to update mobile lock status.');
+    }
   };
 
   const toggleDate = (dateStr: string) => {
@@ -146,6 +176,7 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
 
   useEffect(() => {
     fetchRequests();
+    appointmentService.getAvailability().then(d => setIsMobileLocked(d.is_locked)).catch(() => {});
     let isFetching = false;
     const interval = setInterval(() => {
       if (isFetching) return;
@@ -285,6 +316,11 @@ export function Appointments({ patients, searchQuery = '', onRequireStaffSignOff
           <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">In-Person Appointments</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <MobileFeatureLockButton
+            isLocked={isMobileLocked}
+            saving={lockSaving}
+            onToggle={handleToggleMobileLock}
+          />
           <button
             type="button"
             onClick={openAvailabilityModal}

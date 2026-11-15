@@ -74,16 +74,17 @@ export const appointmentService = {
     }
   },
 
-  getAvailability: async (): Promise<{ unavailable_dates: string[]; unavailable_times: string[] }> => {
+  getAvailability: async (): Promise<{ unavailable_dates: string[]; unavailable_times: string[]; is_locked: boolean }> => {
     try {
       const response = await api.get('/appointments/availability/');
       return {
         unavailable_dates: response.data?.unavailable_dates || [],
         unavailable_times: response.data?.unavailable_times || [],
+        is_locked: Boolean(response.data?.is_locked ?? true),
       };
     } catch (error) {
       console.error('Failed to fetch appointment availability:', error);
-      return { unavailable_dates: [], unavailable_times: [] };
+      return { unavailable_dates: [], unavailable_times: [], is_locked: true };
     }
   },
 
@@ -93,6 +94,16 @@ export const appointmentService = {
       return true;
     } catch (error) {
       console.error('Failed to save appointment availability:', error);
+      return false;
+    }
+  },
+
+  setMobileLocked: async (is_locked: boolean): Promise<boolean> => {
+    try {
+      await api.post('/appointments/availability/', { is_locked });
+      return true;
+    } catch (error) {
+      console.error('Failed to update appointment mobile lock:', error);
       return false;
     }
   }

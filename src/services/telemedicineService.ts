@@ -76,16 +76,17 @@ export const telemedicineService = {
     }
   },
 
-  getAvailability: async (): Promise<{ unavailable_dates: string[]; unavailable_times: string[] }> => {
+  getAvailability: async (): Promise<{ unavailable_dates: string[]; unavailable_times: string[]; is_locked: boolean }> => {
     try {
       const response = await api.get('/telemedicine/availability/');
       return {
         unavailable_dates: response.data?.unavailable_dates || [],
         unavailable_times: response.data?.unavailable_times || [],
+        is_locked: Boolean(response.data?.is_locked ?? true),
       };
     } catch (error) {
       console.error('Failed to fetch telemedicine availability:', error);
-      return { unavailable_dates: [], unavailable_times: [] };
+      return { unavailable_dates: [], unavailable_times: [], is_locked: true };
     }
   },
 
@@ -95,6 +96,16 @@ export const telemedicineService = {
       return true;
     } catch (error) {
       console.error('Failed to save telemedicine availability:', error);
+      return false;
+    }
+  },
+
+  setMobileLocked: async (is_locked: boolean): Promise<boolean> => {
+    try {
+      await api.post('/telemedicine/availability/', { is_locked });
+      return true;
+    } catch (error) {
+      console.error('Failed to update telemedicine mobile lock:', error);
       return false;
     }
   }
