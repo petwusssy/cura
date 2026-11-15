@@ -153,7 +153,7 @@ export interface PurchaseRequest {
   requestedQty: number;
   receivedQty: number;
   date: string;
-  status: 'Pending' | 'Partial' | 'Complete';
+  status: 'Pending' | 'Partial' | 'Complete' | 'Voided';
   history: PurchaseHistory[];
   description?: string;
   unit?: string;

@@ -1264,6 +1264,49 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     } catch (e) { console.error(e); }
   };
 
+  const handleReceivePurchaseDelivery = async (
+    reqId: string,
+    payload: { qty: number; date: string; note: string }
+  ) => {
+    try {
+      const result = await medicineService.receivePurchaseDelivery(reqId, payload);
+      if (result?.request) {
+        setPurchaseRequests(prev => prev.map(r => r.id === result.request.id ? result.request : r));
+      }
+      if (result?.medicine) {
+        setMedicines(prev => prev.map(m => m.id === result.medicine!.id ? result.medicine! : m));
+      }
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || 'Failed to record purchase delivery.';
+      toast.error(msg);
+      throw e;
+    }
+  };
+
+  const handleVoidPrf = async (prfNo: string, ids: string[], reason: string) => {
+    const verifiedStaff = await requireStaffSignOff(
+      'Voided Purchase Requisition Form (PRF)',
+      `${prfNo} • ${reason || 'Cancelled / entered in error'}`,
+      'PurchaseRequest',
+      String(prfNo)
+    );
+    try {
+      const updatedItems = await medicineService.voidPurchaseRequisitionForm({
+        prfNo,
+        ids,
+        reason,
+        staffName: verifiedStaff.name,
+      });
+      const updatedMap = new Map(updatedItems.map(item => [item.id, item]));
+      setPurchaseRequests(prev => prev.map(r => updatedMap.get(r.id) || r));
+      toast.success(`Voided ${prfNo} cleanly.`);
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || 'Failed to void Purchase Requisition Form.';
+      toast.error(msg);
+      throw e;
+    }
+  };
+
   const handleDeletePurchaseRequest = async (id: string) => {
     const targetReq = purchaseRequests.find(r => r.id === id);
     await requireStaffSignOff(
@@ -1272,12 +1315,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       'PurchaseRequest',
       String(id)
     );
+    const snapshot = purchaseRequests;
     // Optimistic update: remove from state immediately so tracker and PRF template sync instantly
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
     try {
       await medicineService.deletePurchaseRequest(id);
-    } catch (e) {
-      console.error('API delete failed, but state updated locally:', e);
+    } catch (e: any) {
+      setPurchaseRequests(snapshot);
+      toast.error(e?.response?.data?.error || 'Failed to remove purchase requisition item.');
     }
   };
   const handleAddMedCert = async (cert: MedicalCertificate) => {
@@ -1653,6 +1698,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             purchaseRequests={purchaseRequests} medicines={medicines}
             searchQuery={searchQuery}
             onUpdateRequest={handleUpdatePurchaseRequest}
+            onReceiveDelivery={handleReceivePurchaseDelivery}
+            onVoidPrf={handleVoidPrf}
             onAddRequest={handleAddPurchaseRequest}
             onDeleteRequest={handleDeletePurchaseRequest}
             onRequireStaffSignOff={requireStaffSignOff}

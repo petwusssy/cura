@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy, UserCheck } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy, UserCheck, Ban, Archive } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate, formatManilaDisplayTime } from '@/utils/philippineTime';
 import { staffService, SHIFT_UPDATED_EVENT, ClinicStaffMember } from '@/services/staffService';
@@ -12,6 +12,8 @@ interface PurchaseReceiptsProps {
   purchaseRequests: PurchaseRequest[];
   medicines: MedicineItem[];
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
+  onReceiveDelivery?: (reqId: string, payload: { qty: number; date: string; note: string }) => Promise<void>;
+  onVoidPrf?: (prfNo: string, ids: string[], reason: string) => Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
   onDeleteRequest: (id: string) => void | Promise<void>;
   onRequireStaffSignOff?: (
@@ -154,10 +156,14 @@ function getSavedPrfPreparedBy(prfKey: string): string {
   return staffService.getActiveShift()?.staff.name || localStorage.getItem('cura_prf_current_prepared_by') || 'Clinic Staff (PIN Verified)';
 }
 
-export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onAddRequest, onDeleteRequest, onRequireStaffSignOff, searchQuery }: PurchaseReceiptsProps) {
+export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest, onReceiveDelivery, onVoidPrf, onAddRequest, onDeleteRequest, onRequireStaffSignOff, searchQuery }: PurchaseReceiptsProps) {
   const [viewMode, setViewMode] = useState<'template' | 'tracker'>('template');
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Partial' | 'Complete'>('All');
+  const [statusFilter, setStatusFilter] = useState<'Active' | 'Pending' | 'Partial' | 'Complete' | 'Voided' | 'All'>('Active');
+  const [showAllPrfs, setShowAllPrfs] = useState(false);
+  const [voidModalGroup, setVoidModalGroup] = useState<{ prfNo: string; items: PurchaseRequest[] } | null>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const [isVoiding, setIsVoiding] = useState(false);
   const [openPrfs, setOpenPrfs] = useState<Record<string, boolean>>({});
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
   const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
@@ -316,22 +322,31 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
         );
         verifierName = staff.name;
       }
-      const newReceived = receiveModal.receivedQty + qty;
       const notePrefix = receiveNote ? `${receiveNote} ` : `Received delivery (+${qty} units) `;
-      const updated: PurchaseRequest = {
-        ...receiveModal,
-        receivedQty: newReceived,
-        status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
-        history: [
-          ...receiveModal.history,
-          {
-            date: getManilaDate(),
-            qty,
-            note: `${notePrefix}${verifierName ? `• Verified by ${verifierName}` : ''}`.trim(),
-          },
-        ],
-      };
-      await onUpdateRequest(updated);
+      const formattedNote = `${notePrefix}${verifierName ? `• Verified by ${verifierName}` : ''}`.trim();
+      if (onReceiveDelivery) {
+        await onReceiveDelivery(receiveModal.id, {
+          qty,
+          date: getManilaDate(),
+          note: formattedNote,
+        });
+      } else {
+        const newReceived = receiveModal.receivedQty + qty;
+        const updated: PurchaseRequest = {
+          ...receiveModal,
+          receivedQty: newReceived,
+          status: newReceived >= receiveModal.requestedQty ? 'Complete' : 'Partial',
+          history: [
+            ...receiveModal.history,
+            {
+              date: getManilaDate(),
+              qty,
+              note: formattedNote,
+            },
+          ],
+        };
+        await onUpdateRequest(updated);
+      }
       setReceiveModal(null);
       setReceiveQty('');
       setReceiveNote('');
@@ -504,7 +519,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const filteredRequests = useMemo(() => {
     const seenPrKeys = new Set<string>();
     return purchaseRequests.filter(req => {
-      const matchesStatus = statusFilter === 'All' ? true : req.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'All'
+          ? true
+          : statusFilter === 'Active'
+          ? req.status === 'Pending' || req.status === 'Partial'
+          : req.status === statusFilter;
       const matchesSearch = searchQuery.trim() === '' || 
         req.medicine.toLowerCase().includes(searchQuery.toLowerCase()) || 
         (req.description && req.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -564,7 +584,9 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     Pending:  { bg: `${YELLOW}25`, text: '#A17A0C', border: '#E2BD3D' },
     Partial:  { bg: '#EBF3FF', text: PRIMARY, border: '#B4D2FF' },
     Complete: { bg: '#E8F6F0', text: '#198057', border: '#A6DFC7' },
+    Voided:   { bg: '#FEE2E2', text: '#B91C1C', border: '#FECACA' },
   };
+  const visiblePrfKeys = showAllPrfs ? sortedPrfKeys : sortedPrfKeys.slice(0, 12);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen bg-transparent">
@@ -1148,12 +1170,12 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               return (
                 <div
                   key={s}
-                  onClick={() => setStatusFilter(s === statusFilter ? 'All' : s)}
+                  onClick={() => setStatusFilter(s === statusFilter ? 'Active' : s)}
                   className="bg-white rounded-2xl p-5 border cursor-pointer transition-all shadow-2xs hover:shadow-md flex items-center justify-between"
                   style={{ borderColor: sc.border }}
                 >
                   <div>
-                    <div className="text-xs font-extrabold uppercase tracking-wider text-gray-500">{s} Deliveries</div>
+                    <div className="text-xs font-extrabold uppercase tracking-wider text-gray-500">{s === 'Complete' ? 'Archived / Complete' : `${s} Deliveries`}</div>
                     <div className="text-2xl font-black mt-1 text-gray-800">{count}</div>
                   </div>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm" style={{ background: sc.bg, color: sc.text }}>
@@ -1167,17 +1189,17 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
             <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 w-full sm:w-auto justify-start sm:justify-end overflow-x-auto hide-scrollbar shadow-sm">
-              {(['All', 'Pending', 'Partial', 'Complete'] as const).map(s => (
+              {(['Active', 'Pending', 'Partial', 'Complete', 'Voided', 'All'] as const).map(s => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => { setStatusFilter(s); setShowAllPrfs(false); }}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     statusFilter === s
                       ? 'bg-gradient-to-r from-[#38BDF8] via-[#0EA5E9] to-[#0284C7] text-white shadow-sm shadow-sky-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  {s}
+                  {s === 'Complete' ? 'Completed' : s}
                 </button>
               ))}
               <button
@@ -1191,20 +1213,25 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
           {/* Requests Tracking List Grouped by PRF */}
           <div className="space-y-4">
-            {sortedPrfKeys.length === 0 ? (
+            {visiblePrfKeys.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400 font-medium">
-                No requisition orders match the current filter or search criteria.
+                {statusFilter === 'Active'
+                  ? 'No active (Pending or Partial) requisition orders. Check "Completed" or "All" to view archived PRFs.'
+                  : 'No requisition orders match the current filter or search criteria.'}
               </div>
             ) : (
-              sortedPrfKeys.map(prfKey => {
+              visiblePrfKeys.map(prfKey => {
                 const group = prfGroups[prfKey];
                 const isOpen = Boolean(openPrfs[prfKey]);
                 const prfTitle = getPrfDisplayTitle(group.prfNo);
                 const purchaseDate = group.date ? normalizeDate(group.date) : getManilaDate();
                 const purchaseTime = group.time || getSavedPrfTime(prfKey, group.items);
+                const hasReceived = group.items.some(i => i.receivedQty > 0);
+                const isCompleteGroup = group.items.length > 0 && group.items.every(i => i.status === 'Complete');
+                const isVoidedGroup = group.items.length > 0 && group.items.every(i => i.status === 'Voided');
 
                 return (
-                  <div key={prfKey} className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all">
+                  <div key={prfKey} className={`bg-white rounded-2xl border shadow-xs overflow-hidden transition-all ${isVoidedGroup ? 'border-red-200 opacity-75' : 'border-gray-200'}`}>
                     {/* PRF Container Header / Dropdown Toggle */}
                     <div className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors">
                       <button
@@ -1216,9 +1243,19 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1E5AA8] flex items-center justify-center flex-shrink-0">
                             <FileText size={16} />
                           </div>
-                          <span className="font-extrabold text-gray-900 text-sm sm:text-base tracking-tight">
+                          <span className={`font-extrabold text-gray-900 text-sm sm:text-base tracking-tight ${isVoidedGroup ? 'line-through text-gray-500' : ''}`}>
                             {prfTitle}
                           </span>
+                          {isCompleteGroup && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <Archive size={11} /> Archived
+                            </span>
+                          )}
+                          {isVoidedGroup && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
+                              <Ban size={11} /> Voided
+                            </span>
+                          )}
                         </div>
                         <span className="text-xs text-gray-500 font-medium sm:border-l sm:border-gray-200 sm:pl-4">
                           Date of Purchase: <strong className="text-gray-700 font-semibold">{purchaseDate} • {purchaseTime}</strong>
@@ -1228,7 +1265,22 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                         </span>
                       </button>
 
-                      <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+                        {!hasReceived && !isVoidedGroup && onVoidPrf && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVoidModalGroup({ prfNo: group.prfNo, items: group.items });
+                              setVoidReason('');
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-all cursor-pointer"
+                            title={`Void untouched ${group.prfNo} (preserves PRF numbering)`}
+                          >
+                            <Ban size={13} />
+                            <span className="hidden sm:inline">Void PRF</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1323,7 +1375,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
 
                                 {/* Action buttons */}
                                 <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto mt-4 lg:mt-0">
-                                  {req.status !== 'Complete' && (
+                                  {req.status !== 'Complete' && req.status !== 'Voided' && (
                                     <button
                                       onClick={() => { setReceiveModal(req); setReceiveQty(''); setReceiveNote(''); }}
                                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 bg-[#1E5AA8]"
@@ -1338,13 +1390,15 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                                     <span>Delivery Log ({req.history.length})</span>
                                     {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                                   </button>
-                                  <button
-                                    onClick={() => onDeleteRequest(req.id)}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors"
-                                    title="Remove this item"
-                                  >
-                                    <Trash2 size={14} /> Remove
-                                  </button>
+                                  {req.receivedQty === 0 && req.status !== 'Voided' && (
+                                    <button
+                                      onClick={() => onDeleteRequest(req.id)}
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors"
+                                      title="Remove untouched item"
+                                    >
+                                      <Trash2 size={14} /> Remove
+                                    </button>
+                                  )}
                                 </div>
                               </div>
 
@@ -1377,6 +1431,17 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   </div>
                 );
               })
+            )}
+            {sortedPrfKeys.length > 12 && (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllPrfs(prev => !prev)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-2xs transition-colors cursor-pointer"
+                >
+                  {showAllPrfs ? 'Show Recent 12 PRFs' : `Show All (${sortedPrfKeys.length} PRFs)`}
+                </button>
+              </div>
             )}
           </div>
 
@@ -1844,6 +1909,64 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                     <CheckCircle size={14} /> Confirm &amp; Submit
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Void PRF Confirmation Modal */}
+      {voidModalGroup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                <Ban size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-gray-900">Void {getPrfDisplayTitle(voidModalGroup.prfNo)}?</h3>
+                <p className="text-xs text-gray-500">
+                  Marks all untouched items as Voided while preserving sequential PRF numbering and audit history.
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Reason for Voiding</label>
+              <input
+                type="text"
+                value={voidReason}
+                onChange={e => setVoidReason(e.target.value)}
+                placeholder="e.g., Duplicate PRF, cancelled order, wrong vendor"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => { setVoidModalGroup(null); setVoidReason(''); }}
+                disabled={isVoiding}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isVoiding || !onVoidPrf}
+                onClick={async () => {
+                  if (!onVoidPrf || !voidModalGroup) return;
+                  setIsVoiding(true);
+                  try {
+                    await onVoidPrf(voidModalGroup.prfNo, voidModalGroup.items.map(i => i.id), voidReason.trim());
+                    setVoidModalGroup(null);
+                    setVoidReason('');
+                  } finally {
+                    setIsVoiding(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                <Ban size={13} />
+                {isVoiding ? 'Voiding...' : 'Confirm Void PRF'}
               </button>
             </div>
           </div>

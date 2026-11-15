@@ -58,4 +58,30 @@ export const medicineService = {
   deletePurchaseRequest: async (id: string): Promise<void> => {
     await api.delete(`/purchase-requests/${id}/`);
   },
+
+  receivePurchaseDelivery: async (
+    id: string,
+    payload: { qty: number; date?: string; note?: string }
+  ): Promise<{ request: PurchaseRequest; medicine: MedicineItem | null }> => {
+    const response = await api.post<{ request: PurchaseRequest; medicine: MedicineItem | null }>(
+      `/purchase-requests/${id}/receive/`,
+      payload
+    );
+    return response.data;
+  },
+
+  voidPurchaseRequisitionForm: async (payload: {
+    prfNo?: string;
+    ids?: string[];
+    reason?: string;
+    staffName?: string;
+  }): Promise<PurchaseRequest[]> => {
+    const response = await api.post<PurchaseRequest[]>('/purchase-requests/void-prf/', {
+      prfNo: payload.prfNo,
+      ids: payload.ids,
+      reason: payload.reason,
+      staff_name: payload.staffName,
+    });
+    return response.data;
+  },
 };
