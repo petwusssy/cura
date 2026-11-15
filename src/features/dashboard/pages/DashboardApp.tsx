@@ -58,6 +58,67 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const [convertingId, setConvertingId]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
   const [isQuickWalkInOpen, setIsQuickWalkInOpen] = useState(false);
+  const [scannedRfidUid, setScannedRfidUid] = useState<string | null>(null);
+  const [rfidScanSeq, setRfidScanSeq]       = useState<number>(0);
+
+  // Global Windows USB RFID Reader (HID Keyboard Wedge) listener
+  useEffect(() => {
+    let buf = '';
+    let burstStart = 0;
+    let lastKeyTime = 0;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      const now = Date.now();
+      const delta = now - lastKeyTime;
+      if (delta > 60) {
+        buf = '';
+        burstStart = now;
+      }
+      lastKeyTime = now;
+
+      if (e.key === 'Enter' && buf.length >= 8 && now - burstStart <= buf.length * 50) {
+        e.preventDefault();
+        e.stopPropagation();
+        const uid = buf.trim();
+        buf = '';
+
+        // If an input was focused during the hardware burst, strip the leaked UID chars from it
+        const activeEl = document.activeElement as HTMLInputElement | HTMLTextAreaElement | null;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+          if (typeof activeEl.value === 'string' && activeEl.value.toLowerCase().endsWith(uid.toLowerCase())) {
+            const cleaned = activeEl.value.slice(0, activeEl.value.length - uid.length);
+            const nativeSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              'value'
+            )?.set;
+            if (nativeSetter && activeEl.tagName === 'INPUT') {
+              nativeSetter.call(activeEl, cleaned);
+              activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+            } else {
+              activeEl.value = cleaned;
+            }
+          }
+          activeEl.blur();
+        }
+
+        setScannedRfidUid(uid);
+        setRfidScanSeq(prev => prev + 1);
+        setIsQuickWalkInOpen(true);
+        return;
+      }
+
+      if (e.key.length === 1 && /^[0-9a-fA-F]$/.test(e.key)) {
+        if (buf.length === 0) burstStart = now;
+        buf += e.key;
+      } else if (e.key !== 'Shift') {
+        buf = '';
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, []);
 
   // Initialize with cached data when available to eliminate skeleton on repeat views
   const [patients, setPatients]                 = useState<Patient[]>(() => {
@@ -1787,12 +1848,18 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
       <QuickStudentCheckInModal
         isOpen={isQuickWalkInOpen}
-        onClose={() => setIsQuickWalkInOpen(false)}
+        onClose={() => {
+          setIsQuickWalkInOpen(false);
+          setScannedRfidUid(null);
+        }}
         patients={patients}
         onSavePatient={handleSaveQuickStudent}
+        scannedRfidUid={scannedRfidUid}
+        rfidScanSeq={rfidScanSeq}
         onProceed={(mode, confirmedStudent) => {
           setSelectedPatientId(confirmedStudent.id);
           setIsQuickWalkInOpen(false);
+          setScannedRfidUid(null);
           if (mode === 'Consultation') {
             navigate('new-consultation-tab');
           } else {

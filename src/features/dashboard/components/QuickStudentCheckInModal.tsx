@@ -20,6 +20,8 @@ interface QuickStudentCheckInModalProps {
   patients: Patient[];
   onSavePatient: (patient: Patient) => void | Promise<void>;
   onProceed: (mode: 'Consultation' | 'Non-Consultation', patient: Patient) => void;
+  scannedRfidUid?: string | null;
+  rfidScanSeq?: number;
 }
 
 export function QuickStudentCheckInModal({
@@ -28,6 +30,8 @@ export function QuickStudentCheckInModal({
   patients,
   onSavePatient,
   onProceed,
+  scannedRfidUid,
+  rfidScanSeq = 0,
 }: QuickStudentCheckInModalProps) {
   const [deptGroups, setDeptGroups] = useState<DepartmentSectionGroup[]>(() => loadDepartmentSectionGroups());
   const [step, setStep] = useState<'form' | 'confirmed'>('form');
@@ -41,6 +45,7 @@ export function QuickStudentCheckInModal({
   const [studentId, setStudentId] = useState<string>('');
   const [studentName, setStudentName] = useState<string>('');
   const [sex, setSex] = useState<string>('Female');
+  const [activeRfidUid, setActiveRfidUid] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [confirmedPatient, setConfirmedPatient] = useState<Patient | null>(null);
@@ -85,11 +90,49 @@ export function QuickStudentCheckInModal({
       setStudentId('');
       setStudentName('');
       setSex('Female');
+      setActiveRfidUid('');
       setErrors({});
       setIsSaving(false);
       setConfirmedPatient(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !scannedRfidUid) return;
+    const cleanUid = scannedRfidUid.trim();
+    if (!cleanUid) return;
+    setActiveRfidUid(cleanUid);
+
+    const matched = patients.find(
+      p =>
+        (p.rfidUid && p.rfidUid.trim().toLowerCase() === cleanUid.toLowerCase()) ||
+        p.id.trim().toLowerCase() === cleanUid.toLowerCase()
+    );
+
+    if (matched) {
+      setStudentId(matched.id);
+      setStudentName(matched.name.toUpperCase());
+      if (matched.sex) setSex(matched.sex);
+      if (matched.course) {
+        const foundDept = deptGroups.find(d =>
+          d.sections.some(s => s.toLowerCase() === matched.course?.toLowerCase())
+        );
+        if (foundDept) {
+          setSelectedDeptId(foundDept.id);
+          const exactSec = foundDept.sections.find(s => s.toLowerCase() === matched.course?.toLowerCase());
+          if (exactSec) setSelectedSection(exactSec);
+        }
+      }
+      setErrors({});
+      setConfirmedPatient(matched);
+      setStep('confirmed');
+      toast.success(`RFID Matched: ${matched.name} (${matched.id})`);
+    } else {
+      setStep('form');
+      toast.info(`New RFID Card (UID: ${cleanUid}) — Enter student info once to link this card.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, scannedRfidUid, rfidScanSeq]);
 
   const handleSelectDept = (deptId: string) => {
     setSelectedDeptId(deptId);
@@ -218,6 +261,7 @@ export function QuickStudentCheckInModal({
       yearLevel: selectedDept.studentCategory === 'College' ? yearLevel : '',
       guardianName: existing?.guardianName || '',
       address: existing?.address || '',
+      rfidUid: activeRfidUid.trim() || existing?.rfidUid || null,
     };
 
     setIsSaving(true);
@@ -277,6 +321,37 @@ export function QuickStudentCheckInModal({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {step === 'form' ? (
             <form id="quick-student-form" onSubmit={handleConfirm} className="space-y-5">
+              {/* RFID UID Status Banner */}
+              <div
+                className={`rounded-xl px-3.5 py-2.5 border flex items-center justify-between gap-2 text-xs ${
+                  activeRfidUid
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    : 'bg-blue-50/60 border-blue-200/80 text-[#1B3A6B]'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <IdCard size={15} className={activeRfidUid ? 'text-emerald-600 flex-shrink-0' : 'text-[#1B3A6B] flex-shrink-0'} />
+                  {activeRfidUid ? (
+                    <span className="truncate">
+                      <strong>RFID Card Scanned (UID: {activeRfidUid})</strong> — Fill out student details below to link this card for future 1-tap check-in.
+                    </span>
+                  ) : (
+                    <span className="truncate">
+                      <strong>USB RFID Reader Ready:</strong> Tap a student ID card at any time to auto-check in or link its UID.
+                    </span>
+                  )}
+                </div>
+                {activeRfidUid && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveRfidUid('')}
+                    className="text-[11px] font-bold text-emerald-700 hover:underline flex-shrink-0 cursor-pointer"
+                  >
+                    Clear UID
+                  </button>
+                )}
+              </div>
+
               {/* 1. Department Selection */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
@@ -629,6 +704,11 @@ export function QuickStudentCheckInModal({
                       <span className="text-xs font-mono font-bold text-gray-600">
                         ID: {confirmedPatient?.id}
                       </span>
+                      {confirmedPatient?.rfidUid && (
+                        <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">
+                          RFID: {confirmedPatient.rfidUid}
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-lg font-extrabold text-gray-900 uppercase mt-1">
                       {confirmedPatient?.name}

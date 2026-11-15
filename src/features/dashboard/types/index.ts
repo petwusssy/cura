@@ -48,6 +48,7 @@ export interface Patient {
   gradeLevel?: string;
   isClaimed?: boolean;
   avatar?: string;
+  rfidUid?: string | null;
   allergies?: string[];
   vitals?: {
     bloodPressure?: string;
