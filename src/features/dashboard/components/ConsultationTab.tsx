@@ -189,16 +189,6 @@ export function ConsultationTab({
           <span className="px-3 py-1.5 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">
             {filtered.length} records
           </span>
-          {onOpenQuickWalkIn && (
-            <button
-              type="button"
-              onClick={onOpenQuickWalkIn}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1E5AA8] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-semibold w-full sm:w-auto cursor-pointer"
-            >
-              <UserCheck size={16} className="text-[#F4C542]" />
-              Quick Student Walk-In
-            </button>
-          )}
           <button
             onClick={() => { onSelectPatient(''); onNavigate('new-consultation-tab'); }}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium w-full sm:w-auto cursor-pointer"

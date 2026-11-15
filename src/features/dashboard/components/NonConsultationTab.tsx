@@ -96,16 +96,6 @@ export function NonConsultationTab({ patients, consultations, onConvertToConsult
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="px-3 py-1.5 flex items-center rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">{filtered.length} records</span>
-          {onOpenQuickWalkIn && (
-            <button
-              type="button"
-              onClick={onOpenQuickWalkIn}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1E5AA8] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-semibold flex-1 justify-center sm:flex-none sm:justify-start cursor-pointer"
-            >
-              <UserCheck size={16} className="text-[#F4C542]" />
-              Quick Student Walk-In
-            </button>
-          )}
           <button
             onClick={() => { onSelectPatient(''); onNavigate('new-non-consultation-tab'); }}
             className="flex items-center gap-2 px-4 py-2 bg-[#1B3A6B] text-white rounded-xl hover:opacity-90 transition-opacity text-sm font-medium flex-1 justify-center sm:flex-none sm:justify-start cursor-pointer"
