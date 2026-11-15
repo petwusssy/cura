@@ -3,8 +3,6 @@ import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCh
 import { medcertRequestService, MedicalCertificateRequest } from '@/services/medcertRequestService';
 import { MedicalCertificate, Patient } from '../types';
 import { uaSealBase64, uaLogoBase64, bagongPilipinasBase64 } from '@/assets/images/medCertAssets';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
@@ -766,6 +764,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
       const targetPatientName = override?.patientName || issuedSummary?.patientName || patientName || 'PATIENT';
       const targetDate = override?.date || issuedSummary?.date || date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
       const filename = formatMedCertFilename(targetPatientName, targetDate);
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
 
       const canvas = await html2canvas(element, {
         scale: 2,

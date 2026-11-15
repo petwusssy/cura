@@ -421,8 +421,12 @@ export const staffService = {
         return res.data.staff;
       }
     } catch (err: any) {
+      const serverMsg = err?.response?.data?.error;
+      if (err?.response?.status === 429 && serverMsg) {
+        throw new Error(String(serverMsg));
+      }
       if (err?.response?.status === 401) {
-        throw new Error('Invalid or inactive 4-digit PIN.');
+        throw new Error(serverMsg ? String(serverMsg) : 'Invalid or inactive 4-digit PIN.');
       }
     }
 

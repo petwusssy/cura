@@ -6,7 +6,8 @@ import { telemedicineService, TelemedicineRequest } from '@/services/telemedicin
 import api from '@/services/api';
 import { staffService } from '@/services/staffService';
 import uaSeal from '@/assets/images/ua-seal.png';
-import ExcelJS from 'exceljs';
+import type ExcelJS from 'exceljs';
+const loadExcelJS = () => import('exceljs').then(m => m.default);
 // @ts-ignore
 import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
@@ -777,6 +778,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     const table = container.querySelector('table');
     if (!table) return;
 
+    const ExcelJS = await loadExcelJS();
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Report');
 
@@ -869,6 +871,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   };
 
   const exportDailyReportExcel = async () => {
+    const ExcelJS = await loadExcelJS();
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Daily Report');
 
@@ -965,6 +968,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   };
 
   const exportCasesAttendedExcel = async () => {
+    const ExcelJS = await loadExcelJS();
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Cases Attended');
 
@@ -1056,6 +1060,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   };
 
   const exportInventoryExcel = async (tab: 'medicines' | 'supplies') => {
+    const ExcelJS = await loadExcelJS();
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(tab === 'medicines' ? 'Medicine Inventory' : 'Supplies Inventory');
     const isMed = tab === 'medicines';
@@ -1300,6 +1305,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
 
   // ── Weekly Census Excel Export (Exact 12-Sheet Workbook matching WEEKLY_CENSUS_(oct).xlsx) ──
   const exportWeeklyCensusExcel = async () => {
+    const ExcelJS = await loadExcelJS();
     const workbook = new ExcelJS.Workbook();
     const groupsToExport = censusTab === 'all'
       ? censusGroups
