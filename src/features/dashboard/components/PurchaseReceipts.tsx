@@ -516,69 +516,99 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     setPrfItems(prev => prev.map(r => r.id === id ? { ...r, [field]: val } : r));
   };
 
-  const filteredRequests = useMemo(() => {
+  // Single source of truth: deduplicate items, group by PRF No., compute per-form status & counts
+  const { prfGroups, sortedPrfKeys, prfSummary, activePrfCount } = useMemo(() => {
     const seenPrKeys = new Set<string>();
-    return purchaseRequests.filter(req => {
-      const matchesStatus =
-        statusFilter === 'All'
-          ? true
-          : statusFilter === 'Active'
-          ? req.status === 'Pending' || req.status === 'Partial'
-          : req.status === statusFilter;
-      const matchesSearch = searchQuery.trim() === '' || 
-        req.medicine.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (req.description && req.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (req.prfNo && req.prfNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        req.id.toLowerCase().includes(searchQuery.toLowerCase());
-      if (!matchesStatus || !matchesSearch) return false;
+    const allGroups: Record<string, { prfNo: string; date: string; time: string; preparedBy: string; items: PurchaseRequest[]; status: 'Pending' | 'Partial' | 'Complete' | 'Voided' }> = {};
 
+    for (const req of purchaseRequests) {
       const key = req.id ? `id:${req.id}` : '';
       const semanticKey = `${(req.medicine || '').toLowerCase()}|${(req.prfNo || '').toLowerCase()}|${req.requestedQty}`;
-      if (key && seenPrKeys.has(key)) return false;
-      if (seenPrKeys.has(semanticKey)) return false;
+      if ((key && seenPrKeys.has(key)) || seenPrKeys.has(semanticKey)) continue;
       if (key) seenPrKeys.add(key);
       seenPrKeys.add(semanticKey);
-      return true;
-    });
-  }, [purchaseRequests, statusFilter, searchQuery]);
 
-  // Group filteredRequests by PRF No. memoized with fast lookup
-  const { prfGroups, sortedPrfKeys } = useMemo(() => {
-    const groups: Record<string, { prfNo: string; date: string; time: string; preparedBy: string; items: PurchaseRequest[] }> = {};
-    for (const req of filteredRequests) {
-      const key = req.prfNo?.trim() || 'PRF-2026-001';
-      if (!groups[key]) {
-        groups[key] = {
-          prfNo: key,
+      const groupKey = req.prfNo?.trim() || 'PRF-2026-001';
+      if (!allGroups[groupKey]) {
+        allGroups[groupKey] = {
+          prfNo: groupKey,
           date: req.date || getManilaDate(),
           time: '',
-          preparedBy: getSavedPrfPreparedBy(key),
+          preparedBy: getSavedPrfPreparedBy(groupKey),
           items: [],
+          status: 'Pending',
         };
       }
-      groups[key].items.push(req);
+      allGroups[groupKey].items.push(req);
     }
 
-    for (const key of Object.keys(groups)) {
-      groups[key].time = getSavedPrfTime(key, groups[key].items);
-    }
+    const summary = {
+      Pending: { prfs: 0, items: 0 },
+      Partial: { prfs: 0, items: 0 },
+      Complete: { prfs: 0, items: 0 },
+    };
 
-    const keys = Object.keys(groups).sort((a, b) => {
-      const ma = a.match(/PRF-(\d{4})-(\d+)/i) || a.match(/PRF-(\d+)/i);
-      const mb = b.match(/PRF-(\d{4})-(\d+)/i) || b.match(/PRF-(\d+)/i);
-      if (ma && mb) {
-        const ya = ma.length === 3 ? parseInt(ma[1], 10) : 0;
-        const yb = mb.length === 3 ? parseInt(mb[1], 10) : 0;
-        if (ya !== yb) return yb - ya;
-        const na = parseInt(ma[ma.length - 1], 10);
-        const nb = parseInt(mb[mb.length - 1], 10);
-        return nb - na;
+    for (const key of Object.keys(allGroups)) {
+      const group = allGroups[key];
+      group.time = getSavedPrfTime(key, group.items);
+      if (group.items.every(i => i.status === 'Voided')) {
+        group.status = 'Voided';
+      } else if (group.items.every(i => i.status === 'Complete')) {
+        group.status = 'Complete';
+      } else if (group.items.some(i => i.status === 'Partial' || i.status === 'Complete')) {
+        group.status = 'Partial';
+      } else {
+        group.status = 'Pending';
       }
-      return b.localeCompare(a);
-    });
+      if (group.status !== 'Voided') {
+        summary[group.status].prfs += 1;
+        summary[group.status].items += group.items.length;
+      }
+    }
 
-    return { prfGroups: groups, sortedPrfKeys: keys };
-  }, [filteredRequests]);
+    const q = searchQuery.trim().toLowerCase();
+    const keys = Object.keys(allGroups)
+      .filter(key => {
+        const group = allGroups[key];
+        const matchesStatus =
+          statusFilter === 'All'
+            ? true
+            : statusFilter === 'Active'
+            ? group.status === 'Pending' || group.status === 'Partial'
+            : group.status === statusFilter;
+        if (!matchesStatus) return false;
+        if (!q) return true;
+        return (
+          group.prfNo.toLowerCase().includes(q) ||
+          group.items.some(
+            item =>
+              item.medicine.toLowerCase().includes(q) ||
+              (item.description && item.description.toLowerCase().includes(q)) ||
+              item.id.toLowerCase().includes(q)
+          )
+        );
+      })
+      .sort((a, b) => {
+        const ma = a.match(/PRF-(\d{4})-(\d+)/i) || a.match(/PRF-(\d+)/i);
+        const mb = b.match(/PRF-(\d{4})-(\d+)/i) || b.match(/PRF-(\d+)/i);
+        if (ma && mb) {
+          const ya = ma.length === 3 ? parseInt(ma[1], 10) : 0;
+          const yb = mb.length === 3 ? parseInt(mb[1], 10) : 0;
+          if (ya !== yb) return yb - ya;
+          const na = parseInt(ma[ma.length - 1], 10);
+          const nb = parseInt(mb[mb.length - 1], 10);
+          return nb - na;
+        }
+        return b.localeCompare(a);
+      });
+
+    return {
+      prfGroups: allGroups,
+      sortedPrfKeys: keys,
+      prfSummary: summary,
+      activePrfCount: summary.Pending.prfs + summary.Partial.prfs,
+    };
+  }, [purchaseRequests, statusFilter, searchQuery]);
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     Pending:  { bg: `${YELLOW}25`, text: '#A17A0C', border: '#E2BD3D' },
@@ -661,7 +691,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
               viewMode === 'tracker' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
             }`}>
-              {purchaseRequests.length}
+              {activePrfCount}
             </span>
           </button>
         </div>
@@ -1162,24 +1192,31 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
             </div>
           )}
 
-          {/* Summary Metric Cards */}
+          {/* Summary Metric Cards (Per PRF Form with Item Sub-Count) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {(['Pending', 'Partial', 'Complete'] as const).map(s => {
-              const count = purchaseRequests.filter(r => r.status === s).length;
+              const { prfs, items } = prfSummary[s];
               const sc = statusColors[s];
               return (
                 <div
                   key={s}
-                  onClick={() => setStatusFilter(s === statusFilter ? 'Active' : s)}
+                  onClick={() => { setStatusFilter(s === statusFilter ? 'Active' : s); setShowAllPrfs(false); }}
                   className="bg-white rounded-2xl p-5 border cursor-pointer transition-all shadow-2xs hover:shadow-md flex items-center justify-between"
                   style={{ borderColor: sc.border }}
                 >
                   <div>
-                    <div className="text-xs font-extrabold uppercase tracking-wider text-gray-500">{s === 'Complete' ? 'Archived / Complete' : `${s} Deliveries`}</div>
-                    <div className="text-2xl font-black mt-1 text-gray-800">{count}</div>
+                    <div className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
+                      {s === 'Complete' ? 'Archived / Complete PRFs' : `${s} PRFs`}
+                    </div>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-2xl font-black text-gray-800">{prfs}</span>
+                      <span className="text-xs font-semibold text-gray-400">
+                        ({items} {items === 1 ? 'item' : 'items'})
+                      </span>
+                    </div>
                   </div>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm" style={{ background: sc.bg, color: sc.text }}>
-                    {count}
+                    {prfs}
                   </div>
                 </div>
               );
@@ -1227,8 +1264,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                 const purchaseDate = group.date ? normalizeDate(group.date) : getManilaDate();
                 const purchaseTime = group.time || getSavedPrfTime(prfKey, group.items);
                 const hasReceived = group.items.some(i => i.receivedQty > 0);
-                const isCompleteGroup = group.items.length > 0 && group.items.every(i => i.status === 'Complete');
-                const isVoidedGroup = group.items.length > 0 && group.items.every(i => i.status === 'Voided');
+                const isCompleteGroup = group.status === 'Complete';
+                const isVoidedGroup = group.status === 'Voided';
 
                 return (
                   <div key={prfKey} className={`bg-white rounded-2xl border shadow-xs overflow-hidden transition-all ${isVoidedGroup ? 'border-red-200 opacity-75' : 'border-gray-200'}`}>
@@ -1294,7 +1331,7 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                           <span className="hidden sm:inline">Print PRF Form</span>
                         </button>
 
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold hidden xs:inline-block">
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold inline-flex items-center whitespace-nowrap">
                           {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
                         </span>
                         <button
