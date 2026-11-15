@@ -462,7 +462,7 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
         throw e;
       }
       console.error('Error saving certificate to archive:', e);
-      return updatedCert;
+      return null;
     }
   }, [selectedCertId, currentPatientId, date, purpose, diagnosis, recommendations, doctor, patientName, age, sex, yearLevel, yearSuffix, courseAndSchool, examinedDueTo, treatment, doctorTitle, licenseNo, ptrNo, medicalCerts, onAddCert, onUpdateCert, patients, selectedPatientId]);
 
@@ -481,7 +481,11 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
 
     try {
       const savedCert = await syncToArchives();
-      const certId = savedCert?.id || selectedCertId || `MC-${Date.now().toString().slice(-6)}`;
+      if (!savedCert) {
+        triggerToast('⚠️ Failed to save certificate to server. Please try again.');
+        return;
+      }
+      const certId = savedCert.id || selectedCertId || `MC-${Date.now().toString().slice(-6)}`;
 
       setIssuedSummary({
         id: certId,
@@ -593,8 +597,20 @@ export function MedicalCertificates({ medicalCerts, patients, selectedPatientId,
   }, [selectedPatientId]);
 
   const handleSaveCertificate = async () => {
-    await syncToArchives();
-    triggerToast('✅ Successfully saved and locked certificate into Clinic Records Archive!');
+    try {
+      const saved = await syncToArchives();
+      if (!saved) {
+        triggerToast('⚠️ Failed to save certificate to Clinic Records Archive.');
+        return;
+      }
+      triggerToast('✅ Successfully saved and locked certificate into Clinic Records Archive!');
+    } catch (err: any) {
+      if (err?.message === 'PIN_CANCELLED') {
+        triggerToast('⚠️ PIN verification cancelled.');
+        return;
+      }
+      triggerToast('⚠️ Failed to save certificate to Clinic Records Archive.');
+    }
   };
 
   const handleCreateNew = () => {

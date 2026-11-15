@@ -581,9 +581,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
     checkTimer = setInterval(() => {
       if (isCancelled || !currentPeer || currentPeer.destroyed) return;
       if (isCallHealthy()) {
-        if (connectionStatus !== 'connected') {
-          setConnectionStatus('connected');
-        }
+        setConnectionStatus((prev) => (prev === 'connected' ? prev : 'connected'));
         return;
       }
       // If call is dead or failed, clear it

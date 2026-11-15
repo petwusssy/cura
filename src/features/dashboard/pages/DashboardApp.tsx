@@ -918,25 +918,35 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       String(formattedPatient.id)
     );
     if (editingPatientId) {
+      const prevPatients = patients;
       setPatients(prev => prev.map(p => p.id === editingPatientId ? formattedPatient : p));
-      try { 
-        const updated = await patientService.updatePatient(editingPatientId, formattedPatient); 
+      try {
+        const updated = await patientService.updatePatient(editingPatientId, formattedPatient);
         setPatients(prev => prev.map(p => p.id === editingPatientId ? updated : p));
-      } 
-      catch (error) { console.error('API failed, but state updated locally:', error); }
+      } catch (error) {
+        console.error('Failed to update patient:', error);
+        setPatients(prevPatients);
+        toast.error('Failed to update patient record on server. Reverted local changes.');
+        throw error;
+      }
     } else {
+      const prevPatients = patients;
       const tempId = formattedPatient.id;
       setPatients(prev => [formattedPatient, ...prev.filter(p => p.id !== tempId)]);
-      try { 
-        const created = await patientService.createPatient(formattedPatient); 
+      try {
+        const created = await patientService.createPatient(formattedPatient);
         setPatients(prev => {
           const map = new Map<string, Patient>();
           prev.forEach(p => { if (p.id !== tempId) map.set(String(p.id), p); });
           map.set(String(created.id), created);
           return Array.from(map.values());
         });
-      } 
-      catch (error) { console.error('API failed, but state updated locally:', error); }
+      } catch (error) {
+        console.error('Failed to create patient:', error);
+        setPatients(prevPatients);
+        toast.error('Failed to save patient record on server.');
+        throw error;
+      }
     }
   };
 

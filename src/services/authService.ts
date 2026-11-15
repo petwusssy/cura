@@ -37,19 +37,25 @@ export const authService = {
       'cura_consultations_cache',
       'cura_medicines_cache',
       'cura_purchase_requests',
+      'cura_purchase_requests_cache',
+      'cura_appointment_requests_cache',
+      'cura_telemedicine_requests_cache',
+      'cura_medcert_requests_cache',
       'cura_medical_certs',
       'cura_beds_cache',
       'cura_queues_cache',
       'cura_audit_logs_cache',
       'cura_clinic_staff_cache',
       'cura_clinic_staff_pins',
+      'cura_intaked_med_doses',
+      'cura_read_notifs',
     ];
     keysToRemove.forEach((k) => {
-      try { localStorage.removeItem(k); } catch {}
+      try { localStorage.removeItem(k); } catch { }
     });
     try {
       sessionStorage.removeItem('cura_active_staff_shift');
-    } catch {}
+    } catch { }
   },
 
   getAccessToken: (): string | null => {

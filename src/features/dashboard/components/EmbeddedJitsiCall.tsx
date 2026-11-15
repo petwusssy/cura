@@ -260,19 +260,19 @@ export function EmbeddedJitsiCall({ request, patient, onClose }: EmbeddedJitsiCa
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-[#081729]/80 p-2.5 rounded-xl border border-white/5">
                       <span className="text-slate-400 block text-[10px] font-semibold">Blood Pressure</span>
-                      <span className="font-bold text-white text-sm">{patient.vitals.bloodPressure || '120/80'}</span>
+                      <span className="font-bold text-white text-sm">{patient.vitals.bloodPressure || '—'}</span>
                     </div>
                     <div className="bg-[#081729]/80 p-2.5 rounded-xl border border-white/5">
                       <span className="text-slate-400 block text-[10px] font-semibold">Pulse Rate</span>
-                      <span className="font-bold text-white text-sm">{patient.vitals.heartRate ? `${patient.vitals.heartRate} bpm` : '72 bpm'}</span>
+                      <span className="font-bold text-white text-sm">{patient.vitals.heartRate ? `${patient.vitals.heartRate} bpm` : '—'}</span>
                     </div>
                     <div className="bg-[#081729]/80 p-2.5 rounded-xl border border-white/5">
                       <span className="text-slate-400 block text-[10px] font-semibold">Temp</span>
-                      <span className="font-bold text-white text-sm">{patient.vitals.temperature ? `${patient.vitals.temperature}°C` : '36.5°C'}</span>
+                      <span className="font-bold text-white text-sm">{patient.vitals.temperature ? `${patient.vitals.temperature}°C` : '—'}</span>
                     </div>
                     <div className="bg-[#081729]/80 p-2.5 rounded-xl border border-white/5">
                       <span className="text-slate-400 block text-[10px] font-semibold">SpO2</span>
-                      <span className="font-bold text-white text-sm">{patient.vitals.oxygenSaturation ? `${patient.vitals.oxygenSaturation}%` : '99%'}</span>
+                      <span className="font-bold text-white text-sm">{patient.vitals.oxygenSaturation ? `${patient.vitals.oxygenSaturation}%` : '—'}</span>
                     </div>
                   </div>
                 </div>

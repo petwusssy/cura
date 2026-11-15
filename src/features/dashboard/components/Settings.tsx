@@ -69,14 +69,38 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  const [profile, setProfile] = useState({
-    name: 'UA CLINIC ADMIN', designation: 'Administrator', email: 'admin@ua.edu.ph',
-    phone: '09121234567', department: 'Medical-Dental Clinic',
+  const [profile, setProfile] = useState<{
+    name: string; designation: string; email: string; phone: string; department: string;
+  }>(() => {
+    const defaults = {
+      name: 'UA CLINIC ADMIN', designation: 'Administrator', email: 'admin@ua.edu.ph',
+      phone: '09121234567', department: 'Medical-Dental Clinic',
+    };
+    try {
+      const savedProfile = localStorage.getItem('cura_admin_profile');
+      return savedProfile ? { ...defaults, ...JSON.parse(savedProfile) } : defaults;
+    } catch { return defaults; }
   });
 
-  const [notifSettings, setNotifSettings] = useState({
-    medicationReminders: true, bedAlerts: true, lowStockAlerts: true,
-    emailNotifs: false, soundAlerts: true, reminderBefore: '10',
+  const [notifSettings, setNotifSettings] = useState<{
+    medicationReminders: boolean; bedAlerts: boolean; lowStockAlerts: boolean;
+    emailNotifs: boolean; soundAlerts: boolean; reminderBefore: string;
+  }>(() => {
+    const defaults = {
+      medicationReminders: true, bedAlerts: true, lowStockAlerts: true,
+      emailNotifs: false, soundAlerts: true, reminderBefore: '10',
+    };
+    try {
+      const savedNotif = localStorage.getItem('cura_notif_settings');
+      return savedNotif ? { ...defaults, ...JSON.parse(savedNotif) } : defaults;
+    } catch { return defaults; }
+  });
+
+  const [fontSize, setFontSize] = useState<'14px' | '16px' | '18px'>(() => {
+    try {
+      const s = localStorage.getItem('cura_font_size');
+      return s === '14px' || s === '18px' ? s : '16px';
+    } catch { return '16px'; }
   });
 
   const handleSave = async () => {
@@ -92,7 +116,12 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
         return;
       }
     }
+    try {
+      localStorage.setItem('cura_admin_profile', JSON.stringify(profile));
+      localStorage.setItem('cura_notif_settings', JSON.stringify(notifSettings));
+    } catch {}
     setSaved(true);
+    toast.success('Settings saved.');
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -426,14 +455,17 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
         return;
       }
     }
-    setSaved(true);
     try {
       await api.post('/advisory/', {
         status: broadcastStatus,
         message: broadcastMessage,
       });
-    } catch (e) { }
-    setTimeout(() => setSaved(false), 2000);
+      setSaved(true);
+      toast.success('Clinic advisory updated.');
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      toast.error('Failed to broadcast clinic advisory.');
+    }
   };
 
   const filteredAuditLogs = auditLogs.filter(log => {
@@ -485,7 +517,6 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                 <div>
                   <div className="font-semibold text-foreground">{profile.name}</div>
                   <div className="text-sm text-muted-foreground">{profile.designation} • {profile.department}</div>
-                  <button className="text-xs mt-1.5 px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">Change Photo</button>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1248,10 +1279,19 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
               </div>
               <div>
                 <label className={labelCls}>Font Size</label>
-                <select className={inputCls + ' max-w-xs'}>
-                  <option>Small (14px)</option>
-                  <option selected>Default (16px)</option>
-                  <option>Large (18px)</option>
+                <select
+                  value={fontSize}
+                  onChange={(e) => {
+                    const next = e.target.value as '14px' | '16px' | '18px';
+                    setFontSize(next);
+                    document.documentElement.style.fontSize = next;
+                    try { localStorage.setItem('cura_font_size', next); } catch {}
+                  }}
+                  className={inputCls + ' max-w-xs'}
+                >
+                  <option value="14px">Small (14px)</option>
+                  <option value="16px">Default (16px)</option>
+                  <option value="18px">Large (18px)</option>
                 </select>
               </div>
             </div>
