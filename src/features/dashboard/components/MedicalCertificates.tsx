@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Printer, Copy, FileText, X, Edit2, Download, Calendar, BookmarkCheck, RefreshCw, UserCheck, Search, AlertCircle, Eye, Edit, CheckCircle2, Trash2, Clock, Check, Inbox } from 'lucide-react';
 import { medcertRequestService, MedicalCertificateRequest } from '@/services/medcertRequestService';
 import { MedicalCertificate, Patient } from '../types';
-import { uaSealBase64, uaLogoBase64, bagongPilipinasBase64 } from '@/assets/images/medCertAssets';
+import { uaSealBase64, uaLogoBase64, bagongPilipinasBase64, philHealthYakapBase64 } from '@/assets/images/medCertAssets';
 import { normalizeDate } from '@/utils/philippineTime';
 
 const PRIMARY = '#1E5AA8';
@@ -108,51 +108,12 @@ const AutoResizeInput = ({ value, onChange, readOnly, placeholder = '', classNam
 // PhilHealth YAKAP official orange badge banner
 function PhilHealthYakapBanner() {
   return (
-    <div className="flex flex-col items-center justify-center my-0.5 select-none">
-      <div className="flex items-baseline justify-center gap-1.5 leading-none mb-0.5">
-        <span
-          className="font-black italic text-[25px] tracking-tight font-sans"
-          style={{
-            color: '#2B72BA',
-            WebkitPrintColorAdjust: 'exact',
-            printColorAdjust: 'exact',
-          }}
-        >
-          PhilHealth
-        </span>
-        <span
-          className="font-black text-[25px] tracking-wider font-sans"
-          style={{
-            color: '#FFB81C',
-            WebkitPrintColorAdjust: 'exact',
-            printColorAdjust: 'exact',
-          }}
-        >
-          YAKAP
-        </span>
-      </div>
-      <div
-        className="rounded-full px-6 py-0.5 text-center flex items-center justify-center mt-0.5"
-        style={{
-          backgroundColor: '#FFB81C',
-          color: '#FFFFFF',
-          WebkitPrintColorAdjust: 'exact',
-          printColorAdjust: 'exact',
-          boxShadow: 'inset 0 0 0 1000px #FFB81C',
-          border: '1px solid #FFB81C',
-        }}
-      >
-        <span
-          className="text-white text-[11px] font-black uppercase tracking-widest font-sans"
-          style={{
-            color: '#FFFFFF',
-            WebkitPrintColorAdjust: 'exact',
-            printColorAdjust: 'exact',
-          }}
-        >
-          PARA MALAYO SA SAKIT
-        </span>
-      </div>
+    <div className="flex flex-col items-center justify-center my-1 select-none">
+      <img
+        src={philHealthYakapBase64}
+        alt="PhilHealth YAKAP - Para Malayo sa Sakit"
+        className="w-[260px] h-auto object-contain"
+      />
     </div>
   );
 }
