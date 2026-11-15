@@ -15,6 +15,8 @@ import curaLogo from "@/assets/images/cura-logo.webp"
 import anthropeakLogo from "@/assets/images/anthropeak-logo.webp"
 import campusBg from "@/features/landing/assets/uafacade.webp"
 import { authService } from "@/services/authService"
+import { staffService, ClinicStaffMember } from "@/services/staffService"
+import { StaffPinModal } from "@/features/dashboard/components/StaffPinModal"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
 import { PrivacyPolicyModal } from "@/components/shared/PrivacyPolicy"
 
@@ -49,6 +51,7 @@ export default function LandingPage({
   const [isUaHovered, setIsUaHovered] = useState(false)
   const [isRightPanelHovered, setIsRightPanelHovered] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
 
   useEffect(() => {
     if (stage === "splitting") {
@@ -96,7 +99,8 @@ export default function LandingPage({
     try {
       await authService.login(username.trim(), password)
       loginLimiter.recordSuccess(username.trim())
-      setStage("splitting")
+      await staffService.getStaff().catch(() => [])
+      setShowPinModal(true)
     } catch (err: any) {
       console.error("Login failed:", err)
       const newLimitState = loginLimiter.recordFailure(err, username.trim())
@@ -580,6 +584,32 @@ export default function LandingPage({
         </div>
 
         <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+
+        <StaffPinModal
+          isOpen={showPinModal}
+          actionTitle="Staff Portal Login Verification"
+          actionDetails={`Enter your individual 4-digit Staff PIN to open CURA (${username.trim()})`}
+          onSuccess={(staff: ClinicStaffMember) => {
+            setShowPinModal(false)
+            staffService.setActiveShift(staff, 15)
+            staffService
+              .recordAuditLog({
+                staff: staff.id,
+                staff_name_snapshot: staff.name,
+                staff_role_snapshot: staff.role,
+                action: "Staff Portal Login",
+                target_type: "System",
+                target_id: username.trim(),
+                details: `${staff.name} (${staff.role}) signed in to the CURA Web Portal`,
+              })
+              .catch(() => {})
+            setStage("splitting")
+          }}
+          onCancel={() => {
+            setShowPinModal(false)
+            authService.logout().catch(() => {})
+          }}
+        />
 
         {/* ── RIGHT OVERLAY SECTION (Takes 45% width) ── */}
         <div
