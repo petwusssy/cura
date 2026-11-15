@@ -1523,7 +1523,6 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             patients={patients} searchQuery={searchQuery}
             onNavigate={navigate} onSelectPatient={setSelectedPatientId}
             onEditPatient={setEditingPatientId}
-            onOpenQuickWalkIn={() => setIsQuickWalkInOpen(true)}
           />
         );
       case 'appointments':

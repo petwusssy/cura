@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  X, ScanLine, CheckCircle2, Stethoscope, ClipboardList,
+  X, CheckCircle2, Stethoscope, ClipboardList,
   Building2, Users, Search, ArrowLeft, UserCheck, Sparkles, IdCard, Plus, Trash2
 } from 'lucide-react';
 import { Patient } from '../types';
@@ -10,7 +10,6 @@ import {
   saveDepartmentSectionGroups,
   inferYearLevelFromSection
 } from '../constants/sectionsData';
-import { StudentIdScannerModal } from './StudentIdScannerModal';
 import { toast } from 'sonner';
 
 const PRIMARY = '#1B3A6B';
@@ -45,7 +44,6 @@ export function QuickStudentCheckInModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [confirmedPatient, setConfirmedPatient] = useState<Patient | null>(null);
-  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
   const selectedDept = useMemo(
     () => deptGroups.find(d => d.id === selectedDeptId) || deptGroups[0],
@@ -513,28 +511,12 @@ export function QuickStudentCheckInModal({
                 {errors.section && <p className="text-xs text-red-500">{errors.section}</p>}
               </div>
 
-              {/* 3. Student ID, Name & Optional Scan ID Button */}
+              {/* 3. Student ID & Name */}
               <div className="space-y-3 pt-1">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    <IdCard size={14} className="text-[#1B3A6B]" />
-                    3. Student Identification
-                  </label>
-
-                  {/* Scan ID Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsScannerOpen(true)}
-                    title="Scan Student ID card with camera or photo"
-                    className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-blue-300 bg-blue-50/80 text-[#1B3A6B] hover:bg-blue-100 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-                  >
-                    <ScanLine size={15} className="text-blue-600" />
-                    <span>Scan Student ID</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-200/90 text-blue-900 font-extrabold flex items-center gap-1">
-                      <Sparkles size={10} className="text-blue-700" /> OCR
-                    </span>
-                  </button>
-                </div>
+                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <IdCard size={14} className="text-[#1B3A6B]" />
+                  3. Student Identification
+                </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-4">
@@ -769,24 +751,6 @@ export function QuickStudentCheckInModal({
           )}
         </div>
       </div>
-
-      {/* ID Scanner Modal */}
-      <StudentIdScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        initialId={studentId}
-        initialName={studentName}
-        onApply={({ studentId: newId, studentName: newName }) => {
-          if (newId) setStudentId(newId);
-          if (newName) setStudentName(newName);
-          setErrors(prev => {
-            const next = { ...prev };
-            if (newId) delete next.studentId;
-            if (newName) delete next.studentName;
-            return next;
-          });
-        }}
-      />
     </div>
   );
 }
