@@ -15,7 +15,7 @@ import {
   STAFF_ACCESS_PAGES,
 } from '@/services/staffService';
 import { authService } from '@/services/authService';
-import { Lock, KeyRound } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));
 const PatientForm = lazy(() => import('../components/PatientForm').then(m => ({ default: m.PatientForm })));
@@ -1643,37 +1643,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                 Active staff member <span className="font-bold text-gray-900 dark:text-foreground">{activeShift.staff.name}</span> ({activeShift.staff.role}) does not have permission to open <span className="font-bold text-[#1E5AA8] dark:text-sky-400">{pageLabel}</span>.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+            <div className="flex items-center justify-center pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  setPinPrompt({
-                    actionTitle: `Unlock ${pageLabel}`,
-                    actionDetails: 'Enter the 4-digit PIN of a staff member authorized to access this page.',
-                    resolve: staff => {
-                      if (!staffService.canAccessPage(currentPage, staff)) {
-                        toast.error(`${staff.name} does not have permission to access ${pageLabel}.`);
-                      } else {
-                        toast.success(`Switched active shift to ${staff.name}`);
-                      }
-                    },
-                    reject: () => {},
-                  });
-                }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-95 transition-all cursor-pointer"
+                onClick={() => navigate(firstAllowed as Page)}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-95 transition-all cursor-pointer"
                 style={{ background: '#1E5AA8' }}
               >
-                <KeyRound size={14} /> Switch Staff PIN
+                Go to Allowed Page
               </button>
-              {currentPage !== firstAllowed && (
-                <button
-                  type="button"
-                  onClick={() => navigate(firstAllowed as Page)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-secondary/40 text-xs font-semibold text-gray-700 dark:text-foreground hover:bg-gray-100 transition-all cursor-pointer"
-                >
-                  Go to Allowed Page
-                </button>
-              )}
             </div>
           </div>
         </div>
