@@ -551,36 +551,8 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Timeline Chart */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-gray-900 font-bold">Daily Activity Timeline</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Consultations per hour</p>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50">
-              <Activity size={14} /> LIVE
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={timelineData}>
-              <defs>
-                <linearGradient id="colorCon" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={PRIMARY} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={PRIMARY} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f8f9fa" />
-              <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, fontWeight: 'bold' }} />
-              <Area type="monotone" dataKey="consultations" stroke={PRIMARY} strokeWidth={3} fill="url(#colorCon)" dot={{ fill: PRIMARY, r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* Top Visiting Sections Ranking */}
-        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-gray-900 font-bold">Top Visiting Sections</h3>
@@ -782,6 +754,34 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
             </div>
           )}
         </div>
+      </div>
+
+      {/* Timeline Chart (Full Width like Live Patient Queue, same height) */}
+      <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-gray-900 font-bold">Daily Activity Timeline</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Consultations per hour</p>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50">
+            <Activity size={14} /> LIVE
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={timelineData}>
+            <defs>
+              <linearGradient id="colorCon" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={PRIMARY} stopOpacity={0.15} />
+                <stop offset="95%" stopColor={PRIMARY} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f8f9fa" />
+            <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, fontWeight: 'bold' }} />
+            <Area type="monotone" dataKey="consultations" stroke={PRIMARY} strokeWidth={3} fill="url(#colorCon)" dot={{ fill: PRIMARY, r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
