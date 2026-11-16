@@ -18,7 +18,6 @@ export function StaffPinModal({
   onCancel,
 }: StaffPinModalProps) {
   const [pin, setPin] = useState('');
-  const [keepShift, setKeepShift] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifiedStaff, setVerifiedStaff] = useState<ClinicStaffMember | null>(null);
@@ -40,9 +39,6 @@ export function StaffPinModal({
       try {
         const staff = await staffService.verifyPin(enteredPin);
         setVerifiedStaff(staff);
-        if (keepShift) {
-          staffService.setActiveShift(staff, 15);
-        }
         setTimeout(() => {
           onSuccess(staff);
         }, 220);
@@ -52,7 +48,7 @@ export function StaffPinModal({
         setIsVerifying(false);
       }
     },
-    [isVerifying, keepShift, onSuccess]
+    [isVerifying, onSuccess]
   );
 
   const handleDigit = useCallback(

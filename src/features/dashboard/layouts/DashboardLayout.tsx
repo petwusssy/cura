@@ -357,7 +357,10 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             </div>
           )}
           <button
-            onClick={onLogout}
+            onClick={() => {
+              staffService.clearActiveShift();
+              onLogout();
+            }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
             style={{ color: 'rgba(255,255,255,0.55)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; }}
@@ -432,23 +435,15 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
             )}
           </button>
 
-          {/* Active Nurse Shift Pill */}
+          {/* Active Nurse Shift Pill (locked to login staff) */}
           {activeShift && (
-            <button
-              type="button"
-              onClick={() => {
-                staffService.clearActiveShift();
-                toast.info('Active nurse shift cleared. Next action will prompt for 4-digit PIN.');
-              }}
-              title="Click to end/switch active nurse PIN shift"
-              className="relative z-10 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-colors cursor-pointer flex-shrink-0"
+            <div
+              title={`Logged in as ${activeShift.staff.name} (${activeShift.staff.role})`}
+              className="relative z-10 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold select-none flex-shrink-0"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="truncate max-w-[140px]">{activeShift.staff.name}</span>
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-200/70 text-emerald-900">
-                Switch
-              </span>
-            </button>
+              <span className="truncate max-w-[160px]">{activeShift.staff.name}</span>
+            </div>
           )}
 
           {/* User profile */}

@@ -591,7 +591,7 @@ export default function LandingPage({
           actionDetails={`Enter your individual 4-digit Staff PIN to open CURA (${username.trim()})`}
           onSuccess={(staff: ClinicStaffMember) => {
             setShowPinModal(false)
-            staffService.setActiveShift(staff, 15)
+            staffService.setActiveShift(staff, 1440)
             staffService
               .recordAuditLog({
                 staff: staff.id,

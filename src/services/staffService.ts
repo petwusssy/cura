@@ -597,7 +597,7 @@ export const staffService = {
     }
   },
 
-  setActiveShift(staff: ClinicStaffMember, durationMinutes = 15): ShiftSession {
+  setActiveShift(staff: ClinicStaffMember, durationMinutes = 1440): ShiftSession {
     const session: ShiftSession = {
       staff: hydrateStaffPages(staff),
       expiresAt: Date.now() + durationMinutes * 60 * 1000,
