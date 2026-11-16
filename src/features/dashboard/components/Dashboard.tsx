@@ -13,6 +13,7 @@ import { Patient, Consultation, MedicineItem, AppNotification, Page, PatientQueu
 import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 import { consultationService } from '@/services/consultationService';
+import { loadDepartmentSectionGroups, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -279,6 +280,97 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
     });
   }, [consultations, filteredConsultations, dateFilter, today, patients, currentTimeNow, intakedDoseIds]);
 
+  const [deptSectionGroups, setDeptSectionGroups] = useState(() => loadDepartmentSectionGroups());
+  useEffect(() => {
+    const refreshSections = () => setDeptSectionGroups(loadDepartmentSectionGroups());
+    window.addEventListener(SECTIONS_UPDATED_EVENT, refreshSections);
+    window.addEventListener('storage', refreshSections);
+    return () => {
+      window.removeEventListener(SECTIONS_UPDATED_EVENT, refreshSections);
+      window.removeEventListener('storage', refreshSections);
+    };
+  }, []);
+
+  const sectionRankings = useMemo(() => {
+    const normExact = (s: string) => (s || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    const normCompact = (s: string) => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    const exactLookup = new Map<string, { canonical: string; deptShort: string }>();
+    const compactLookup = new Map<string, { canonical: string; deptShort: string }>();
+
+    deptSectionGroups.forEach(group => {
+      group.sections.forEach(sec => {
+        const info = { canonical: sec, deptShort: group.shortName };
+        exactLookup.set(normExact(sec), info);
+        const comp = normCompact(sec);
+        if (!compactLookup.has(comp)) compactLookup.set(comp, info);
+      });
+    });
+
+    const patientMap = new Map(patients.map(p => [p.id, p]));
+    const counts = new Map<string, {
+      section: string;
+      deptLabel: string;
+      visits: number;
+      cases: Record<string, number>;
+    }>();
+
+    filteredConsultations.forEach(c => {
+      if ((c.complaint || '').includes('[CONVERTED]')) return;
+      const p = patientMap.get(c.patientId);
+      if (!p) return;
+
+      let sectionKey = '';
+      let deptLabel = '';
+
+      if (p.category === 'Student') {
+        const rawSec = (p.section || p.course || p.gradeLevel || '').trim();
+        if (!rawSec) return;
+        const matched = exactLookup.get(normExact(rawSec)) || compactLookup.get(normCompact(rawSec));
+        sectionKey = matched ? matched.canonical : normExact(rawSec);
+        deptLabel = matched ? matched.deptShort : (p.studentCategory || 'Student');
+      } else if (p.category === 'Employee') {
+        const rawDept = (p.department || p.employeeDepartment || '').trim();
+        if (!rawDept) return;
+        sectionKey = normExact(rawDept);
+        deptLabel = 'Personnel Dept';
+      } else {
+        return;
+      }
+
+      const existing = counts.get(sectionKey) || {
+        section: sectionKey,
+        deptLabel,
+        visits: 0,
+        cases: {},
+      };
+
+      existing.visits += 1;
+      const caseLabel = ((c.categories && c.categories[0]) || c.complaint || c.purposeOfVisit || '').replace(' [CONVERTED]', '').trim();
+      if (caseLabel) {
+        existing.cases[caseLabel] = (existing.cases[caseLabel] || 0) + 1;
+      }
+      counts.set(sectionKey, existing);
+    });
+
+    const sorted = Array.from(counts.values()).sort((a, b) => b.visits - a.visits || a.section.localeCompare(b.section));
+    const maxVisits = sorted[0]?.visits || 1;
+    const totalVisits = sorted.reduce((sum, item) => sum + item.visits, 0) || 1;
+
+    return sorted.slice(0, 10).map((item, idx) => {
+      const topComplaint = Object.entries(item.cases).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Clinic Visit';
+      return {
+        rank: idx + 1,
+        section: item.section,
+        deptLabel: item.deptLabel,
+        visits: item.visits,
+        percentOfMax: Math.round((item.visits / maxVisits) * 100),
+        sharePercent: Math.round((item.visits / totalVisits) * 100),
+        topComplaint,
+      };
+    });
+  }, [filteredConsultations, patients, deptSectionGroups]);
+
   const statCards = [
     { label: 'Total Consultations', value: filteredConsultations.length, color: PRIMARY, icon: <Stethoscope size={22} />, sub: `${todayConsultations.length} with doctor` },
     { label: 'Students', value: todayStudents.length, color: '#1B3A6B', icon: <Users size={22} />, sub: 'today' },
@@ -460,7 +552,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timeline Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-gray-900 font-bold">Daily Activity Timeline</h3>
@@ -470,7 +562,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
               <Activity size={14} /> LIVE
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={timelineData}>
               <defs>
                 <linearGradient id="colorCon" x1="0" y1="0" x2="0" y2="1">
@@ -485,6 +577,82 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
               <Area type="monotone" dataKey="consultations" stroke={PRIMARY} strokeWidth={3} fill="url(#colorCon)" dot={{ fill: PRIMARY, r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Top Visiting Sections Ranking */}
+        <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f3f5' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-gray-900 font-bold">Top Visiting Sections</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Most clinic visits by section</p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50">
+              <BarChart2 size={14} /> {sectionRankings.length} Ranked
+            </div>
+          </div>
+          {sectionRankings.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">No section visits recorded for this period</div>
+          ) : (
+            <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+              {sectionRankings.map(item => {
+                const isFirst = item.rank === 1;
+                const isSecond = item.rank === 2;
+                const isThird = item.rank === 3;
+                const badgeStyle = isFirst
+                  ? { background: YELLOW, color: '#1B3A6B' }
+                  : isSecond
+                  ? { background: '#E2E8F0', color: '#334155' }
+                  : isThird
+                  ? { background: '#FDE68A', color: '#92400E' }
+                  : { background: '#EFF6FF', color: PRIMARY };
+
+                return (
+                  <div
+                    key={item.section}
+                    className="rounded-lg p-2.5 border border-gray-100 bg-gray-50/70 hover:bg-blue-50/30 transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-6 h-6 rounded-md text-[11px] font-extrabold flex items-center justify-center shrink-0"
+                          style={badgeStyle}
+                        >
+                          #{item.rank}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-gray-900 truncate" title={item.section}>
+                            {item.section}
+                          </div>
+                          <div className="text-[10px] text-gray-500 font-medium truncate">
+                            {item.deptLabel} • Top: {item.topComplaint}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-extrabold" style={{ color: PRIMARY }}>
+                          {item.visits} {item.visits === 1 ? 'visit' : 'visits'}
+                        </span>
+                        <div className="text-[10px] text-gray-400 font-semibold">
+                          {item.sharePercent}% share
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-gray-200/80 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.max(8, item.percentOfMax)}%`,
+                          background: isFirst
+                            ? `linear-gradient(90deg, ${PRIMARY}, #0EA5E9)`
+                            : PRIMARY,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Medication Reminders */}
