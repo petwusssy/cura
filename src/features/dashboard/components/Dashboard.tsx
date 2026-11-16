@@ -581,7 +581,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                 return (
                   <div
                     key={item.section}
-                    className="rounded-lg p-2.5 border border-gray-100 bg-gray-50/70 hover:bg-blue-50/30 transition-all"
+                    className="rounded-lg p-2.5 border border-gray-200 dark:border-border bg-gray-50 dark:bg-secondary/45 hover:bg-gray-100 dark:hover:bg-secondary/65 transition-all"
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2 min-w-0">
@@ -592,31 +592,31 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
                           #{item.rank}
                         </span>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-gray-900 truncate" title={item.section}>
+                          <div className="text-xs font-bold text-gray-900 dark:text-foreground truncate" title={item.section}>
                             {item.section}
                           </div>
-                          <div className="text-[10px] text-gray-500 font-medium truncate">
+                          <div className="text-[10px] text-gray-600 dark:text-muted-foreground font-medium truncate">
                             {item.deptLabel} • Top: {item.topComplaint}
                           </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-xs font-extrabold" style={{ color: PRIMARY }}>
+                        <span className="text-xs font-extrabold text-[#1E5AA8] dark:text-sky-400">
                           {item.visits} {item.visits === 1 ? 'visit' : 'visits'}
                         </span>
-                        <div className="text-[10px] text-gray-400 font-semibold">
+                        <div className="text-[10px] text-gray-500 dark:text-muted-foreground font-semibold">
                           {item.sharePercent}% share
                         </div>
                       </div>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-gray-200/80 overflow-hidden">
+                    <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-muted overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
                           width: `${Math.max(8, item.percentOfMax)}%`,
                           background: isFirst
                             ? `linear-gradient(90deg, ${PRIMARY}, #0EA5E9)`
-                            : PRIMARY,
+                            : 'linear-gradient(90deg, #0284C7, #38BDF8)',
                         }}
                       />
                     </div>
