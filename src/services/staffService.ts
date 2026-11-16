@@ -1,11 +1,29 @@
 import api, { API_URL } from './api';
 import { authService } from './authService';
 
+export const STAFF_ACCESS_PAGES = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'patients', label: 'Patients' },
+  { id: 'beds', label: 'Beds Management' },
+  { id: 'appointments', label: 'Appointments' },
+  { id: 'medical-certificates', label: 'Medical Certificates' },
+  { id: 'consultations', label: 'Consultations' },
+  { id: 'non-consultations', label: 'Non-Consultation' },
+  { id: 'telemedicine', label: 'Telemedicine' },
+  { id: 'inventory', label: 'Inventory' },
+  { id: 'purchase-receipts', label: 'Purchase Receipts' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'settings', label: 'Settings' },
+] as const;
+
+export const ALL_STAFF_PAGE_IDS: string[] = STAFF_ACCESS_PAGES.map(p => p.id);
+
 export interface ClinicStaffMember {
   id: string;
   name: string;
   role: string;
   is_active: boolean;
+  allowed_pages?: string[] | null;
   created_at: string;
 }
 
@@ -45,6 +63,7 @@ export interface AuditDriveArchivesResponse {
 
 const STAFF_CACHE_KEY = 'cura_clinic_staff_cache';
 const STAFF_PINS_CACHE_KEY = 'cura_clinic_staff_pins';
+const STAFF_PAGES_CACHE_KEY = 'cura_clinic_staff_pages';
 const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
 const USER_MGMT_PW_HASH_KEY = 'cura_user_mgmt_pw_hash';
@@ -103,6 +122,36 @@ function saveLocalPin(staffId: string, pin: string): void {
   } catch { }
 }
 
+function loadLocalPagesMap(): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(STAFF_PAGES_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalPages(staffId: string, pages: string[] | null | undefined): void {
+  if (!Array.isArray(pages)) return;
+  try {
+    const map = loadLocalPagesMap();
+    map[staffId] = pages;
+    localStorage.setItem(STAFF_PAGES_CACHE_KEY, JSON.stringify(map));
+  } catch { }
+}
+
+function hydrateStaffPages(member: ClinicStaffMember): ClinicStaffMember {
+  if (Array.isArray(member.allowed_pages)) {
+    saveLocalPages(member.id, member.allowed_pages);
+    return member;
+  }
+  const map = loadLocalPagesMap();
+  if (Array.isArray(map[member.id])) {
+    return { ...member, allowed_pages: map[member.id] };
+  }
+  return member;
+}
+
 function loadLocalAuditLogs(): AuditLogEntry[] {
   try {
     const raw = localStorage.getItem(AUDIT_LOGS_CACHE_KEY);
@@ -134,14 +183,15 @@ export const staffService = {
   },
 
   async getStaff(): Promise<ClinicStaffMember[]> {
-    const localList = loadLocalStaff();
+    const localList = loadLocalStaff().map(hydrateStaffPages);
     try {
       const res = await api.get<ClinicStaffMember[]>('/staff/');
       if (Array.isArray(res.data)) {
+        const hydrated = res.data.map(hydrateStaffPages);
         // Merge server list with any local-only items if server was empty before migration
-        if (res.data.length > 0 || localList.length === 0) {
-          saveLocalStaff(res.data, false);
-          return res.data;
+        if (hydrated.length > 0 || localList.length === 0) {
+          saveLocalStaff(hydrated, false);
+          return hydrated;
         }
       }
     } catch {
@@ -150,9 +200,10 @@ export const staffService = {
     return localList;
   },
 
-  async createStaff(payload: { name: string; role: string; pin: string }): Promise<ClinicStaffMember> {
+  async createStaff(payload: { name: string; role: string; pin: string; allowed_pages?: string[] }): Promise<ClinicStaffMember> {
     const cleanName = payload.name.trim().toUpperCase();
     const cleanPin = payload.pin.trim();
+    const allowedPages = Array.isArray(payload.allowed_pages) ? payload.allowed_pages : [...ALL_STAFF_PAGE_IDS];
     if (!/^\d{4}$/.test(cleanPin)) {
       throw new Error('PIN must be exactly 4 digits.');
     }
@@ -174,9 +225,14 @@ export const staffService = {
         role: payload.role,
         pin: cleanPin,
         is_active: true,
+        allowed_pages: allowedPages,
       });
-      const created = res.data;
+      const created: ClinicStaffMember = {
+        ...res.data,
+        allowed_pages: Array.isArray(res.data.allowed_pages) ? res.data.allowed_pages : allowedPages,
+      };
       saveLocalPin(created.id, cleanPin);
+      saveLocalPages(created.id, created.allowed_pages);
       const next = [...localList.filter(s => s.id !== created.id), created].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
@@ -200,9 +256,11 @@ export const staffService = {
         name: cleanName,
         role: payload.role,
         is_active: true,
+        allowed_pages: allowedPages,
         created_at: new Date().toISOString(),
       };
       saveLocalPin(fallbackStaff.id, cleanPin);
+      saveLocalPages(fallbackStaff.id, allowedPages);
       const next = [...localList, fallbackStaff].sort((a, b) => a.name.localeCompare(b.name));
       saveLocalStaff(next);
       return fallbackStaff;
@@ -211,7 +269,7 @@ export const staffService = {
 
   async updateStaff(
     id: string,
-    payload: Partial<{ name: string; role: string; pin: string; is_active: boolean }>
+    payload: Partial<{ name: string; role: string; pin: string; is_active: boolean; allowed_pages: string[] }>
   ): Promise<ClinicStaffMember> {
     const localList = loadLocalStaff();
     const pinMap = loadLocalPinMap();
@@ -230,6 +288,10 @@ export const staffService = {
       }
     }
 
+    if (Array.isArray(payload.allowed_pages)) {
+      saveLocalPages(id, payload.allowed_pages);
+    }
+
     const updatedLocalList = localList.map(s => {
       if (s.id !== id) return s;
       return {
@@ -237,6 +299,7 @@ export const staffService = {
         ...(payload.name !== undefined ? { name: payload.name.trim().toUpperCase() } : {}),
         ...(payload.role !== undefined ? { role: payload.role } : {}),
         ...(payload.is_active !== undefined ? { is_active: payload.is_active } : {}),
+        ...(payload.allowed_pages !== undefined ? { allowed_pages: payload.allowed_pages } : {}),
       };
     });
 
@@ -245,19 +308,34 @@ export const staffService = {
     }
     saveLocalStaff(updatedLocalList);
 
-    // If staff member was deactivated and is currently on shift, end their shift
-    if (payload.is_active === false) {
-      const activeShift = this.getActiveShift();
-      if (activeShift?.staff.id === id) {
+    // Sync active shift if the updated staff member is currently on shift
+    const activeShift = this.getActiveShift();
+    if (activeShift?.staff.id === id) {
+      if (payload.is_active === false) {
         this.clearActiveShift();
+      } else {
+        const updatedSelf = updatedLocalList.find(s => s.id === id);
+        if (updatedSelf) {
+          try {
+            sessionStorage.setItem(
+              ACTIVE_SHIFT_KEY,
+              JSON.stringify({ ...activeShift, staff: hydrateStaffPages(updatedSelf) })
+            );
+            window.dispatchEvent(new CustomEvent(SHIFT_UPDATED_EVENT));
+          } catch { }
+        }
       }
     }
 
     try {
       const res = await api.patch<ClinicStaffMember>(`/staff/${id}/`, payload);
-      const finalList = updatedLocalList.map(s => (s.id === id ? res.data : s));
+      const mergedRes = hydrateStaffPages({
+        ...res.data,
+        ...(payload.allowed_pages !== undefined ? { allowed_pages: payload.allowed_pages } : {}),
+      });
+      const finalList = updatedLocalList.map(s => (s.id === id ? mergedRes : s));
       saveLocalStaff(finalList);
-      return res.data;
+      return mergedRes;
     } catch (err: any) {
       if (err?.response?.status === 400 && err?.response?.data) {
         const data = err.response.data;
@@ -408,7 +486,7 @@ export const staffService = {
     const targetHash = hashPinLocal(cleanPin);
     const localMatch = localList.find(s => pinMap[s.id] === targetHash);
     if (localMatch) {
-      return localMatch;
+      return hydrateStaffPages(localMatch);
     }
 
     // 2. Verify against backend /staff/verify-pin/
@@ -418,7 +496,7 @@ export const staffService = {
       });
       if (res.data?.valid && res.data?.staff) {
         saveLocalPin(res.data.staff.id, cleanPin);
-        return res.data.staff;
+        return hydrateStaffPages(res.data.staff);
       }
     } catch (err: any) {
       const serverMsg = err?.response?.data?.error;
@@ -505,12 +583,15 @@ export const staffService = {
       const localList = loadLocalStaff();
       if (localList.length > 0) {
         const found = localList.find(s => s.id === parsed.staff.id);
-        if (found && !found.is_active) {
-          sessionStorage.removeItem(ACTIVE_SHIFT_KEY);
-          return null;
+        if (found) {
+          if (!found.is_active) {
+            sessionStorage.removeItem(ACTIVE_SHIFT_KEY);
+            return null;
+          }
+          return { ...parsed, staff: hydrateStaffPages(found) };
         }
       }
-      return parsed;
+      return { ...parsed, staff: hydrateStaffPages(parsed.staff) };
     } catch {
       return null;
     }
@@ -518,7 +599,7 @@ export const staffService = {
 
   setActiveShift(staff: ClinicStaffMember, durationMinutes = 15): ShiftSession {
     const session: ShiftSession = {
-      staff,
+      staff: hydrateStaffPages(staff),
       expiresAt: Date.now() + durationMinutes * 60 * 1000,
     };
     try {
@@ -526,6 +607,28 @@ export const staffService = {
       window.dispatchEvent(new CustomEvent(SHIFT_UPDATED_EVENT));
     } catch { }
     return session;
+  },
+
+  canAccessPage(page: string, staff?: ClinicStaffMember | null): boolean {
+    if (!staff) return true;
+    const hydrated = hydrateStaffPages(staff);
+    if (!Array.isArray(hydrated.allowed_pages)) return true;
+
+    let canonical = page;
+    if (page === 'patient-profile' || page === 'patient-form') canonical = 'patients';
+    else if (
+      page === 'new-consultation' ||
+      page === 'new-consultation-tab' ||
+      page === 'convert-consultation-tab'
+    ) {
+      canonical = 'consultations';
+    } else if (page === 'new-non-consultation-tab') {
+      canonical = 'non-consultations';
+    } else if (page === 'notifications' || page === 'search' || page === 'login') {
+      return true;
+    }
+
+    return hydrated.allowed_pages.includes(canonical);
   },
 
   clearActiveShift(): void {

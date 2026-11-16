@@ -6,8 +6,16 @@ import { PageSkeleton } from '../components/PageSkeleton';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { QuickStudentCheckInModal } from '../components/QuickStudentCheckInModal';
 import { StaffPinModal } from '../components/StaffPinModal';
-import { staffService, ClinicStaffMember } from '@/services/staffService';
+import {
+  staffService,
+  ClinicStaffMember,
+  ShiftSession,
+  SHIFT_UPDATED_EVENT,
+  STAFF_UPDATED_EVENT,
+  STAFF_ACCESS_PAGES,
+} from '@/services/staffService';
 import { authService } from '@/services/authService';
+import { Lock, KeyRound } from 'lucide-react';
 
 const PatientManagement = lazy(() => import('../components/PatientManagement').then(m => ({ default: m.PatientManagement })));
 const PatientForm = lazy(() => import('../components/PatientForm').then(m => ({ default: m.PatientForm })));
@@ -906,6 +914,20 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     staffService.getStaff().catch(() => {});
   }, []);
 
+  const [activeShift, setActiveShift] = useState<ShiftSession | null>(() => staffService.getActiveShift());
+
+  useEffect(() => {
+    const syncShift = () => setActiveShift(staffService.getActiveShift());
+    window.addEventListener(SHIFT_UPDATED_EVENT, syncShift);
+    window.addEventListener(STAFF_UPDATED_EVENT, syncShift);
+    const interval = setInterval(syncShift, 10000);
+    return () => {
+      window.removeEventListener(SHIFT_UPDATED_EVENT, syncShift);
+      window.removeEventListener(STAFF_UPDATED_EVENT, syncShift);
+      clearInterval(interval);
+    };
+  }, []);
+
   const requireStaffSignOff = useCallback(
     async (
       actionTitle: string,
@@ -1597,6 +1619,65 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     // Show layout-matched skeleton for ALL pages ONLY when actively loading without cached/loaded data
     if (isLoading && !hasExistingData && skeletonVisible) {
       return <PageSkeleton page={currentPage} />;
+    }
+
+    if (activeShift?.staff && !staffService.canAccessPage(currentPage, activeShift.staff)) {
+      const pageLabel =
+        STAFF_ACCESS_PAGES.find(p => p.id === currentPage)?.label ||
+        currentPage.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const firstAllowed =
+        (Array.isArray(activeShift.staff.allowed_pages) && activeShift.staff.allowed_pages[0]) ||
+        'dashboard';
+
+      return (
+        <div className="p-6 flex items-center justify-center min-h-[75vh]">
+          <div className="max-w-md w-full bg-white dark:bg-card rounded-2xl p-6 border border-gray-200 dark:border-border shadow-sm text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+              <Lock size={26} />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-extrabold text-gray-900 dark:text-foreground">
+                Page Locked — Access Restricted
+              </h2>
+              <p className="text-xs text-gray-600 dark:text-muted-foreground leading-relaxed">
+                Active staff member <span className="font-bold text-gray-900 dark:text-foreground">{activeShift.staff.name}</span> ({activeShift.staff.role}) does not have permission to open <span className="font-bold text-[#1E5AA8] dark:text-sky-400">{pageLabel}</span>.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPinPrompt({
+                    actionTitle: `Unlock ${pageLabel}`,
+                    actionDetails: 'Enter the 4-digit PIN of a staff member authorized to access this page.',
+                    resolve: staff => {
+                      if (!staffService.canAccessPage(currentPage, staff)) {
+                        toast.error(`${staff.name} does not have permission to access ${pageLabel}.`);
+                      } else {
+                        toast.success(`Switched active shift to ${staff.name}`);
+                      }
+                    },
+                    reject: () => {},
+                  });
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-95 transition-all cursor-pointer"
+                style={{ background: '#1E5AA8' }}
+              >
+                <KeyRound size={14} /> Switch Staff PIN
+              </button>
+              {currentPage !== firstAllowed && (
+                <button
+                  type="button"
+                  onClick={() => navigate(firstAllowed as Page)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-secondary/40 text-xs font-semibold text-gray-700 dark:text-foreground hover:bg-gray-100 transition-all cursor-pointer"
+                >
+                  Go to Allowed Page
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
     }
 
     switch (currentPage) {

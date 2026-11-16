@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList, Package, ShoppingCart,
-  FileText, BedDouble, BarChart2, Bell, Settings, LogOut, Menu, Calendar, Video, ChevronDown, UserCheck
+  FileText, BedDouble, BarChart2, Bell, Settings, LogOut, Menu, Calendar, Video, ChevronDown, UserCheck, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Page, AppNotification } from '@/types';
 import uaLogo from '@/assets/images/ua-logo.webp';
 import curaLogoMain from '@/assets/images/cura-logo.webp';
 import { authService } from '@/services/authService';
-import { staffService, ShiftSession, SHIFT_UPDATED_EVENT } from '@/services/staffService';
+import { staffService, ShiftSession, SHIFT_UPDATED_EVENT, STAFF_UPDATED_EVENT } from '@/services/staffService';
 import { toast } from 'sonner';
 
 // ── Nav structure ──────────────────────────────────────────────────────────────
@@ -98,9 +98,11 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
   useEffect(() => {
     const syncShift = () => setActiveShift(staffService.getActiveShift());
     window.addEventListener(SHIFT_UPDATED_EVENT, syncShift);
+    window.addEventListener(STAFF_UPDATED_EVENT, syncShift);
     const interval = setInterval(syncShift, 15000);
     return () => {
       window.removeEventListener(SHIFT_UPDATED_EVENT, syncShift);
+      window.removeEventListener(STAFF_UPDATED_EVENT, syncShift);
       clearInterval(interval);
     };
   }, []);
@@ -130,21 +132,27 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
 
   const renderLeaf = (item: NavLeaf, indent = false) => {
     const active = isLeafActive(item.id);
+    const isLocked = Boolean(
+      activeShift?.staff && !staffService.canAccessPage(item.id, activeShift.staff)
+    );
     return (
       <button
         key={item.id}
         onClick={() => {
+          if (isLocked) {
+            toast.warning(`Locked: ${activeShift?.staff.name} does not have access to ${item.label}.`);
+          }
           onNavigate(item.id);
           if (window.innerWidth < 768) setCollapsed(true);
         }}
-        title={collapsed ? item.label : undefined}
+        title={collapsed ? `${item.label}${isLocked ? ' (Locked)' : ''}` : undefined}
         className={`w-full flex items-center text-left relative transition-all duration-200 rounded-xl group ${
           collapsed
             ? 'justify-center w-11 h-11 mx-auto my-1 p-0'
             : indent
               ? 'gap-3 pl-8 pr-3.5 py-2.5 my-0.5 text-xs'
               : 'gap-3.5 px-3.5 py-3 my-0.5 text-sm font-medium'
-        } ${active ? 'text-white' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
+        } ${active ? 'text-white' : isLocked ? 'text-white/45 hover:text-white/75 hover:bg-white/5' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
       >
         {active && (
           <>
@@ -163,6 +171,14 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
         )}
         <span className="relative flex-shrink-0 flex items-center justify-center">{item.icon}</span>
         {!collapsed && <span className="relative truncate flex-1 tracking-tight">{item.label}</span>}
+        {!collapsed && isLocked && (
+          <Lock size={13} className="relative flex-shrink-0 text-amber-300/90" />
+        )}
+        {collapsed && isLocked && (
+          <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-amber-400/90 text-[#0d213f] flex items-center justify-center">
+            <Lock size={9} />
+          </span>
+        )}
       </button>
     );
   };

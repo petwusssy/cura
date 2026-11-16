@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import {
   Save, User, Bell, Shield, Palette, Database, HelpCircle, Sun, Moon, Laptop,
   Droplets, Megaphone, Users, Lock, Unlock, KeyRound, Plus, CheckCircle2,
@@ -14,6 +14,8 @@ import {
   ClinicStaffMember,
   AuditLogEntry,
   AuditDriveArchiveItem,
+  STAFF_ACCESS_PAGES,
+  ALL_STAFF_PAGE_IDS,
   STAFF_UPDATED_EVENT,
   AUDIT_UPDATED_EVENT,
 } from '../../../services/staffService';
@@ -163,11 +165,16 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffRole, setNewStaffRole] = useState('Staff Nurse');
   const [newStaffPin, setNewStaffPin] = useState('');
+  const [newStaffPages, setNewStaffPages] = useState<string[]>(() => [...ALL_STAFF_PAGE_IDS]);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
 
   // Reset PIN inline state
   const [resettingPinId, setResettingPinId] = useState<string | null>(null);
   const [resetPinValue, setResetPinValue] = useState('');
+
+  // Edit Page Access inline state
+  const [editingAccessId, setEditingAccessId] = useState<string | null>(null);
+  const [editingAccessPages, setEditingAccessPages] = useState<string[]>([]);
 
   // Audit filter & Google Drive backup state
   const [auditSearch, setAuditSearch] = useState('');
@@ -348,12 +355,17 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
       toast.error('PIN must be exactly 4 digits (0-9).');
       return;
     }
+    if (newStaffPages.length === 0) {
+      toast.error('Please select at least one page that this staff member can access.');
+      return;
+    }
     setIsAddingStaff(true);
     try {
       const created = await staffService.createStaff({
         name: newStaffName,
         role: newStaffRole,
         pin: newStaffPin,
+        allowed_pages: newStaffPages,
       });
       await staffService.recordAuditLog({
         staff: created.id,
@@ -362,17 +374,42 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
         action: 'Added Clinic Staff',
         target_type: 'Staff',
         target_id: created.id,
-        details: `Added ${created.name} (${created.role}) with 4-digit PIN`,
+        details: `Added ${created.name} (${created.role}) with 4-digit PIN (${newStaffPages.length}/${ALL_STAFF_PAGE_IDS.length} pages allowed)`,
       });
       setNewStaffName('');
       setNewStaffPin('');
       setNewStaffRole('Staff Nurse');
+      setNewStaffPages([...ALL_STAFF_PAGE_IDS]);
       await loadStaffAndLogs();
       toast.success(`Added ${created.name} (${created.role})`);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to add staff member.');
     } finally {
       setIsAddingStaff(false);
+    }
+  };
+
+  const handleSaveStaffAccess = async (member: ClinicStaffMember) => {
+    if (editingAccessPages.length === 0) {
+      toast.error('Please select at least one allowed page.');
+      return;
+    }
+    try {
+      await staffService.updateStaff(member.id, { allowed_pages: editingAccessPages });
+      await staffService.recordAuditLog({
+        staff: member.id,
+        staff_name_snapshot: authService.getUsername().toUpperCase() || 'ADMIN',
+        staff_role_snapshot: 'Administrator',
+        action: 'Updated Staff Page Access',
+        target_type: 'Staff',
+        target_id: member.id,
+        details: `Updated page permissions for ${member.name} (${editingAccessPages.length}/${ALL_STAFF_PAGE_IDS.length} pages allowed)`,
+      });
+      setEditingAccessId(null);
+      await loadStaffAndLogs();
+      toast.success(`Updated page access for ${member.name}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update page access.');
     }
   };
 
@@ -781,6 +818,66 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                             </button>
                           </div>
                         </div>
+
+                        {/* Page Access Checkboxes for New Staff Member */}
+                        <div className="pt-3 border-t border-blue-200/60 dark:border-border space-y-2.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-[#1E5AA8] dark:text-sky-400">
+                                Allowed Pages &amp; Module Access ({newStaffPages.length}/{ALL_STAFF_PAGE_IDS.length})
+                              </span>
+                              <p className="text-[11px] text-muted-foreground">
+                                Unchecked pages will be locked when this staff member logs in with their 4-digit PIN.
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setNewStaffPages([...ALL_STAFF_PAGE_IDS])}
+                                className="px-2.5 py-1 rounded-md border border-border bg-white dark:bg-card text-[11px] font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer"
+                              >
+                                Select All
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setNewStaffPages(['dashboard'])}
+                                className="px-2.5 py-1 rounded-md border border-border bg-white dark:bg-card text-[11px] font-semibold text-muted-foreground hover:bg-accent transition-colors cursor-pointer"
+                              >
+                                Dashboard Only
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {STAFF_ACCESS_PAGES.map(page => {
+                              const checked = newStaffPages.includes(page.id);
+                              return (
+                                <label
+                                  key={page.id}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer select-none transition-all ${
+                                    checked
+                                      ? 'bg-white dark:bg-card border-[#1E5AA8] text-foreground shadow-2xs'
+                                      : 'bg-white/50 dark:bg-card/40 border-border text-muted-foreground opacity-75'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      setNewStaffPages(prev =>
+                                        prev.includes(page.id)
+                                          ? prev.filter(p => p !== page.id)
+                                          : [...prev, page.id]
+                                      );
+                                    }}
+                                    className="rounded border-gray-300 text-[#1E5AA8] focus:ring-[#1E5AA8] w-3.5 h-3.5 cursor-pointer"
+                                  />
+                                  <span className="truncate">{page.label}</span>
+                                  {!checked && <Lock size={11} className="ml-auto text-amber-600 shrink-0" />}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </form>
 
                       {/* Staff Roster List */}
@@ -798,99 +895,216 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                               <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                                 <th className="py-3 px-4">Staff Name</th>
                                 <th className="py-3 px-4">Role</th>
+                                <th className="py-3 px-4">Page Access</th>
                                 <th className="py-3 px-4">Status</th>
                                 <th className="py-3 px-4 text-right">Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border text-sm">
-                              {staffList.map(member => (
-                                <tr key={member.id} className="hover:bg-muted/20 transition-colors">
-                                  <td className="py-3 px-4 font-bold text-foreground">
-                                    {member.name}
-                                  </td>
-                                  <td className="py-3 px-4 text-xs font-medium text-muted-foreground">
-                                    {member.role}
-                                  </td>
-                                  <td className="py-3 px-4">
-                                    {member.is_active ? (
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <CheckCircle2 size={12} /> Active
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                                        <XCircle size={12} /> Inactive
-                                      </span>
+                              {staffList.map(member => {
+                                const memberPages = Array.isArray(member.allowed_pages)
+                                  ? member.allowed_pages
+                                  : ALL_STAFF_PAGE_IDS;
+                                const isFullAccess = memberPages.length >= ALL_STAFF_PAGE_IDS.length;
+                                const isEditingAccess = editingAccessId === member.id;
+
+                                return (
+                                  <Fragment key={member.id}>
+                                    <tr className="hover:bg-muted/20 transition-colors">
+                                      <td className="py-3 px-4 font-bold text-foreground">
+                                        {member.name}
+                                      </td>
+                                      <td className="py-3 px-4 text-xs font-medium text-muted-foreground">
+                                        {member.role}
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        {isFullAccess ? (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#1E5AA8] border border-blue-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30">
+                                            <Unlock size={11} /> All Pages ({ALL_STAFF_PAGE_IDS.length})
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
+                                            <Lock size={11} /> {memberPages.length} / {ALL_STAFF_PAGE_IDS.length} Pages
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        {member.is_active ? (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <CheckCircle2 size={12} /> Active
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                            <XCircle size={12} /> Inactive
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="py-3 px-4 text-right">
+                                        {resettingPinId === member.id ? (
+                                          <div className="inline-flex items-center gap-2">
+                                            <input
+                                              type="password"
+                                              inputMode="numeric"
+                                              maxLength={4}
+                                              autoFocus
+                                              value={resetPinValue}
+                                              onChange={e =>
+                                                setResetPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))
+                                              }
+                                              placeholder="New 4-digit PIN"
+                                              className="w-28 border border-border rounded-lg px-2.5 py-1 text-xs font-mono text-center"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => handleSaveResetPin(member)}
+                                              className="px-2.5 py-1 rounded-lg text-white text-xs font-semibold cursor-pointer"
+                                              style={{ background: PRIMARY }}
+                                            >
+                                              Save
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setResettingPinId(null);
+                                                setResetPinValue('');
+                                              }}
+                                              className="px-2 py-1 rounded-lg border border-border text-xs text-muted-foreground cursor-pointer"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div className="inline-flex items-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                if (isEditingAccess) {
+                                                  setEditingAccessId(null);
+                                                } else {
+                                                  setEditingAccessId(member.id);
+                                                  setEditingAccessPages([...memberPages]);
+                                                }
+                                              }}
+                                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                                                isEditingAccess
+                                                  ? 'border-[#1E5AA8] bg-blue-50 text-[#1E5AA8] dark:bg-sky-500/20 dark:text-sky-300'
+                                                  : 'border-border text-foreground hover:bg-accent'
+                                              }`}
+                                            >
+                                              <Shield size={12} /> Page Access
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setResettingPinId(member.id);
+                                                setResetPinValue('');
+                                              }}
+                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors cursor-pointer"
+                                            >
+                                              <KeyRound size={12} /> Reset PIN
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleToggleStaffActive(member)}
+                                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${member.is_active
+                                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                }`}
+                                            >
+                                              {member.is_active ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteStaff(member)}
+                                              title="Delete Staff"
+                                              className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                            >
+                                              <Trash2 size={13} />
+                                            </button>
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                    {isEditingAccess && (
+                                      <tr className="bg-blue-50/30 dark:bg-slate-900/50">
+                                        <td colSpan={5} className="p-4 space-y-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div>
+                                              <div className="text-xs font-bold text-foreground">
+                                                Page Access Permissions for <span className="text-[#1E5AA8] dark:text-sky-400">{member.name}</span> ({editingAccessPages.length}/{ALL_STAFF_PAGE_IDS.length} Checked)
+                                              </div>
+                                              <div className="text-[11px] text-muted-foreground">
+                                                Unchecked pages will show a lock icon and prevent access when {member.name} is on shift.
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingAccessPages([...ALL_STAFF_PAGE_IDS])}
+                                                className="px-2.5 py-1 rounded-md border border-border bg-white dark:bg-card text-[11px] font-semibold text-foreground hover:bg-accent cursor-pointer"
+                                              >
+                                                Select All
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingAccessPages(['dashboard'])}
+                                                className="px-2.5 py-1 rounded-md border border-border bg-white dark:bg-card text-[11px] font-semibold text-muted-foreground hover:bg-accent cursor-pointer"
+                                              >
+                                                Dashboard Only
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleSaveStaffAccess(member)}
+                                                className="px-3 py-1 rounded-md text-white text-xs font-bold cursor-pointer"
+                                                style={{ background: PRIMARY }}
+                                              >
+                                                Save Access
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingAccessId(null)}
+                                                className="px-2.5 py-1 rounded-md border border-border bg-white dark:bg-card text-xs text-muted-foreground cursor-pointer"
+                                              >
+                                                Cancel
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                            {STAFF_ACCESS_PAGES.map(page => {
+                                              const checked = editingAccessPages.includes(page.id);
+                                              return (
+                                                <label
+                                                  key={page.id}
+                                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer select-none transition-all ${
+                                                    checked
+                                                      ? 'bg-white dark:bg-card border-[#1E5AA8] text-foreground shadow-2xs'
+                                                      : 'bg-white/50 dark:bg-card/40 border-border text-muted-foreground opacity-75'
+                                                  }`}
+                                                >
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => {
+                                                      setEditingAccessPages(prev =>
+                                                        prev.includes(page.id)
+                                                          ? prev.filter(p => p !== page.id)
+                                                          : [...prev, page.id]
+                                                      );
+                                                    }}
+                                                    className="rounded border-gray-300 text-[#1E5AA8] focus:ring-[#1E5AA8] w-3.5 h-3.5 cursor-pointer"
+                                                  />
+                                                  <span className="truncate">{page.label}</span>
+                                                  {!checked && <Lock size={11} className="ml-auto text-amber-600 shrink-0" />}
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        </td>
+                                      </tr>
                                     )}
-                                  </td>
-                                  <td className="py-3 px-4 text-right">
-                                    {resettingPinId === member.id ? (
-                                      <div className="inline-flex items-center gap-2">
-                                        <input
-                                          type="password"
-                                          inputMode="numeric"
-                                          maxLength={4}
-                                          autoFocus
-                                          value={resetPinValue}
-                                          onChange={e =>
-                                            setResetPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))
-                                          }
-                                          placeholder="New 4-digit PIN"
-                                          className="w-28 border border-border rounded-lg px-2.5 py-1 text-xs font-mono text-center"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSaveResetPin(member)}
-                                          className="px-2.5 py-1 rounded-lg text-white text-xs font-semibold cursor-pointer"
-                                          style={{ background: PRIMARY }}
-                                        >
-                                          Save
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setResettingPinId(null);
-                                            setResetPinValue('');
-                                          }}
-                                          className="px-2 py-1 rounded-lg border border-border text-xs text-muted-foreground cursor-pointer"
-                                        >
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="inline-flex items-center gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setResettingPinId(member.id);
-                                            setResetPinValue('');
-                                          }}
-                                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors cursor-pointer"
-                                        >
-                                          <KeyRound size={12} /> Reset PIN
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleToggleStaffActive(member)}
-                                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${member.is_active
-                                            ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                            }`}
-                                        >
-                                          {member.is_active ? 'Deactivate' : 'Activate'}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDeleteStaff(member)}
-                                          title="Delete Staff"
-                                          className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                                        >
-                                          <Trash2 size={13} />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
+                                  </Fragment>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
