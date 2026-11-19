@@ -1158,18 +1158,27 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                                       {formatManilaTimestamp(file.created_at)}
                                     </span>
                                   )}
-                                  <a
-                                    href={
-                                      api.defaults.baseURL
-                                        ? `${api.defaults.baseURL.replace(/\/$/, '')}/reports/archives/${file.id}/download/`
-                                        : file.download_url
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-[#1E5AA8] hover:underline font-semibold"
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      try {
+                                        const res = await api.get(`/reports/archives/${file.id}/download/`, { responseType: 'blob' });
+                                        const blobUrl = URL.createObjectURL(res.data);
+                                        const a = document.createElement('a');
+                                        a.href = blobUrl;
+                                        a.download = file.name || `CURA_Archive_${file.id.slice(0, 8)}.csv`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                                      } catch {
+                                        toast.error('Failed to download archive CSV.');
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1 text-[#1E5AA8] hover:underline font-semibold cursor-pointer"
                                   >
                                     <Download size={12} /> CSV
-                                  </a>
+                                  </button>
                                 </div>
                               </div>
                             ))}

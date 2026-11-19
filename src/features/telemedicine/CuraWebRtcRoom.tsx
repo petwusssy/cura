@@ -84,7 +84,7 @@ export const CuraWebRtcRoom: React.FC<CuraWebRtcRoomProps> = ({
   const myPeerId = role === 'doctor' ? doctorPeerId : patientPeerId;
   const targetPeerId = role === 'doctor' ? patientPeerId : doctorPeerId;
 
-  const directLink = `https://cura-bice.vercel.app/call/${cleanId}`;
+  const directLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://cura-bice.vercel.app'}/call/${cleanId}`;
 
   const [cameraError, setCameraError] = useState<string>('');
 

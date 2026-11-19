@@ -41,7 +41,7 @@ export function EmbeddedJitsiCall({ request, patient, onClose }: EmbeddedJitsiCa
 
   const roomName = extractRoomName(request.meeting_link);
   const patientDisplayName = (patient?.name || request.patient_name || request.patient).toUpperCase();
-  const directJoinLink = `https://cura-bice.vercel.app/call/${roomName}`;
+  const directJoinLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://cura-bice.vercel.app'}/call/${roomName}`;
 
   // Check if there is an alternative / secondary Google Meet link
   const googleMeetLink = 

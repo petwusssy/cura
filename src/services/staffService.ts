@@ -62,7 +62,6 @@ export interface AuditDriveArchivesResponse {
 }
 
 const STAFF_CACHE_KEY = 'cura_clinic_staff_cache';
-const STAFF_PINS_CACHE_KEY = 'cura_clinic_staff_pins';
 const STAFF_PAGES_CACHE_KEY = 'cura_clinic_staff_pages';
 const AUDIT_LOGS_CACHE_KEY = 'cura_audit_logs_cache';
 const ACTIVE_SHIFT_KEY = 'cura_active_staff_shift';
@@ -73,17 +72,6 @@ let lastVerifiedAdminPassword = '';
 export const STAFF_UPDATED_EVENT = 'cura-staff-updated';
 export const AUDIT_UPDATED_EVENT = 'cura-audit-updated';
 export const SHIFT_UPDATED_EVENT = 'cura-shift-updated';
-
-// Lightweight deterministic hash for offline/fallback PIN verification
-function hashPinLocal(pin: string): string {
-  let h = 2166136261;
-  const salted = `cura-pin-v1:${pin.trim()}`;
-  for (let i = 0; i < salted.length; i++) {
-    h ^= salted.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16);
-}
 
 function loadLocalStaff(): ClinicStaffMember[] {
   try {
@@ -102,23 +90,6 @@ function saveLocalStaff(list: ClinicStaffMember[], notify = true): void {
     if (notify) {
       window.dispatchEvent(new CustomEvent(STAFF_UPDATED_EVENT));
     }
-  } catch { }
-}
-
-function loadLocalPinMap(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(STAFF_PINS_CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveLocalPin(staffId: string, pin: string): void {
-  try {
-    const map = loadLocalPinMap();
-    map[staffId] = hashPinLocal(pin);
-    localStorage.setItem(STAFF_PINS_CACHE_KEY, JSON.stringify(map));
   } catch { }
 }
 
@@ -208,16 +179,7 @@ export const staffService = {
       throw new Error('PIN must be exactly 4 digits.');
     }
 
-    // Check local uniqueness first
     const localList = loadLocalStaff();
-    const pinMap = loadLocalPinMap();
-    const pinHash = hashPinLocal(cleanPin);
-    const duplicatePinStaff = localList.find(
-      s => s.is_active && pinMap[s.id] && pinMap[s.id] === pinHash
-    );
-    if (duplicatePinStaff) {
-      throw new Error(`This 4-digit PIN is already used by ${duplicatePinStaff.name}. Each active staff member must have a unique PIN.`);
-    }
 
     try {
       const res = await api.post<ClinicStaffMember>('/staff/', {
@@ -231,7 +193,6 @@ export const staffService = {
         ...res.data,
         allowed_pages: Array.isArray(res.data.allowed_pages) ? res.data.allowed_pages : allowedPages,
       };
-      saveLocalPin(created.id, cleanPin);
       saveLocalPages(created.id, created.allowed_pages);
       const next = [...localList.filter(s => s.id !== created.id), created].sort((a, b) =>
         a.name.localeCompare(b.name)
@@ -249,21 +210,7 @@ export const staffService = {
           (typeof data === 'string' ? data : 'Invalid staff details.');
         throw new Error(String(msg));
       }
-
-      // Otherwise fallback to local storage so UI works seamlessly
-      const fallbackStaff: ClinicStaffMember = {
-        id: `staff-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name: cleanName,
-        role: payload.role,
-        is_active: true,
-        allowed_pages: allowedPages,
-        created_at: new Date().toISOString(),
-      };
-      saveLocalPin(fallbackStaff.id, cleanPin);
-      saveLocalPages(fallbackStaff.id, allowedPages);
-      const next = [...localList, fallbackStaff].sort((a, b) => a.name.localeCompare(b.name));
-      saveLocalStaff(next);
-      return fallbackStaff;
+      throw new Error(err?.response?.data?.error || 'Could not reach server to create staff PIN.');
     }
   },
 
@@ -272,19 +219,11 @@ export const staffService = {
     payload: Partial<{ name: string; role: string; pin: string; is_active: boolean; allowed_pages: string[] }>
   ): Promise<ClinicStaffMember> {
     const localList = loadLocalStaff();
-    const pinMap = loadLocalPinMap();
 
     if (payload.pin !== undefined) {
       const cleanPin = payload.pin.trim();
       if (!/^\d{4}$/.test(cleanPin)) {
         throw new Error('PIN must be exactly 4 digits.');
-      }
-      const pinHash = hashPinLocal(cleanPin);
-      const duplicatePinStaff = localList.find(
-        s => s.id !== id && s.is_active && pinMap[s.id] && pinMap[s.id] === pinHash
-      );
-      if (duplicatePinStaff) {
-        throw new Error(`This 4-digit PIN is already used by ${duplicatePinStaff.name}.`);
       }
     }
 
@@ -303,9 +242,6 @@ export const staffService = {
       };
     });
 
-    if (payload.pin) {
-      saveLocalPin(id, payload.pin.trim());
-    }
     saveLocalStaff(updatedLocalList);
 
     // Sync active shift if the updated staff member is currently on shift
@@ -479,23 +415,14 @@ export const staffService = {
     if (!/^\d{4}$/.test(cleanPin)) {
       throw new Error('Please enter a 4-digit PIN.');
     }
+    try { localStorage.removeItem('cura_clinic_staff_pins'); } catch { }
 
-    // 1. Check local PIN cache first for 0ms instant response if available
-    const localList = loadLocalStaff().filter(s => s.is_active);
-    const pinMap = loadLocalPinMap();
-    const targetHash = hashPinLocal(cleanPin);
-    const localMatch = localList.find(s => pinMap[s.id] === targetHash);
-    if (localMatch) {
-      return hydrateStaffPages(localMatch);
-    }
-
-    // 2. Verify against backend /staff/verify-pin/
+    // Always verify against backend /staff/verify-pin/ so lockout and revocation cannot be bypassed
     try {
       const res = await api.post<{ valid: boolean; staff: ClinicStaffMember }>('/staff/verify-pin/', {
         pin: cleanPin,
       });
       if (res.data?.valid && res.data?.staff) {
-        saveLocalPin(res.data.staff.id, cleanPin);
         return hydrateStaffPages(res.data.staff);
       }
     } catch (err: any) {

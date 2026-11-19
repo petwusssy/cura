@@ -351,7 +351,8 @@ const TELEMEDICINE_TIME_SLOTS = [
     }
     
     const finalStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
-    const effectiveMeetingLink = `https://cura-bice.vercel.app/call/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
+    const webOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://cura-bice.vercel.app';
+    const effectiveMeetingLink = `${webOrigin}/call/CURA-Telemed-${selectedReq.id.slice(0, 8)}`;
     const targetId = selectedReq.id;
     const prevRequests = requests;
 
@@ -429,7 +430,8 @@ const TELEMEDICINE_TIME_SLOTS = [
   };
 
   const handleCopyLink = (req: TelemedicineRequest) => {
-    const link = `https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}`;
+    const webOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://cura-bice.vercel.app';
+    const link = `${webOrigin}/call/CURA-Telemed-${req.id.slice(0, 8)}`;
     navigator.clipboard.writeText(link);
     setCopiedId(req.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -678,7 +680,7 @@ const TELEMEDICINE_TIME_SLOTS = [
                       ) : (
                         access.canJoin ? (
                           <a 
-                            href={`https://cura-bice.vercel.app/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
+                            href={`${typeof window !== 'undefined' ? window.location.origin : 'https://cura-bice.vercel.app'}/call/CURA-Telemed-${req.id.slice(0, 8)}?role=doctor`} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs"
