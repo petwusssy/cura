@@ -15,6 +15,7 @@ import curaLogo from "@/assets/images/cura-logo.webp"
 import anthropeakLogo from "@/assets/images/anthropeak-logo.webp"
 import campusBg from "@/features/landing/assets/uafacade.webp"
 import { authService } from "@/services/authService"
+import api from "@/services/api"
 import { staffService, ClinicStaffMember } from "@/services/staffService"
 import { StaffPinModal } from "@/features/dashboard/components/StaffPinModal"
 import { loginLimiter, MAX_LOGIN_ATTEMPTS } from "@/utils/loginLimiter"
@@ -52,6 +53,10 @@ export default function LandingPage({
   const [isRightPanelHovered, setIsRightPanelHovered] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
+
+  useEffect(() => {
+    api.get("/health/", { timeout: 45000 }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (stage === "splitting") {
@@ -99,16 +104,21 @@ export default function LandingPage({
     try {
       await authService.login(username.trim(), password)
       loginLimiter.recordSuccess(username.trim())
-      await staffService.getStaff().catch(() => [])
+      staffService.getStaff().catch(() => [])
       setShowPinModal(true)
     } catch (err: any) {
       console.error("Login failed:", err)
-      const newLimitState = loginLimiter.recordFailure(err, username.trim())
-      setLimitState(newLimitState)
-      if (newLimitState.isLocked) {
-        setErrorMessage(null)
+      const status = err?.response?.status
+      if (!err?.response || status >= 500) {
+        setErrorMessage("Clinic server is waking up or unreachable. Please tap Login again in a moment.")
       } else {
-        setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
+        const newLimitState = loginLimiter.recordFailure(err, username.trim())
+        setLimitState(newLimitState)
+        if (newLimitState.isLocked) {
+          setErrorMessage(null)
+        } else {
+          setErrorMessage(newLimitState.message || "Invalid username or password. Access denied.")
+        }
       }
     } finally {
       setLoading(false)

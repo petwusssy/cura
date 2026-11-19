@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, Lock, Delete, X, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { ShieldCheck, Lock, Delete, X, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { staffService, ClinicStaffMember } from '@/services/staffService';
 
 interface StaffPinModalProps {
@@ -41,7 +41,7 @@ export function StaffPinModal({
         setVerifiedStaff(staff);
         setTimeout(() => {
           onSuccess(staff);
-        }, 220);
+        }, 120);
       } catch (err: any) {
         setError(err?.message || 'Invalid 4-digit PIN.');
         setPin('');
@@ -59,7 +59,7 @@ export function StaffPinModal({
         if (prev.length >= 4) return prev;
         const next = prev + digit;
         if (next.length === 4) {
-          setTimeout(() => verifyEnteredPin(next), 40);
+          setTimeout(() => verifyEnteredPin(next), 0);
         }
         return next;
       });
@@ -174,6 +174,11 @@ export function StaffPinModal({
               <span>
                 Verified: {verifiedStaff.name} ({verifiedStaff.role})
               </span>
+            </div>
+          ) : isVerifying ? (
+            <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-[#1B3A6B] text-xs font-semibold">
+              <RefreshCw size={14} className="animate-spin flex-shrink-0" />
+              <span>Verifying PIN...</span>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">

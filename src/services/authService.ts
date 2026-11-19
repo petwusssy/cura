@@ -8,7 +8,11 @@ export interface LoginResponse {
 
 export const authService = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>('/auth/login/', { username, password });
+    const response = await api.post<LoginResponse>(
+      '/auth/login/',
+      { username, password },
+      { timeout: 45000 }
+    );
     if (response.data.access) {
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('cura_access_token', response.data.access);

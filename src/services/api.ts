@@ -15,8 +15,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  const url = config.url || '';
+  const isAuthEndpoint =
+    url.includes('/auth/login/') ||
+    url.includes('/auth/refresh/') ||
+    url.includes('/auth/google/');
   const token = localStorage.getItem('accessToken') || localStorage.getItem('cura_access_token');
-  if (token && config.headers) {
+  if (token && !isAuthEndpoint && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
