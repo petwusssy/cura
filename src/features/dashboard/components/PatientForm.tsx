@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Save, User, UserCheck, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, Save, User, ShieldCheck } from 'lucide-react';
 import { Patient, PatientCategory, StudentCategory, Page } from '../types';
 import { loadDepartmentSectionGroups, inferYearLevelFromSection, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
 import { PrivacyPolicyModal } from '../../../components/shared/PrivacyPolicy';
@@ -202,16 +202,6 @@ export function PatientForm({ patients, editingPatientId, onSave, onNavigate, on
             </div>
           </div>
         </div>
-        {!isEditing && onOpenQuickWalkIn && (
-          <button
-            type="button"
-            onClick={onOpenQuickWalkIn}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1B3A6B] text-white text-xs sm:text-sm font-bold shadow-xs hover:opacity-95 transition-all cursor-pointer"
-          >
-            <UserCheck size={16} className="text-[#F4C542]" />
-            Quick Student Walk-In (Dept & Section)
-          </button>
-        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
