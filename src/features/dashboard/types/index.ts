@@ -125,6 +125,18 @@ export interface StockHistory {
   qty: number;
   type: 'add' | 'dispense';
   note?: string;
+  batchNumber?: string | null;
+  expirationDate?: string | null;
+}
+
+export interface MedicineBatch {
+  id: string;
+  batchNumber: string;
+  prfNo?: string | null;
+  expirationDate: string;
+  initialQty: number;
+  remainingQty: number;
+  receivedDate: string;
 }
 
 export interface MedicineItem {
@@ -141,12 +153,15 @@ export interface MedicineItem {
   threshold?: number;
   batchNumber?: string;
   expirationDate?: string | null;
+  batches?: MedicineBatch[];
 }
 
 export interface PurchaseHistory {
   date: string;
   qty: number;
   note: string;
+  batchNumber?: string | null;
+  expirationDate?: string | null;
 }
 
 export interface PurchaseRequest {

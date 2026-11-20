@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Plus, ChevronDown, ChevronUp, FileText, Printer, X, CheckCircle, PackageCheck, AlertCircle, RefreshCw, BookmarkCheck, Search, Trash2, Calendar, Copy, UserCheck, Ban, Archive } from 'lucide-react';
 import { PurchaseRequest, MedicineItem } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate, formatManilaDisplayTime } from '@/utils/philippineTime';
+import { formatExpirationDisplay, getEffectiveExpirationDate, toMonthInputValue } from '@/utils/medicineRules';
 import { staffService, SHIFT_UPDATED_EVENT, ClinicStaffMember } from '@/services/staffService';
 import uaSeal from '@/assets/images/ua-seal.png';
 
@@ -12,7 +13,10 @@ interface PurchaseReceiptsProps {
   purchaseRequests: PurchaseRequest[];
   medicines: MedicineItem[];
   onUpdateRequest: (req: PurchaseRequest) => void | Promise<void>;
-  onReceiveDelivery?: (reqId: string, payload: { qty: number; date: string; note: string }) => Promise<void>;
+  onReceiveDelivery?: (
+    reqId: string,
+    payload: { qty: number; date: string; note: string; expirationDate?: string; batchNumber?: string }
+  ) => Promise<void>;
   onVoidPrf?: (prfNo: string, ids: string[], reason: string) => Promise<void>;
   onAddRequest: (req: PurchaseRequest) => void | Promise<void>;
   onDeleteRequest: (id: string) => void | Promise<void>;
@@ -180,6 +184,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
   const [receiveModal, setReceiveModal] = useState<PurchaseRequest | null>(null);
   const [receiveQty, setReceiveQty] = useState('');
   const [receiveNote, setReceiveNote] = useState('');
+  const [receiveExpiration, setReceiveExpiration] = useState('');
+  const [receiveBatchNo, setReceiveBatchNo] = useState('');
 
   // New Tracker Request state
   const [showNewForm, setShowNewForm] = useState(false);
@@ -311,24 +317,29 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
     if (!receiveModal || !receiveQty) return;
     const qty = parseInt(receiveQty) || 0;
     if (qty <= 0) return;
+    const formattedExp = formatExpirationDisplay(receiveExpiration) || getEffectiveExpirationDate({ name: receiveModal.medicine });
+    const effectiveBatchNo = receiveBatchNo.trim() || receiveModal.prfNo || `BATCH-${getManilaDate().replace(/-/g, '')}`;
     try {
       let verifierName = staffService.getActiveShift()?.staff.name || '';
       if (onRequireStaffSignOff) {
         const staff = await onRequireStaffSignOff(
           'Received Purchase Delivery',
-          `${receiveModal.medicine} • +${qty} ${receiveModal.unit || 'units'} (${receiveModal.prfNo || 'PRF'})`,
+          `${receiveModal.medicine} • +${qty} ${receiveModal.unit || 'units'} (${effectiveBatchNo}${formattedExp ? ` • Exp: ${formattedExp}` : ''})`,
           'PurchaseRequest',
           String(receiveModal.id)
         );
         verifierName = staff.name;
       }
       const notePrefix = receiveNote ? `${receiveNote} ` : `Received delivery (+${qty} units) `;
-      const formattedNote = `${notePrefix}${verifierName ? `• Verified by ${verifierName}` : ''}`.trim();
+      const batchTag = `• Batch: ${effectiveBatchNo}${formattedExp ? ` | Exp: ${formattedExp}` : ''}`;
+      const formattedNote = `${notePrefix}${batchTag}${verifierName ? ` • Verified by ${verifierName}` : ''}`.trim();
       if (onReceiveDelivery) {
         await onReceiveDelivery(receiveModal.id, {
           qty,
           date: getManilaDate(),
           note: formattedNote,
+          expirationDate: formattedExp || undefined,
+          batchNumber: effectiveBatchNo,
         });
       } else {
         const newReceived = receiveModal.receivedQty + qty;
@@ -342,6 +353,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
               date: getManilaDate(),
               qty,
               note: formattedNote,
+              batchNumber: effectiveBatchNo,
+              expirationDate: formattedExp || null,
             },
           ],
         };
@@ -350,6 +363,8 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
       setReceiveModal(null);
       setReceiveQty('');
       setReceiveNote('');
+      setReceiveExpiration('');
+      setReceiveBatchNo('');
     } catch (e) { console.error(e); }
   };
 
@@ -1414,7 +1429,14 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                                 <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto mt-4 lg:mt-0">
                                   {req.status !== 'Complete' && req.status !== 'Voided' && (
                                     <button
-                                      onClick={() => { setReceiveModal(req); setReceiveQty(''); setReceiveNote(''); }}
+                                      onClick={() => {
+                                        const matchedMed = medicines.find(m => m.name.trim().toLowerCase() === req.medicine.trim().toLowerCase());
+                                        setReceiveModal(req);
+                                        setReceiveQty('');
+                                        setReceiveNote('');
+                                        setReceiveBatchNo(req.prfNo || 'PRF-2026-001');
+                                        setReceiveExpiration(toMonthInputValue(getEffectiveExpirationDate(matchedMed || { name: req.medicine })));
+                                      }}
                                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 bg-[#1E5AA8]"
                                     >
                                       <CheckCircle size={15} /> Receive Shipment
@@ -1450,7 +1472,19 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                                       <div key={i} className="flex items-start gap-3 text-xs">
                                         <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${h.qty > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
                                         <div className="flex-1 overflow-hidden">
-                                          <span className="font-bold text-gray-800 break-words">{h.note}</span>
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-gray-800 break-words">{h.note}</span>
+                                            {h.batchNumber && (
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-[#1E5AA8] border border-blue-200 text-[10px] font-mono font-bold">
+                                                Batch: {h.batchNumber}
+                                              </span>
+                                            )}
+                                            {h.expirationDate && (
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                                Exp: {h.expirationDate}
+                                              </span>
+                                            )}
+                                          </div>
                                           <div className="text-gray-400 mt-0.5 font-medium">
                                             {formatManilaDateTime(h.date)} {h.qty > 0 ? ` • Verified arrival of +${h.qty} ${req.unit || 'units'}` : ''}
                                           </div>
@@ -1717,6 +1751,31 @@ export function PurchaseReceipts({ purchaseRequests, medicines, onUpdateRequest,
                   placeholder={`Max remaining: ${receiveModal.requestedQty - receiveModal.receivedQty}`}
                   className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] font-bold transition-all"
                 />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Batch / Lot Number
+                  </label>
+                  <input
+                    type="text"
+                    value={receiveBatchNo}
+                    onChange={e => setReceiveBatchNo(e.target.value)}
+                    placeholder={receiveModal.prfNo || 'PRF-2026-001'}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Batch Expiration (Month &amp; Year)
+                  </label>
+                  <input
+                    type="month"
+                    value={receiveExpiration}
+                    onChange={e => setReceiveExpiration(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E5AA8]/20 focus:border-[#1E5AA8] transition-all"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">

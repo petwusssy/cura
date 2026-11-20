@@ -29,13 +29,17 @@ export const medicineService = {
     quantity: number,
     type: 'add' | 'dispense' = 'dispense',
     note?: string,
-    date?: string
+    date?: string,
+    options?: { expirationDate?: string; batchNumber?: string }
   ): Promise<MedicineItem> => {
     const response = await api.patch<MedicineItem>(`/medicines/${id}/stock/`, {
+      qty: quantity,
       quantity,
       type,
       note,
       date,
+      expirationDate: options?.expirationDate,
+      batchNumber: options?.batchNumber,
     });
     return response.data;
   },
@@ -61,7 +65,7 @@ export const medicineService = {
 
   receivePurchaseDelivery: async (
     id: string,
-    payload: { qty: number; date?: string; note?: string }
+    payload: { qty: number; date?: string; note?: string; expirationDate?: string; batchNumber?: string }
   ): Promise<{ request: PurchaseRequest; medicine: MedicineItem | null }> => {
     const response = await api.post<{ request: PurchaseRequest; medicine: MedicineItem | null }>(
       `/purchase-requests/${id}/receive/`,

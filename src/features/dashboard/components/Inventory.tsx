@@ -11,11 +11,15 @@ import {
   getExpirationState,
   formatExpirationDisplay,
   toMonthInputValue,
+  getNormalizedMedicineBatches,
+  applyBatchIntakeFEFO,
+  applyBatchDispenseFEFO,
 } from '@/utils/medicineRules';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
-const YELLOW = '#F59E0B';
+const YELLOW = '#F4C542';
+const YELLOW_TEXT = '#B45309';
 const GREEN = '#2E7D32';
 
 interface InventoryProps {
@@ -42,6 +46,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
   const [adjustExpiration, setAdjustExpiration] = useState('');
+  const [adjustBatchNo, setAdjustBatchNo] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,7 +78,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     const thresh = getEffectiveThreshold(m);
     const fastMoving = isFastMovingMedicine(m.name);
     const status = getMedicineStockStatus(m);
-    const rawExp = getEffectiveExpirationDate(m);
+    const batches = getNormalizedMedicineBatches(m);
+    const activeBatches = batches.filter(b => b.remainingQty > 0);
+    const rawExp = activeBatches[0]?.expirationDate || getEffectiveExpirationDate(m);
     const expState = getExpirationState(rawExp);
 
     let displayUnit = m.unit.charAt(0).toUpperCase() + m.unit.slice(1);
@@ -90,7 +97,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       expirationDisplay: expState.display,
       expirationStatus: expState.status,
       displayUnit,
-      batchNumber: m.batchNumber || '',
+      batchNumber: activeBatches[0]?.batchNumber || m.batchNumber || '',
+      batches,
+      activeBatches,
     };
   };
 
@@ -137,10 +146,46 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     const newStock = adjustType === 'add' ? adjustModal.stock + qty : Math.max(0, adjustModal.stock - qty);
     const newDispensed = adjustType === 'dispense' ? (details.dispensed + qty) : details.dispensed;
     const thresh = getEffectiveThreshold(adjustModal);
-    const formattedExp = adjustExpiration.trim()
-      ? formatExpirationDisplay(adjustExpiration)
-      : getEffectiveExpirationDate(adjustModal);
-    
+    const todayDate = getManilaDate();
+
+    let nextBatches = details.batches;
+    let nextExpiration = adjustModal.expirationDate;
+    let nextBatchNo = adjustModal.batchNumber;
+    let historyNote = adjustNote.trim();
+    let historyBatchNo: string | null = null;
+    let historyExp: string | null = null;
+
+    if (adjustType === 'add') {
+      const fefoIntake = applyBatchIntakeFEFO(adjustModal, qty, {
+        expirationDate: adjustExpiration.trim() || getEffectiveExpirationDate(adjustModal),
+        batchNumber: adjustBatchNo.trim() || undefined,
+        receivedDate: todayDate,
+      });
+      nextBatches = fefoIntake.batches;
+      nextExpiration = fefoIntake.activeExpirationDate;
+      nextBatchNo = fefoIntake.activeBatchNumber;
+      historyBatchNo = fefoIntake.addedBatch.batchNumber;
+      historyExp = fefoIntake.addedBatch.expirationDate;
+      const baseNote = historyNote || 'Manual stock intake';
+      historyNote = `${baseNote} • Batch: ${historyBatchNo} | Exp: ${historyExp}`;
+    } else {
+      const fefoDispense = applyBatchDispenseFEFO(adjustModal, qty);
+      nextBatches = fefoDispense.batches;
+      nextExpiration = fefoDispense.activeExpirationDate;
+      nextBatchNo = fefoDispense.activeBatchNumber;
+      if (fefoDispense.deductedSummary.length > 0) {
+        historyBatchNo = fefoDispense.deductedSummary.map(d => d.batchNumber).join(', ');
+        historyExp = Array.from(new Set(fefoDispense.deductedSummary.map(d => d.expirationDate))).join(', ');
+        const fefoTag = fefoDispense.deductedSummary
+          .map(d => `${d.batchNumber} [Exp: ${d.expirationDate}] (-${d.qty})`)
+          .join(', ');
+        const baseNote = historyNote || 'Stock adjustment decrement';
+        historyNote = `${baseNote} • FEFO: ${fefoTag}`;
+      } else {
+        historyNote = historyNote || 'Stock adjustment decrement';
+      }
+    }
+
     let newStatus: 'Normal' | 'Low Stock' | 'Out of Stock' = 'Normal';
     if (newStock === 0) newStatus = 'Out of Stock';
     else if (newStock <= thresh) newStatus = 'Low Stock';
@@ -150,14 +195,21 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       stock: newStock,
       dispensed: newDispensed,
       threshold: thresh,
-      expirationDate: formattedExp || adjustModal.expirationDate,
+      batchNumber: nextBatchNo,
+      expirationDate: nextExpiration || adjustModal.expirationDate,
+      batches: nextBatches,
       status: newStatus as any,
-      stockHistory: [...(adjustModal.stockHistory || []), {
-        date: getManilaDate(),
-        qty,
-        type: adjustType,
-        note: adjustNote || (adjustType === 'add' ? 'Manual stock intake' : 'Stock adjustment decrement'),
-      }],
+      stockHistory: [
+        ...(adjustModal.stockHistory || []),
+        {
+          date: todayDate,
+          qty,
+          type: adjustType,
+          note: historyNote,
+          batchNumber: historyBatchNo,
+          expirationDate: historyExp,
+        },
+      ],
     };
 
     if (isSubmitting) return;
@@ -168,6 +220,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       setAdjustQty('');
       setAdjustNote('');
       setAdjustExpiration('');
+      setAdjustBatchNo('');
     } catch (e: any) {
       if (e?.message !== 'PIN_CANCELLED') {
         console.error(e);
@@ -185,19 +238,38 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     const defaultThresh = getDefaultThresholdByName(newMed.name);
     const thresh = customThresholdEdited ? (parseInt(newMed.threshold) || defaultThresh) : defaultThresh;
     const formattedExp = formatExpirationDisplay(newMed.expirationDate) || getEffectiveExpirationDate({ name: newMed.name });
+    const addedDate = newMed.dateAdded || getManilaDate();
+    const initialBatchNo = `BATCH-${addedDate.replace(/-/g, '')}`;
     const med: MedicineItem = {
       id: `m${Date.now()}`,
       name: newMed.name,
       stock: qty,
       unit: newMed.unit,
       category: newMed.category,
-      dateAdded: newMed.dateAdded || getManilaDate(),
+      dateAdded: addedDate,
       status: qty === 0 ? 'Out of Stock' : qty <= thresh ? 'Low Stock' : 'Normal',
       beginningQty: qty,
       dispensed: 0,
       threshold: thresh,
+      batchNumber: initialBatchNo,
       expirationDate: formattedExp || null,
-      stockHistory: [{ date: newMed.dateAdded || getManilaDate(), qty, type: 'add', note: 'Initial inventory' }],
+      batches: qty > 0 ? [{
+        id: `batch-init-${Date.now()}`,
+        batchNumber: initialBatchNo,
+        prfNo: null,
+        expirationDate: formattedExp || 'N/A',
+        initialQty: qty,
+        remainingQty: qty,
+        receivedDate: addedDate,
+      }] : [],
+      stockHistory: [{
+        date: addedDate,
+        qty,
+        type: 'add',
+        note: `Initial inventory • Batch: ${initialBatchNo}${formattedExp ? ` | Exp: ${formattedExp}` : ''}`,
+        batchNumber: initialBatchNo,
+        expirationDate: formattedExp || null,
+      }],
     };
 
     try {
@@ -234,8 +306,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Healthy Stock', filter: 'Healthy' as const, value: healthyCount, color: '#2E7D32', bg: '#E8F5E9', icon: <CheckCircle2 size={20} /> },
-          { label: 'Low Stock', filter: 'Low Stock' as const, value: lowStockCount, color: RED, bg: `${RED}15`, icon: <AlertTriangle size={20} /> },
-          { label: 'Out of Stock', filter: 'Out of Stock' as const, value: outOfStockCount, color: '#991B1B', bg: '#FEE2E2', icon: <X size={20} /> },
+          { label: 'Low Stock', filter: 'Low Stock' as const, value: lowStockCount, color: '#D97706', bg: '#FEF3C7', icon: <AlertTriangle size={20} /> },
+          { label: 'Out of Stock', filter: 'Out of Stock' as const, value: outOfStockCount, color: RED, bg: `${RED}15`, icon: <X size={20} /> },
           { label: 'Total Items', filter: 'All' as const, value: displayMedicines.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <CheckCircle2 size={20} /> },
         ].map(s => {
           const isActive = statusFilter === s.filter;
@@ -380,53 +452,59 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                     : { background: '#F1F5F9', color: '#334155' };
 
                 return (
-                  <tr key={m.id} className={isOut || isLow ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
+                  <tr key={m.id} className={isOut ? "hover:bg-red-50/30 transition-colors" : isLow ? "hover:bg-amber-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                     <td className="px-5 py-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-gray-700">{m.name}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                            details.fastMoving
-                              ? 'bg-blue-50 text-[#1E5AA8] border border-blue-200'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                          title={details.fastMoving ? 'Fast-moving item: Red low stock at ≤100 pcs' : `Standard item: Red low stock at ≤${details.thresh} pcs`}
-                        >
-                          {details.fastMoving ? `Fast-Moving (Min: ${details.thresh})` : `Min: ${details.thresh}`}
-                        </span>
-                      </div>
+                      <div className="text-sm font-medium text-gray-700">{m.name}</div>
                       <div className="text-xs text-gray-400">Added: {normalizeDate(m.dateAdded) || 'N/A'}</div>
                     </td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>
                     <td className="px-5 py-3">
-                      <span className="text-sm font-bold" style={{ color: isOut ? '#991B1B' : isLow ? RED : '#374151' }}>
+                      <span className="text-sm font-bold" style={{ color: isOut ? RED : isLow ? '#D97706' : '#374151' }}>
                         {m.stock} <span className="text-xs text-gray-500 font-normal">{details.displayUnit}</span>
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <span
-                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md font-bold"
-                        style={expBadgeStyle}
-                      >
-                        <Calendar size={12} />
-                        <span>{details.expirationDisplay}</span>
-                        {details.expirationStatus === 'expired' && (
-                          <span className="text-[10px] uppercase font-extrabold ml-0.5">(EXPIRED)</span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span
+                          className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md font-bold"
+                          style={expBadgeStyle}
+                          title={details.activeBatches[0] ? `Active FEFO Batch: ${details.activeBatches[0].batchNumber} (${details.activeBatches[0].remainingQty} ${details.displayUnit} remaining)` : undefined}
+                        >
+                          <Calendar size={12} />
+                          <span>{details.expirationDisplay}</span>
+                          {details.activeBatches.length > 1 && (
+                            <span className="text-[10px] font-semibold opacity-80">
+                              ({details.activeBatches[0].remainingQty})
+                            </span>
+                          )}
+                          {details.expirationStatus === 'expired' && (
+                            <span className="text-[10px] uppercase font-extrabold ml-0.5">(EXPIRED)</span>
+                          )}
+                          {details.expirationStatus === 'expiring-soon' && (
+                            <span className="text-[10px] uppercase font-extrabold ml-0.5">(SOON)</span>
+                          )}
+                        </span>
+                        {details.activeBatches.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setHistoryModal(m)}
+                            className="text-[10px] font-bold text-[#1E5AA8] bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded transition-colors cursor-pointer"
+                            title="Click to view all batches in FEFO order"
+                          >
+                            +{details.activeBatches.length - 1} more batch ({details.activeBatches[1].expirationDate})
+                          </button>
                         )}
-                        {details.expirationStatus === 'expiring-soon' && (
-                          <span className="text-[10px] uppercase font-extrabold ml-0.5">(SOON)</span>
-                        )}
-                      </span>
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-center">
                       <span className="text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"
                         style={{
-                          background: isOut ? '#FEE2E2' : isLow ? `${RED}18` : '#E8F5E9',
-                          color: isOut ? '#991B1B' : isLow ? RED : '#2E7D32',
-                          border: isLow ? `1px solid ${RED}40` : isOut ? '1px solid #FCA5A5' : 'none',
+                          background: isOut ? `${RED}15` : isLow ? '#FEF3C7' : '#E8F5E9',
+                          color: isOut ? RED : isLow ? YELLOW_TEXT : '#2E7D32',
+                          border: isLow ? '1px solid #FDE68A' : isOut ? `1px solid ${RED}40` : 'none',
                         }}>
-                        {isLow && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: RED }} />}
+                        {isLow && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#F59E0B' }} />}
                         {details.status}
                       </span>
                     </td>
@@ -438,6 +516,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                             setAdjustType('add');
                             setAdjustQty('');
                             setAdjustNote('');
+                            setAdjustBatchNo('');
                             setAdjustExpiration(toMonthInputValue(getEffectiveExpirationDate(m)));
                           }}
                           className="px-3 py-1 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
@@ -448,6 +527,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                         <button
                           onClick={() => setHistoryModal(m)}
                           className="rounded-lg border border-gray-200 transition-colors flex items-center justify-center w-8 h-8 flex-shrink-0 text-[#1B3A6B] hover:bg-blue-50"
+                          title="View Batches (FEFO) & Transaction History"
                         >
                           <Eye size={14} />
                         </button>
@@ -482,14 +562,11 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
               <div className="flex justify-between items-start gap-2">
                 <div>
                   <div className="font-bold text-gray-900 leading-tight">{m.name}</div>
-                  <div className="text-[11px] text-gray-500 mt-0.5">
-                    {details.fastMoving ? `Fast-Moving (Low Stock ≤ ${details.thresh})` : `Low Stock ≤ ${details.thresh}`}
-                  </div>
                 </div>
                 <span className="text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wide flex-shrink-0"
                   style={{
-                    background: isOut ? '#FEE2E2' : isLow ? `${RED}18` : '#E8F5E9',
-                    color: isOut ? '#991B1B' : isLow ? RED : '#2E7D32',
+                    background: isOut ? `${RED}15` : isLow ? '#FEF3C7' : '#E8F5E9',
+                    color: isOut ? RED : isLow ? YELLOW_TEXT : '#2E7D32',
                   }}>
                   {details.status}
                 </span>
@@ -506,15 +583,20 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 </div>
                 <div className="flex flex-col mt-1 border-t border-gray-200 pt-2">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Current Stock</span>
-                  <span className="text-base font-bold" style={{ color: isOut ? '#991B1B' : isLow ? RED : '#374151' }}>
+                  <span className="text-base font-bold" style={{ color: isOut ? RED : isLow ? '#D97706' : '#374151' }}>
                     {m.stock} <span className="text-xs font-normal text-gray-500">{details.displayUnit}</span>
                   </span>
                 </div>
                 <div className="flex flex-col mt-1 border-t border-gray-200 pt-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Expiration</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Expiration (FEFO)</span>
                   <span className="text-sm font-bold" style={{ color: details.expirationStatus === 'expired' ? RED : details.expirationStatus === 'expiring-soon' ? '#b45309' : '#374151' }}>
                     {details.expirationDisplay}
                   </span>
+                  {details.activeBatches.length > 1 && (
+                    <span className="text-[10px] text-[#1E5AA8] font-semibold">
+                      +{details.activeBatches.length - 1} more batch ({details.activeBatches[1].expirationDate})
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -522,7 +604,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 <button 
                   onClick={() => setHistoryModal(m)}
                   className="flex-1 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-1.5">
-                  <Eye size={14} /> History
+                  <Eye size={14} /> Batches &amp; Log
                 </button>
                 <button 
                   onClick={() => {
@@ -530,6 +612,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                     setAdjustType('add');
                     setAdjustQty('');
                     setAdjustNote('');
+                    setAdjustBatchNo('');
                     setAdjustExpiration(toMonthInputValue(getEffectiveExpirationDate(m)));
                   }}
                   className="flex-1 py-2 bg-[#1B3A6B] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5">
@@ -586,17 +669,48 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 placeholder="e.g. Delivery or Clinic dispense"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
             </div>
-            {adjustType === 'add' && (
-              <div className="mt-4">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                  Expiration Date (Month &amp; Year)
-                </label>
-                <input
-                  type="month"
-                  value={adjustExpiration}
-                  onChange={e => setAdjustExpiration(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
-                />
+            {adjustType === 'add' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Batch /PRF No.
+                  </label>
+                  <input
+                    type="text"
+                    value={adjustBatchNo}
+                    onChange={e => setAdjustBatchNo(e.target.value)}
+                    placeholder={`BATCH-${getManilaDate().replace(/-/g, '')}`}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-[#1B3A6B]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Batch Expiry
+                  </label>
+                  <input
+                    type="month"
+                    value={adjustExpiration}
+                    onChange={e => setAdjustExpiration(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900">
+                <div className="font-bold">FEFO Deduction (First Expired, First Out)</div>
+                {(() => {
+                  const activeBatches = getMedicineDetails(adjustModal).activeBatches;
+                  if (activeBatches.length === 0) {
+                    return <div className="text-amber-700 mt-0.5">No active batches remaining.</div>;
+                  }
+                  const first = activeBatches[0];
+                  return (
+                    <div className="text-amber-800 mt-0.5">
+                      Deducts first from <strong>{first.batchNumber}</strong> (Exp: <strong>{first.expirationDate}</strong> • {first.remainingQty} left)
+                      {activeBatches.length > 1 ? `, then next batch (${activeBatches[1].expirationDate}).` : '.'}
+                    </div>
+                  );
+                })()}
               </div>
             )}
             <div className="flex gap-3 mt-5">
@@ -708,37 +822,147 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
         </div>
       )}
 
-      {/* History Modal */}
+      {/* History & Batches Modal */}
       {historyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] flex flex-col">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 p-6 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-gray-900 font-bold">{historyModal.name}</h3>
+                <h3 className="text-gray-900 font-bold text-base">{historyModal.name}</h3>
+                <p className="text-xs text-gray-500">Per-Batch Expiration Queue (FEFO) &amp; Stock Transaction Log</p>
               </div>
               <button onClick={() => setHistoryModal(null)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
             </div>
 
-            <div className="overflow-y-auto space-y-3 flex-1">
-              {(!historyModal.stockHistory || historyModal.stockHistory.length === 0) ? (
-                <p className="text-center py-8 text-gray-400 text-sm">No transaction history recorded yet.</p>
-              ) : historyModal.stockHistory.map((h, i) => (
-                <div key={i} className={`flex items-center gap-3.5 p-3.5 rounded-xl border ${
-                  h.type === 'add' ? 'bg-green-50/40 border-green-100' : 'bg-red-50/40 border-red-100'
-                }`}>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
-                    h.type === 'add' ? 'bg-[#2E7D32]' : 'bg-[#D64545]'
-                  }`}>
-                    {h.type === 'add' ? '+' : '−'}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-bold text-gray-800">
-                      {h.type === 'add' ? 'Restocked' : 'Dispensed'} {h.qty} {historyModal.unit}s
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">{formatManilaDateTime(h.date)} — <span className="italic">{h.note || 'No remarks'}</span></div>
-                  </div>
+            <div className="overflow-y-auto space-y-5 flex-1 pr-1">
+              {/* Active & Historical Batches (FEFO Order) */}
+              <div>
+                <div className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">
+                  Medicine Batches by Expiration (FEFO Order)
                 </div>
-              ))}
+                {(() => {
+                  const batches = getMedicineDetails(historyModal).batches;
+                  if (batches.length === 0) {
+                    return (
+                      <div className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl p-3 text-center">
+                        No active batch records.
+                      </div>
+                    );
+                  }
+                  let activeRank = 0;
+                  return (
+                    <div className="space-y-2">
+                      {batches.map((b, idx) => {
+                        const isConsumed = b.remainingQty <= 0;
+                        if (!isConsumed) activeRank += 1;
+                        const isFefoFirst = !isConsumed && activeRank === 1;
+                        const expState = getExpirationState(b.expirationDate);
+                        return (
+                          <div
+                            key={b.id || idx}
+                            className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs ${
+                              isConsumed
+                                ? 'bg-gray-50 border-gray-200 opacity-65'
+                                : isFefoFirst
+                                ? 'bg-blue-50/50 border-blue-200'
+                                : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono font-bold text-gray-900">{b.batchNumber}</span>
+                                {isFefoFirst && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#1E5AA8] text-white">
+                                    FEFO #1 (Dispense First)
+                                  </span>
+                                )}
+                                {!isConsumed && !isFefoFirst && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700">
+                                    FEFO #{activeRank} (Queued)
+                                  </span>
+                                )}
+                                {isConsumed && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">
+                                    CONSUMED
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-gray-500">
+                                Received: {normalizeDate(b.receivedDate) || 'N/A'}
+                                {b.prfNo ? ` • PRF: ${b.prfNo}` : ''}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <div className="font-bold text-gray-800">
+                                  {b.remainingQty} <span className="text-gray-400 font-normal">/ {b.initialQty} {historyModal.unit}s</span>
+                                </div>
+                                <div
+                                  className="text-[11px] font-bold"
+                                  style={{
+                                    color:
+                                      expState.status === 'expired'
+                                        ? RED
+                                        : expState.status === 'expiring-soon'
+                                        ? YELLOW_TEXT
+                                        : '#1E5AA8',
+                                  }}
+                                >
+                                  Exp: {expState.display}
+                                  {expState.status === 'expired' ? ' (EXPIRED)' : expState.status === 'expiring-soon' ? ' (SOON)' : ''}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Transaction History */}
+              <div>
+                <div className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">
+                  Transaction History
+                </div>
+                {(!historyModal.stockHistory || historyModal.stockHistory.length === 0) ? (
+                  <p className="text-center py-6 text-gray-400 text-sm">No transaction history recorded yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {historyModal.stockHistory.map((h, i) => (
+                      <div key={i} className={`flex items-center gap-3.5 p-3.5 rounded-xl border ${
+                        h.type === 'add' ? 'bg-green-50/40 border-green-100' : 'bg-red-50/40 border-red-100'
+                      }`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
+                          h.type === 'add' ? 'bg-[#2E7D32]' : 'bg-[#D64545]'
+                        }`}>
+                          {h.type === 'add' ? '+' : '−'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-gray-800">
+                              {h.type === 'add' ? 'Restocked' : 'Dispensed'} {h.qty} {historyModal.unit}s
+                            </span>
+                            {h.batchNumber && (
+                              <span className="px-2 py-0.5 rounded bg-blue-50 text-[#1E5AA8] border border-blue-200 text-[10px] font-mono font-bold">
+                                Batch: {h.batchNumber}
+                              </span>
+                            )}
+                            {h.expirationDate && (
+                              <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                Exp: {h.expirationDate}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5 break-words">{formatManilaDateTime(h.date)} — <span className="italic">{h.note || 'No remarks'}</span></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-100 text-right">

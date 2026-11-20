@@ -1,4 +1,5 @@
 import { getManilaDate } from '@/utils/philippineTime';
+import { MedicineBatch, MedicineItem } from '@/features/dashboard/types';
 
 export interface CanonicalMedicineMeta {
   no: number;
@@ -187,14 +188,182 @@ export function toMonthInputValue(raw?: string | null): string {
   return '';
 }
 
-export function getEffectiveExpirationDate(m?: { name?: string | null; expirationDate?: string | null }): string {
-  const explicit = formatExpirationDisplay(m?.expirationDate);
-  if (explicit && explicit !== 'NO STOCK') return explicit;
-  const meta = findCanonicalMedicineMeta(m?.name);
+export function getExpirationSortKey(raw?: string | null): string {
+  const monthInput = toMonthInputValue(raw);
+  if (monthInput) return monthInput; // YYYY-MM sorts lexicographically
+  return '9999-99';
+}
+
+export function getNormalizedMedicineBatches(m?: Partial<MedicineItem> | null): MedicineBatch[] {
+  if (!m) return [];
+  const rawBatches = Array.isArray(m.batches) ? m.batches : [];
+  const cloned: MedicineBatch[] = rawBatches
+    .filter(b => b && typeof b === 'object')
+    .map((b, idx) => ({
+      id: b.id || `batch-${idx}`,
+      batchNumber: b.batchNumber || b.prfNo || 'BATCH-01',
+      prfNo: b.prfNo || null,
+      expirationDate: formatExpirationDisplay(b.expirationDate) || getFallbackExpirationByName(m.name) || 'N/A',
+      initialQty: Math.max(0, Number(b.initialQty) || Number(b.remainingQty) || 0),
+      remainingQty: Math.max(0, Number(b.remainingQty) || 0),
+      receivedDate: b.receivedDate || (m.dateAdded ? String(m.dateAdded).split('T')[0] : getManilaDate()),
+    }));
+
+  const currentStock = Math.max(0, Number(m.stock) || 0);
+  const trackedRemaining = cloned.reduce((sum, b) => sum + b.remainingQty, 0);
+
+  if (currentStock > trackedRemaining) {
+    const untracked = currentStock - trackedRemaining;
+    const fallbackExp = formatExpirationDisplay(m.expirationDate) || getFallbackExpirationByName(m.name) || 'N/A';
+    cloned.push({
+      id: `batch-init-${m.id || '0'}`,
+      batchNumber: m.batchNumber || 'INITIAL-BATCH',
+      prfNo: null,
+      expirationDate: fallbackExp,
+      initialQty: cloned.length === 0 ? Math.max(untracked, Number(m.beginningQty) || untracked) : untracked,
+      remainingQty: untracked,
+      receivedDate: m.dateAdded ? String(m.dateAdded).split('T')[0] : getManilaDate(),
+    });
+  }
+
+  return cloned.sort((a, b) => {
+    const ka = getExpirationSortKey(a.expirationDate);
+    const kb = getExpirationSortKey(b.expirationDate);
+    if (ka !== kb) return ka.localeCompare(kb);
+    return (a.receivedDate || '').localeCompare(b.receivedDate || '');
+  });
+}
+
+function getFallbackExpirationByName(name?: string | null): string {
+  const meta = findCanonicalMedicineMeta(name);
   if (meta && meta.defaultExpiration && meta.defaultExpiration !== 'NO STOCK') {
     return meta.defaultExpiration;
   }
+  return '';
+}
+
+export function getEffectiveExpirationDate(m?: {
+  name?: string | null;
+  expirationDate?: string | null;
+  batches?: MedicineBatch[] | null;
+  stock?: number;
+  beginningQty?: number;
+  batchNumber?: string;
+  dateAdded?: string;
+  id?: string;
+}): string {
+  if (m && Array.isArray(m.batches) && m.batches.length > 0) {
+    const sorted = [...m.batches].sort((a, b) =>
+      getExpirationSortKey(a.expirationDate).localeCompare(getExpirationSortKey(b.expirationDate))
+    );
+    const firstActive = sorted.find(b => (Number(b.remainingQty) || 0) > 0 && b.expirationDate);
+    if (firstActive) {
+      return formatExpirationDisplay(firstActive.expirationDate);
+    }
+    const lastConsumed = sorted[sorted.length - 1];
+    if (lastConsumed?.expirationDate) {
+      return formatExpirationDisplay(lastConsumed.expirationDate);
+    }
+  }
+  const explicit = formatExpirationDisplay(m?.expirationDate);
+  if (explicit && explicit !== 'NO STOCK') return explicit;
+  const fallback = getFallbackExpirationByName(m?.name);
+  if (fallback) return fallback;
   return explicit;
+}
+
+export function applyBatchIntakeFEFO(
+  med: MedicineItem,
+  qty: number,
+  options?: {
+    expirationDate?: string | null;
+    batchNumber?: string | null;
+    prfNo?: string | null;
+    receivedDate?: string | null;
+  }
+): {
+  batches: MedicineBatch[];
+  activeExpirationDate: string;
+  activeBatchNumber: string;
+  addedBatch: MedicineBatch;
+} {
+  const existingBatches = getNormalizedMedicineBatches(med);
+  const rxDate = options?.receivedDate || getManilaDate();
+  const formattedExp =
+    formatExpirationDisplay(options?.expirationDate) ||
+    getEffectiveExpirationDate(med) ||
+    'N/A';
+  const batchNo =
+    (options?.batchNumber || options?.prfNo || '').trim() ||
+    `BATCH-${rxDate.replace(/-/g, '')}`;
+
+  const addedBatch: MedicineBatch = {
+    id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    batchNumber: batchNo,
+    prfNo: options?.prfNo || (batchNo.toUpperCase().startsWith('PRF-') ? batchNo : null),
+    expirationDate: formattedExp,
+    initialQty: qty,
+    remainingQty: qty,
+    receivedDate: rxDate,
+  };
+
+  const allBatches = [...existingBatches, addedBatch].sort((a, b) => {
+    const ka = getExpirationSortKey(a.expirationDate);
+    const kb = getExpirationSortKey(b.expirationDate);
+    if (ka !== kb) return ka.localeCompare(kb);
+    return (a.receivedDate || '').localeCompare(b.receivedDate || '');
+  });
+
+  const firstActive = allBatches.find(b => b.remainingQty > 0) || addedBatch;
+  return {
+    batches: allBatches,
+    activeExpirationDate: firstActive.expirationDate,
+    activeBatchNumber: firstActive.batchNumber,
+    addedBatch,
+  };
+}
+
+export function applyBatchDispenseFEFO(
+  med: MedicineItem,
+  qtyToDispense: number
+): {
+  batches: MedicineBatch[];
+  activeExpirationDate: string;
+  activeBatchNumber: string;
+  deductedSummary: Array<{ batchNumber: string; expirationDate: string; qty: number }>;
+} {
+  const batches = getNormalizedMedicineBatches(med).map(b => ({ ...b }));
+  let remaining = Math.max(0, qtyToDispense);
+  const deductedSummary: Array<{ batchNumber: string; expirationDate: string; qty: number }> = [];
+
+  for (const batch of batches) {
+    if (remaining <= 0) break;
+    if (batch.remainingQty <= 0) continue;
+    const take = Math.min(batch.remainingQty, remaining);
+    batch.remainingQty -= take;
+    remaining -= take;
+    deductedSummary.push({
+      batchNumber: batch.batchNumber,
+      expirationDate: batch.expirationDate,
+      qty: take,
+    });
+  }
+
+  const firstActive = batches.find(b => b.remainingQty > 0);
+  const lastConsumed = batches[batches.length - 1];
+  return {
+    batches,
+    activeExpirationDate:
+      firstActive?.expirationDate ||
+      lastConsumed?.expirationDate ||
+      getEffectiveExpirationDate(med),
+    activeBatchNumber:
+      firstActive?.batchNumber ||
+      lastConsumed?.batchNumber ||
+      med.batchNumber ||
+      'INITIAL-BATCH',
+    deductedSummary,
+  };
 }
 
 export function getExpirationState(raw?: string | null): {
@@ -224,3 +393,4 @@ export function getExpirationState(raw?: string | null): {
   }
   return { display, status: 'valid' };
 }
+

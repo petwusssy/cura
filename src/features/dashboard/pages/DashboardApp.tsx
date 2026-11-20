@@ -1338,7 +1338,11 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               last.qty,
               'add',
               `From PR ${req.prfNo || req.id}`,
-              last.date
+              last.date,
+              {
+                expirationDate: last.expirationDate || undefined,
+                batchNumber: last.batchNumber || req.prfNo || undefined,
+              }
             );
             setMedicines(prev => prev.map(m => m.id === updatedMed.id ? updatedMed : m));
           } catch (err) {
@@ -1351,7 +1355,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
   const handleReceivePurchaseDelivery = async (
     reqId: string,
-    payload: { qty: number; date: string; note: string }
+    payload: { qty: number; date: string; note: string; expirationDate?: string; batchNumber?: string }
   ) => {
     try {
       const result = await medicineService.receivePurchaseDelivery(reqId, payload);
