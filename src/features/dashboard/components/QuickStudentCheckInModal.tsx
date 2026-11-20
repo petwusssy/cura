@@ -782,7 +782,7 @@ export function QuickStudentCheckInModal({
                 )}
               </div>
             </form>
-          ) : (
+          ) : step === 'confirmed' ? (
             /* STEP 2: CONFIRMED -> CHOOSE CONSULTATION OR NON-CONSULTATION */
             <div className="py-3 space-y-6 animate-in fade-in zoom-in-95 duration-200">
               <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
