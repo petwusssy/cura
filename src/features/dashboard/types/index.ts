@@ -140,6 +140,7 @@ export interface MedicineItem {
   category?: 'Medicine' | 'Supply';
   threshold?: number;
   batchNumber?: string;
+  expirationDate?: string | null;
 }
 
 export interface PurchaseHistory {

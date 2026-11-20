@@ -14,6 +14,7 @@ import { getManilaDate, getManilaTime, getManilaYesterday, getManilaDaysAgo, nor
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 import { consultationService } from '@/services/consultationService';
 import { loadDepartmentSectionGroups, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
+import { getMedicineStockStatus } from '@/utils/medicineRules';
 
 const PRIMARY = '#1E5AA8';
 const RED = '#D64545';
@@ -166,7 +167,7 @@ export function Dashboard({ patients, consultations, medicines, notifications, q
   const todayEmployees = filteredConsultations.filter(c => patients.find(p => p.id === c.patientId)?.category === 'Employee');
   const todayOutsiders = filteredConsultations.filter(c => patients.find(p => p.id === c.patientId)?.category === 'Outsider');
   const dispensed = filteredConsultations.reduce((sum, c) => sum + (c.treatments?.length || 0), 0);
-  const lowStock = medicines.filter(m => m.status === 'Low Stock').length;
+  const lowStock = medicines.filter(m => getMedicineStockStatus(m) === 'Low Stock').length;
 
   const medicationReminders = useMemo(() => {
     const items: {

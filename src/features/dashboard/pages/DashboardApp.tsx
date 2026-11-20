@@ -46,6 +46,7 @@ import { certificateService } from '@/services/certificateService';
 import { notificationService } from '@/services/notificationService';
 import { queueService } from '@/services/queueService';
 import { getManilaDate, getManilaTime, normalizeDate, formatTime12 } from '@/utils/philippineTime';
+import { getEffectiveThreshold } from '@/utils/medicineRules';
 import { toast } from 'sonner';
 
 
@@ -836,13 +837,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     const today = getManilaDate();
 
     const lowStockMeds = medicines.filter(m => {
-      const threshold = m.threshold ?? 10;
+      const threshold = getEffectiveThreshold(m);
       return Number(m.stock) <= threshold;
     });
 
     const healthyMedIds = new Set(
       medicines
-        .filter(m => Number(m.stock) > (m.threshold ?? 10))
+        .filter(m => Number(m.stock) > getEffectiveThreshold(m))
         .map(m => String(m.id))
     );
 
@@ -864,9 +865,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         if (pruned.some(n => n.id === notifId) || newStockNotifs.some(n => n.id === notifId)) return;
 
         const isOut = Number(m.stock) === 0;
+        const thresh = getEffectiveThreshold(m);
         const msg = isOut
           ? `Out of Stock: ${m.name} has 0 stock remaining!`
-          : `Low Stock Alert: ${m.name} is running low (${m.stock} ${m.unit || 'units'} left, threshold: ${m.threshold ?? 10})`;
+          : `Low Stock Alert: ${m.name} is running low (${m.stock} ${m.unit || 'units'} left, threshold: ${thresh})`;
 
         if (!alertedDosesRef.current.has(notifId)) {
           alertedDosesRef.current.add(notifId);

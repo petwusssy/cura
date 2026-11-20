@@ -13,6 +13,7 @@ import { saveAs } from 'file-saver';
 import { getManilaDate, getManilaYesterday, getManilaDaysAgo, normalizeDate, formatTime12 } from '@/utils/philippineTime';
 import { CustomDateRangeModal } from './CustomDateRangeModal';
 import { getCensusSheetGroups, SECTIONS_UPDATED_EVENT } from '../constants/sectionsData';
+import { getEffectiveExpirationDate } from '@/utils/medicineRules';
 
 const PRIMARY = '#1B3A6B';
 const YELLOW = '#F4C542';
@@ -123,51 +124,52 @@ const SUPPLIES_LIST = [
   { no: 32, name: 'KN95 MASK 50 PCS/BOX', beg: 0, consumed: Array(31).fill(0), total: 0, end: 0 },
 ];
 
-// Medicines Inventory matching exact May-26 Excel spreadsheet screenshot
+// Medicines Inventory matching exact Oct-26 / Nov-26 Excel spreadsheet screenshot
 const MEDICINE_INVENTORY_TEMPLATE = [
-  { no: 1, name: 'Allerta 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 2, name: 'Allerkid 60mL bottle', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 3, name: 'Alnix 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 4, name: 'Aspilets-EC 80mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 5, name: 'Benadryl 25mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 6, name: 'Benadryl 50mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 7, name: 'Benadryl 60mL bottle', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 8, name: 'Bioflu tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 9, name: 'Biogesic 500mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 10, name: 'Budecort respules 250mcg/mL', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 11, name: 'Buscopan 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 12, name: 'Buscopan Plus', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 13, name: 'Calmoseptine ointment', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 14, name: 'Catapres 75mcg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 15, name: 'Celecoxib 200mg capsule', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 16, name: 'Dolcet 37.5mg/325mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 17, name: 'Dolfenal 500mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 18, name: 'Duavent nebules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 19, name: 'Erceflora Niblet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 20, name: 'Erythromycin ointment tubes', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 21, name: 'Flotera chewable', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 22, name: 'Gaviscon sachet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 23, name: 'Gaviscon tablet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'NO STOCK' },
-  { no: 24, name: 'Hidrasec 30mg granules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 25, name: 'Hydrite sachet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 26, name: 'Hypromellose 3mg/mL drops', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 27, name: 'Imodium 2mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
+  { no: 1, name: 'Allerta 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Feb-28' },
+  { no: 2, name: 'Allerkid 60mL bottle', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-27' },
+  { no: 3, name: 'Alnix 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-28' },
+  { no: 4, name: 'Aspilets-EC 80mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Feb-28' },
+  { no: 5, name: 'Benadryl 25mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-28' },
+  { no: 6, name: 'Benadryl 50mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-28' },
+  { no: 7, name: 'Benadryl 60mL bottle', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-29' },
+  { no: 8, name: 'Bioflu tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-27' },
+  { no: 9, name: 'Biogesic 500mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'May-29' },
+  { no: 10, name: 'Budecort respules 250mcg/mL', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-26' },
+  { no: 11, name: 'Buscopan 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-28' },
+  { no: 12, name: 'Buscopan Plus', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-28' },
+  { no: 13, name: 'Calmoseptine ointment', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Nov-30' },
+  { no: 14, name: 'Catapres 75mcg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'May-28' },
+  { no: 15, name: 'Cetirizine (Zyrtec) 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-27' },
+  { no: 16, name: 'Celecoxib 200mg capsule', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Aug-27' },
+  { no: 17, name: 'Dolcet 37.5mg/325mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-26' },
+  { no: 18, name: 'Dolfenal 500mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-27' },
+  { no: 19, name: 'Duavent nebules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-28' },
+  { no: 20, name: 'Erceflora Niblet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-28' },
+  { no: 21, name: 'Erythromycin ointment tubes', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-26' },
+  { no: 22, name: 'Flotera chewable', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-28' },
+  { no: 23, name: 'Gaviscon sachet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-28' },
+  { no: 24, name: 'Hidrasec 100mg capsule', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Dec-28' },
+  { no: 25, name: 'Hydrite sachet', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Sep-28' },
+  { no: 26, name: 'Hypromellose 3mg/mL drops', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Aug-28' },
+  { no: 27, name: 'Imodium 2mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jul-30' },
   { no: 28, name: 'Isordil SL 5mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'NO STOCK' },
-  { no: 29, name: 'Kramil-S chewable pink', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 30, name: 'Kramil-S ADVANCE', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 31, name: 'Motilium 10mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 32, name: 'Nafarin A', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 33, name: 'Norvasc 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 34, name: 'Omeprazole 20mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 35, name: 'Omeprazole 40mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 36, name: 'Panto Plus cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 37, name: 'Paracetamol syrup', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 38, name: 'Plavix 75mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 39, name: 'Ranitidine 150mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 40, name: 'Serc 16mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 41, name: 'Sinupret tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 42, name: 'Strepsils lozenges (8xpack)', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' },
-  { no: 43, name: 'Ventolin nebules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: '' }
+  { no: 29, name: 'Kramil-S chewable pink', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Sep-28' },
+  { no: 30, name: 'Kramil-S ADVANCE', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Sep-27' },
+  { no: 31, name: 'Motilium 10mg', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-29' },
+  { no: 32, name: 'Nafarin A', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'May-28' },
+  { no: 33, name: 'Norvasc 10mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-27' },
+  { no: 34, name: 'Omeprazole 20mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-28' },
+  { no: 35, name: 'Omeprazole 40mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jun-28' },
+  { no: 36, name: 'Panto Plus cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Sep-28' },
+  { no: 37, name: 'Paracetamol syrup', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Apr-27' },
+  { no: 38, name: 'Plavix 75mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-27' },
+  { no: 39, name: 'Ranitidine 150mg tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Feb-28' },
+  { no: 40, name: 'Serc 16mg cap', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Aug-27' },
+  { no: 41, name: 'Sinupret tab', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Aug-27' },
+  { no: 42, name: 'Strepsils lozenges (8xpack)', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-29' },
+  { no: 43, name: 'Ventolin nebules', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Nov-27' },
+  { no: 44, name: 'Vispring Opthalmic', beg: 0, c: Array(31).fill(0), total: 0, end: 0, status: 'Jan-28' },
 ];
 
 type ReportFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
@@ -689,8 +691,10 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       : (baseStock + total);
 
     const end = Math.max(0, beg - total);
-    const isNoStock = actualMed ? (end <= 0 || baseStock <= 0) : (end <= 0);
-    const statusText = isNoStock ? 'NO STOCK' : '';
+    const isConsumed = beg > 0 && end <= 0 && total > 0;
+    const isNoStock = !isConsumed && (actualMed ? (end <= 0 || baseStock <= 0) : (end <= 0));
+    const resolvedExp = getEffectiveExpirationDate(actualMed || { name: itemTemplate.name });
+    const statusText = isConsumed ? 'CONSUMED' : isNoStock ? 'NO STOCK' : (resolvedExp || '');
 
     return {
       no: itemTemplate.no,
@@ -700,6 +704,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
       end,
       total,
       isNoStock,
+      isConsumed,
       statusText,
     };
   };
@@ -1954,7 +1959,22 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                             {renderConsumptionCells(med.c, med.isNoStock)}
                             <td style={{ backgroundColor: med.isNoStock ? '#F2DCDB' : '#76923C' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.isNoStock ? 'text-black' : 'text-white'}`}>{med.end}</td>
                             <td style={{ backgroundColor: med.isNoStock ? '#F2DCDB' : '#31859B' }} className={`border-2 border-black py-1 px-1.5 text-center font-black font-mono ${med.isNoStock ? 'text-black' : 'text-white'} text-xs`}>{med.total}</td>
-                            <td className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${med.isNoStock ? 'bg-[#EA9999] text-black tracking-wider font-black' : 'bg-white text-gray-600'}`}>{med.statusText}</td>
+                            <td
+                              style={{
+                                backgroundColor: med.isConsumed
+                                  ? '#FFFF00'
+                                  : med.isNoStock
+                                  ? '#EA9999'
+                                  : '#FFFFFF',
+                              }}
+                              className={`border-2 border-black py-1 px-2 text-center font-extrabold text-[10px] ${
+                                med.isConsumed || med.isNoStock
+                                  ? 'text-black tracking-wider font-black'
+                                  : 'text-gray-900 font-bold'
+                              }`}
+                            >
+                              {med.statusText}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

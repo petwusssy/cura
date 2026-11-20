@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, AlertTriangle, RefreshCw, ArrowUpRight, CheckCircle2, X, Eye, TrendingDown, TrendingUp, Calendar, PackageSearch } from 'lucide-react';
 import { MedicineItem, StockHistory } from '../types';
 import { getManilaDate, formatManilaDateTime, normalizeDate } from '@/utils/philippineTime';
+import {
+  getEffectiveThreshold,
+  getMedicineStockStatus,
+  getDefaultThresholdByName,
+  isFastMovingMedicine,
+  getEffectiveExpirationDate,
+  getExpirationState,
+  formatExpirationDisplay,
+  toMonthInputValue,
+} from '@/utils/medicineRules';
 
 const PRIMARY = '#1B3A6B';
 const RED = '#D64545';
@@ -31,9 +41,11 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
   const [adjustType, setAdjustType] = useState<'add' | 'dispense'>('add');
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
+  const [adjustExpiration, setAdjustExpiration] = useState('');
   const [historyModal, setHistoryModal] = useState<MedicineItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customThresholdEdited, setCustomThresholdEdited] = useState(false);
   const [newMed, setNewMed] = useState<{
     name: string;
     stock: string;
@@ -41,13 +53,15 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     unit: string;
     threshold: string;
     category: 'Medicine' | 'Supply';
+    expirationDate: string;
   }>({
     name: '',
     stock: '',
     dateAdded: getManilaDate(),
     unit: 'Tablet',
     threshold: '15',
-    category: 'Medicine'
+    category: 'Medicine',
+    expirationDate: '',
   });
 
   const getMedicineDetails = (m: MedicineItem) => {
@@ -56,22 +70,28 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     const dispensed = Math.max(Number(m.dispensed) || 0, historyDispenses);
     const beginningQty = m.beginningQty !== undefined && m.beginningQty !== null ? m.beginningQty : (adds > 0 ? adds : m.stock + dispensed);
 
-    const thresh = m.threshold ?? 5;
-    let status: 'Healthy' | 'Low Stock' | 'Out of Stock' = 'Healthy';
-    if (m.stock === 0 || m.status === 'Out of Stock') {
-      status = 'Out of Stock';
-    } else if (m.stock <= thresh || m.status === 'Low Stock') {
-      status = 'Low Stock';
-    } else {
-      status = 'Healthy';
-    }
+    const thresh = getEffectiveThreshold(m);
+    const fastMoving = isFastMovingMedicine(m.name);
+    const status = getMedicineStockStatus(m);
+    const rawExp = getEffectiveExpirationDate(m);
+    const expState = getExpirationState(rawExp);
 
     let displayUnit = m.unit.charAt(0).toUpperCase() + m.unit.slice(1);
     if (!displayUnit.endsWith('s') && displayUnit !== 'Ointment' && displayUnit !== 'Syrup') {
       displayUnit += 's';
     }
 
-    return { beginningQty, dispensed, status, displayUnit, batchNumber: m.batchNumber || '' };
+    return {
+      beginningQty,
+      dispensed,
+      status,
+      thresh,
+      fastMoving,
+      expirationDisplay: expState.display,
+      expirationStatus: expState.status,
+      displayUnit,
+      batchNumber: m.batchNumber || '',
+    };
   };
 
   const query = (localSearch || searchQuery || '').trim().toLowerCase();
@@ -94,6 +114,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       (m.unit && m.unit.toLowerCase().includes(query)) ||
       (details.displayUnit && details.displayUnit.toLowerCase().includes(query)) ||
       (details.status && details.status.toLowerCase().includes(query)) ||
+      (details.expirationDisplay && details.expirationDisplay.toLowerCase().includes(query)) ||
       (m.dateAdded && m.dateAdded.toLowerCase().includes(query)) ||
       (m.stockHistory || []).some(h => (h.note && h.note.toLowerCase().includes(query)));
 
@@ -115,7 +136,10 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     const details = getMedicineDetails(adjustModal);
     const newStock = adjustType === 'add' ? adjustModal.stock + qty : Math.max(0, adjustModal.stock - qty);
     const newDispensed = adjustType === 'dispense' ? (details.dispensed + qty) : details.dispensed;
-    const thresh = adjustModal.threshold ?? 5;
+    const thresh = getEffectiveThreshold(adjustModal);
+    const formattedExp = adjustExpiration.trim()
+      ? formatExpirationDisplay(adjustExpiration)
+      : getEffectiveExpirationDate(adjustModal);
     
     let newStatus: 'Normal' | 'Low Stock' | 'Out of Stock' = 'Normal';
     if (newStock === 0) newStatus = 'Out of Stock';
@@ -125,6 +149,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       ...adjustModal,
       stock: newStock,
       dispensed: newDispensed,
+      threshold: thresh,
+      expirationDate: formattedExp || adjustModal.expirationDate,
       status: newStatus as any,
       stockHistory: [...(adjustModal.stockHistory || []), {
         date: getManilaDate(),
@@ -141,6 +167,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       setAdjustModal(null);
       setAdjustQty('');
       setAdjustNote('');
+      setAdjustExpiration('');
     } catch (e: any) {
       if (e?.message !== 'PIN_CANCELLED') {
         console.error(e);
@@ -155,7 +182,9 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
     if (!newMed.name || !newMed.stock) return;
     setIsSubmitting(true);
     const qty = parseInt(newMed.stock) || 0;
-    const thresh = parseInt(newMed.threshold) || 15;
+    const defaultThresh = getDefaultThresholdByName(newMed.name);
+    const thresh = customThresholdEdited ? (parseInt(newMed.threshold) || defaultThresh) : defaultThresh;
+    const formattedExp = formatExpirationDisplay(newMed.expirationDate) || getEffectiveExpirationDate({ name: newMed.name });
     const med: MedicineItem = {
       id: `m${Date.now()}`,
       name: newMed.name,
@@ -167,13 +196,15 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       beginningQty: qty,
       dispensed: 0,
       threshold: thresh,
+      expirationDate: formattedExp || null,
       stockHistory: [{ date: newMed.dateAdded || getManilaDate(), qty, type: 'add', note: 'Initial inventory' }],
     };
 
     try {
       await onAddMedicine(med);
       setShowAddForm(false);
-      setNewMed({ name: '', stock: '', dateAdded: getManilaDate(), unit: 'Tablet', threshold: '15', category: 'Medicine' });
+      setCustomThresholdEdited(false);
+      setNewMed({ name: '', stock: '', dateAdded: getManilaDate(), unit: 'Tablet', threshold: '15', category: 'Medicine', expirationDate: '' });
     } catch (e: any) {
       if (e?.message !== 'PIN_CANCELLED') {
         console.error(e);
@@ -203,8 +234,8 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Healthy Stock', filter: 'Healthy' as const, value: healthyCount, color: '#2E7D32', bg: '#E8F5E9', icon: <CheckCircle2 size={20} /> },
-          { label: 'Low Stock', filter: 'Low Stock' as const, value: lowStockCount, color: YELLOW, bg: `${YELLOW}15`, icon: <AlertTriangle size={20} /> },
-          { label: 'Out of Stock', filter: 'Out of Stock' as const, value: outOfStockCount, color: RED, bg: `${RED}15`, icon: <X size={20} /> },
+          { label: 'Low Stock', filter: 'Low Stock' as const, value: lowStockCount, color: RED, bg: `${RED}15`, icon: <AlertTriangle size={20} /> },
+          { label: 'Out of Stock', filter: 'Out of Stock' as const, value: outOfStockCount, color: '#991B1B', bg: '#FEE2E2', icon: <X size={20} /> },
           { label: 'Total Items', filter: 'All' as const, value: displayMedicines.length, color: PRIMARY, bg: `${PRIMARY}15`, icon: <CheckCircle2 size={20} /> },
         ].map(s => {
           const isActive = statusFilter === s.filter;
@@ -317,6 +348,7 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Beg. Qty</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Dispensed</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Stock Count</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Expiration Date</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
@@ -340,29 +372,74 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 const details = getMedicineDetails(m);
                 const isOut = details.status === 'Out of Stock';
                 const isLow = details.status === 'Low Stock';
+                const expBadgeStyle =
+                  details.expirationStatus === 'expired'
+                    ? { background: `${RED}18`, color: RED }
+                    : details.expirationStatus === 'expiring-soon'
+                    ? { background: `${YELLOW}20`, color: '#b45309' }
+                    : { background: '#F1F5F9', color: '#334155' };
+
                 return (
-                  <tr key={m.id} className={isOut ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
+                  <tr key={m.id} className={isOut || isLow ? "hover:bg-red-50/30 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                     <td className="px-5 py-3">
-                      <div className="text-sm font-medium text-gray-700">{m.name}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-700">{m.name}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                            details.fastMoving
+                              ? 'bg-blue-50 text-[#1E5AA8] border border-blue-200'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                          title={details.fastMoving ? 'Fast-moving item: Red low stock at ≤100 pcs' : `Standard item: Red low stock at ≤${details.thresh} pcs`}
+                        >
+                          {details.fastMoving ? `Fast-Moving (Min: ${details.thresh})` : `Min: ${details.thresh}`}
+                        </span>
+                      </div>
                       <div className="text-xs text-gray-400">Added: {normalizeDate(m.dateAdded) || 'N/A'}</div>
                     </td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.beginningQty} <span className="text-xs text-gray-400">{details.displayUnit}</span></td>
                     <td className="px-5 py-3 text-sm text-gray-700">{details.dispensed}</td>
                     <td className="px-5 py-3">
-                      <span className="text-sm font-semibold" style={{ color: isOut ? RED : isLow ? '#b45309' : '#374151' }}>
+                      <span className="text-sm font-bold" style={{ color: isOut ? '#991B1B' : isLow ? RED : '#374151' }}>
                         {m.stock} <span className="text-xs text-gray-500 font-normal">{details.displayUnit}</span>
                       </span>
                     </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md font-bold"
+                        style={expBadgeStyle}
+                      >
+                        <Calendar size={12} />
+                        <span>{details.expirationDisplay}</span>
+                        {details.expirationStatus === 'expired' && (
+                          <span className="text-[10px] uppercase font-extrabold ml-0.5">(EXPIRED)</span>
+                        )}
+                        {details.expirationStatus === 'expiring-soon' && (
+                          <span className="text-[10px] uppercase font-extrabold ml-0.5">(SOON)</span>
+                        )}
+                      </span>
+                    </td>
                     <td className="px-5 py-3 text-center">
-                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                        style={{ background: isOut ? `${RED}15` : isLow ? `${YELLOW}20` : '#E8F5E9', color: isOut ? RED : isLow ? '#b45309' : '#2E7D32' }}>
+                      <span className="text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"
+                        style={{
+                          background: isOut ? '#FEE2E2' : isLow ? `${RED}18` : '#E8F5E9',
+                          color: isOut ? '#991B1B' : isLow ? RED : '#2E7D32',
+                          border: isLow ? `1px solid ${RED}40` : isOut ? '1px solid #FCA5A5' : 'none',
+                        }}>
+                        {isLow && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: RED }} />}
                         {details.status}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => { setAdjustModal(m); setAdjustType('add'); setAdjustQty(''); setAdjustNote(''); }}
+                          onClick={() => {
+                            setAdjustModal(m);
+                            setAdjustType('add');
+                            setAdjustQty('');
+                            setAdjustNote('');
+                            setAdjustExpiration(toMonthInputValue(getEffectiveExpirationDate(m)));
+                          }}
                           className="px-3 py-1 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-all"
                           style={{ background: PRIMARY }}
                         >
@@ -402,12 +479,18 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
           const isLow = details.status === 'Low Stock';
           return (
             <div key={m.id} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-3 shadow-sm">
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start gap-2">
                 <div>
                   <div className="font-bold text-gray-900 leading-tight">{m.name}</div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">
+                    {details.fastMoving ? `Fast-Moving (Low Stock ≤ ${details.thresh})` : `Low Stock ≤ ${details.thresh}`}
+                  </div>
                 </div>
                 <span className="text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wide flex-shrink-0"
-                  style={{ background: isOut ? `${RED}15` : isLow ? `${YELLOW}20` : '#E8F5E9', color: isOut ? RED : isLow ? '#b45309' : '#2E7D32' }}>
+                  style={{
+                    background: isOut ? '#FEE2E2' : isLow ? `${RED}18` : '#E8F5E9',
+                    color: isOut ? '#991B1B' : isLow ? RED : '#2E7D32',
+                  }}>
                   {details.status}
                 </span>
               </div>
@@ -421,10 +504,16 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Dispensed</span>
                   <span className="text-sm text-gray-700">{details.dispensed}</span>
                 </div>
-                <div className="flex flex-col col-span-2 mt-1 border-t border-gray-200 pt-2">
+                <div className="flex flex-col mt-1 border-t border-gray-200 pt-2">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Current Stock</span>
-                  <span className="text-base font-bold" style={{ color: isOut ? RED : isLow ? '#b45309' : '#374151' }}>
+                  <span className="text-base font-bold" style={{ color: isOut ? '#991B1B' : isLow ? RED : '#374151' }}>
                     {m.stock} <span className="text-xs font-normal text-gray-500">{details.displayUnit}</span>
+                  </span>
+                </div>
+                <div className="flex flex-col mt-1 border-t border-gray-200 pt-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Expiration</span>
+                  <span className="text-sm font-bold" style={{ color: details.expirationStatus === 'expired' ? RED : details.expirationStatus === 'expiring-soon' ? '#b45309' : '#374151' }}>
+                    {details.expirationDisplay}
                   </span>
                 </div>
               </div>
@@ -436,7 +525,13 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   <Eye size={14} /> History
                 </button>
                 <button 
-                  onClick={() => { setAdjustModal(m); setAdjustType('add'); setAdjustQty(''); setAdjustNote(''); }}
+                  onClick={() => {
+                    setAdjustModal(m);
+                    setAdjustType('add');
+                    setAdjustQty('');
+                    setAdjustNote('');
+                    setAdjustExpiration(toMonthInputValue(getEffectiveExpirationDate(m)));
+                  }}
                   className="flex-1 py-2 bg-[#1B3A6B] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5">
                   Adjust
                 </button>
@@ -491,6 +586,19 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 placeholder="e.g. Delivery or Clinic dispense"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
             </div>
+            {adjustType === 'add' && (
+              <div className="mt-4">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Expiration Date (Month &amp; Year)
+                </label>
+                <input
+                  type="month"
+                  value={adjustExpiration}
+                  onChange={e => setAdjustExpiration(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                />
+              </div>
+            )}
             <div className="flex gap-3 mt-5">
               <button onClick={() => setAdjustModal(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
               <button onClick={handleAdjustStock}
@@ -515,9 +623,23 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Medicine Name</label>
-                <input type="text" value={newMed.name} onChange={e => setNewMed(n => ({ ...n, name: e.target.value }))}
+                <input
+                  type="text"
+                  value={newMed.name}
+                  onChange={e => {
+                    const nextName = e.target.value;
+                    const autoThresh = String(getDefaultThresholdByName(nextName));
+                    const defaultExp = toMonthInputValue(getEffectiveExpirationDate({ name: nextName }));
+                    setNewMed(n => ({
+                      ...n,
+                      name: nextName,
+                      threshold: customThresholdEdited ? n.threshold : autoThresh,
+                      expirationDate: n.expirationDate || defaultExp,
+                    }));
+                  }}
                   placeholder="e.g. Biogesic 500mg tab"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Beginning Inventory Qty</label>
@@ -529,6 +651,15 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Date Added</label>
                 <input type="date" value={newMed.dateAdded} onChange={e => setNewMed(n => ({ ...n, dateAdded: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Expiration Date (Month &amp; Year)</label>
+                <input
+                  type="month"
+                  value={newMed.expirationDate}
+                  onChange={e => setNewMed(n => ({ ...n, expirationDate: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
@@ -547,11 +678,21 @@ export function Inventory({ medicines, onUpdateMedicine, onAddMedicine, searchQu
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Low Stock Threshold</label>
-                <input type="number" min={1} value={newMed.threshold} onChange={e => setNewMed(n => ({ ...n, threshold: e.target.value }))}
-                  placeholder="e.g. 15"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]" />
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Low Stock Threshold ({isFastMovingMedicine(newMed.name) ? 'Fast-Moving Default: 100 pcs' : 'Standard Default: 15 pcs'})
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newMed.threshold}
+                  onChange={e => {
+                    setCustomThresholdEdited(true);
+                    setNewMed(n => ({ ...n, threshold: e.target.value }));
+                  }}
+                  placeholder="100 for fast-moving, 15 for standard"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1B3A6B]"
+                />
               </div>
             </div>
 
