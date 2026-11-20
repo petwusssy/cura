@@ -57,18 +57,18 @@ interface DashboardAppProps {
 export default function DashboardApp({ onLogout }: DashboardAppProps) {
   const location = useLocation();
   const routerNavigate = useNavigate();
-  
+
   const pathParts = location.pathname.split('/');
   const routePage = pathParts[2] || 'dashboard';
   const currentPage = routePage as Page;
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [editingPatientId, setEditingPatientId]   = useState<string | null>(null);
-  const [convertingId, setConvertingId]           = useState<string | null>(null);
-  const [searchQuery, setSearchQuery]       = useState('');
+  const [editingPatientId, setEditingPatientId] = useState<string | null>(null);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isQuickWalkInOpen, setIsQuickWalkInOpen] = useState(false);
   const [scannedRfidUid, setScannedRfidUid] = useState<string | null>(null);
-  const [rfidScanSeq, setRfidScanSeq]       = useState<number>(0);
+  const [rfidScanSeq, setRfidScanSeq] = useState<number>(0);
 
   // Global Windows USB RFID Reader (HID Keyboard Wedge) listener
   useEffect(() => {
@@ -130,20 +130,20 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   }, []);
 
   // Initialize with cached data when available to eliminate skeleton on repeat views
-  const [patients, setPatients]                 = useState<Patient[]>(() => {
+  const [patients, setPatients] = useState<Patient[]>(() => {
     try {
       const cached = localStorage.getItem('cura_patients_cache');
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [consultations, setConsultations]       = useState<Consultation[]>(() => {
+  const [consultations, setConsultations] = useState<Consultation[]>(() => {
     try {
       const cached = localStorage.getItem('cura_consultations_cache');
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [transfers, setTransfers]               = useState<HospitalTransfer[]>([]);
-  const [medicines, setMedicines]               = useState<MedicineItem[]>(() => {
+  const [transfers, setTransfers] = useState<HospitalTransfer[]>([]);
+  const [medicines, setMedicines] = useState<MedicineItem[]>(() => {
     try {
       const cached = localStorage.getItem('cura_medicines_cache');
       return cached ? JSON.parse(cached) : [];
@@ -155,33 +155,33 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [medicalCerts, setMedicalCerts]         = useState<MedicalCertificate[]>(() => {
+  const [medicalCerts, setMedicalCerts] = useState<MedicalCertificate[]>(() => {
     try {
       const cached = localStorage.getItem('cura_medical_certs');
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [beds, setBeds]                         = useState<Bed[]>(() => {
+  const [beds, setBeds] = useState<Bed[]>(() => {
     try {
       const cached = localStorage.getItem('cura_beds_cache');
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
-  const [notifications, setNotifications]       = useState<AppNotification[]>([]);
-  const [queues, setQueues]                     = useState<PatientQueue[]>(() => {
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [queues, setQueues] = useState<PatientQueue[]>(() => {
     try {
       const cached = localStorage.getItem('cura_queues_cache');
       return cached ? JSON.parse(cached) : [];
     } catch { return []; }
   });
   // true while the first batch of API calls is in-flight
-  const [isLoading, setIsLoading]               = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // If we already have loaded data, never show a blocking skeleton
   const hasExistingData = patients.length > 0 || consultations.length > 0 || medicines.length > 0 || purchaseRequests.length > 0;
 
   // Threshold delay: only reveal skeleton if network is actually slow (> 150ms) and we have no data
-  const [skeletonVisible, setSkeletonVisible]   = useState(false);
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
 
   useEffect(() => {
     if (!isLoading || hasExistingData) {
@@ -234,7 +234,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           ...c,
           treatments: (c.treatments || []).map(t => {
             if ((treatmentId && String(t.id) === String(treatmentId)) ||
-                keys.some(k => k.includes(t.medicineName) && (k.includes(String(t.nextDose)) || k.includes(String(t.timeGiven))))) {
+              keys.some(k => k.includes(t.medicineName) && (k.includes(String(t.nextDose)) || k.includes(String(t.timeGiven))))) {
               return { ...t, remarks: updatedRemarks };
             }
             return t;
@@ -258,7 +258,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             .map(q => notifiedQueueIdsRef.current.has(q.id) ? { ...q, status: 'called' } : q);
         });
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -280,7 +280,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         const formatted = Array.from(pMap.values());
         setPatients(formatted);
-        try { localStorage.setItem('cura_patients_cache', JSON.stringify(formatted)); } catch {}
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(formatted)); } catch { }
       }
       if (cRes.status === 'fulfilled' && cRes.value !== undefined) {
         const seenIds = new Set<string>();
@@ -294,7 +294,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           return true;
         });
         setConsultations(unique);
-        try { localStorage.setItem('cura_consultations_cache', JSON.stringify(unique)); } catch {}
+        try { localStorage.setItem('cura_consultations_cache', JSON.stringify(unique)); } catch { }
       }
       if (mRes.status === 'fulfilled' && mRes.value !== undefined) {
         const mMap = new Map<string, MedicineItem>();
@@ -303,7 +303,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         const uniqueMeds = Array.from(mMap.values());
         setMedicines(uniqueMeds);
-        try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch {}
+        try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch { }
       }
       if (prRes.status === 'fulfilled' && prRes.value !== undefined) {
         const prMap = new Map<string, PurchaseRequest>();
@@ -312,7 +312,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         const uniquePR = Array.from(prMap.values());
         setPurchaseRequests(uniquePR);
-        try { localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(uniquePR)); } catch {}
+        try { localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(uniquePR)); } catch { }
       }
       if (bRes.status === 'fulfilled' && bRes.value !== undefined) {
         const bMap = new Map<string, Bed>();
@@ -321,14 +321,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         const uniqueBeds = Array.from(bMap.values());
         setBeds(uniqueBeds);
-        try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch {}
+        try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch { }
       }
       if (certRes.status === 'fulfilled' && certRes.value !== undefined) {
         const certMap = new Map<string, MedicalCertificate>();
         certRes.value.forEach(c => { if (c.id) certMap.set(String(c.id), c); });
         const uniqueCerts = Array.from(certMap.values());
         setMedicalCerts(uniqueCerts);
-        try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch {}
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch { }
       }
       if (qRes.status === 'fulfilled' && qRes.value !== undefined) {
         const qMap = new Map<string, PatientQueue>();
@@ -337,7 +337,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
         const uniqueQueues = Array.from(qMap.values());
         setQueues(uniqueQueues);
-        try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch {}
+        try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch { }
       }
     }).finally(() => {
       // Immediate transition when network requests settle
@@ -356,7 +356,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           const deletedSet = new Set(toDelete.map(n => String(n.id)));
           const cleaned = stored.filter(x => !deletedSet.has(x));
           localStorage.setItem('cura_dismissed_notifs', JSON.stringify(cleaned));
-        } catch {}
+        } catch { }
       });
     };
 
@@ -385,7 +385,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             return [...localNotifs, ...backendNotifs];
           });
         }
-      }).catch(() => {});
+      }).catch(() => { });
     };
 
     fetchAndMergeNotifications();
@@ -437,8 +437,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               knownServerNotifIdsRef.current.add(String(n.id));
               const title = n.type === 'appointment_request' ? '📅 New Appointment Request'
                 : n.type === 'telemedicine_request' ? '📹 New Telemedicine Request'
-                : n.type === 'medcert_request' ? '📋 New MedCert Request'
-                : '🔔 New Notification';
+                  : n.type === 'medcert_request' ? '📋 New MedCert Request'
+                    : '🔔 New Notification';
               toast.info(`${title}: ${n.message || 'New request received'}`, {
                 duration: 8000,
               });
@@ -448,7 +448,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                     body: n.message || 'New request received',
                     icon: '/favicon.ico',
                   });
-                } catch {}
+                } catch { }
               }
             });
           }
@@ -472,7 +472,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           const uniqueQueues = Array.from(qMap.values());
           setQueues(uniqueQueues);
-          try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch {}
+          try { localStorage.setItem('cura_queues_cache', JSON.stringify(uniqueQueues)); } catch { }
         }
 
         // 3. Beds with Map deduplication
@@ -483,7 +483,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           const uniqueBeds = Array.from(bMap.values());
           setBeds(uniqueBeds);
-          try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch {}
+          try { localStorage.setItem('cura_beds_cache', JSON.stringify(uniqueBeds)); } catch { }
         }
 
         // 4. Consultations with strict ID and composite-key deduplication
@@ -499,7 +499,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             return true;
           });
           setConsultations(uniqueConsults);
-          try { localStorage.setItem('cura_consultations_cache', JSON.stringify(uniqueConsults)); } catch {}
+          try { localStorage.setItem('cura_consultations_cache', JSON.stringify(uniqueConsults)); } catch { }
         }
 
         // 5. Patients with Map deduplication by ID (seamlessly syncs newly added patients across devices)
@@ -512,7 +512,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           const uniquePatients = Array.from(pMap.values());
           setPatients(uniquePatients);
-          try { localStorage.setItem('cura_patients_cache', JSON.stringify(uniquePatients)); } catch {}
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(uniquePatients)); } catch { }
         }
 
         // 6. Medicines with Map deduplication
@@ -523,7 +523,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           const uniqueMeds = Array.from(mMap.values());
           setMedicines(uniqueMeds);
-          try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch {}
+          try { localStorage.setItem('cura_medicines_cache', JSON.stringify(uniqueMeds)); } catch { }
         }
 
         // 7. Medical Certificates with Map deduplication
@@ -534,9 +534,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           });
           const uniqueCerts = Array.from(certMap.values());
           setMedicalCerts(uniqueCerts);
-          try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch {}
+          try { localStorage.setItem('cura_medical_certs', JSON.stringify(uniqueCerts)); } catch { }
         }
-      }).catch(() => {}).finally(() => {
+      }).catch(() => { }).finally(() => {
         isPolling = false;
       });
     };
@@ -575,14 +575,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     if (purchaseRequests.length > 0) {
       try {
         localStorage.setItem('cura_purchase_requests_cache', JSON.stringify(purchaseRequests));
-      } catch {}
+      } catch { }
     }
   }, [purchaseRequests]);
 
   // Check for upcoming and due medication doses, as well as bed timers
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+      Notification.requestPermission().catch(() => { });
     }
 
     const checkAlertsAndTimers = () => {
@@ -594,7 +594,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
       setNotifications(prev => {
         const newNotifs: AppNotification[] = [];
-        
+
         // ─── 1. MEDICATION INTAKE REMINDERS ─────────────────────────────────
         consultations.forEach(c => {
           if (normalizeDate(c.date) !== today || !c.treatments) return;
@@ -603,7 +603,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           const patientName = patient?.name || 'Unknown Patient';
           const rawCase = c.complaint || c.purposeOfVisit || (c.categories && c.categories.length > 0 ? c.categories.join(', ') : '');
           const caseName = (rawCase || (c.status === 'Non-Consultation' ? 'Non-Consultation Visit' : 'Consultation')).replace(' [CONVERTED]', '').trim();
-          
+
           c.treatments.forEach(t => {
             if (t.remarks && t.remarks.includes('[INTAKED]')) {
               const notifDueId = `med-due-${c.id}-${t.medicineName}-${t.nextDose}`;
@@ -617,12 +617,12 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
               const [doseHourStr, doseMinuteStr] = t.nextDose.split(':');
               const doseHour = parseInt(doseHourStr, 10);
               const doseMinute = parseInt(doseMinuteStr, 10);
-              
+
               if (isNaN(doseHour) || isNaN(doseMinute)) return;
-              
+
               const doseTimeInMins = doseHour * 60 + doseMinute;
               const diff = doseTimeInMins - currentTimeInMins;
-              
+
               // Condition A: Time for next intake has arrived or passed recently (within 3 hours)
               if (diff <= 0 && diff >= -180) {
                 const notifId = `med-due-${c.id}-${t.medicineName}-${t.nextDose}`;
@@ -644,7 +644,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                           body: `Time for ${patientName}'s next dose of ${t.medicineName} (${formatTime12(t.nextDose)})`,
                           icon: '/favicon.ico',
                         });
-                      } catch {}
+                      } catch { }
                     }
                   }
 
@@ -687,7 +687,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                           body: `${patientName} is due for ${t.medicineName} in ${diff} mins (${formatTime12(t.nextDose)})`,
                           icon: '/favicon.ico',
                         });
-                      } catch {}
+                      } catch { }
                     }
                   }
 
@@ -747,7 +747,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                         body: `Time's up for ${b.patientName || 'Patient'} in Bed ${b.bedNumber} (${b.allottedTime}m limit)`,
                         icon: '/favicon.ico',
                       });
-                    } catch {}
+                    } catch { }
                   }
                 }
 
@@ -785,7 +785,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                         body: `${b.patientName || 'Patient'} in Bed ${b.bedNumber} has ${remainingMins}m remaining`,
                         icon: '/favicon.ico',
                       });
-                    } catch {}
+                    } catch { }
                   }
                 }
 
@@ -883,7 +883,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                 body: msg,
                 icon: '/favicon.ico',
               });
-            } catch {}
+            } catch { }
           }
         }
 
@@ -913,7 +913,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
   } | null>(null);
 
   useEffect(() => {
-    staffService.getStaff().catch(() => {});
+    staffService.getStaff().catch(() => { });
   }, []);
 
   const [activeShift, setActiveShift] = useState<ShiftSession | null>(() => staffService.getActiveShift());
@@ -960,7 +960,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             target_id: targetId,
             details: actionDetails,
           })
-          .catch(() => {});
+          .catch(() => { });
         return fallbackStaff;
       }
 
@@ -984,7 +984,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           target_id: targetId,
           details: actionDetails,
         })
-        .catch(() => {});
+        .catch(() => { });
 
       return verifiedStaff;
     },
@@ -1053,14 +1053,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const updatedLocal = { ...existing, ...formattedPatient, id: existing.id };
       setPatients(prev => {
         const next = prev.map(p => p.id === existing.id ? updatedLocal : p);
-        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch { }
         return next;
       });
       try {
         const updated = await patientService.updatePatient(existing.id, updatedLocal);
         setPatients(prev => {
           const next = prev.map(p => p.id === existing.id ? updated : p);
-          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch { }
           return next;
         });
       } catch (error) {
@@ -1070,7 +1070,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const tempId = formattedPatient.id;
       setPatients(prev => {
         const next = [formattedPatient, ...prev.filter(p => p.id !== tempId)];
-        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch { }
         return next;
       });
       try {
@@ -1080,7 +1080,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           prev.forEach(p => { if (p.id !== tempId) map.set(String(p.id), p); });
           map.set(String(created.id), created);
           const next = Array.from(map.values());
-          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch {}
+          try { localStorage.setItem('cura_patients_cache', JSON.stringify(next)); } catch { }
           return next;
         });
       } catch (error) {
@@ -1158,7 +1158,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         }
         return [...prev, created];
       });
-      
+
       await processMedicineDeductions(consultation.date, consultation.patientId, consultation.treatments);
       // Removed instant hardcoded notification; now handled by interval inside useEffect
     } catch (e) {
@@ -1215,8 +1215,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         ...newConsultation,
         assistingNurse: verifiedStaff.name || newConsultation.assistingNurse,
       });
-      const updatedOld = await consultationService.updateConsultation(convertingId, { 
-        complaint: `${existing.complaint} [CONVERTED]` 
+      const updatedOld = await consultationService.updateConsultation(convertingId, {
+        complaint: `${existing.complaint} [CONVERTED]`
       });
 
       await processMedicineDeductions(newConsultation.date, newConsultation.patientId, newConsultation.treatments);
@@ -1264,7 +1264,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       if (targetCons) {
         const updatedCons = { ...targetCons, transferred: true };
         setConsultations(prev => prev.map(c => c.id === updatedCons.id ? updatedCons : c));
-        consultationService.updateConsultation(updatedCons.id, updatedCons).catch(() => {});
+        consultationService.updateConsultation(updatedCons.id, updatedCons).catch(() => { });
       }
     }
     const notif: AppNotification = {
@@ -1289,8 +1289,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const created = await medicineService.createMedicine(rest);
       // Replace temp local item with the server-assigned item (real UUID)
       setMedicines(prev => prev.map(m => m.id === med.id ? created : m));
-    } catch (e) { 
-      console.error('API failed, but state updated locally:', e); 
+    } catch (e) {
+      console.error('API failed, but state updated locally:', e);
     }
   };
 
@@ -1304,8 +1304,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     setMedicines(prev => prev.map(m => m.id === med.id ? med : m));
     try {
       await medicineService.updateMedicine(med.id, med);
-    } catch (e) { 
-      console.error('API failed, but state updated locally:', e); 
+    } catch (e) {
+      console.error('API failed, but state updated locally:', e);
     }
   };
 
@@ -1327,7 +1327,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     try {
       const updated = await medicineService.updatePurchaseRequest(req.id, req);
       setPurchaseRequests(prev => prev.map(r => r.id === updated.id ? updated : r));
-      
+
       const last = req.history[req.history.length - 1];
       if (last?.qty > 0) {
         const targetMed = medicines.find(m => m.name === req.medicine);
@@ -1437,7 +1437,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       };
       setMedicalCerts(prev => {
         const next = [...prev.filter(c => c.id !== cert.id && c.id !== fullCreated.id), fullCreated];
-        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch { }
         return next;
       });
       return fullCreated;
@@ -1445,7 +1445,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       console.error('Error creating certificate:', e);
       setMedicalCerts(prev => {
         const next = [...prev.filter(c => c.id !== cert.id), cert];
-        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch { }
         return next;
       });
       return cert;
@@ -1462,7 +1462,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     );
     setMedicalCerts(prev => {
       const next = prev.filter(c => c.id !== id);
-      try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch { }
       return next;
     });
     try {
@@ -1484,7 +1484,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const fullUpdated = { ...cert, ...updated, patientId: updated.patientId || cert.patientId };
       setMedicalCerts(prev => {
         const next = prev.map(c => c.id === fullUpdated.id ? fullUpdated : c);
-        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch { }
         return next;
       });
       return fullUpdated;
@@ -1492,7 +1492,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       console.error('Error updating certificate:', e);
       setMedicalCerts(prev => {
         const next = prev.map(c => c.id === cert.id ? cert : c);
-        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('cura_medical_certs', JSON.stringify(next)); } catch { }
         return next;
       });
       return cert;
@@ -1524,7 +1524,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     // 2. Sync with remote server asynchronously in background without freezing UI
     try {
       await bedService.updateBed(bed.id, bed);
-    } catch (e: any) { 
+    } catch (e: any) {
       console.error('Background updateBed server note:', e);
     }
   };
@@ -1589,13 +1589,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         try {
           const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
           localStorage.setItem('cura_dismissed_notifs', JSON.stringify(stored.filter(x => x !== id)));
-        } catch {}
+        } catch { }
       } catch (error: any) {
         if (error?.response?.status === 404) {
           try {
             const stored: string[] = JSON.parse(localStorage.getItem('cura_dismissed_notifs') || '[]');
             localStorage.setItem('cura_dismissed_notifs', JSON.stringify(stored.filter(x => x !== id)));
-          } catch {}
+          } catch { }
         } else {
           console.error('Failed to delete notification from server:', error);
         }
@@ -1918,7 +1918,9 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
           setScannedRfidUid(null);
         }}
         patients={patients}
+        beds={beds}
         onSavePatient={handleSaveQuickStudent}
+        onAssignBed={handleUpdateBed}
         scannedRfidUid={scannedRfidUid}
         rfidScanSeq={rfidScanSeq}
         onProceed={(mode, confirmedStudent) => {

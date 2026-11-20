@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   X, CheckCircle2, Stethoscope, ClipboardList,
-  Building2, Users, Search, ArrowLeft, UserCheck, Sparkles, IdCard, Plus, Trash2
+  Building2, Users, Search, ArrowLeft, UserCheck, Sparkles, IdCard, Plus, Trash2, BedDouble, Clock
 } from 'lucide-react';
-import { Patient } from '../types';
+import { Patient, Bed } from '../types';
 import {
   DepartmentSectionGroup,
   loadDepartmentSectionGroups,
@@ -13,13 +13,16 @@ import {
 import { toast } from 'sonner';
 
 const PRIMARY = '#1B3A6B';
+const RED = '#D64545';
 
 interface QuickStudentCheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
   patients: Patient[];
+  beds?: Bed[];
   onSavePatient: (patient: Patient) => void | Promise<void>;
   onProceed: (mode: 'Consultation' | 'Non-Consultation', patient: Patient) => void;
+  onAssignBed?: (bed: Bed) => void | Promise<void>;
   scannedRfidUid?: string | null;
   rfidScanSeq?: number;
 }
@@ -28,13 +31,19 @@ export function QuickStudentCheckInModal({
   isOpen,
   onClose,
   patients,
+  beds = [],
   onSavePatient,
   onProceed,
+  onAssignBed,
   scannedRfidUid,
   rfidScanSeq = 0,
 }: QuickStudentCheckInModalProps) {
   const [deptGroups, setDeptGroups] = useState<DepartmentSectionGroup[]>(() => loadDepartmentSectionGroups());
-  const [step, setStep] = useState<'form' | 'confirmed'>('form');
+  const [step, setStep] = useState<'form' | 'confirmed' | 'beds'>('form');
+  const [selectedBedNumber, setSelectedBedNumber] = useState<number | null>(null);
+  const [bedReason, setBedReason] = useState<string>('');
+  const [bedTime, setBedTime] = useState<string>('');
+  const [isAssigningBed, setIsAssigningBed] = useState<boolean>(false);
   const [selectedDeptId, setSelectedDeptId] = useState<string>(deptGroups[0].id);
   const [selectedSection, setSelectedSection] = useState<string>('');
   const [sectionSearch, setSectionSearch] = useState<string>('');
@@ -94,6 +103,10 @@ export function QuickStudentCheckInModal({
       setErrors({});
       setIsSaving(false);
       setConfirmedPatient(null);
+      setSelectedBedNumber(null);
+      setBedReason('');
+      setBedTime('');
+      setIsAssigningBed(false);
     }
   }, [isOpen]);
 
@@ -277,6 +290,87 @@ export function QuickStudentCheckInModal({
       console.error('Failed to save student check-in:', err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Normalized 8 beds (Bed 1 to Bed 8)
+  const normalizedBeds = useMemo<Bed[]>(() => {
+    const byNum = new Map<number, Bed>();
+    beds.forEach(b => byNum.set(Number(b.bedNumber), b));
+    return Array.from({ length: 8 }, (_, idx) => {
+      const num = idx + 1;
+      return (
+        byNum.get(num) || {
+          id: `bed-${num}`,
+          bedNumber: num,
+          status: 'Available',
+          patientName: null,
+          patientId: null,
+          timeOccupied: null,
+          reason: null,
+          allottedTime: null,
+          history: [],
+        }
+      );
+    });
+  }, [beds]);
+
+  const availableBedsCount = useMemo(
+    () => normalizedBeds.filter(b => b.status === 'Available').length,
+    [normalizedBeds]
+  );
+
+  const existingStudentBed = useMemo(() => {
+    if (!confirmedPatient) return undefined;
+    return normalizedBeds.find(
+      b =>
+        b.status === 'Occupied' &&
+        ((b.patientId && b.patientId.toLowerCase() === confirmedPatient.id.toLowerCase()) ||
+          (b.patientName && b.patientName.trim().toLowerCase() === confirmedPatient.name.trim().toLowerCase()))
+    );
+  }, [normalizedBeds, confirmedPatient]);
+
+  const selectedBedObj = useMemo(
+    () => (selectedBedNumber ? normalizedBeds.find(b => b.bedNumber === selectedBedNumber) || null : null),
+    [normalizedBeds, selectedBedNumber]
+  );
+
+  const handleConfirmBedAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmedPatient || !selectedBedObj || !onAssignBed || isAssigningBed) return;
+    if (selectedBedObj.status === 'Occupied') {
+      toast.error(`Bed ${selectedBedObj.bedNumber} is currently occupied.`);
+      return;
+    }
+    if (existingStudentBed) {
+      toast.error(
+        `${confirmedPatient.name} is already assigned to Bed ${existingStudentBed.bedNumber}. Please release them from Bed ${existingStudentBed.bedNumber} first.`
+      );
+      return;
+    }
+
+    const updatedBed: Bed = {
+      ...selectedBedObj,
+      status: 'Occupied',
+      patientName: confirmedPatient.name,
+      patientId: confirmedPatient.id,
+      timeOccupied: new Date().toISOString(),
+      reason: bedReason.trim() || null,
+      allottedTime: bedTime ? parseInt(bedTime, 10) || null : null,
+    };
+
+    setIsAssigningBed(true);
+    try {
+      await onAssignBed(updatedBed);
+      toast.success(`Assigned ${confirmedPatient.name} to Bed ${selectedBedObj.bedNumber}`);
+      onClose();
+    } catch (err: any) {
+      if (err?.message !== 'PIN_CANCELLED') {
+        console.error('Failed to assign bed:', err);
+        toast.error('Failed to assign patient to bed.');
+      }
+    } finally {
+      setIsAssigningBed(false);
     }
   };
 
@@ -786,7 +880,237 @@ export function QuickStudentCheckInModal({
                     </div>
                   </button>
                 </div>
+
+                {/* Quick Bed Assignment Small Rectangular Container */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const firstAvail = normalizedBeds.find(b => b.status === 'Available');
+                    setSelectedBedNumber(firstAvail ? firstAvail.bedNumber : null);
+                    setBedReason('');
+                    setBedTime('');
+                    setStep('beds');
+                  }}
+                  className="group w-full mt-3 text-left px-4 py-3.5 rounded-2xl border-2 border-[#1B3A6B]/20 hover:border-[#1B3A6B] bg-slate-50 hover:bg-blue-50/60 transition-all cursor-pointer flex items-center justify-between gap-4 shadow-2xs hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"
+                      style={{ background: `${PRIMARY}15`, color: PRIMARY }}
+                    >
+                      <BedDouble size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-extrabold text-gray-900">
+                          Assign Bed to Patient
+                        </span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-[#1B3A6B]">
+                          Quick Bed Management
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {existingStudentBed
+                          ? `Currently occupying Bed ${existingStudentBed.bedNumber} — Click to view Beds 1–8`
+                          : 'Select from Beds 1–8 and enter reason & allotted rest time'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                        availableBedsCount > 0
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-red-50 text-red-700 border-red-200'
+                      }`}
+                    >
+                      {availableBedsCount}/8 Available
+                    </span>
+                  </div>
+                </button>
               </div>
+            </div>
+          ) : (
+            /* STEP 3: QUICK BED MANAGEMENT (8 BEDS + REASON & TIME) */
+            <div className="py-1 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+              {/* Compact Patient Banner + Back Button */}
+              <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+                    <BedDouble size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-extrabold text-gray-900 uppercase truncate">
+                        {confirmedPatient?.name}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-gray-600">
+                        ({confirmedPatient?.id})
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-semibold text-[#1B3A6B] truncate">
+                      {confirmedPatient?.department} • {confirmedPatient?.course}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep('confirmed')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer flex-shrink-0"
+                >
+                  <ArrowLeft size={13} />
+                  Back
+                </button>
+              </div>
+
+              {existingStudentBed && (
+                <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-between">
+                  <span>
+                    ⚠️ {confirmedPatient?.name} is currently assigned to <strong>Bed {existingStudentBed.bedNumber}</strong>
+                    {existingStudentBed.reason ? ` (${existingStudentBed.reason})` : ''}.
+                  </span>
+                </div>
+              )}
+
+              {/* 8 Beds Grid (Bed 1 to Bed 8) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    1. Select Clinic Bed (Bed 1 – Bed 8)
+                  </label>
+                  <span className="text-xs font-semibold text-gray-500">
+                    {availableBedsCount} of 8 Available
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {normalizedBeds.map(bed => {
+                    const isOccupied = bed.status === 'Occupied';
+                    const isSelected = selectedBedNumber === bed.bedNumber;
+                    return (
+                      <button
+                        key={bed.id}
+                        type="button"
+                        disabled={isOccupied}
+                        onClick={() => setSelectedBedNumber(bed.bedNumber)}
+                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[88px] ${
+                          isOccupied
+                            ? 'bg-red-50/40 border-red-200/80 opacity-75 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-[#1B3A6B] text-white border-[#1B3A6B] shadow-md ring-2 ring-[#1B3A6B]/20 cursor-pointer'
+                            : 'bg-white hover:bg-blue-50/40 border-gray-200 hover:border-[#1B3A6B]/50 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <BedDouble
+                              size={16}
+                              style={{
+                                color: isOccupied ? RED : isSelected ? '#F4C542' : '#2E7D32',
+                              }}
+                            />
+                            <span
+                              className={`text-xs font-extrabold ${
+                                isSelected ? 'text-white' : 'text-gray-900'
+                              }`}
+                            >
+                              Bed {bed.bedNumber}
+                            </span>
+                          </div>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                              isOccupied
+                                ? 'bg-red-100 text-red-700'
+                                : isSelected
+                                ? 'bg-white/20 text-white'
+                                : 'bg-emerald-50 text-emerald-700'
+                            }`}
+                          >
+                            {bed.status}
+                          </span>
+                        </div>
+
+                        <div className="mt-2">
+                          {isOccupied ? (
+                            <div className="text-[10px] font-semibold text-red-700 truncate" title={bed.patientName || ''}>
+                              {bed.patientName || 'Occupied'}
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-[10px] font-medium ${
+                                isSelected ? 'text-blue-100' : 'text-gray-400'
+                              }`}
+                            >
+                              {isSelected ? 'Selected — Enter details below' : 'Click to assign'}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Reason & Time Form for Selected Bed */}
+              {selectedBedObj && selectedBedObj.status === 'Available' && !existingStudentBed && (
+                <form
+                  id="quick-bed-assign-form"
+                  onSubmit={handleConfirmBedAssignment}
+                  className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 animate-in fade-in duration-150"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-[#1B3A6B]">
+                      2. Assignment Details for Bed {selectedBedObj.bedNumber}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div className="sm:col-span-7">
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Reason for Assignment
+                      </label>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={bedReason}
+                        onChange={e => setBedReason(e.target.value)}
+                        placeholder="e.g., Resting, Headache, Dysmenorrhea, Observation"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:border-[#1B3A6B]"
+                      />
+                    </div>
+                    <div className="sm:col-span-5">
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Allotted Time (Minutes)
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <div className="relative flex-1">
+                          <Clock size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input
+                            type="number"
+                            min={1}
+                            value={bedTime}
+                            onChange={e => setBedTime(e.target.value)}
+                            placeholder="e.g., 30"
+                            className="w-full pl-8 pr-2.5 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:border-[#1B3A6B]"
+                          />
+                        </div>
+                        {[15, 30, 60].map(mins => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => setBedTime(String(mins))}
+                            className={`px-2 py-2 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                              bedTime === String(mins)
+                                ? 'bg-[#1B3A6B] text-white border-[#1B3A6B]'
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-blue-50'
+                            }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              )}
             </div>
           )}
         </div>
@@ -818,6 +1142,39 @@ export function QuickStudentCheckInModal({
                 </button>
               </div>
             </>
+          ) : step === 'beds' ? (
+            <div className="w-full flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setStep('confirmed')}
+                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Back to Visit Types
+              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="quick-bed-assign-form"
+                  disabled={!selectedBedObj || selectedBedObj.status === 'Occupied' || Boolean(existingStudentBed) || isAssigningBed}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-sm hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                  style={{ background: PRIMARY }}
+                >
+                  <BedDouble size={16} />
+                  {isAssigningBed
+                    ? 'Assigning...'
+                    : selectedBedObj
+                    ? `Assign to Bed ${selectedBedObj.bedNumber}`
+                    : 'Select a Bed'}
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="w-full flex items-center justify-end">
               <button
