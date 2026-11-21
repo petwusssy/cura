@@ -461,16 +461,13 @@ export function Layout({ currentPage, onNavigate, onLogout, notifications, child
           </div>
         </motion.header>
 
-        {/* Page content */}
-        <motion.main
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.25, ease: 'easeOut' }}
-          className="flex-1 overflow-y-auto"
+        {/* Page content — plain <main> (no CSS transform) so fixed inset-0 modals anchor to true viewport */}
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain min-w-0"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {children}
-        </motion.main>
+        </main>
       </div>
     </motion.div>
   );

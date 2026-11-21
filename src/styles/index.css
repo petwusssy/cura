@@ -217,8 +217,54 @@ html,
 body,
 #root {
   height: 100%;
+  width: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+/* Lock background scroll & prevent scroll-chaining whenever any modal dialog is mounted */
+body:has(.fixed.inset-0.flex.items-center.justify-center) main {
+  overflow: hidden !important;
+}
+
+.fixed.inset-0.flex.items-center.justify-center {
+  overscroll-behavior: contain;
+}
+
+/* Mobile viewport & modal stabilization: prevent iOS <16px input auto-zoom, scale jitter, and 90vh keyboard overflow */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .prf-printable-area input,
+  .prf-printable-area select,
+  .prf-printable-area textarea,
+  #official-med-cert-page input,
+  #official-med-cert-page select,
+  #official-med-cert-page textarea,
+  .print-report-container input,
+  .print-report-container select,
+  .print-report-container textarea {
+    font-size: revert !important;
+  }
+
+  .fixed.inset-0.flex.items-center.justify-center {
+    padding: 0.75rem !important;
+  }
+
+  .fixed.inset-0.flex.items-center.justify-center > div {
+    max-height: calc(100dvh - 1.5rem) !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overscroll-behavior: contain;
+    --tw-enter-scale: 1 !important;
+  }
 }
 
 body {
