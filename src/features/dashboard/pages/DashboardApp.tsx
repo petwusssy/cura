@@ -50,6 +50,49 @@ import { getEffectiveThreshold } from '@/utils/medicineRules';
 import { toast } from 'sonner';
 
 
+interface NotifPrefs {
+  medicationReminders: boolean;
+  bedAlerts: boolean;
+  lowStockAlerts: boolean;
+  soundAlerts: boolean;
+  reminderBefore: string;
+}
+
+function loadNotifPrefs(): NotifPrefs {
+  const defaults: NotifPrefs = {
+    medicationReminders: true,
+    bedAlerts: true,
+    lowStockAlerts: true,
+    soundAlerts: true,
+    reminderBefore: '10',
+  };
+  try {
+    const raw = localStorage.getItem('cura_notif_settings');
+    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+  } catch {
+    return defaults;
+  }
+}
+
+function playAlertChime() {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.22);
+  } catch {}
+}
+
 interface DashboardAppProps {
   onLogout: () => void;
 }
@@ -579,6 +622,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     }
   }, [purchaseRequests]);
 
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(() => loadNotifPrefs());
+
+  useEffect(() => {
+    const syncPrefs = () => setNotifPrefs(loadNotifPrefs());
+    window.addEventListener('cura-notif-settings-updated', syncPrefs);
+    return () => window.removeEventListener('cura-notif-settings-updated', syncPrefs);
+  }, []);
+
   // Check for upcoming and due medication doses, as well as bed timers
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
@@ -591,11 +642,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       const currentMinutes = parseInt(currMStr, 10);
       const today = getManilaDate();
       const currentTimeInMins = currentHours * 60 + currentMinutes;
+      const reminderLeadMins = Math.max(5, parseInt(notifPrefs.reminderBefore, 10) || 10);
 
       setNotifications(prev => {
         const newNotifs: AppNotification[] = [];
 
         // ─── 1. MEDICATION INTAKE REMINDERS ─────────────────────────────────
+        if (notifPrefs.medicationReminders) {
         consultations.forEach(c => {
           if (normalizeDate(c.date) !== today || !c.treatments) return;
 
@@ -633,6 +686,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                   // Fire toast & desktop alert once per dose when due
                   if (!alertedDosesRef.current.has(notifId)) {
                     alertedDosesRef.current.add(notifId);
+                    if (notifPrefs.soundAlerts) playAlertChime();
                     toast.error(`🔔 Time for Next Intake: ${patientName} is due for ${t.medicineName} (${formatTime12(t.nextDose)})!`, {
                       description: `Case: ${caseName} • Remarks: ${t.remarks || 'Take as prescribed'}`,
                       duration: 10000,
@@ -669,13 +723,14 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                   }
                 }
               }
-              // Condition B: Dose is approaching within 30 minutes (diff > 0 && diff <= 30)
-              else if (diff > 0 && diff <= 30) {
+              // Condition B: Dose is approaching within configured reminderBefore minutes
+              else if (diff > 0 && diff <= reminderLeadMins) {
                 const notifId = `med-${c.id}-${t.medicineName}-${t.nextDose}`;
                 if (!dismissedNotifIdsRef.current.has(notifId)) {
                   const alertKey = `${c.id}-${t.medicineName}-${t.nextDose}-upcoming`;
                   if (!alertedUpcomingDosesRef.current.has(alertKey)) {
                     alertedUpcomingDosesRef.current.add(alertKey);
+                    if (notifPrefs.soundAlerts) playAlertChime();
                     toast.warning(`⏰ Upcoming Intake: ${patientName} is scheduled for ${t.medicineName} in ${diff} mins (${formatTime12(t.nextDose)})`, {
                       description: `Case: ${caseName} • Instructions: ${t.remarks || 'Take as prescribed'}`,
                       duration: 8000,
@@ -715,8 +770,10 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             }
           });
         });
+        }
 
         // ─── 2. BED MANAGEMENT TIMERS & NOTIFICATIONS ───────────────────────
+        if (notifPrefs.bedAlerts) {
         beds.forEach(b => {
           if (b.status === 'Occupied' && b.timeOccupied && b.allottedTime) {
             const start = new Date(b.timeOccupied).getTime();
@@ -736,6 +793,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
                 const alertKey = `${b.id}-${b.timeOccupied}-expired`;
                 if (!alertedBedsRef.current.has(alertKey)) {
                   alertedBedsRef.current.add(alertKey);
+                  if (notifPrefs.soundAlerts) playAlertChime();
                   toast.error(`🚨 Time's Up: Bed ${b.bedNumber} allotted time for ${b.patientName || 'Patient'} has expired!`, {
                     description: `Reason: ${b.reason || 'Observation/Rest'} • Allotted: ${b.allottedTime} mins`,
                     duration: 10000,
@@ -807,10 +865,13 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
             }
           }
         });
+        }
 
         // Clean dismissed or inactive notifications
         const cleanedPrev = prev.filter(n => {
           if (dismissedNotifIdsRef.current.has(n.id)) return false;
+          if (!notifPrefs.medicationReminders && n.id.startsWith('med-')) return false;
+          if (!notifPrefs.bedAlerts && n.id.startsWith('bed-')) return false;
           if (n.type === 'bed' && n.id.startsWith('bed-')) {
             const bedMatch = beds.find(b => n.id.includes(b.id));
             if (!bedMatch || bedMatch.status === 'Available') return false;
@@ -829,11 +890,15 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
     checkAlertsAndTimers();
     const interval = setInterval(checkAlertsAndTimers, 6000);
     return () => clearInterval(interval);
-  }, [consultations, patients, beds]);
+  }, [consultations, patients, beds, notifPrefs]);
 
   // Check for low stock medicines daily (auto-resolves when restocked, stays dismissed for today if cleared)
   useEffect(() => {
     if (!medicines || medicines.length === 0) return;
+    if (!notifPrefs.lowStockAlerts) {
+      setNotifications(prev => prev.filter(n => n.type !== 'stock'));
+      return;
+    }
     const today = getManilaDate();
 
     const lowStockMeds = medicines.filter(m => {
@@ -872,6 +937,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
 
         if (!alertedDosesRef.current.has(notifId)) {
           alertedDosesRef.current.add(notifId);
+          if (notifPrefs.soundAlerts) playAlertChime();
           toast.warning(msg, {
             description: `Check Inventory to restock or record a purchase request.`,
             duration: 8000,
@@ -902,7 +968,7 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
       }
       return pruned;
     });
-  }, [medicines]);
+  }, [medicines, notifPrefs.lowStockAlerts, notifPrefs.soundAlerts]);
 
   // ── Central Clinic Staff PIN Sign-Off & Audit Trail Helper ──────────────────
   const [pinPrompt, setPinPrompt] = useState<{

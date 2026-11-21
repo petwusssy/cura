@@ -18,11 +18,13 @@ import {
   ALL_STAFF_PAGE_IDS,
   STAFF_UPDATED_EVENT,
   AUDIT_UPDATED_EVENT,
+  SHIFT_UPDATED_EVENT,
 } from '../../../services/staffService';
 import { toast } from 'sonner';
 import { PrivacyPolicyModal, DPO_CONTACT, PRIVACY_POLICY_VERSION } from '../../../components/shared/PrivacyPolicy';
 
 const PRIMARY = '#1E5AA8';
+const APP_VERSION = 'v1.0.1';
 
 interface SettingsSection {
   id: string;
@@ -71,26 +73,16 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  const [profile, setProfile] = useState<{
-    name: string; designation: string; email: string; phone: string; department: string;
-  }>(() => {
-    const defaults = {
-      name: 'UA CLINIC ADMIN', designation: 'Administrator', email: 'admin@ua.edu.ph',
-      phone: '09121234567', department: 'Medical-Dental Clinic',
-    };
-    try {
-      const savedProfile = localStorage.getItem('cura_admin_profile');
-      return savedProfile ? { ...defaults, ...JSON.parse(savedProfile) } : defaults;
-    } catch { return defaults; }
-  });
+  const [activeShift, setActiveShift] = useState(() => staffService.getActiveShift());
+  const [healthStatus, setHealthStatus] = useState<{ state: 'checking' | 'online' | 'offline'; latencyMs?: number }>({ state: 'checking' });
 
   const [notifSettings, setNotifSettings] = useState<{
     medicationReminders: boolean; bedAlerts: boolean; lowStockAlerts: boolean;
-    emailNotifs: boolean; soundAlerts: boolean; reminderBefore: string;
+    soundAlerts: boolean; reminderBefore: string;
   }>(() => {
     const defaults = {
       medicationReminders: true, bedAlerts: true, lowStockAlerts: true,
-      emailNotifs: false, soundAlerts: true, reminderBefore: '10',
+      soundAlerts: true, reminderBefore: '10',
     };
     try {
       const savedNotif = localStorage.getItem('cura_notif_settings');
@@ -105,25 +97,36 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
     } catch { return '16px'; }
   });
 
-  const handleSave = async () => {
-    if (onRequireStaffSignOff) {
-      try {
-        await onRequireStaffSignOff(
-          'Updated Clinic Profile Settings',
-          `${profile.name} (${profile.designation} • ${profile.department})`,
-          'Settings',
-          'profile'
-        );
-      } catch {
-        return;
-      }
-    }
+  useEffect(() => {
+    const syncShift = () => setActiveShift(staffService.getActiveShift());
+    window.addEventListener(SHIFT_UPDATED_EVENT, syncShift);
+    return () => window.removeEventListener(SHIFT_UPDATED_EVENT, syncShift);
+  }, []);
+
+  const checkBackendHealth = useCallback(async () => {
+    setHealthStatus({ state: 'checking' });
+    const started = performance.now();
     try {
-      localStorage.setItem('cura_admin_profile', JSON.stringify(profile));
+      await api.get('/health/', { timeout: 8000 });
+      setHealthStatus({ state: 'online', latencyMs: Math.round(performance.now() - started) });
+    } catch {
+      setHealthStatus({ state: 'offline' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSection === 'system') {
+      checkBackendHealth();
+    }
+  }, [activeSection, checkBackendHealth]);
+
+  const handleSaveNotifPrefs = () => {
+    try {
       localStorage.setItem('cura_notif_settings', JSON.stringify(notifSettings));
+      window.dispatchEvent(new CustomEvent('cura-notif-settings-updated'));
     } catch {}
     setSaved(true);
-    toast.success('Settings saved.');
+    toast.success('Notification preferences applied.');
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -546,39 +549,68 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          {activeSection === 'profile' && (
-            <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-border">Profile Information</h3>
-              <div className="flex items-center gap-5 pb-4 border-b border-border">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0" style={{ background: PRIMARY }}>GA</div>
-                <div>
-                  <div className="font-semibold text-foreground">{profile.name}</div>
-                  <div className="text-sm text-muted-foreground">{profile.designation} • {profile.department}</div>
+          {activeSection === 'profile' && (() => {
+            const staffName = activeShift?.staff?.name || authService.getUsername() || 'Clinic Staff';
+            const staffRole = activeShift?.staff?.role || 'Clinic Account';
+            const initials = staffName.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'UA';
+            const allowedCount = Array.isArray(activeShift?.staff?.allowed_pages)
+              ? activeShift!.staff.allowed_pages!.length
+              : ALL_STAFF_PAGE_IDS.length;
+            return (
+              <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+                  <h3 className="text-foreground font-semibold">Active Duty Session &amp; Clinic Profile</h3>
+                  {onRequireStaffSignOff && (
+                    <button
+                      type="button"
+                      onClick={() => onRequireStaffSignOff(
+                        'Switch Active Duty Staff',
+                        'Verify your 4-digit staff PIN to take over the current terminal shift',
+                        'Staff',
+                        activeShift?.staff?.id || 'shift'
+                      ).catch(() => {})}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-95 transition-opacity cursor-pointer w-fit"
+                      style={{ background: PRIMARY }}
+                    >
+                      <KeyRound size={14} /> Switch Duty Staff (PIN)
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4 pb-4 border-b border-border">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0" style={{ background: PRIMARY }}>
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-foreground truncate uppercase">{staffName}</div>
+                    <div className="text-sm text-muted-foreground">{staffRole} • Medical-Dental Clinic</div>
+                    {activeShift && (
+                      <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        On Shift • Valid until {formatManilaTimestamp(new Date(activeShift.expiresAt).toISOString())}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    ['Signed-In Clinic Account', authService.getUsername() || 'Clinic Portal'],
+                    ['Duty Staff Member', staffName],
+                    ['Assigned Role', staffRole],
+                    ['Module Access Scope', `${allowedCount} / ${ALL_STAFF_PAGE_IDS.length} Modules`],
+                    ['Department', 'Medical-Dental Clinic'],
+                    ['Institution', 'University of the Assumption'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="p-3.5 rounded-xl border border-border bg-muted/20">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{k}</div>
+                      <div className="text-sm font-semibold text-foreground mt-0.5 truncate">{v}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { key: 'name', label: 'Full Name' },
-                  { key: 'designation', label: 'Designation' },
-                  { key: 'email', label: 'Email Address' },
-                  { key: 'phone', label: 'Phone Number' },
-                  { key: 'department', label: 'Department' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label className={labelCls}>{f.label}</label>
-                    <input type="text" value={(profile as any)[f.key]}
-                      onChange={e => setProfile(p => ({ ...p, [f.key]: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end">
-                <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
-                  <Save size={15} /> {saved ? 'Saved!' : 'Save Changes'}
-                </button>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {activeSection === 'staff' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
@@ -1371,11 +1403,10 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
               <h3 className="text-foreground pb-4 border-b border-border">Notification Preferences</h3>
               <div className="space-y-4">
                 {[
-                  { key: 'medicationReminders', label: 'Medication Reminders', desc: 'Alert when a patient\'s next dose is approaching' },
-                  { key: 'bedAlerts', label: 'Bed Occupancy Alerts', desc: 'Alert when a bed has been occupied for too long' },
-                  { key: 'lowStockAlerts', label: 'Low Stock Alerts', desc: 'Alert when medicine stock falls below threshold' },
-                  { key: 'emailNotifs', label: 'Email Notifications', desc: 'Send notification summary via email' },
-                  { key: 'soundAlerts', label: 'Sound Alerts', desc: 'Play sound for urgent notifications' },
+                  { key: 'medicationReminders', label: 'Medication Reminders', desc: 'Alert when a patient\'s next dose is due or approaching' },
+                  { key: 'bedAlerts', label: 'Bed Occupancy Alerts', desc: 'Alert when a clinic bed timer is nearing or past allotted time' },
+                  { key: 'lowStockAlerts', label: 'Low Stock Alerts', desc: 'Alert when medicine stock reaches low or out-of-stock threshold' },
+                  { key: 'soundAlerts', label: 'Sound Alerts', desc: 'Play an audible chime when an urgent clinic alert triggers' },
                 ].map(s => (
                   <div key={s.key} className="flex items-center justify-between py-3 border-b border-border">
                     <div>
@@ -1383,8 +1414,9 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                       <div className="text-xs text-muted-foreground">{s.desc}</div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setNotifSettings(n => ({ ...n, [s.key]: !(n as any)[s.key] }))}
-                      className="relative w-11 h-6 rounded-full transition-all flex-shrink-0"
+                      className="relative w-11 h-6 rounded-full transition-all flex-shrink-0 cursor-pointer"
                       style={{ background: (notifSettings as any)[s.key] ? PRIMARY : '#d1d5db' }}
                     >
                       <span className="absolute top-0.5 transition-all w-5 h-5 rounded-full bg-card text-card-foreground shadow"
@@ -1402,8 +1434,8 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                 </div>
               </div>
               <div className="flex justify-end">
-                <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
-                  <Save size={15} /> {saved ? 'Saved!' : 'Save Changes'}
+                <button type="button" onClick={handleSaveNotifPrefs} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90 cursor-pointer" style={{ background: saved ? '#4CAF50' : PRIMARY }}>
+                  <Save size={15} /> {saved ? 'Saved!' : 'Save Preferences'}
                 </button>
               </div>
             </div>
@@ -1522,19 +1554,44 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
 
           {activeSection === 'system' && (
             <div className="bg-card text-card-foreground rounded-xl p-6 space-y-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <h3 className="text-foreground pb-4 border-b border-border">System Information</h3>
+              <div className="flex items-center justify-between pb-4 border-b border-border gap-3">
+                <h3 className="text-foreground font-semibold">System Information &amp; Live Diagnostics</h3>
+                <button
+                  type="button"
+                  onClick={checkBackendHealth}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+                >
+                  <RefreshCw size={13} className={healthStatus.state === 'checking' ? 'animate-spin' : ''} />
+                  Test API Connection
+                </button>
+              </div>
               <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Backend API Status</span>
+                  {healthStatus.state === 'checking' ? (
+                    <span className="text-xs font-semibold text-muted-foreground">Checking...</span>
+                  ) : healthStatus.state === 'online' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 size={12} /> Online ({healthStatus.latencyMs} ms)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                      <AlertCircle size={12} /> Unreachable
+                    </span>
+                  )}
+                </div>
                 {[
                   ['System Name', 'CURA — University of the Assumption Clinic'],
-                  ['Version', 'v1.0.0 (June 2026)'],
-                  ['Environment', 'Production'],
+                  ['Version', `${APP_VERSION} (Production)`],
                   ['Institution', 'University of the Assumption, San Fernando, Pampanga'],
                   ['Department', 'Medical-Dental Clinic'],
-                  ['Data Storage', 'Local (Session)'],
+                  ['Primary Database', 'PostgreSQL (Supabase Cloud)'],
+                  ['Cloud File Archives', 'Google Drive API (Auto-Synced CSV & XLSX)'],
+                  ['Data Privacy Standard', `RA 10173 Compliant (${PRIVACY_POLICY_VERSION})`],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between py-2 border-b border-border">
+                  <div key={label} className="flex justify-between gap-4 py-2 border-b border-border">
                     <span className="text-sm text-muted-foreground">{label}</span>
-                    <span className="text-sm font-medium text-foreground">{value}</span>
+                    <span className="text-sm font-medium text-foreground text-right">{value}</span>
                   </div>
                 ))}
               </div>
@@ -1591,7 +1648,7 @@ export function Settings({ onRequireStaffSignOff }: SettingsProps = {}) {
                 <div className="p-4 rounded-xl" style={{ background: `${PRIMARY}08` }}>
                   <div className="font-bold text-lg" style={{ color: PRIMARY }}>CURA</div>
                   <div className="text-sm text-muted-foreground mt-1">University of the Assumption Clinic Information System</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Version 1.0.0 • June 2026</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Version {APP_VERSION} • Production</div>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <button
                       type="button"
