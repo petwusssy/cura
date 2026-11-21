@@ -1040,6 +1040,8 @@ export default function DashboardApp({ onLogout }: DashboardAppProps) {
         });
       });
 
+      staffService.setActiveShift(verifiedStaff, 1440);
+
       staffService
         .recordAuditLog({
           staff: verifiedStaff.id,
