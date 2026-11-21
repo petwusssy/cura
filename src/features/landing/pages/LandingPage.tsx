@@ -181,15 +181,15 @@ export default function LandingPage({
 
       {/* ── MAIN CONTENT CONTAINER (Split on Desktop, Architectural Campus Header + Sheet on Mobile) ── */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full min-h-[100dvh]">
-        {/* ── MOBILE ENTERPRISE INSTITUTIONAL HERO HEADER (< lg only) ── */}
-        <div className="lg:hidden relative w-full shrink-0 overflow-hidden bg-[#001e50] px-5 pt-5 pb-9 sm:px-8 sm:pt-6 sm:pb-10 text-white">
+        {/* ── MOBILE RESPONSIVE UNIVERSITY HEADER (< lg only — mirrors desktop right panel) ── */}
+        <div className="lg:hidden relative w-full shrink-0 overflow-hidden bg-[#001e50] px-5 pt-6 pb-10 sm:px-8 sm:pt-7 sm:pb-11 text-white">
           <img
             src={campusBg}
             alt="University of the Assumption campus"
             width={1920}
             height={1080}
             fetchPriority="high"
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-45"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-50"
           />
           <div
             className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${
@@ -197,7 +197,7 @@ export default function LandingPage({
             }`}
             style={{
               background:
-                "linear-gradient(135deg, rgba(0, 24, 68, 0.94) 0%, rgba(0, 30, 80, 0.82) 55%, rgba(27, 108, 168, 0.72) 100%)",
+                "linear-gradient(135deg, rgba(0, 24, 68, 0.92) 0%, rgba(0, 30, 80, 0.78) 55%, rgba(0, 30, 80, 0.65) 100%)",
             }}
           />
           <div
@@ -206,26 +206,23 @@ export default function LandingPage({
             }`}
             style={{
               background:
-                "linear-gradient(135deg, rgba(14, 92, 152, 0.94) 0%, rgba(2, 132, 199, 0.85) 100%)",
+                "linear-gradient(135deg, rgba(14, 116, 178, 0.92) 0%, rgba(2, 132, 199, 0.80) 100%)",
             }}
           />
-          {/* Subtle UA Gold structural hairline */}
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#ffb81c] via-[#1b6ca8] to-[#001e50]" />
 
-          <div className="relative z-10 max-w-xl mx-auto flex items-center justify-between gap-3">
+          <div className="relative z-10 max-w-xl mx-auto flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffb81c] mb-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                University Health Services
-              </div>
-              <h2
-                className="font-extrabold text-[15px] sm:text-[18px] tracking-wide leading-tight text-white"
+              <div
+                className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight text-white drop-shadow-md"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 UNIVERSITY OF THE ASSUMPTION
-              </h2>
-              <p className="text-[11px] sm:text-xs text-sky-100/85 mt-0.5 leading-snug">
-                The First Catholic Archdiocesan University in the Philippines and in Asia
+              </div>
+              <p
+                className="text-[11px] sm:text-xs font-semibold text-white/90 mt-1 leading-snug drop-shadow"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                The First Catholic Archdiocesan University in the Philippines and in Asia.
               </p>
             </div>
             <a
@@ -233,22 +230,22 @@ export default function LandingPage({
               target="_blank"
               rel="noopener noreferrer"
               title="Visit University of the Assumption website"
-              className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/20 p-1.5 flex items-center justify-center backdrop-blur-xs shadow-lg active:scale-95 transition-transform"
+              className="shrink-0 block cursor-pointer select-none active:scale-95 transition-transform"
             >
               <img
                 src={uaLogo}
-                alt="University of the Assumption Seal"
-                width={48}
-                height={48}
-                className="w-full h-full object-contain drop-shadow"
+                alt="University of the Assumption Logo"
+                width={56}
+                height={56}
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-[0_4px_14px_rgba(0,0,0,0.45)]"
                 draggable={false}
               />
             </a>
           </div>
         </div>
 
-        {/* ── LEFT WHITE BOARD / PANEL (55% width on desktop, elevated architectural surface on mobile) ── */}
-        <div className="w-full lg:w-[55%] flex-1 lg:h-full lg:min-h-[100dvh] bg-[#f8fafc] lg:bg-white rounded-t-3xl -mt-5 lg:mt-0 lg:rounded-none relative z-20 flex flex-col justify-between items-center px-5 sm:px-10 lg:px-12 xl:px-16 pt-6 pb-5 sm:py-6 shadow-[0_-10px_30px_rgba(0,18,50,0.22)] lg:shadow-2xl border-t border-white/60 lg:border-t-0 lg:border-r lg:border-slate-200/50 lg:overflow-y-auto">
+        {/* ── LEFT WHITE BOARD / PANEL (55% width on desktop, clean rounded sheet on mobile) ── */}
+        <div className="w-full lg:w-[55%] flex-1 lg:h-full lg:min-h-[100dvh] bg-white rounded-t-3xl -mt-5 lg:mt-0 lg:rounded-none relative z-20 flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 pt-6 pb-5 sm:py-6 shadow-2xl lg:border-r lg:border-slate-200/50 lg:overflow-y-auto">
           {/* Desktop spacer to keep top clean and balanced with footer */}
           <div className="hidden lg:block w-full h-4 shrink-0" />
 
@@ -337,22 +334,6 @@ export default function LandingPage({
                       className="group-hover:translate-x-1 transition-transform"
                     />
                   </motion.button>
-
-                  {/* Mobile-only compact trust metadata */}
-                  <div className="lg:hidden mt-6 grid grid-cols-3 gap-2 w-full max-w-sm pt-5 border-t border-slate-200/80 text-left">
-                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">EHR</div>
-                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Centralized</div>
-                    </div>
-                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">Triage</div>
-                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Live Queue</div>
-                    </div>
-                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">RA 10173</div>
-                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Protected</div>
-                    </div>
-                  </div>
                 </motion.div>
               )}
 
