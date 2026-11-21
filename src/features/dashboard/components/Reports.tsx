@@ -331,10 +331,23 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   }>>([]);
   const [archivesLoading, setArchivesLoading] = useState(false);
 
-  const fetchDriveArchives = async () => {
+  const monthMap: Record<string, string> = {
+    'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
+    'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
+  };
+  const monthNum = monthMap[reportMonth] || '10';
+  const selectedMonthYear = `${reportYear}-${monthNum}`;
+
+  const fetchDriveArchives = async (forceRefresh = false) => {
     setArchivesLoading(true);
     try {
-      const res = await api.get('/reports/archives/');
+      const res = await api.get('/reports/archives/', {
+        params: {
+          year: reportYear,
+          month: monthNum,
+          ...(forceRefresh ? { refresh: '1' } : {}),
+        },
+      });
       if (Array.isArray(res.data?.archives)) {
         setDriveArchives(res.data.archives);
       }
@@ -349,7 +362,7 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
     if (activeReport === 'archives') {
       fetchDriveArchives();
     }
-  }, [activeReport]);
+  }, [activeReport, reportMonth, reportYear]);
 
   const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
@@ -400,13 +413,6 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
   useEffect(() => {
     if (telemedicineRequests) setTeleRequests(telemedicineRequests);
   }, [telemedicineRequests]);
-
-  const monthMap: Record<string, string> = {
-    'JANUARY': '01', 'FEBRUARY': '02', 'MARCH': '03', 'APRIL': '04', 'MAY': '05', 'JUNE': '06',
-    'JULY': '07', 'AUGUST': '08', 'SEPTEMBER': '09', 'OCTOBER': '10', 'NOVEMBER': '11', 'DECEMBER': '12'
-  };
-  const monthNum = monthMap[reportMonth] || '10';
-  const selectedMonthYear = `${reportYear}-${monthNum}`;
 
   const seenReportConsKeys = new Set<string>();
   const dedupedConsultations = consultations.filter(c => {
@@ -2154,6 +2160,14 @@ export function Reports({ patients, consultations, medicines, beds, medicalCerts
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => fetchDriveArchives(true)}
+                    disabled={archivesLoading}
+                    className="px-3.5 py-2 rounded-lg bg-white/15 border border-white/30 text-white text-xs font-bold hover:bg-white/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {archivesLoading ? 'Syncing Mirrors...' : 'Sync Live Mirrors'}
+                  </button>
                   <a
                     href="https://drive.google.com/drive/folders/1lc-gyNPuUUjQUL1s07-fMcBumyWnSEIW"
                     target="_blank"
