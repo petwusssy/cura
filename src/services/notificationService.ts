@@ -1,5 +1,6 @@
 import api from './api';
 import { AppNotification } from '@/types';
+import { staffService } from './staffService';
 
 export const notificationService = {
   getNotifications: async (): Promise<AppNotification[]> => {
@@ -25,6 +26,11 @@ export const notificationService = {
   },
 
   clearAll: async (): Promise<void> => {
-    await api.post('/notifications/clear_all/?audience=web');
+    const shift = staffService.getActiveShift();
+    await api.post('/notifications/clear_all/?audience=web', {
+      staff_id: shift?.staff?.id || undefined,
+      staff_name: shift?.staff?.name || localStorage.getItem('username') || 'Clinic Staff',
+      staff_role: shift?.staff?.role || 'Clinic Staff',
+    });
   },
 };
