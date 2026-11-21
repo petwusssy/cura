@@ -49,7 +49,6 @@ export default function LandingPage({
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [limitState, setLimitState] = useState(() => loginLimiter.getLimitState())
-  const [isUaHovered, setIsUaHovered] = useState(false)
   const [isRightPanelHovered, setIsRightPanelHovered] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -126,9 +125,9 @@ export default function LandingPage({
   }
 
   return (
-    <div className="relative flex w-full h-full min-h-screen overflow-hidden bg-[#001e50]">
-      {/* ── BACKGROUND IMAGE WITH OVERLAY (Base layer) ── */}
-      <div className="absolute inset-0 z-0">
+    <div className="relative flex w-full h-full min-h-[100dvh] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#001e50]">
+      {/* ── BACKGROUND IMAGE WITH OVERLAY (Desktop Base layer) ── */}
+      <div className="hidden lg:block absolute inset-0 z-0">
         <img
           src={campusBg}
           alt="University of the Assumption campus"
@@ -180,52 +179,78 @@ export default function LandingPage({
         </div>
       </div>
 
-      {/* ── MAIN CONTENT CONTAINER (Split Layout) ── */}
-      <div className="relative z-10 flex w-full h-full min-h-screen">
-        {/* ── LEFT WHITE BOARD / PANEL (Straight edge, takes 55% width) ── */}
-        <div className="w-full lg:w-[55%] h-full min-h-screen bg-white relative z-20 flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-4 sm:py-6 shadow-2xl border-r border-slate-200/50 overflow-y-auto">
-          {/* Top Section: Clean minimal spacer on desktop; interactive title on mobile */}
-          <div className="w-full flex items-center justify-center lg:justify-start shrink-0">
-            {/* Mobile-only University title that reveals small UA logo on tap/hover */}
-            <div
-              className="inline-flex items-center gap-2.5 cursor-pointer select-none py-1.5 px-3 rounded-xl active:bg-slate-100 lg:hidden"
-              onClick={() => setIsUaHovered((prev) => !prev)}
-              onMouseEnter={() => setIsUaHovered(true)}
-              onMouseLeave={() => setIsUaHovered(false)}
-            >
-              <div className="flex flex-col text-[#001e50] text-center">
-                <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-none whitespace-nowrap"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                >
-                  UNIVERSITY OF THE
-                </span>
-                <span
-                  className="font-extrabold text-[15px] sm:text-[18px] tracking-wider leading-tight mt-1 whitespace-nowrap"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                >
-                  ASSUMPTION
-                </span>
+      {/* ── MAIN CONTENT CONTAINER (Split on Desktop, Architectural Campus Header + Sheet on Mobile) ── */}
+      <div className="relative z-10 flex flex-col lg:flex-row w-full min-h-[100dvh]">
+        {/* ── MOBILE ENTERPRISE INSTITUTIONAL HERO HEADER (< lg only) ── */}
+        <div className="lg:hidden relative w-full shrink-0 overflow-hidden bg-[#001e50] px-5 pt-5 pb-9 sm:px-8 sm:pt-6 sm:pb-10 text-white">
+          <img
+            src={campusBg}
+            alt="University of the Assumption campus"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-45"
+          />
+          <div
+            className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${
+              stage === "idle" ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(0, 24, 68, 0.94) 0%, rgba(0, 30, 80, 0.82) 55%, rgba(27, 108, 168, 0.72) 100%)",
+            }}
+          />
+          <div
+            className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${
+              stage !== "idle" ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(14, 92, 152, 0.94) 0%, rgba(2, 132, 199, 0.85) 100%)",
+            }}
+          />
+          {/* Subtle UA Gold structural hairline */}
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#ffb81c] via-[#1b6ca8] to-[#001e50]" />
+
+          <div className="relative z-10 max-w-xl mx-auto flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffb81c] mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                University Health Services
               </div>
-              <AnimatePresence>
-                {isUaHovered && (
-                  <motion.img
-                    src={uaLogo}
-                    alt="UA Logo"
-                    width={36}
-                    height={36}
-                    initial={{ opacity: 0, scale: 0.4 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.4 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    className="w-9 h-9 object-contain drop-shadow-sm ml-1"
-                  />
-                )}
-              </AnimatePresence>
+              <h2
+                className="font-extrabold text-[15px] sm:text-[18px] tracking-wide leading-tight text-white"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                UNIVERSITY OF THE ASSUMPTION
+              </h2>
+              <p className="text-[11px] sm:text-xs text-sky-100/85 mt-0.5 leading-snug">
+                The First Catholic Archdiocesan University in the Philippines and in Asia
+              </p>
             </div>
-            {/* Desktop spacer to keep top clean and balanced with footer */}
-            <div className="hidden lg:block h-4" />
+            <a
+              href="https://web.ua.edu.ph/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Visit University of the Assumption website"
+              className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/20 p-1.5 flex items-center justify-center backdrop-blur-xs shadow-lg active:scale-95 transition-transform"
+            >
+              <img
+                src={uaLogo}
+                alt="University of the Assumption Seal"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain drop-shadow"
+                draggable={false}
+              />
+            </a>
           </div>
+        </div>
+
+        {/* ── LEFT WHITE BOARD / PANEL (55% width on desktop, elevated architectural surface on mobile) ── */}
+        <div className="w-full lg:w-[55%] flex-1 lg:h-full lg:min-h-[100dvh] bg-[#f8fafc] lg:bg-white rounded-t-3xl -mt-5 lg:mt-0 lg:rounded-none relative z-20 flex flex-col justify-between items-center px-5 sm:px-10 lg:px-12 xl:px-16 pt-6 pb-5 sm:py-6 shadow-[0_-10px_30px_rgba(0,18,50,0.22)] lg:shadow-2xl border-t border-white/60 lg:border-t-0 lg:border-r lg:border-slate-200/50 lg:overflow-y-auto">
+          {/* Desktop spacer to keep top clean and balanced with footer */}
+          <div className="hidden lg:block w-full h-4 shrink-0" />
 
           {/* Middle: Content Board (Slides smoothly between Idle and Form, Dead-center) */}
           <div className="my-auto py-2 w-full max-w-xl mx-auto flex flex-col items-center justify-center">
@@ -274,10 +299,10 @@ export default function LandingPage({
                   </div>
 
                   <h1
-                    className="leading-none mb-4 text-[#001e50]"
+                    className="leading-none mb-3 text-[#001e50]"
                     style={{
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: "clamp(5rem, 10.5vw, 8.25rem)",
+                      fontSize: "clamp(3.75rem, 10.5vw, 8.25rem)",
                       fontWeight: 800,
                       letterSpacing: "-0.035em",
                       WebkitTextStroke: "1px #001e50",
@@ -287,7 +312,7 @@ export default function LandingPage({
                   </h1>
 
                   <p
-                    className="text-[11px] sm:text-[12.5px] font-semibold tracking-widest uppercase mb-8 sm:mb-9 text-[#001e50]/75 max-w-lg mx-auto leading-relaxed"
+                    className="text-[11px] sm:text-[12.5px] font-semibold tracking-widest uppercase mb-6 sm:mb-8 text-[#001e50]/75 max-w-lg mx-auto leading-relaxed"
                     style={{
                       fontFamily: "'Inter', sans-serif",
                       letterSpacing: "0.12em",
@@ -301,7 +326,7 @@ export default function LandingPage({
                       setStage("form")
                       if (onLoginClick) onLoginClick()
                     }}
-                    className="group inline-flex items-center gap-3 px-9 py-4 rounded-xl font-semibold text-base bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50] transition-colors duration-300 shadow-md hover:shadow-lg"
+                    className="group w-full sm:w-auto justify-center inline-flex items-center gap-3 px-9 py-4 min-h-[48px] rounded-xl font-semibold text-base bg-[#1b6ca8] text-white hover:bg-[#ffb81c] hover:text-[#001e50] transition-colors duration-300 shadow-md hover:shadow-lg cursor-pointer"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -312,6 +337,22 @@ export default function LandingPage({
                       className="group-hover:translate-x-1 transition-transform"
                     />
                   </motion.button>
+
+                  {/* Mobile-only compact trust metadata */}
+                  <div className="lg:hidden mt-6 grid grid-cols-3 gap-2 w-full max-w-sm pt-5 border-t border-slate-200/80 text-left">
+                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">EHR</div>
+                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Centralized</div>
+                    </div>
+                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">Triage</div>
+                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Live Queue</div>
+                    </div>
+                    <div className="px-2.5 py-2 rounded-xl bg-white border border-slate-200/70">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#1b6ca8]">RA 10173</div>
+                      <div className="text-[11px] font-semibold text-[#001e50] mt-0.5">Protected</div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -559,9 +600,9 @@ export default function LandingPage({
             </AnimatePresence>
           </div>
 
-          {/* Footer inside White Panel */}
-          <div className="w-full pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#001e50]/75 font-medium">
-            <div className="flex items-center gap-2 flex-wrap">
+          {/* Footer inside Panel */}
+          <div className="w-full pt-3.5 border-t border-slate-200/80 lg:border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-[11px] text-[#001e50]/75 font-medium">
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
               <span>CURA System</span>
               <span aria-hidden="true" className="text-slate-300">·</span>
               <button
@@ -572,7 +613,7 @@ export default function LandingPage({
                 Privacy Policy (RA 10173)
               </button>
             </div>
-            <div className="text-right flex flex-col items-end leading-tight">
+            <div className="text-center sm:text-right flex flex-col items-center sm:items-end leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#001e50]/75">
                   DEVELOPED BY :
